@@ -32,6 +32,10 @@ export function freeCancelHours(cfg, tour, channel, account = null) {
   return tour.cancelHours ?? cfg.policy.b2cFreeCancelHours;
 }
 
+/** Importo che il cliente deve ancora pagare con carta/in sede/fattura (totale meno quanto coperto da buoni regalo). */
+export const bookingDue = (b) => b.total_cents - (b.gift_cents ?? 0);
+
+/** Metodi di pagamento disponibili (può essere vuoto: prenotazioni online non attive finché non si configura Stripe). */
 export function paymentOptions(app, tour, channel, account = null) {
   const { cfg } = app;
   const cardOk = !!cfg.stripe.secretKey || cfg.demoPayments;
@@ -43,7 +47,7 @@ export function paymentOptions(app, tour, channel, account = null) {
     if (cardOk) opts.push('card');
     if (cfg.policy.allowPayOnSite && tour.payOnSite) opts.push('onsite');
   }
-  return opts.length ? opts : channel === 'b2b' ? ['invoice'] : ['onsite'];
+  return opts;
 }
 
 export function getBooking(db, id) {
@@ -124,9 +128,17 @@ export function createBooking(app, input, nowMs = Date.now()) {
   });
 }
 
+/** Segna come scaduta una prenotazione in attesa di pagamento e libera lo slot. */
+export function expireBooking(db, bookingId) {
+  return db.prepare(`UPDATE bookings SET status = 'expired' WHERE id = ? AND status = 'held'`).run(bookingId).changes;
+}
+
 /** Libera gli slot "held" scaduti (pagamento non completato). */
 export function expireHolds(db, nowMs = Date.now()) {
-  return db.prepare(`UPDATE bookings SET status = 'expired' WHERE status = 'held' AND hold_expires_at <= ?`).run(new Date(nowMs).toISOString()).changes;
+  const ids = db.prepare(`SELECT id FROM bookings WHERE status = 'held' AND hold_expires_at <= ?`).all(new Date(nowMs).toISOString());
+  let n = 0;
+  for (const { id } of ids) n += expireBooking(db, id);
+  return n;
 }
 
 /**

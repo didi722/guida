@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { daySlots, monthAvailability } from '../server/availability.js';
-import { BookingError, cancelBooking, cancellationState, confirmPaid, createBooking, expireHolds, priceFor } from '../server/bookings.js';
+import { BookingError, cancelBooking, cancellationState, confirmPaid, createBooking, expireHolds, paymentOptions, priceFor } from '../server/bookings.js';
 import { setSetting } from '../server/db.js';
 import { addAccount, base, makeApp, NOW } from './helpers.js';
 
@@ -191,4 +191,22 @@ test('disponibilità mensile per il calendario', (t) => {
   createBooking(app, base({ pax: 10 }), NOW);
   createBooking(app, base({ pax: 10, time: '14:30', email: 'z@example.com' }), NOW);
   assert.equal(monthAvailability(app.db, app.cfg, shared, '2027-01', { nowMs: NOW })['2027-01-12'], undefined);
+});
+
+test('pagamento in sede: disattivato di default, senza metodi la prenotazione non parte', (t) => {
+  const app = makeApp({ policy: { allowPayOnSite: false } });
+  t.after(app.cleanup);
+  const shared = app.content.tour('shared');
+  assert.deepEqual(paymentOptions(app, shared, 'b2c'), ['card'], 'solo carta (demo attiva)');
+  assert.throws(() => createBooking(app, base({ paymentMethod: 'onsite' }), NOW), (e) => e.code === 'payment');
+
+  const noCard = makeApp({ policy: { allowPayOnSite: false }, demoPayments: false });
+  t.after(noCard.cleanup);
+  assert.deepEqual(paymentOptions(noCard, noCard.content.tour('shared'), 'b2c'), []);
+  assert.throws(() => createBooking(noCard, base({ paymentMethod: 'card' }), NOW), (e) => e.code === 'payment');
+  // il flag per tour disattiva comunque il pagamento in sede
+  const on = makeApp({ policy: { allowPayOnSite: true } });
+  t.after(on.cleanup);
+  assert.deepEqual(paymentOptions(on, { ...on.content.tour('shared'), payOnSite: false }, 'b2c'), ['card']);
+  assert.deepEqual(paymentOptions(on, on.content.tour('shared'), 'b2c'), ['card', 'onsite']);
 });

@@ -1,6 +1,6 @@
 import express from 'express';
 import { daySlots, monthAvailability } from '../availability.js';
-import { getBookingByRef, priceFor } from '../bookings.js';
+import { priceFor } from '../bookings.js';
 import { isDate, isMonth, nowRome } from '../time.js';
 import { safeEqual } from '../util.js';
 import { limits, makeCtx, noStore, send, tooMany } from '../http.js';
@@ -53,14 +53,14 @@ export function apiRouter(app) {
     }
     try {
       const obj = event.data?.object ?? {};
-      const ref = obj.client_reference_id ?? obj.metadata?.ref;
-      const b = ref ? getBookingByRef(db, ref) : null;
-      if (b) {
+      const found = app.payables.lookup(obj.client_reference_id ?? obj.metadata?.ref);
+      if (found) {
+        const { handler, row } = found;
         if (['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type) && obj.payment_status === 'paid') {
-          if (obj.amount_total === b.total_cents) await services.handlePaid(b.id, typeof obj.payment_intent === 'string' ? obj.payment_intent : (obj.payment_intent?.id ?? null));
-          else console.error(`[webhook] importo non corrispondente per ${b.ref}: ${obj.amount_total} ≠ ${b.total_cents}`);
-        } else if (['checkout.session.expired', 'checkout.session.async_payment_failed'].includes(event.type) && obj.id === b.stripe_session_id && b.status === 'held') {
-          db.prepare(`UPDATE bookings SET status = 'expired' WHERE id = ? AND status = 'held'`).run(b.id);
+          if (obj.amount_total === handler.dueCents(row)) await handler.onPaid(row, typeof obj.payment_intent === 'string' ? obj.payment_intent : (obj.payment_intent?.id ?? null), Date.now());
+          else console.error(`[webhook] importo non corrispondente per ${row.ref}: ${obj.amount_total} ≠ ${handler.dueCents(row)}`);
+        } else if (['checkout.session.expired', 'checkout.session.async_payment_failed'].includes(event.type) && obj.id === row.stripe_session_id) {
+          handler.onExpired(row);
         }
       }
       res.json({ received: true });
@@ -70,22 +70,23 @@ export function apiRouter(app) {
     }
   });
 
-  // ───── pagamento: ripresa e demo ─────
+  // ───── pagamento: ripresa e demo (valgono per prenotazioni, gift card e acconti) ─────
   const langOf = (req) => (isLang(String(req.query.lang ?? req.body?.lang)) ? String(req.query.lang ?? req.body?.lang) : 'it');
   function byToken(req) {
-    const b = getBookingByRef(db, req.params.ref);
+    const found = app.payables.lookup(req.params.ref);
     const token = String(req.query.t ?? req.body?.t ?? '');
-    return b && token && safeEqual(token, b.token) ? b : null;
+    return found && token && safeEqual(token, found.row.token) ? found : null;
   }
 
   r.get('/pay/resume/:ref', async (req, res, next) => {
-    const b = byToken(req);
+    const found = byToken(req);
     const lang = langOf(req);
-    if (!b) return next();
-    const back = `/${lang}/booking/${b.ref}?t=${b.token}`;
-    if (b.status !== 'held' || Date.parse(b.hold_expires_at) <= Date.now()) return res.redirect(303, back);
+    if (!found) return next();
+    const { handler, row } = found;
+    const back = handler.statusUrl(row, lang);
+    if (!handler.isOpen(row)) return res.redirect(303, back);
     try {
-      res.redirect(303, await services.startCheckout(b, lang, Date.now(), Date.now()));
+      res.redirect(303, await handler.startCheckout(row, lang, Date.now(), Date.now()));
     } catch (err) {
       console.error('[resume] errore Stripe:', err.message);
       res.redirect(303, back);
@@ -93,16 +94,18 @@ export function apiRouter(app) {
   });
 
   r.get('/pay/demo/:ref', (req, res, next) => {
-    const b = byToken(req);
-    if (!b || !payments.demo || b.status !== 'held') return next();
-    send(res, demoPayPage(makeCtx(app, req, langOf(req)), b));
+    const found = byToken(req);
+    if (!found || !payments.demo || !found.handler.isOpen(found.row)) return next();
+    const lang = langOf(req);
+    const { handler, row } = found;
+    send(res, demoPayPage(makeCtx(app, req, lang), { ref: row.ref, token: row.token, amountCents: handler.dueCents(row), currency: row.currency ?? 'EUR', title: handler.title(row, lang), cancelUrl: `${handler.statusUrl(row, lang)}&canceled=1` }));
   });
   r.post('/pay/demo/:ref/complete', form, async (req, res, next) => {
-    const b = byToken(req);
-    if (!b || !payments.demo) return next();
-    const lang = langOf(req);
-    await services.handlePaid(b.id, `demo_pi_${b.ref}`);
-    res.redirect(303, `/${lang}/booking/${b.ref}?t=${b.token}&paid=1`);
+    const found = byToken(req);
+    if (!found || !payments.demo) return next();
+    const { handler, row } = found;
+    await handler.onPaid(row, `demo_pi_${row.ref}`, Date.now());
+    res.redirect(303, `${handler.statusUrl(row, langOf(req))}&paid=1`);
   });
 
   return r;

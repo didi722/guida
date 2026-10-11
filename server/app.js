@@ -4,9 +4,7 @@ import express from 'express';
 import { createConfig, ROOT } from './config.js';
 import { loadContent } from './content.js';
 import { openDb } from './db.js';
-import { createMailer } from './mail.js';
-import { createPayments } from './payments.js';
-import { createServices } from './services.js';
+import { createContext } from './context.js';
 import { LANGS } from './i18n.js';
 import { langMiddleware, makeCtx, preferredLang, sameOrigin, securityHeaders, send, sessionMiddleware } from './http.js';
 import { publicRouter } from './routes/public.js';
@@ -32,10 +30,7 @@ export function createApp(overrides = {}) {
   const cfg = overrides.cfg ?? createConfig();
   const db = overrides.db ?? openDb(cfg.dbFile);
   const content = overrides.content ?? loadContent(ROOT);
-  const app = { cfg, db, content, assetVersion: assetVersion() };
-  app.mail = overrides.mail ?? createMailer(cfg);
-  app.payments = overrides.payments ?? createPayments(cfg);
-  app.services = createServices(app);
+  const app = createContext({ cfg, db, content, mail: overrides.mail, payments: overrides.payments, assetVersion: assetVersion() });
 
   const server = express();
   server.disable('x-powered-by');

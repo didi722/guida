@@ -27,11 +27,15 @@ export function createPayments(cfg, fetchImpl = globalThis.fetch) {
     live,
     demo: !live && cfg.demoPayments,
 
-    /** Crea la sessione di pagamento e restituisce { id, url }. */
-    async createCheckout({ booking, title, description, lang, successUrl, cancelUrl, nowMs = Date.now(), attempt = 0 }) {
+    /**
+     * Crea la sessione di pagamento e restituisce { id, url }.
+     * `ref` identifica l'ordine (VE-… prenotazione, GC-… gift card, PR-… acconto programma);
+     * `demoUrl` è la pagina di pagamento simulata usata quando non c'è Stripe.
+     */
+    async createCheckout({ ref, email, amountCents, currency = 'EUR', title, description, lang, successUrl, cancelUrl, demoUrl, nowMs = Date.now(), attempt = 0 }) {
       if (!live) {
         if (!cfg.demoPayments) throw new Error('Pagamenti con carta non configurati');
-        return { id: `demo_${booking.ref}`, url: `${cfg.baseUrl}/pay/demo/${booking.ref}?t=${booking.token}` };
+        return { id: `demo_${ref}`, url: demoUrl };
       }
       const s = await call(
         'POST',
@@ -39,22 +43,22 @@ export function createPayments(cfg, fetchImpl = globalThis.fetch) {
         {
           mode: 'payment',
           'line_items[0][quantity]': '1',
-          'line_items[0][price_data][currency]': booking.currency.toLowerCase(),
-          'line_items[0][price_data][unit_amount]': String(booking.total_cents),
+          'line_items[0][price_data][currency]': currency.toLowerCase(),
+          'line_items[0][price_data][unit_amount]': String(amountCents),
           'line_items[0][price_data][product_data][name]': title,
           'line_items[0][price_data][product_data][description]': description,
-          client_reference_id: booking.ref,
-          customer_email: booking.email,
-          'metadata[ref]': booking.ref,
-          'payment_intent_data[description]': `${booking.ref} — ${title}`,
-          'payment_intent_data[metadata][ref]': booking.ref,
+          client_reference_id: ref,
+          customer_email: email,
+          'metadata[ref]': ref,
+          'payment_intent_data[description]': `${ref} — ${title}`,
+          'payment_intent_data[metadata][ref]': ref,
           success_url: successUrl,
           cancel_url: cancelUrl,
           locale: lang === 'it' ? 'it' : 'en',
           // Stripe richiede almeno 30 minuti: la sessione scade poco prima della "hold" interna
           expires_at: String(Math.floor(nowMs / 1000) + 31 * 60),
         },
-        `checkout-${booking.ref}-${attempt}`,
+        `checkout-${ref}-${attempt}`,
       );
       return { id: s.id, url: s.url };
     },

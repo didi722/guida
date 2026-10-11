@@ -95,7 +95,7 @@ export function createConfig(overrides = {}) {
       bufferMin: num(e.BUFFER_MIN, 30), // pausa tra un servizio e il successivo
       slotStepMin: num(e.SLOT_STEP_MIN, 30), // passo orari per i servizi a inizio libero
       holdMinutes: num(e.HOLD_MINUTES, 35), // blocco dello slot durante il pagamento
-      allowPayOnSite: bool(e.ALLOW_PAY_ON_SITE, true),
+      allowPayOnSite: bool(e.ALLOW_PAY_ON_SITE, false), // pagamento il giorno del servizio: disattivato di default
       currency: 'EUR',
     },
 

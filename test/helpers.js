@@ -4,9 +4,7 @@ import crypto from 'node:crypto';
 import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { localToInstant } from '../server/time.js';
-import { createMailer } from '../server/mail.js';
-import { createPayments } from '../server/payments.js';
-import { createServices } from '../server/services.js';
+import { createContext } from '../server/context.js';
 
 process.env.GUIDA_QUIET = '1';
 
@@ -41,14 +39,12 @@ export const NOW = localToInstant('2027-01-04', '10:00');
 
 export function makeApp(overrides = {}) {
   const dir = path.join(ROOT, 'data', 'test-' + crypto.randomBytes(4).toString('hex'));
-  const cfg = createConfig({ __skipDotEnv: true, dataDir: dir, demoPayments: true, ...overrides });
+  const cfg = createConfig({ __skipDotEnv: true, dataDir: dir, demoPayments: true, policy: { allowPayOnSite: true }, ...overrides });
   const db = openDb(':memory:');
   const tours = FIXTURE_TOURS;
   const content = { tours, tour: (s) => tours.find((t) => t.slug === s), postsFor: () => [], post: () => null, page: () => null };
-  const app = { cfg, db, content, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
-  app.mail = createMailer(cfg);
-  app.payments = createPayments(cfg);
-  app.services = createServices(app);
+  const app = createContext({ cfg, db, content });
+  app.cleanup = () => fs.rmSync(dir, { recursive: true, force: true });
   return app;
 }
 

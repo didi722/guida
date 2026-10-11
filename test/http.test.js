@@ -16,13 +16,14 @@ const tmp = path.join(ROOT, 'data', 'test-http-' + crypto.randomBytes(3).toStrin
 const content = loadContent(ROOT);
 const day = (n) => addDays(nowRome().date, n);
 
-async function start({ fakeStripe = false } = {}) {
+async function start({ fakeStripe = false, noOnSite = false } = {}) {
   const cfg = createConfig({
     __skipDotEnv: true,
     dataDir: tmp,
     adminPassword: 'segreto-admin',
     baseUrl: 'http://localhost',
     mail: { notifyTo: 'guida@example.com' },
+    policy: { allowPayOnSite: !noOnSite },
     ...(fakeStripe ? { stripe: { secretKey: 'sk_test_x', webhookSecret: 'whsec_test' }, demoPayments: false } : { demoPayments: true }),
   });
   const calls = [];

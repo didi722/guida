@@ -1,5 +1,5 @@
 // Orchestrazione: collega DB, pagamenti ed email.
-import { BookingError, cancelBooking, confirmPaid, createBooking, expireHolds, getBooking, markRefund } from './bookings.js';
+import { BookingError, bookingDue, cancelBooking, confirmPaid, createBooking, expireBooking, expireHolds, getBooking, getBookingByRef, markRefund } from './bookings.js';
 import { sendBookingCancelled, sendBookingConfirmed, sendSlotLostRefund } from './emails.js';
 import { fmtDate } from './time.js';
 
@@ -24,12 +24,16 @@ export function createServices(app) {
       const tour = content.tour(booking.tour_slug);
       const ti = tour.i18n[booking.lang];
       const session = await payments.createCheckout({
-        booking,
+        ref: booking.ref,
+        email: booking.email,
+        amountCents: bookingDue(booking),
+        currency: booking.currency,
         title: ti.title,
         description: `${fmtDate(booking.date, booking.lang, 'short')} ${booking.start_time} · ${booking.participants}`,
         lang: booking.lang,
         successUrl: `${cfg.baseUrl}/${lang}/booking/${booking.ref}?t=${booking.token}&paid=1`,
         cancelUrl: `${cfg.baseUrl}/${lang}/booking/${booking.ref}?t=${booking.token}&canceled=1`,
+        demoUrl: `${cfg.baseUrl}/pay/demo/${booking.ref}?t=${booking.token}`,
         nowMs,
         attempt,
       });
@@ -49,7 +53,7 @@ export function createServices(app) {
         return { booking: getBooking(db, booking.id), redirect: url, external: true };
       } catch (err) {
         // se Stripe non risponde non lasciamo lo slot bloccato
-        db.prepare(`UPDATE bookings SET status = 'expired' WHERE id = ?`).run(booking.id);
+        expireBooking(db, booking.id);
         console.error('[checkout] errore Stripe:', err.message);
         throw new BookingError('payment', 'checkout failed');
       }
@@ -61,7 +65,7 @@ export function createServices(app) {
       if (res.outcome === 'already' && paymentIntent && res.booking.stripe_payment_intent && paymentIntent !== res.booking.stripe_payment_intent) {
         // doppio pagamento (es. due sessioni aperte): rimborsiamo il secondo
         try {
-          await payments.refund({ paymentIntent, cents: res.booking.total_cents, ref: `${res.booking.ref}-dup` });
+          await payments.refund({ paymentIntent, cents: bookingDue(res.booking), ref: `${res.booking.ref}-dup` });
         } catch (err) {
           console.error(`[rimborso doppio pagamento] ${res.booking.ref}:`, err.message);
         }
@@ -77,7 +81,7 @@ export function createServices(app) {
           b.id,
         );
         const fresh = getBooking(db, b.id);
-        await doRefund(fresh, fresh.total_cents);
+        await doRefund(fresh, bookingDue(fresh));
         await sendSlotLostRefund(app, getBooking(db, b.id));
       }
       return res;
@@ -95,21 +99,25 @@ export function createServices(app) {
 
     /** Il cliente è tornato da Stripe prima del webhook: verifichiamo noi lo stato. */
     async syncStripe(booking) {
-      if (booking.status !== 'held' || !booking.stripe_session_id || !payments.live) return booking;
-      try {
-        const s = await payments.retrieveSession(booking.stripe_session_id);
-        if (s.payment_status === 'paid') await svc.handlePaid(booking.id, typeof s.payment_intent === 'string' ? s.payment_intent : s.payment_intent?.id);
-        else if (s.status === 'expired') db.prepare(`UPDATE bookings SET status = 'expired' WHERE id = ? AND status = 'held'`).run(booking.id);
-      } catch (err) {
-        console.error('[stripe] verifica sessione fallita:', err.message);
-      }
-      return getBooking(db, booking.id);
+      return (await app.payables.sync(booking.ref)) ?? booking;
     },
 
     sweep(nowMs = Date.now()) {
       return expireHolds(db, nowMs);
     },
   };
+
+  // Le prenotazioni si pagano con lo stesso meccanismo (webhook, ripresa, pagina demo) di gift card e acconti.
+  app.payables.register('booking', {
+    find: (ref) => getBookingByRef(db, ref),
+    dueCents: bookingDue,
+    isOpen: (b) => b.status === 'held' && Date.parse(b.hold_expires_at) > Date.now(),
+    title: (b, lang) => content.tour(b.tour_slug)?.i18n[lang]?.title ?? b.ref,
+    onPaid: (b, pi, nowMs) => svc.handlePaid(b.id, pi, nowMs),
+    onExpired: (b) => expireBooking(db, b.id),
+    startCheckout: (b, lang, nowMs, attempt) => svc.startCheckout(b, lang, nowMs, attempt),
+    statusUrl: (b, lang) => `/${lang}/booking/${b.ref}?t=${b.token}`,
+  });
   return svc;
 }
 

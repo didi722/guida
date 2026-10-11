@@ -1394,5 +1394,9 @@
  "b2b.flash.welcome": [
   "Benvenuto!",
   "Welcome!"
+ ],
+ "checkout.noPayment": [
+  "Al momento non è possibile completare la prenotazione online. Scrivimi e ti confermo la disponibilità.",
+  "Online booking is not available right now. Write to me and I will confirm availability."
  ]
 }

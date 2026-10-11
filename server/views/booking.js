@@ -61,7 +61,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
   const hours = freeCancelHours(cfg, tour, channel, acct);
   const deadline = localToInstant(date, time) - hours * 3600_000;
   const refundable = Date.now() <= deadline;
-  const method = values.paymentMethod && options.includes(values.paymentMethod) ? values.paymentMethod : options[0];
+  const method = values.paymentMethod && options.includes(values.paymentMethod) ? values.paymentMethod : (options[0] ?? null);
   const isB2b = channel === 'b2b';
   const v = (k, d = '') => values[k] ?? d;
 
@@ -91,13 +91,15 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       : ''}
 
     <h2>${t('checkout.payment')}</h2>
-    <div class="pay-options" role="radiogroup">
+    ${options.length
+      ? html`<div class="pay-options" role="radiogroup">
       ${options.map((o) => html`<label class="pay-option"><input type="radio" name="paymentMethod" value="${o}" ${o === method ? raw('checked') : ''} data-label="${t(`pay.${o}.cta`)}"><span><strong>${t(`pay.${o}.title`)}</strong><small>${t(`pay.${o}.desc`)}</small></span></label>`)}
-    </div>
+    </div>`
+      : html`<div class="notice notice-err" role="alert">${t('checkout.noPayment')} <a href="${u('/contact')}">${t('nav.contact')}</a></div>`}
 
     <label class="check consent"><input type="checkbox" name="consent" value="1" required> <span>${t('f.consent')} <a href="${u('/terms')}" target="_blank">${t('footer.terms')}</a> · <a href="${u('/privacy')}" target="_blank">${t('footer.privacy')}</a></span></label>
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit">${t(`pay.${method}.cta`)}</button>
+    <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" ${method ? '' : raw('disabled')}>${method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
   </form>
 
   <aside class="card summary-card">
@@ -215,18 +217,18 @@ export function voucherPage(ctx, b) {
   return page(ctx, { title: `${t('voucher.title')} ${b.ref}`, path: `/${lang}/booking/${b.ref}/voucher`, body, noindex: true, bodyClass: 'voucher-page' });
 }
 
-export function demoPayPage(ctx, b) {
+export function demoPayPage(ctx, o) {
   const { t, lang } = ctx;
   const body = html`
 <section class="page-head"><div class="wrap narrow">
   <div class="notice notice-err" role="note"><strong>${t('demo.banner')}</strong> ${t('demo.text')}</div>
   <h1>${t('demo.title')}</h1>
-  <p class="lead">${formatMoney(b.total_cents, lang, b.currency)} · ${b.ref}</p>
-  <form method="post" action="/pay/demo/${b.ref}/complete" class="btn-row">
-    <input type="hidden" name="t" value="${b.token}"><input type="hidden" name="lang" value="${lang}">
+  <p class="lead">${o.title} · ${formatMoney(o.amountCents, lang, o.currency)} · ${o.ref}</p>
+  <form method="post" action="/pay/demo/${o.ref}/complete" class="btn-row">
+    <input type="hidden" name="t" value="${o.token}"><input type="hidden" name="lang" value="${lang}">
     <button class="btn btn-gold" type="submit">${t('demo.pay')}</button>
-    <a class="btn btn-outline" href="/${lang}/booking/${b.ref}?t=${b.token}&canceled=1">${t('demo.cancel')}</a>
+    <a class="btn btn-outline" href="${o.cancelUrl}">${t('demo.cancel')}</a>
   </form>
 </div></section>`;
-  return page(ctx, { title: t('demo.title'), path: `/pay/demo/${b.ref}`, body, noindex: true });
+  return page(ctx, { title: t('demo.title'), path: `/pay/demo/${o.ref}`, body, noindex: true });
 }
