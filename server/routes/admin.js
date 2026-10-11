@@ -8,12 +8,25 @@ import { addDays, isDate, isMonth, isTime, monthDates, nowRome, toMin } from '..
 import { cleanText, safeEqual } from '../util.js';
 import { loginAdmin, logoutAdmin, send, tooMany } from '../http.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
+import { feedbackStats } from '../reviews.js';
+import { maskUrl } from '../calendars.js';
+import { feedbackAdminPage } from '../views/admin-feedback.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage, partnerDetailPage, partnersPage } from '../views/admin.js';
+
+const ERR = {
+  calurl: 'Inserisci un nome e un indirizzo iCal valido (https://… oppure webcal://…).',
+  calsync: 'Non sono riuscito a leggere il calendario: controlla l’indirizzo (vedi il dettaglio sotto).',
+};
 
 const FLASH = {
   cancelled: 'Prenotazione annullata e cliente avvisato.',
   notes: 'Note salvate.',
   paid: 'Prenotazione segnata come incassata.',
+  review: 'Richiesta di recensione aggiornata.',
+  calendar: 'Calendario collegato e sincronizzato.',
+  calsynced: 'Calendario sincronizzato.',
+  caltoggled: 'Calendario aggiornato.',
+  caldeleted: 'Calendario scollegato.',
   weekly: 'Orari di lavoro salvati.',
   closed: 'Giorno chiuso.',
   opened: 'Giorno riaperto.',
@@ -78,6 +91,12 @@ export function adminRouter(app) {
 
   r.use(adminDiscountsRouter(app));
 
+  r.get('/feedback', (req, res) => {
+    const items = db.prepare(`SELECT f.*, b.name, b.email, b.tour_slug, b.date FROM feedback f JOIN bookings b ON b.id = f.booking_id ORDER BY f.created_at DESC LIMIT 200`).all();
+    const requested = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE review_status = 'sent'`).get().n;
+    send(res, feedbackAdminPage(ctxOf(req), { items, stats: { ...feedbackStats(db), requested }, flash: flash(req) }));
+  });
+
   // ───── agenda ─────
   r.get('/', (req, res) => {
     const today = nowRome().date;
@@ -89,7 +108,7 @@ export function adminRouter(app) {
     });
     const pendingPartners = db.prepare(`SELECT COUNT(*) n FROM accounts WHERE status = 'pending'`).get().n;
     const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(new Date().toISOString()).n;
-    send(res, dashboardPage(ctxOf(req), { today, days, pendingPartners, held, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
+    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), today, days, pendingPartners, held, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
   });
 
   // ───── prenotazioni ─────
@@ -116,6 +135,13 @@ export function adminRouter(app) {
     if (!b) return next();
     db.prepare('UPDATE bookings SET admin_notes = ? WHERE id = ?').run(cleanText(req.body.admin_notes, 2000) || null, b.id);
     res.redirect(303, `/admin/bookings/${b.id}?ok=notes`);
+  });
+  r.post('/bookings/:id/review', form, async (req, res, next) => {
+    const b = getBooking(db, Number(req.params.id));
+    if (!b) return next();
+    if (req.body.action === 'skip') app.reviews.skip(b.id);
+    else if (b.status === 'confirmed' && b.channel === 'b2c' && !b.review_status) await app.reviews.send(b);
+    res.redirect(303, `/admin/bookings/${b.id}?ok=review`);
   });
   r.post('/bookings/:id/paid', form, (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));
@@ -148,8 +174,36 @@ export function adminRouter(app) {
       overrides: db.prepare('SELECT * FROM day_overrides WHERE date >= ? ORDER BY date LIMIT 60').all(today),
       blocks: db.prepare('SELECT * FROM blocks WHERE date >= ? ORDER BY date, start_time LIMIT 100').all(today),
       bookingsByDate: counts,
+      calendars: app.calendars.list().map((c) => ({ ...c, masked: maskUrl(c.url) })),
+      external: app.calendars.busyBetween(dates[0], dates.at(-1)),
+      problems: app.calendars.problems(),
       flash: flash(req),
+      error: ERR[String(req.query.err ?? '')] ?? '',
     }));
+  });
+
+  // ───── calendari esterni (Google Calendar, ecc.) ─────
+  r.post('/availability/calendars', form, async (req, res) => {
+    const month = monthOf(req.body.m);
+    const source = app.calendars.add({ name: req.body.name, url: req.body.url });
+    if (!source) return res.redirect(303, `/admin/availability?m=${month}&err=calurl`);
+    const result = await app.calendars.syncSource(source);
+    res.redirect(303, `/admin/availability?m=${month}&${result.ok ? 'ok=calendar' : 'err=calsync'}`);
+  });
+  r.post('/availability/calendars/:id/sync', form, async (req, res, next) => {
+    const source = app.calendars.get(Number(req.params.id));
+    if (!source) return next();
+    const result = await app.calendars.syncSource(source);
+    res.redirect(303, `/admin/availability?m=${monthOf(req.body.m)}&${result.ok ? 'ok=calsynced' : 'err=calsync'}`);
+  });
+  r.post('/availability/calendars/:id/toggle', form, (req, res) => {
+    const source = app.calendars.get(Number(req.params.id));
+    if (source) app.calendars.setEnabled(source.id, !source.enabled);
+    res.redirect(303, back(req.body.m, 'caltoggled'));
+  });
+  r.post('/availability/calendars/:id/delete', form, (req, res) => {
+    app.calendars.remove(Number(req.params.id));
+    res.redirect(303, back(req.body.m, 'caldeleted'));
   });
 
   r.post('/availability/weekly', form, (req, res) => {

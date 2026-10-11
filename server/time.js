@@ -3,28 +3,37 @@
 
 export const TZ = 'Europe/Rome';
 
-const partsFmt = new Intl.DateTimeFormat('en-GB', {
-  timeZone: TZ,
-  hourCycle: 'h23',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
+const partsFmts = new Map();
+function fmtFor(tz) {
+  let f = partsFmts.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    partsFmts.set(tz, f);
+  }
+  return f;
+}
+
+/** true se `tz` è un fuso IANA valido (es. "Europe/Berlin"). */
+export function isTimeZone(tz) {
+  try {
+    fmtFor(tz);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const pad = (n) => String(n).padStart(2, '0');
 
-function tzParts(ms) {
+function tzParts(ms, tz = TZ) {
   const o = {};
-  for (const p of partsFmt.formatToParts(new Date(ms))) o[p.type] = p.value;
+  for (const p of fmtFor(tz).formatToParts(new Date(ms))) o[p.type] = p.value;
   return { y: +o.year, m: +o.month, d: +o.day, h: +o.hour, mi: +o.minute, s: +o.second };
 }
 
-/** Differenza (ms) tra l'ora locale di Venezia e UTC nell'istante dato. */
-function tzOffset(ms) {
-  const p = tzParts(ms);
+/** Differenza (ms) tra l'ora locale del fuso e UTC nell'istante dato. */
+function tzOffset(ms, tz = TZ) {
+  const p = tzParts(ms, tz);
   return Date.UTC(p.y, p.m - 1, p.d, p.h, p.mi, p.s) - Math.floor(ms / 1000) * 1000;
 }
 
@@ -33,14 +42,13 @@ export function nowRome(ms = Date.now()) {
   return { date: `${p.y}-${pad(p.m)}-${pad(p.d)}`, time: `${pad(p.h)}:${pad(p.mi)}` };
 }
 
-/** Converte data+ora locali di Venezia nell'istante UTC corrispondente (gestisce l'ora legale). */
-export function localToInstant(date, time) {
+/** Converte data+ora locali (di Venezia, o del fuso indicato) nell'istante UTC corrispondente (gestisce l'ora legale). */
+export function localToInstant(date, time, tz = TZ) {
   const [y, m, d] = date.split('-').map(Number);
   const [h, mi] = time.split(':').map(Number);
   const guess = Date.UTC(y, m - 1, d, h, mi);
-  let inst = guess - tzOffset(guess);
-  const off2 = tzOffset(inst);
-  inst = guess - off2;
+  let inst = guess - tzOffset(guess, tz);
+  inst = guess - tzOffset(inst, tz);
   return inst;
 }
 

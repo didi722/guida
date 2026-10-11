@@ -1,12 +1,14 @@
 // Assembla i moduli dell'applicazione (usato dal server e dai test, così non si disallineano).
+import { createCalendars } from './calendars.js';
 import { createGiftServices } from './giftServices.js';
 import { createLimits } from './http.js';
 import { createMailer } from './mail.js';
+import { createReviewServices } from './reviews.js';
 import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
 import { createServices } from './services.js';
 
-export function createContext({ cfg, db, content, mail, payments, assetVersion = '0' }) {
+export function createContext({ cfg, db, content, mail, payments, fetchImpl, assetVersion = '0' }) {
   const app = { cfg, db, content, assetVersion, jobs: [], limits: createLimits() };
   /** Lavori periodici (ogni minuto): ogni modulo aggiunge i suoi a `app.jobs`. */
   app.runJobs = async (nowMs = Date.now()) => {
@@ -23,5 +25,7 @@ export function createContext({ cfg, db, content, mail, payments, assetVersion =
   app.payables = createPayables(app);
   app.services = createServices(app);
   app.gifts = createGiftServices(app);
+  app.reviews = createReviewServices(app);
+  app.calendars = createCalendars(app, fetchImpl);
   return app;
 }

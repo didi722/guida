@@ -9,6 +9,7 @@ const NAV = [
   ['/admin/availability', 'Disponibilità'],
   ['/admin/partners', 'Partner B2B'],
   ['/admin/discounts', 'Sconti e buoni'],
+  ['/admin/feedback', 'Feedback'],
 ];
 
 const WEEKDAYS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
@@ -68,8 +69,15 @@ function bookingRow(ctx, b) {
   </a>`;
 }
 
-export function dashboardPage(ctx, { today, days, pendingPartners, held, feedUrl, flash }) {
+function calendarWarning(problems) {
+  return problems?.length
+    ? html`<div class="notice notice-err" role="alert"><strong>Calendario non aggiornato.</strong> ${problems.map((p) => `«${p.name}»`).join(', ')}: l’ultima lettura riuscita è troppo vecchia, quindi le disponibilità potrebbero non tenere conto dei tuoi impegni. <a href="/admin/availability">Controlla</a></div>`
+    : '';
+}
+
+export function dashboardPage(ctx, { today, days, pendingPartners, held, feedUrl, flash, problems }) {
   const body = html`
+${calendarWarning(problems)}
 <div class="grid grid-3 kpis">
   <div class="card pad kpi"><span class="muted">Oggi</span><strong>${days.find((d) => d.date === today)?.items.length ?? 0}</strong><small>servizi</small></div>
   <div class="card pad kpi"><span class="muted">Partner da approvare</span><strong>${pendingPartners}</strong><a href="/admin/partners">Apri</a></div>
@@ -121,6 +129,8 @@ export function bookingDetailPage(ctx, b, account, flash = '') {
       ${b.gift_cents ? html`<div><dt>Buono regalo</dt><dd>−${formatMoney(b.gift_cents, 'it', b.currency)}</dd></div>` : ''}
       <div><dt>${b.discount_cents || b.gift_cents ? 'Da pagare' : 'Totale'}</dt><dd>${formatMoney(b.total_cents - b.gift_cents, 'it', b.currency)} · ${PAY_IT[b.payment_method]} · <strong>${PAYSTATUS_IT[b.payment_status]}</strong>${b.refund_cents ? ` (rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)})` : ''}</dd></div>
       <div><dt>Cancellazione gratuita fino a</dt><dd>${new Date(b.free_cancel_until).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'medium', timeStyle: 'short' })} ${st.free ? html`<span class="chip chip-ok">ancora valida</span>` : html`<span class="chip chip-warn">scaduta</span>`}</dd></div>
+      ${b.channel === 'b2c' && b.status === 'confirmed' ? html`<div><dt>Richiesta recensione</dt><dd>${b.review_status === 'sent' ? `inviata il ${new Date(b.review_sent_at).toLocaleDateString('it-IT')}` : b.review_status === 'skipped' ? 'non verrà inviata' : 'parte il giorno dopo il tour'}
+        ${!b.review_status ? html`<form method="post" action="/admin/bookings/${b.id}/review" class="inline-form"><button class="btn btn-sm btn-outline" type="submit" name="action" value="send">Invia ora</button> <button class="btn btn-sm btn-outline" type="submit" name="action" value="skip">Non inviare</button></form>` : ''}</dd></div>` : ''}
       ${b.status === 'cancelled' ? html`<div><dt>Annullata</dt><dd>${b.cancelled_by ?? ''}${b.cancel_reason ? ' · ' + b.cancel_reason : ''}</dd></div>` : ''}
     </dl>
   </div>
@@ -161,13 +171,15 @@ export function bookingDetailPage(ctx, b, account, flash = '') {
   return adminLayout(ctx, { title: 'Prenotazione', active: '/admin/bookings', body, flash });
 }
 
-export function availabilityPage(ctx, { weekly, month, overrides, blocks, bookingsByDate, today, flash }) {
+export function availabilityPage(ctx, { weekly, month, overrides, blocks, bookingsByDate, today, flash, error = '', calendars = [], external = [], problems = [] }) {
   const dates = monthDates(month);
   const first = dayOfWeek(dates[0]);
   const offset = (first + 6) % 7; // lunedì = 0
   const prev = month.replace(/^(\d{4})-(\d{2})$/, (_, y, m) => (m === '01' ? `${+y - 1}-12` : `${y}-${String(+m - 1).padStart(2, '0')}`));
   const next = month.replace(/^(\d{4})-(\d{2})$/, (_, y, m) => (m === '12' ? `${+y + 1}-01` : `${y}-${String(+m + 1).padStart(2, '0')}`));
   const ovMap = new Map(overrides.map((o) => [o.date, o]));
+  const extMap = new Map();
+  for (const e of external) extMap.set(e.date, [...(extMap.get(e.date) ?? []), `${e.start_time}–${e.end_time.replace('24:00', '24')} ${e.title ?? ''}`.trim()]);
 
   const body = html`
 <div class="card pad">
@@ -191,18 +203,49 @@ export function availabilityPage(ctx, { weekly, month, overrides, blocks, bookin
       const n = bookingsByDate.get(d) ?? 0;
       const wk = weekly[dayOfWeek(d)]?.open;
       const cls = o ? (o.closed ? 'is-closed' : 'is-custom') : wk ? '' : 'is-off';
-      return html`<form method="post" action="/admin/availability/day" class="cal-admin-cell ${cls} ${d === today ? 'is-today' : ''}">
+      const ext = extMap.get(d);
+      return html`<form method="post" action="/admin/availability/day" class="cal-admin-cell ${cls} ${d === today ? 'is-today' : ''} ${ext ? 'has-ext' : ''}">
         <input type="hidden" name="date" value="${d}"><input type="hidden" name="m" value="${month}"><input type="hidden" name="action" value="${o ? 'open' : 'close'}">
-        <button type="submit" title="${o ? 'Riapri' : 'Chiudi'} ${d}"><span>${Number(d.slice(8))}</span>${n ? html`<small>${n}</small>` : ''}</button></form>`;
+        <button type="submit" title="${ext ? 'Dal calendario: ' + ext.slice(0, 6).join(' · ') : (o ? 'Riapri' : 'Chiudi') + ' ' + d}"><span>${Number(d.slice(8))}</span>${n ? html`<small>${n}</small>` : ''}</button></form>`;
     })}
   </div>
-  <p class="small muted"><span class="legend l-closed"></span> chiuso · <span class="legend l-off"></span> giorno non lavorativo abituale · <span class="legend l-custom"></span> orario speciale · il numero indica le prenotazioni. Tocca un giorno per chiuderlo o riaprirlo.</p>
+  <p class="small muted"><span class="legend l-closed"></span> chiuso · <span class="legend l-off"></span> giorno non lavorativo abituale · <span class="legend l-custom"></span> orario speciale · <span class="legend l-ext"></span> impegni dal calendario collegato · il numero indica le prenotazioni. Tocca un giorno per chiuderlo o riaprirlo.</p>
   <form method="post" action="/admin/availability/custom" class="form inline-form">
     <h3>Orario speciale per un giorno</h3>
     <input type="date" name="date" required> <input type="time" name="from" value="09:00" required> <span>–</span> <input type="time" name="to" value="14:00" required>
     <input type="hidden" name="m" value="${month}"><button class="btn btn-outline" type="submit">Imposta</button>
   </form>
   ${overrides.length ? html`<h3>Prossime eccezioni</h3><ul class="plain">${overrides.map((o) => html`<li>${fmtDate(o.date, 'it', 'weekday')} — ${o.closed ? 'chiuso' : `${o.from_time}–${o.to_time}`}</li>`)}</ul>` : ''}
+</div>
+
+<div class="card pad">
+  <h2>Calendari collegati (Google Calendar e simili)</h2>
+  <p class="muted">Collega il tuo calendario personale: gli impegni segnati come <strong>«Occupato»</strong> bloccano da soli le disponibilità sul sito, così non ti prenoti sopra. Gli eventi segnati «Libero» e quelli annullati vengono ignorati. Il sito rilegge il calendario ogni ${ctx.app.cfg.calendar.syncMinutes} minuti e, prima di confermare una prenotazione, si riallinea.</p>
+  ${calendarWarning(problems)}
+  ${calendars.length
+    ? html`<ul class="plain cal-sources">${calendars.map((c) => html`<li>
+      <div><strong>${c.name}</strong> ${c.enabled ? '' : html`<span class="chip chip-warn">disattivato</span>`}<br><small class="muted">${c.masked}</small><br>
+        ${c.last_ok_at ? html`<small>Ultimo aggiornamento: ${new Date(c.last_ok_at).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'short', timeStyle: 'short' })} · ${c.event_count} eventi letti</small>` : html`<small class="muted">Mai sincronizzato</small>`}
+        ${c.last_error ? html`<br><small class="field-error">${c.last_error}</small>` : ''}</div>
+      <div class="actions">
+        <form method="post" action="/admin/availability/calendars/${c.id}/sync"><input type="hidden" name="m" value="${month}"><button class="btn btn-sm btn-outline" type="submit">Sincronizza ora</button></form>
+        <form method="post" action="/admin/availability/calendars/${c.id}/toggle"><input type="hidden" name="m" value="${month}"><button class="btn btn-sm btn-outline" type="submit">${c.enabled ? 'Disattiva' : 'Attiva'}</button></form>
+        <form method="post" action="/admin/availability/calendars/${c.id}/delete" data-confirm="Scollegare questo calendario?"><input type="hidden" name="m" value="${month}"><button class="btn btn-sm btn-outline" type="submit">Scollega</button></form>
+      </div></li>`)}</ul>`
+    : html`<p class="muted">Nessun calendario collegato.</p>`}
+  <form method="post" action="/admin/availability/calendars" class="form inline-form">
+    <h3>Collega un calendario</h3>
+    <input name="name" placeholder="Nome (es. Personale)" maxlength="80" required>
+    <input name="url" type="url" placeholder="Indirizzo segreto iCal (https://calendar.google.com/…/basic.ics)" required class="grow">
+    <input type="hidden" name="m" value="${month}"><button class="btn btn-gold" type="submit">Collega</button>
+  </form>
+  <details class="how-to"><summary>Come trovo l’indirizzo su Google Calendar?</summary>
+    <ol><li>Apri Google Calendar dal computer → ⚙ <em>Impostazioni</em>.</li>
+    <li>A sinistra, sotto «Impostazioni per i miei calendari», clicca il tuo calendario personale.</li>
+    <li>Scorri fino a <em>«Integra calendario»</em> e copia <strong>«Indirizzo segreto in formato iCal»</strong>.</li>
+    <li>Incollalo qui sopra. Tienilo riservato: chi lo possiede può leggere il tuo calendario (puoi rigenerarlo da Google).</li></ol>
+    <p class="small muted">Funziona anche con Apple iCloud (calendario pubblico/webcal), Outlook, Posteo, Nextcloud…</p>
+  </details>
 </div>
 
 <div class="card pad">
@@ -216,7 +259,7 @@ export function availabilityPage(ctx, { weekly, month, overrides, blocks, bookin
     ? html`<ul class="plain block-list">${blocks.map((bl) => html`<li><span>${fmtDate(bl.date, 'it', 'weekday')} · ${bl.start_time}–${bl.end_time}${bl.note ? ' · ' + bl.note : ''}</span><form method="post" action="/admin/availability/block/${bl.id}/delete"><input type="hidden" name="m" value="${month}"><button class="btn btn-sm btn-outline" type="submit">Elimina</button></form></li>`)}</ul>`
     : html`<p class="muted">Nessun blocco.</p>`}
 </div>`;
-  return adminLayout(ctx, { title: 'Disponibilità', active: '/admin/availability', body, flash });
+  return adminLayout(ctx, { title: 'Disponibilità', active: '/admin/availability', body, flash, error });
 }
 
 export function partnersPage(ctx, { items, filter }) {

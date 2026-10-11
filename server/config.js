@@ -99,6 +99,20 @@ export function createConfig(overrides = {}) {
       currency: 'EUR',
     },
 
+    calendar: {
+      syncMinutes: num(e.CALENDAR_SYNC_MINUTES, 10), // ogni quanto si rilegge il calendario personale
+      freshSeconds: num(e.CALENDAR_FRESH_SECONDS, 120), // prima di confermare una prenotazione si riallinea se i dati sono più vecchi di così
+      staleWarnMinutes: 60, // avviso nell'admin se la sincronizzazione non riesce da oltre un'ora
+    },
+
+    reviews: {
+      enabled: bool(e.REVIEWS_ENABLED, true),
+      googleUrl: e.REVIEW_URL || '', // link «scrivi una recensione» del profilo Google Business
+      tripadvisorUrl: e.REVIEW_URL_TRIPADVISOR || '',
+      sendHour: num(e.REVIEW_SEND_HOUR, 10), // la richiesta parte il giorno dopo il tour a quest'ora (ora di Venezia)
+      catchUpDays: 7, // dopo un'interruzione non si inviano richieste più vecchie di così
+    },
+
     gift: {
       validityMonths: num(e.GIFT_VALIDITY_MONTHS, 24), // validità dei buoni regalo
       minCents: num(e.GIFT_MIN_EUR, 20) * 100,

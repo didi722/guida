@@ -1694,5 +1694,81 @@
  "nav.gift": [
   "Regala",
   "Gift cards"
+ ],
+ "fb.title": [
+  "Com’è andato il tour?",
+  "How was the tour?"
+ ],
+ "fb.lead": [
+  "Il tuo parere mi aiuta a migliorare. Bastano un voto e, se vuoi, due righe.",
+  "Your opinion helps me improve. A rating and, if you like, a couple of lines is enough."
+ ],
+ "fb.rating": [
+  "Il tuo voto",
+  "Your rating"
+ ],
+ "fb.star": [
+  "{n} su 5",
+  "{n} out of 5"
+ ],
+ "fb.comment": [
+  "Commento",
+  "Comment"
+ ],
+ "fb.commentHint": [
+  "Cosa ti è piaciuto? Cosa potrei fare meglio?",
+  "What did you like? What could I do better?"
+ ],
+ "fb.publish": [
+  "Puoi citare le mie parole sul sito (senza cognome)",
+  "You may quote my words on the website (without my surname)"
+ ],
+ "fb.send": [
+  "Invia il feedback",
+  "Send feedback"
+ ],
+ "fb.thanksTitle": [
+  "Grazie!",
+  "Thank you!"
+ ],
+ "fb.thanksText": [
+  "Ho ricevuto il tuo feedback. Lo leggo personalmente.",
+  "I have received your feedback. I read every one personally."
+ ],
+ "fb.publicTitle": [
+  "Ti va di condividerlo anche pubblicamente?",
+  "Would you also like to share it publicly?"
+ ],
+ "fb.publicText": [
+  "Una recensione pubblica aiuta chi sta scegliendo una guida a Venezia.",
+  "A public review helps people choosing a guide in Venice."
+ ],
+ "fb.google": [
+  "Scrivi una recensione su Google",
+  "Write a Google review"
+ ],
+ "fb.tripadvisor": [
+  "Scrivi una recensione su Tripadvisor",
+  "Write a Tripadvisor review"
+ ],
+ "fb.early": [
+  "Potrai lasciare il feedback dopo il tour.",
+  "You will be able to leave feedback after the tour."
+ ],
+ "fb.err.rating": [
+  "Scegli un voto da 1 a 5.",
+  "Please choose a rating from 1 to 5."
+ ],
+ "fb.err.early": [
+  "Potrai lasciare il feedback dopo il tour.",
+  "You will be able to leave feedback after the tour."
+ ],
+ "fb.err.booking": [
+  "Questa prenotazione non può ricevere feedback.",
+  "This booking cannot receive feedback."
+ ],
+ "fb.already": [
+  "Hai già lasciato un feedback: puoi aggiornarlo qui sotto.",
+  "You have already left feedback: you can update it below."
  ]
 }

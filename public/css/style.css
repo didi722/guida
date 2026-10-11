@@ -371,6 +371,12 @@ textarea { resize: vertical; min-height: 90px; }
 .amount-option { cursor: pointer; } .amount-option input { position: absolute; opacity: 0; } .amount-option span { display: block; text-align: center; padding: 14px 8px; border: 1.5px solid var(--line); border-radius: 12px; font-weight: 700; background: var(--field); transition: border-color 0.2s, background-color 0.2s; }
 .amount-option input:checked + span { border-color: var(--bronze); background: var(--gold-soft); } .amount-option input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
 .recipient-fields { margin-top: 16px; }
+.stars { border: 0; padding: 0; margin: 0 0 14px; } .stars legend { padding: 0; }
+.star-row { display: inline-flex; flex-direction: row-reverse; gap: 4px; } .star-row input { position: absolute; opacity: 0; }
+.star-row label { font-size: 2.6rem; line-height: 1; color: var(--line); cursor: pointer; transition: color 0.15s, transform 0.15s; padding: 2px; }
+.star-row label:hover, .star-row label:hover ~ label, .star-row input:checked ~ label { color: var(--gold); } .star-row label:hover { transform: scale(1.12); }
+.star-row input:focus-visible + label { outline: 3px solid var(--gold); border-radius: 6px; }
+.stars-cell { white-space: nowrap; color: #b8921f; letter-spacing: 2px; }
 .gift-code { font-size: 1.3rem; letter-spacing: 0.12em; }
 .band-soft { background: var(--soft); border-block: 1px solid var(--line); }
 .promo-box { margin: 4px 0 8px; } .promo-box summary { cursor: pointer; color: var(--accent-text); font-weight: 700; padding: 6px 0; }
@@ -454,6 +460,10 @@ body.admin { --header-h: 64px; }
 .cal-admin-cell { margin: 0; } .cal-admin-cell button { width: 100%; aspect-ratio: 1; border-radius: 10px; border: 1.5px solid var(--line); background: var(--field); font: inherit; font-weight: 700; cursor: pointer; color: var(--text); position: relative; padding: 0; display: grid; place-items: center; }
 .cal-admin-cell button small { position: absolute; bottom: 2px; right: 5px; font-size: 0.65rem; background: var(--gold); color: var(--ink); border-radius: 50px; padding: 0 5px; }
 .cal-admin-cell.is-off button { background: transparent; opacity: 0.55; border-style: dashed; } .cal-admin-cell.is-closed button { background: var(--err-bg); border-color: var(--err); color: var(--err); text-decoration: line-through; } .cal-admin-cell.is-custom button { background: var(--warn-bg); border-color: var(--warn); } .cal-admin-cell.is-today button { box-shadow: 0 0 0 2px var(--gold); }
+.cal-admin-cell.has-ext button::after { content: ''; position: absolute; top: 5px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: #4a7bd0; }
+.l-ext { background: #4a7bd0; border-color: #4a7bd0; border-radius: 50%; width: 9px; height: 9px; }
+.cal-sources li { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--line); } .cal-sources .actions { display: flex; gap: 6px; flex-wrap: wrap; } .cal-sources .actions form { margin: 0; }
+.inline-form .grow { flex: 1 1 280px; } .how-to { margin-top: 14px; } .how-to summary { cursor: pointer; font-weight: 700; color: var(--accent-text); } .how-to ol { padding-left: 1.2em; }
 .legend { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; border: 1.5px solid var(--line); } .l-closed { background: var(--err-bg); border-color: var(--err); } .l-off { border-style: dashed; } .l-custom { background: var(--warn-bg); border-color: var(--warn); }
 .block-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .admin-detail { align-items: start; margin-bottom: 24px; }

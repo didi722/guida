@@ -107,11 +107,12 @@ export function publicRouter(app) {
     return { tour, pax, date: src.date, time: src.time };
   }
 
-  r.get('/book/checkout', (req, res) => {
+  r.get('/book/checkout', async (req, res) => {
     const ctx = res.locals.ctx;
     const channel = channelOf(req.acct);
     const p = readSlotParams(req.query);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(req.query.tour ?? '')), date: null, pax: 2 }), 400);
+    await app.calendars.ensureFresh(); // riallinea il calendario personale prima di mostrare/confermare lo slot
     const slot = slotStillOpen(app, p.tour, p.date, p.time, p.pax, channel);
     if (!slot) return send(res, slotGonePage(ctx, p), 409);
     // link promozionali: /book/checkout?...&promo=CODICE (o &gift=CODICE)
@@ -132,6 +133,7 @@ export function publicRouter(app) {
     const channel = channelOf(req.acct);
     const p = readSlotParams(b);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(b.tour ?? '')), date: null, pax: 2 }), 400);
+    if (!b.apply) await app.calendars.ensureFresh(); // riallinea il calendario personale prima di prenotare
     const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: b.lang === 'en' ? 'en' : 'it', notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {

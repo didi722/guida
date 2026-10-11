@@ -5,6 +5,10 @@ import { cleanText, safeEqual } from '../util.js';
 import { send, tooMany } from '../http.js';
 import { giftPage, giftStatusPage } from '../views/gift.js';
 import { addDays, nowRome } from '../time.js';
+import { getBookingByRef } from '../bookings.js';
+import { getFeedback, saveFeedback } from '../reviews.js';
+import { notifyGuideFeedback } from '../emails.js';
+import { feedbackPage } from '../views/feedback.js';
 
 export function featuresRouter(app) {
   const r = express.Router();
@@ -63,6 +67,29 @@ export function featuresRouter(app) {
     if (!card) return next();
     if (req.query.paid && card.status === 'pending') card = (await app.payables.sync(card.ref)) ?? card;
     send(res, giftStatusPage(res.locals.ctx, card));
+  });
+
+  // ───── feedback dopo il tour ─────
+  function loadFeedbackBooking(req) {
+    const b = getBookingByRef(db, req.params.ref);
+    const token = String(req.query.t ?? req.body?.t ?? '');
+    return b && b.channel === 'b2c' && b.status === 'confirmed' && token && safeEqual(token, b.token) ? b : null;
+  }
+  r.get('/feedback/:ref', (req, res, next) => {
+    const b = loadFeedbackBooking(req);
+    if (!b) return next();
+    const { t } = res.locals.ctx;
+    send(res, feedbackPage(res.locals.ctx, b, { existing: getFeedback(db, b.id), error: b.date > nowRome().date ? t('fb.early') : '' }));
+  });
+  r.post('/feedback/:ref', form, async (req, res, next) => {
+    const b = loadFeedbackBooking(req);
+    if (!b) return next();
+    const ctx = res.locals.ctx;
+    if (!app.limits.contact(ip(req))) return tooMany(res);
+    const result = saveFeedback(db, b, { rating: req.body.rating, comment: req.body.comment, mayPublish: !!req.body.may_publish });
+    if (!result.ok) return send(res, feedbackPage(ctx, b, { existing: getFeedback(db, b.id), error: ctx.t(`fb.err.${result.reason}`) }), 400);
+    await notifyGuideFeedback(app, b, getFeedback(db, b.id));
+    send(res, feedbackPage(ctx, b, { done: true }));
   });
 
   return r;

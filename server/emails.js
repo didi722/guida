@@ -372,3 +372,73 @@ export async function notifyGuideGift(app, card) {
     text: [`Buono regalo ${card.ref}`, `Importo: ${formatMoney(card.initial_cents, 'it', card.currency)}`, `Acquirente: ${card.buyer_name ?? '—'} <${card.buyer_email ?? '—'}>`, card.recipient_email ? `Destinatario: ${card.recipient_name ?? ''} <${card.recipient_email}> (consegna: ${card.deliver_on ?? 'subito'})` : null, '', `${app.cfg.baseUrl}/admin/discounts/gifts/${card.id}`].filter((x) => x !== null).join('\n'),
   });
 }
+
+// ───────────── Richiesta di recensione ─────────────
+const R = {
+  it: {
+    subject: (site) => `Com’è andata? Il tuo tour a Venezia con ${site}`,
+    hello: (n) => `Ciao ${n},`,
+    intro: (title, date) => `grazie per aver scelto «${title}» (${date}). Spero ti sia piaciuto!`,
+    ask: 'Se ti va, una recensione aiuta moltissimo chi sta scegliendo una guida e un piccolo lavoro come il mio: bastano un minuto e due righe.',
+    google: 'Scrivi una recensione su Google',
+    tripadvisor: 'Scrivi una recensione su Tripadvisor',
+    privateAsk: 'Preferisci dirmelo in privato (cosa è andato bene, cosa migliorare)?',
+    privateCta: 'Lascia un feedback privato',
+    thanks: 'Grazie ancora e a presto a Venezia,',
+    once: 'Questa è l’unica email che ti invio dopo il tour.',
+  },
+  en: {
+    subject: (site) => `How was it? Your Venice tour with ${site}`,
+    hello: (n) => `Hi ${n},`,
+    intro: (title, date) => `thank you for choosing “${title}” (${date}). I hope you enjoyed it!`,
+    ask: 'If you feel like it, a review helps people choosing a guide and a small business like mine enormously: it takes a minute and two lines.',
+    google: 'Write a Google review',
+    tripadvisor: 'Write a Tripadvisor review',
+    privateAsk: 'Would you rather tell me privately (what went well, what could be better)?',
+    privateCta: 'Leave private feedback',
+    thanks: 'Thanks again, and see you in Venice,',
+    once: 'This is the only email I will send you after the tour.',
+  },
+};
+
+export function reviewLinks(app, lang) {
+  const tr = R[lang];
+  return [[app.cfg.reviews.googleUrl, tr.google], [app.cfg.reviews.tripadvisorUrl, tr.tripadvisor]].filter(([url]) => url);
+}
+
+export async function sendReviewRequest(app, b) {
+  const lang = b.lang;
+  const tr = R[lang];
+  const ti = app.content.tour(b.tour_slug).i18n[lang];
+  const links = reviewLinks(app, lang);
+  const feedbackUrl = `${app.cfg.baseUrl}/${lang}/feedback/${b.ref}?t=${b.token}`;
+  const intro = tr.intro(ti.title, fmtDate(b.date, lang, 'short'));
+  const text = [tr.hello(b.name), '', intro, '', tr.ask, '', ...links.map(([url, label]) => `${label}: ${url}`), '', tr.privateAsk, `${tr.privateCta}: ${feedbackUrl}`, '', tr.thanks, app.cfg.site.name, '', tr.once].join('\n');
+  const button = (href, label, primary) => html`<p><a href="${href}" style="display:inline-block;${primary ? 'background:#af9168;color:#fff' : 'border:2px solid #af9168;color:#7d6238'};text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${label}</a></p>`;
+  return app.mail.send({
+    to: b.email,
+    subject: tr.subject(app.cfg.site.name),
+    text,
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${tr.hello(b.name)}</p><p>${intro}</p><p>${tr.ask}</p>
+        ${links.map(([url, label]) => button(url, label, true))}
+        <p style="color:#444">${tr.privateAsk}</p>${button(feedbackUrl, tr.privateCta, links.length === 0)}
+        <p style="color:#666;font-size:13px">${tr.thanks} ${app.cfg.site.name}<br>${tr.once}</p>`,
+      ),
+    ),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+export async function notifyGuideFeedback(app, b, fb) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  await app.mail.send({
+    to,
+    subject: `Feedback ${'★'.repeat(fb.rating)}${'☆'.repeat(5 - fb.rating)} da ${b.name} (${b.ref})`,
+    text: [`${app.content.tour(b.tour_slug).i18n.it.title} · ${fmtDate(b.date, 'it')}`, `${b.name} <${b.email}>`, `Valutazione: ${fb.rating}/5`, fb.comment ? `Commento: ${fb.comment}` : null, fb.may_publish ? 'Può essere citato sul sito.' : null, '', `${app.cfg.baseUrl}/admin/feedback`].filter((x) => x !== null).join('\n'),
+  });
+}

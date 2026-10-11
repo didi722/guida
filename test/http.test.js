@@ -16,7 +16,7 @@ const tmp = path.join(ROOT, 'data', 'test-http-' + crypto.randomBytes(3).toStrin
 const content = loadContent(ROOT);
 const day = (n) => addDays(nowRome().date, n);
 
-async function start({ fakeStripe = false, noOnSite = false } = {}) {
+async function start({ fakeStripe = false, noOnSite = false, fetchImpl: calFetch } = {}) {
   const cfg = createConfig({
     __skipDotEnv: true,
     dataDir: tmp,
@@ -34,7 +34,7 @@ async function start({ fakeStripe = false, noOnSite = false } = {}) {
     if (url.endsWith('/refunds')) return new Response(JSON.stringify({ id: 're_1' }), { status: 200 });
     return new Response('{}', { status: 404 });
   };
-  const { app, server } = createApp({ cfg, db: openDb(':memory:'), content, payments: createPayments(cfg, fakeFetch) });
+  const { app, server } = createApp({ cfg, db: openDb(':memory:'), content, payments: createPayments(cfg, fakeFetch), fetchImpl: calFetch });
   const http = await new Promise((resolve) => {
     const s = server.listen(0, () => resolve(s));
   });
@@ -462,6 +462,82 @@ test('buono regalo programmato: parte alle 9:00 del giorno scelto, una sola volt
     // data nel passato o oltre un anno: rifiutata
     assert.equal((await f('/en/gift', form({ amount: '10000', buyerName: 'Sam', buyerEmail: 'sam@example.com', delivery: 'recipient', recipientEmail: 'kim@example.com', deliverOn: day(-3), consent: '1' }))).status, 400);
     assert.equal((await f('/en/gift', form({ amount: '10000', buyerName: 'Sam', buyerEmail: 'sam@example.com', delivery: 'recipient', recipientEmail: 'kim@example.com', deliverOn: day(500), consent: '1' }))).status, 400);
+  } finally {
+    s.close();
+  }
+});
+
+test('feedback dalla pagina privata: token, voto, pagina di ringraziamento con link pubblici, admin', async () => {
+  const s = await start();
+  s.app.cfg.reviews.googleUrl = 'https://g.page/r/ABC/review';
+  try {
+    const f = s.jar();
+    const admin = s.jar();
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+    const date = day(15);
+    const book = await f('/it/book/checkout', form({ tour: 'san-marco-rialto', date, time: '09:30', pax: '2', name: 'Marta', email: 'marta@example.com', lang: 'it', paymentMethod: 'onsite', consent: '1' }));
+    assert.equal(book.status, 303);
+    const b = s.app.db.prepare('SELECT * FROM bookings').get();
+    assert.equal((await f(`/it/feedback/${b.ref}?t=sbagliato`)).status, 404);
+    const early = await (await f(`/it/feedback/${b.ref}?t=${b.token}`)).text();
+    assert.match(early, /dopo il tour/, 'prima del tour avvisa');
+    // simuliamo che il tour sia passato
+    s.app.db.prepare('UPDATE bookings SET date = ? WHERE id = ?').run(day(-2), b.id);
+    const page = await (await f(`/it/feedback/${b.ref}?t=${b.token}`)).text();
+    assert.match(page, /Com’è andato il tour/);
+    assert.equal((await f(`/it/feedback/${b.ref}`, form({ t: b.token, comment: 'senza voto' }))).status, 400);
+    const ok = await f(`/it/feedback/${b.ref}`, form({ t: b.token, rating: '3', comment: 'Bello ma un po\' veloce', may_publish: '1' }));
+    assert.equal(ok.status, 200);
+    const thanks = await ok.text();
+    assert.match(thanks, /Grazie!/);
+    assert.match(thanks, /g\.page\/r\/ABC\/review/, 'il link pubblico è mostrato anche con voto 3');
+    assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /Feedback ★★★☆☆/.test(m.subject)));
+    const list = await (await admin('/admin/feedback')).text();
+    assert.match(list, /Bello ma un po&#39; veloce/);
+    assert.match(list, /citabile sul sito/);
+    // l'admin può saltare / inviare la richiesta dal dettaglio
+    assert.equal((await admin(`/admin/bookings/${b.id}/review`, form({ action: 'skip' }))).status, 303);
+    assert.equal(s.app.db.prepare('SELECT review_status FROM bookings WHERE id = ?').get(b.id).review_status, 'skipped');
+  } finally {
+    s.close();
+  }
+});
+
+test('admin: collegare un calendario, vedere gli impegni, checkout con riallineamento al volo', async () => {
+  const state = { body: '' };
+  const day2 = day(14);
+  const ymd = day2.replaceAll('-', '');
+  const mkIcs = (events) => ['BEGIN:VCALENDAR', 'VERSION:2.0', ...events, 'END:VCALENDAR'].join('\r\n');
+  const ev = (uid, from, to, title) => `BEGIN:VEVENT\r\nUID:${uid}\r\nDTSTART:${ymd}T${from}00Z\r\nDTEND:${ymd}T${to}00Z\r\nSUMMARY:${title}\r\nEND:VEVENT`;
+  state.body = mkIcs([ev('x1', '0700', '0800', 'Visita medica')]);
+  const s = await start({ fetchImpl: async () => new Response(state.body, { status: 200 }) });
+  try {
+    const f = s.jar();
+    const admin = s.jar();
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+    const month = day2.slice(0, 7);
+    assert.match(loc(await admin('/admin/availability/calendars', form({ name: 'X', url: 'ftp://nope', m: month }))), /err=calurl/);
+    assert.match(loc(await admin('/admin/availability/calendars', form({ name: 'Personale', url: 'webcal://calendar.example/private-secret-123/basic.ics', m: month }))), /ok=calendar/);
+    const page = await (await admin(`/admin/availability?m=${month}`)).text();
+    assert.match(page, /Personale/);
+    assert.ok(!page.includes('private-secret-123/basic.ics'), 'l\'indirizzo segreto non è mostrato per intero');
+    assert.match(page, /Visita medica/, 'gli impegni compaiono nel mese');
+
+    const slots = async () => (await (await f(`/api/slots?tour=san-marco-rialto&date=${day2}&pax=1`)).json()).slots.map((x) => x.time);
+    const before = await slots();
+
+    // l'utente aggiunge un impegno in calendario che si sovrappone alle 14:30: il checkout lo vede subito
+    state.body = mkIcs([ev('x1', '0700', '0800', 'Visita medica'), ev('x2', '1330', '1500', 'Appuntamento appena inserito')]);
+    s.app.db.prepare('UPDATE calendar_sources SET last_ok_at = ?, last_attempt_at = ?').run(new Date(Date.now() - 600_000).toISOString(), new Date(Date.now() - 600_000).toISOString());
+    const co = await f(`/it/book/checkout?tour=san-marco-rialto&date=${day2}&time=14:30&pax=1`);
+    assert.equal(co.status, 409, 'lo slot è stato bloccato dall’impegno appena inserito');
+    assert.ok(!(await slots()).includes('14:30'));
+    assert.ok(before.includes('14:30'), 'prima era libero');
+
+    assert.equal((await admin('/admin/availability/calendars/1/toggle', form({ m: month }))).status, 303);
+    assert.ok((await slots()).includes('14:30'), 'calendario disattivato: torna libero');
+    assert.equal((await admin('/admin/availability/calendars/1/delete', form({ m: month }))).status, 303);
+    assert.equal(s.app.db.prepare('SELECT COUNT(*) n FROM calendar_sources').get().n, 0);
   } finally {
     s.close();
   }

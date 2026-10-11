@@ -24,7 +24,16 @@ function groupBy(rows, key) {
 export function loadAvailabilityContext(db, cfg, fromDate, toDate, nowMs) {
   const weekly = getSetting(db, 'weekly', cfg.defaultWeekly);
   const overrides = new Map(db.prepare('SELECT * FROM day_overrides WHERE date BETWEEN ? AND ?').all(fromDate, toDate).map((r) => [r.date, r]));
-  const blocks = groupBy(db.prepare('SELECT * FROM blocks WHERE date BETWEEN ? AND ?').all(fromDate, toDate), 'date');
+  const blocks = groupBy(
+    [
+      ...db.prepare('SELECT date, start_time, end_time FROM blocks WHERE date BETWEEN ? AND ?').all(fromDate, toDate),
+      // impegni letti dai calendari esterni (solo sorgenti attive)
+      ...db
+        .prepare(`SELECT e.date, e.start_time, e.end_time FROM external_busy e JOIN calendar_sources s ON s.id = e.source_id WHERE s.enabled = 1 AND e.date BETWEEN ? AND ?`)
+        .all(fromDate, toDate),
+    ],
+    'date',
+  );
   const bookings = groupBy(
     db
       .prepare(

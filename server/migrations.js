@@ -154,11 +154,56 @@ CREATE INDEX gift_ledger_card ON gift_card_ledger(gift_card_id);
 CREATE INDEX gift_ledger_booking ON gift_card_ledger(booking_id);
 `;
 
+const V3_REVIEWS = `
+ALTER TABLE bookings ADD COLUMN review_status TEXT;      -- NULL = da inviare | sent | skipped
+ALTER TABLE bookings ADD COLUMN review_sent_at TEXT;
+ALTER TABLE bookings ADD COLUMN review_attempt_at TEXT;
+
+CREATE TABLE feedback (
+  id          INTEGER PRIMARY KEY,
+  booking_id  INTEGER NOT NULL UNIQUE REFERENCES bookings(id),
+  rating      INTEGER NOT NULL,            -- 1-5
+  comment     TEXT,
+  may_publish INTEGER NOT NULL DEFAULT 0,  -- il cliente accetta che il commento sia citato sul sito
+  created_at  TEXT NOT NULL
+);
+`;
+
+const V4_CALENDARS = `
+-- Calendari esterni (es. Google Calendar via indirizzo segreto iCal): gli impegni bloccano le disponibilità
+CREATE TABLE calendar_sources (
+  id              INTEGER PRIMARY KEY,
+  name            TEXT NOT NULL,
+  url             TEXT NOT NULL,
+  enabled         INTEGER NOT NULL DEFAULT 1,
+  created_at      TEXT NOT NULL,
+  last_attempt_at TEXT,
+  last_ok_at      TEXT,
+  last_error      TEXT,
+  event_count     INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE external_busy (
+  id         INTEGER PRIMARY KEY,
+  source_id  INTEGER NOT NULL REFERENCES calendar_sources(id) ON DELETE CASCADE,
+  date       TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  end_time   TEXT NOT NULL,
+  title      TEXT,
+  uid        TEXT
+);
+CREATE INDEX external_busy_date ON external_busy(date);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
   // v2 — codici sconto e buoni regalo
   V2_PROMO_GIFT,
+  // v3 — richiesta di recensione e feedback
+  V3_REVIEWS,
+  // v4 — calendari esterni
+  V4_CALENDARS,
 ];
 
 export function migrate(db) {
