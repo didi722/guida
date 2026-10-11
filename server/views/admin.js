@@ -12,7 +12,7 @@ export const ADMIN_GROUPS = [
   { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità']] },
   { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
   { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
-  { label: 'Sito', items: [['/admin/tours', 'Tour'], ['/admin/prices', 'Listino'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini']] },
+  { label: 'Sito', items: [['/admin/tours', 'Tour'], ['/admin/prices', 'Listino'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/settings', 'Impostazioni']] },
   { label: 'Aiuto', items: [['/admin/guide', 'Guida'], ['/admin/mail', 'Email']] },
 ];
 

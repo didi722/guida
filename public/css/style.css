@@ -662,3 +662,12 @@ body.admin { --header-h: 64px; }
 @media (max-width: 640px) { .dep-list { grid-template-columns: 1fr; } }
 .summary-list .pax-select { width: auto; min-width: 4.5em; padding: 6px 30px 6px 12px; margin: 0; font-size: 1rem; }
 .summary-list dt label { cursor: pointer; }
+
+/* Admin: impostazioni */
+.settings-section { margin-bottom: 18px; } .settings-section summary { cursor: pointer; list-style: none; } .settings-section summary::-webkit-details-marker { display: none; } .settings-section summary h2 { margin: 0; }
+.settings-section[open] summary { margin-bottom: 8px; }
+.settings-group { margin: 26px 0 6px; font-size: 1.05rem; padding-top: 14px; border-top: 1px solid var(--line); } .settings-grid > .settings-group { grid-column: 1 / -1; } .settings-grid > .settings-group:first-child { margin-top: 6px; border-top: 0; padding-top: 0; }
+.settings-grid .field-wide { grid-column: 1 / -1; } .settings-grid .field small.muted { display: block; margin-top: 4px; }
+.input-unit { display: flex; align-items: center; gap: 10px; } .input-unit input { max-width: 9em; } .unit { color: var(--muted); }
+.field .label em { font-weight: 400; }
+.settings-section { scroll-margin-top: calc(var(--header-h) + 14px); }

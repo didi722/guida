@@ -7,6 +7,7 @@ import path from 'node:path';
 import { createMailer } from './mail.js';
 import { createMedia } from './media.js';
 import { createPecMailer } from './pec.js';
+import { createSettings } from './settings.js';
 import { createSiteImages } from './siteImages.js';
 import { createProgramServices } from './programs.js';
 import { createReviewServices } from './reviews.js';
@@ -16,6 +17,7 @@ import { createServices } from './services.js';
 
 export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl, assetVersion = '0' }) {
   const app = { cfg, db, content, assetVersion, jobs: [], limits: createLimits() };
+  app.settings = createSettings({ cfg, db }); // prima di ogni altro modulo: applica alla configurazione i valori scelti dal pannello
   /** Lavori periodici (ogni minuto): ogni modulo aggiunge i suoi a `app.jobs`. */
   app.runJobs = async (nowMs = Date.now()) => {
     for (const job of app.jobs) {

@@ -36,8 +36,8 @@ export function settingsOf(cfg) {
 export function configProblems(cfg) {
   const s = settingsOf(cfg);
   const out = sellerProblems({ ...s.seller, vatBp: s.vatBp, nature: s.nature });
-  if (s.iban && !/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s.iban)) out.push('L’IBAN (INVOICE_IBAN) non ha un formato valido.');
-  if (s.seller.regime === 'RF19' && s.vatBp > 0) out.push('Il regime forfettario (RF19) non prevede IVA: imposta INVOICE_VAT_RATE=0.');
+  if (s.iban && !/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s.iban)) out.push('L’IBAN non ha un formato valido.');
+  if (s.seller.regime === 'RF19' && s.vatBp > 0) out.push('Il regime forfettario (RF19) non prevede IVA: imposta l’aliquota IVA a 0.');
   return out;
 }
 
@@ -535,7 +535,7 @@ export function issueInvoice(app, id, nowMs = Date.now()) {
     const date = inv.issue_date;
     if (!isDate(date)) throw new InvoiceError('date', 'la data della fattura non è valida');
     if (!reissue && date > today) throw new InvoiceError('date', 'la data della fattura non può essere futura');
-    if (!reissue && s.startDate && date < s.startDate) throw new InvoiceError('date', `prima del ${fmtDate(s.startDate, 'it', 'date')} non si emettono fatture (INVOICE_START_DATE)`);
+    if (!reissue && s.startDate && date < s.startDate) throw new InvoiceError('date', `prima del ${fmtDate(s.startDate, 'it', 'date')} non si emettono fatture (data iniziale impostata in Impostazioni › Fatturazione)`);
     if (buyer.country?.toUpperCase() === 'IT' && ((buyer.vat && buyer.vat === s.seller.vatNumber.replace(/^IT/i, '')) || (buyer.taxCode && buyer.taxCode === s.seller.fiscalCode))) {
       throw new InvoiceError('buyer', 'l’intestatario coincide con te (cedente): SdI scarta le fatture a sé stessi', ['Partita IVA o codice fiscale uguali ai tuoi.']);
     }
