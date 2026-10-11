@@ -6,6 +6,7 @@ import PDFDocument from 'pdfkit';
 import { bookingDue, cancellationState } from './bookings.js';
 import { ROOT } from './config.js';
 import { makeT } from './i18n.js';
+import { localeOf, normLang, pick } from './langs.js';
 import { formatGiftCode } from './pricing.js';
 import { fmtDate, fmtInstant, nowRome } from './time.js';
 import { formatMoney } from './util.js';
@@ -21,14 +22,18 @@ const FONT_FILES = { R: '400-normal', L: '300-normal', B: '700-normal', I: '400-
 let fontBuffers = null;
 const loadFonts = () => (fontBuffers ??= Object.fromEntries(Object.entries(FONT_FILES).map(([k, f]) => [k, fs.readFileSync(path.join(FONT_DIR, `josefin-sans-latin-${f}.woff`))])));
 
-// Glifi presenti nel sottoinsieme latino di Josefin Sans (ASCII, Latin-1, punteggiatura generale, €, ™)
+// Glifi presenti nel sottoinsieme latino di Josefin Sans (ASCII, Latin-1, punteggiatura generale, €, ™):
+// bastano per italiano, inglese e spagnolo (ñ Ñ á é í ó ú ü ¿ ¡ « » “ ” ‘ ’ – — € º ª).
 const SUPPORTED = /[\u0020-\u007E\u00A0-\u00FF\u0131\u0152\u0153\u2010-\u2027\u2030-\u203A\u20AC\u2122\u2212\n]/;
 const REPLACEMENTS = { ł: 'l', Ł: 'L', đ: 'd', Đ: 'D', ħ: 'h', Ħ: 'H', ŧ: 't', Ŧ: 'T', '→': '-', '←': '-', '↔': '-', '✓': '', '✔': '', '★': '*', '☆': '*' };
 
-/** Adatta un testo ai glifi del font: toglie gli accenti non disponibili (ł→l, č→c…), scarta emoji e simboli, mette «?» al posto di alfabeti non latini. */
+/**
+ * Adatta un testo ai glifi del font: toglie gli accenti non disponibili (ł→l, č→c…), scarta emoji e simboli, mette «?» al posto di alfabeti non latini.
+ * Prima compone le lettere accentate (NFC): «ñ» scritta come n + tilde combinata (capita con certe tastiere e con il copia-incolla) resta «ñ».
+ */
 export function fold(input) {
   let out = '';
-  for (const ch of String(input ?? '').replace(/\r\n?/g, '\n')) {
+  for (const ch of String(input ?? '').normalize('NFC').replace(/\r\n?/g, '\n')) {
     if (SUPPORTED.test(ch)) out += ch;
     else if (REPLACEMENTS[ch] !== undefined) out += REPLACEMENTS[ch];
     else {
@@ -48,7 +53,7 @@ export function createDoc(app, { title, subject, lang, label }) {
     size: 'A4',
     margins: { top: PAGE.m, bottom: 66, left: PAGE.m, right: PAGE.m },
     bufferPages: true,
-    lang: lang === 'en' ? 'en-GB' : 'it-IT',
+    lang: localeOf(lang),
     info: { Title: fold(title), Author: fold(site.legalName || site.name), Subject: fold(subject ?? title), Creator: fold(site.name) },
   });
   for (const [name, buf] of Object.entries(loadFonts())) doc.registerFont(name, buf);
@@ -67,7 +72,7 @@ function drawHeader(doc, app, lang, label, { compact = false } = {}) {
   doc.save();
   doc.rect(0, 0, PAGE.w, h).fill(C.band);
   doc.fillColor(C.ink).font('B').fontSize(compact ? 14 : 21).text(fold(site.name), PAGE.m, compact ? 18 : 26, { lineBreak: false });
-  if (!compact) doc.font('R').fontSize(8.5).text(fold(site.tagline[lang].toUpperCase()), PAGE.m, 54, { characterSpacing: 1.2, lineBreak: false });
+  if (!compact) doc.font('R').fontSize(8.5).text(fold(pick(site.tagline, lang).toUpperCase()), PAGE.m, 54, { characterSpacing: 1.2, lineBreak: false });
   doc.font('B').fontSize(compact ? 8 : 9).text(fold(String(label).toUpperCase()), PAGE.m, compact ? 21 : 37, { width: CW, align: 'right', characterSpacing: 1.4, lineBreak: false });
   doc.restore();
   doc.x = PAGE.m;
@@ -78,7 +83,7 @@ function drawHeader(doc, app, lang, label, { compact = false } = {}) {
 export function finishDoc(doc, app, lang) {
   const t = makeT(lang);
   const { site } = app.cfg;
-  const vat = site.vatNumber ? `${lang === 'it' ? 'P.IVA' : 'VAT no.'} ${site.vatNumber}` : '';
+  const vat = site.vatNumber ? `${pick({ it: 'P.IVA', en: 'VAT no.', es: 'N.º IVA' }, lang)} ${site.vatNumber}` : '';
   const line1 = [site.legalName || site.name, vat, site.guideLicense].filter(Boolean).join('  ·  ');
   const line2 = [site.address, site.email, site.phone].filter(Boolean).join('  ·  ');
   const range = doc.bufferedPageRange();
@@ -139,7 +144,9 @@ export function keyValueRows(doc, items, { labelW = 138, pad = 6 } = {}) {
     const text = fold(value);
     doc.font(o.bold ? 'B' : 'R').fontSize(11);
     const hText = Math.max(doc.heightOfString(text, { width: CW - labelW }), 14);
-    const h = hText + (o.sub ? 15 : 0);
+    // un'etichetta lunga (in spagnolo capita) va a capo: la riga deve essere alta abbastanza da contenerla
+    const hLabel = doc.font('R').fontSize(7.5).heightOfString(fold(String(label).toUpperCase()), { width: labelW - 12, characterSpacing: 0.8 }) + 3.5;
+    const h = Math.max(hText, hLabel) + (o.sub ? 15 : 0);
     ensure(doc, h + pad * 2 + 4);
     const y = doc.y;
     doc.font('R').fontSize(7.5).fillColor(C.muted).text(fold(String(label).toUpperCase()), PAGE.m, y + 3.5, { width: labelW - 12, characterSpacing: 0.8 });
@@ -208,11 +215,12 @@ const nowLabel = (lang) => fmtDate(nowRome().date, lang, 'short');
  * Voucher della prenotazione. Per le prenotazioni B2B non mostra prezzi né il link di gestione
  * (si può girare al cliente finale dell'agenzia).
  */
-export async function renderVoucherPdf(app, b, { lang = b.lang, nowMs = Date.now() } = {}) {
+export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = Date.now() } = {}) {
+  const lang = normLang(wanted);
   const t = makeT(lang);
   const { cfg } = app;
   const tour = app.content.tour(b.tour_slug);
-  const ti = tour.i18n[lang] ?? tour.i18n.it;
+  const ti = pick(tour.i18n, lang); // senza il blocco della lingua: inglese, poi italiano
   const b2b = b.channel === 'b2b';
   const account = b2b && b.account_id ? app.db.prepare('SELECT company FROM accounts WHERE id = ?').get(b.account_id) : null;
   const doc = createDoc(app, { title: `${t('voucher.title')} ${b.ref}`, subject: ti.title, lang, label: t('voucher.title') });
@@ -289,7 +297,8 @@ export async function renderVoucherPdf(app, b, { lang = b.lang, nowMs = Date.now
 }
 
 // ───────────── buono regalo ─────────────
-export async function renderGiftCardPdf(app, card, lang = 'it') {
+export async function renderGiftCardPdf(app, card, wanted = 'it') {
+  const lang = normLang(wanted);
   const t = makeT(lang);
   const { cfg } = app;
   const doc = createDoc(app, { title: `${t('pdf.giftTitle')} ${card.ref}`, subject: t('pdf.giftTitle'), lang, label: t('pdf.giftTitle') });
@@ -350,7 +359,8 @@ export async function renderGiftCardPdf(app, card, lang = 'it') {
 }
 
 // ───────────── proposta di programma ─────────────
-export async function renderProposalPdf(app, p, lang = p.lang) {
+export async function renderProposalPdf(app, p, wanted = p.lang) {
+  const lang = normLang(wanted);
   const t = makeT(lang);
   const { cfg } = app;
   const days = app.db.prepare('SELECT * FROM program_days WHERE program_id = ? ORDER BY date, start_time, position').all(p.id);
@@ -413,7 +423,7 @@ export async function renderProposalPdf(app, p, lang = p.lang) {
   }
   for (const [label, value, big] of totalRows) {
     const y = doc.y;
-    doc.font(big ? 'B' : 'R').fontSize(big ? 14 : 11).fillColor(C.ink).text(fold(label), PAGE.m + CW - 320, y, { width: 190, align: 'right', lineBreak: false });
+    doc.font(big ? 'B' : 'R').fontSize(big ? 14 : 11).fillColor(C.ink).text(fold(label), PAGE.m + CW - 440, y, { width: 310, align: 'right', lineBreak: false });
     doc.font('B').fontSize(big ? 14 : 11).text(value, PAGE.m + CW - 120, y, { width: 120, align: 'right', lineBreak: false });
     doc.x = PAGE.m;
     doc.y = y + (big ? 24 : 18);

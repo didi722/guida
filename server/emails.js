@@ -1,4 +1,6 @@
-// Testi delle email transazionali (IT/EN) e invio.
+// Testi delle email transazionali (IT/EN/ES) e invio.
+// Ogni dizionario ha una voce per lingua (it, en, es) con le stesse chiavi; la lingua di un record arriva dal database
+// o da un form, quindi nei punti d'ingresso si passa da normLang() (una lingua sconosciuta ripiega sull'italiano).
 import { html } from './html.js';
 import { calendar, eventLines } from './ics.js';
 import { bookingDue, cancellationState } from './bookings.js';
@@ -6,6 +8,14 @@ import { fmtDate, fmtInstant } from './time.js';
 import { formatMoney } from './util.js';
 import { formatGiftCode } from './pricing.js';
 import { makeT } from './i18n.js';
+import { normLang, pick } from './langs.js';
+
+/** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
+const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,' }, lang);
+const bye = (lang) => pick({ it: 'A presto,', en: 'See you soon,', es: 'Hasta pronto,' }, lang);
+
+/** I testi del tour nella lingua richiesta; se il tour non ha quel blocco (fixture, contenuti incompleti) ripiega sull'inglese, poi sull'italiano. */
+const tourText = (app, slug, lang) => pick(app.content.tour(slug).i18n, lang);
 
 const T = {
   it: {
@@ -68,16 +78,45 @@ const T = {
     bye: 'See you soon,',
     contactLine: 'Just reply to this email for anything.',
   },
+  es: {
+    hello: (n) => `Hola ${n},`,
+    confirmedSubject: (ref, title, d) => `Reserva confirmada ${ref} — ${title}, ${d}`,
+    confirmedIntro: 'tu reserva está confirmada. Aquí tienes el resumen.',
+    cancelledSubject: (ref) => `Reserva cancelada ${ref}`,
+    cancelledIntro: 'la reserva ha sido cancelada.',
+    refundLine: (m) => `Reembolso: ${m}, abonado en el método de pago original (normalmente entre 5 y 10 días hábiles).`,
+    noRefundLine: 'Esta cancelación no da derecho a reembolso.',
+    conflictSubject: (ref) => `Reserva ${ref}: horario ya no disponible, reembolso en curso`,
+    conflictBody: 'por desgracia, el pago llegó cuando el bloqueo de la reserva ya había caducado y, entretanto, ese horario se ha asignado a otras personas. Te hemos reembolsado el importe íntegro. Disculpa las molestias: puedes elegir otro horario en la web o escribirme.',
+    tour: 'Servicio',
+    date: 'Fecha',
+    time: 'Hora',
+    people: 'Participantes',
+    meeting: 'Punto de encuentro',
+    total: 'Total',
+    ref: 'Código',
+    clientRef: 'Ref. de expediente',
+    pay: { card: 'pagado online', onsite: 'a pagar el día del servicio', invoice: 'por factura / transferencia según lo acordado', giftcard: 'pagado con tarjeta regalo', free: 'nada que pagar' },
+    discount: (code) => `Descuento${code ? ' ' + code : ''}`,
+    giftUsed: 'Tarjeta regalo',
+    due: 'A pagar',
+    policyFree: (dt) => `Cancelación gratuita hasta el ${dt}.`,
+    policyNone: 'Esta reserva no es reembolsable (hecha con muy poca antelación al servicio).',
+    policyAfter: 'Pasado ese plazo no se prevé reembolso.',
+    manage: 'Gestiona o cancela la reserva',
+    addCal: 'El archivo adjunto añade el servicio a tu calendario.',
+    bye: 'Hasta pronto,',
+    contactLine: 'Para cualquier cosa, responde a este correo.',
+  },
 };
 
-export function bookingUrl(app, b, lang = b.lang) {
+export function bookingUrl(app, b, lang = normLang(b.lang)) {
   return `${app.cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`;
 }
 
 function summaryRows(app, b, lang) {
   const tr = T[lang];
-  const tour = app.content.tour(b.tour_slug);
-  const ti = tour.i18n[lang];
+  const ti = tourText(app, b.tour_slug, lang);
   const rows = [
     [tr.ref, b.ref],
     [tr.tour, ti.title],
@@ -100,9 +139,8 @@ function policyLine(b, lang, nowMs) {
   return `${tr.policyFree(fmtInstant(st.until, lang))} ${tr.policyAfter}`;
 }
 
-export function icsFor(app, b, lang = b.lang) {
-  const tour = app.content.tour(b.tour_slug);
-  const ti = tour.i18n[lang];
+export function icsFor(app, b, lang = normLang(b.lang)) {
+  const ti = tourText(app, b.tour_slug, lang);
   return calendar(`${app.cfg.site.name} — ${ti.title}`, [
     eventLines({
       uid: `${b.ref}@${new URL(app.cfg.baseUrl).hostname}`,
@@ -119,7 +157,7 @@ export function icsFor(app, b, lang = b.lang) {
 
 function layout(app, lang, inner) {
   return html`<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1c1c1c;line-height:1.55">
-    <div style="background:#d6bb51;padding:18px 24px;border-radius:12px 12px 0 0"><strong style="font-size:20px">${app.cfg.site.name}</strong><br><span style="font-size:13px">${app.cfg.site.tagline[lang]}</span></div>
+    <div style="background:#d6bb51;padding:18px 24px;border-radius:12px 12px 0 0"><strong style="font-size:20px">${app.cfg.site.name}</strong><br><span style="font-size:13px">${pick(app.cfg.site.tagline, lang)}</span></div>
     <div style="border:1px solid #eee;border-top:0;padding:24px;border-radius:0 0 12px 12px">${inner}</div>
   </div>`;
 }
@@ -156,9 +194,9 @@ async function pdfAttachment(filename, render, what, file = './pdf.js') {
 }
 
 export async function sendBookingConfirmed(app, b, nowMs = Date.now()) {
-  const lang = b.lang;
+  const lang = normLang(b.lang);
   const tr = T[lang];
-  const ti = app.content.tour(b.tour_slug).i18n[lang];
+  const ti = tourText(app, b.tour_slug, lang);
   const pol = policyLine(b, lang, nowMs);
   await app.mail.send({
     to: b.email,
@@ -175,7 +213,7 @@ export async function sendBookingConfirmed(app, b, nowMs = Date.now()) {
 }
 
 export async function sendBookingCancelled(app, b, refundCents) {
-  const lang = b.lang;
+  const lang = normLang(b.lang);
   const tr = T[lang];
   const line = refundCents ? tr.refundLine(formatMoney(refundCents, lang, b.currency)) : b.payment_status === 'paid' || b.payment_method === 'card' ? tr.noRefundLine : '';
   await app.mail.send({
@@ -189,7 +227,7 @@ export async function sendBookingCancelled(app, b, refundCents) {
 }
 
 export async function sendSlotLostRefund(app, b) {
-  const lang = b.lang;
+  const lang = normLang(b.lang);
   const tr = T[lang];
   await app.mail.send({
     to: b.email,
@@ -243,10 +281,17 @@ const P = {
     approvedBody: (n, url) => `Hi ${n},\nyour partner account has been approved: you can now sign in, see your reserved rates and book services for your clients.\n\nSign in here: ${url}\n`,
     sign: 'See you soon,',
   },
+  es: {
+    receivedSubject: 'Solicitud de acceso de partner recibida',
+    receivedBody: (n) => `Hola ${n},\nhe recibido tu solicitud de acceso al área de partners. La reviso y te respondo, normalmente, en uno o dos días hábiles.\n`,
+    approvedSubject: 'Tu cuenta de partner está activa',
+    approvedBody: (n, url) => `Hola ${n},\ntu cuenta de partner ha sido aprobada: a partir de ahora puedes acceder, consultar las tarifas reservadas y reservar servicios para tus clientes.\n\nAccede aquí: ${url}\n`,
+    sign: 'Hasta pronto,',
+  },
 };
 
 export async function sendPartnerRegistered(app, a) {
-  const tr = P[a.lang === 'en' ? 'en' : 'it'];
+  const tr = P[normLang(a.lang)];
   await app.mail.send({ to: a.email, subject: tr.receivedSubject, text: `${tr.receivedBody(a.contact_name)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
   const to = app.cfg.mail.notifyTo;
   if (to)
@@ -258,8 +303,9 @@ export async function sendPartnerRegistered(app, a) {
 }
 
 export async function sendPartnerApproved(app, a) {
-  const tr = P[a.lang === 'en' ? 'en' : 'it'];
-  const url = `${app.cfg.baseUrl}/${a.lang === 'en' ? 'en' : 'it'}/b2b/login`;
+  const lang = normLang(a.lang);
+  const tr = P[lang];
+  const url = `${app.cfg.baseUrl}/${lang}/b2b/login`;
   await app.mail.send({ to: a.email, subject: tr.approvedSubject, text: `${tr.approvedBody(a.contact_name, url)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
 }
 
@@ -302,6 +348,22 @@ const G = {
     cta: 'Choose your tour',
     sign: 'See you soon,',
   },
+  es: {
+    buyerSubject: (amount) => `Tu tarjeta regalo de ${amount}`,
+    buyerIntro: '¡gracias! Tu tarjeta regalo está lista.',
+    buyerScheduled: (name, email, date) => `La enviaremos a ${name ? name + ' ' : ''}(${email}) el ${date} a las 9:00. Aun así, aquí abajo tienes el código.`,
+    buyerSent: (email) => `La hemos enviado a ${email}.`,
+    buyerSelf: 'Puedes imprimirla o reenviarla a la persona a quien se la quieras regalar.',
+    recipientSubject: (from) => (from ? `${from} te ha regalado una experiencia en Venecia` : 'Una tarjeta regalo para Venecia, para ti'),
+    recipientIntro: (name) => `${name ? `Hola ${name}, ` : 'Hola, '}has recibido una tarjeta regalo para descubrir Venecia con un guía turístico habilitado.`,
+    from: (name) => `De parte de ${name}`,
+    amount: 'Importe',
+    code: 'Código',
+    valid: 'Válida hasta',
+    how: 'Cómo se usa: elige un tour en la web, ve al paso de confirmación e introduce el código en el campo «Tarjeta regalo». La tarjeta se puede usar en varias reservas hasta agotar el saldo.',
+    cta: 'Elige tu tour',
+    sign: 'Hasta pronto,',
+  },
 };
 
 function giftBlock(app, card, lang) {
@@ -337,11 +399,11 @@ function giftHtml(app, lang, intro, card, extra = '') {
 
 export async function sendGiftToBuyer(app, card) {
   if (!card.buyer_email) return false;
-  const lang = card.lang;
+  const lang = normLang(card.lang);
   const tr = G[lang];
   const money = formatMoney(card.initial_cents, lang, card.currency);
   const note = card.recipient_email ? (card.delivered_at ? tr.buyerSent(card.recipient_email) : tr.buyerScheduled(card.recipient_name, card.recipient_email, fmtDate(card.deliver_on, lang, 'short'))) : tr.buyerSelf;
-  const hello = lang === 'it' ? `Ciao ${card.buyer_name},` : `Hi ${card.buyer_name},`;
+  const hello = greet(lang, card.buyer_name);
   const lines = [hello, '', tr.buyerIntro, note, '', ...giftBlock(app, card, lang).map(([k, v]) => `${k}: ${v}`), '', tr.how, `${app.cfg.baseUrl}/${lang}/tours`, '', `${tr.sign} ${app.cfg.site.name}`];
   return app.mail.send({
     to: card.buyer_email,
@@ -355,7 +417,7 @@ export async function sendGiftToBuyer(app, card) {
 
 export async function sendGiftToRecipient(app, card) {
   if (!card.recipient_email) return false;
-  const lang = card.lang;
+  const lang = normLang(card.lang);
   const tr = G[lang];
   const intro = tr.recipientIntro(card.recipient_name);
   const from = card.buyer_name ? tr.from(card.buyer_name) : '';
@@ -406,17 +468,29 @@ const R = {
     thanks: 'Thanks again, and see you in Venice,',
     once: 'This is the only email I will send you after the tour.',
   },
+  es: {
+    subject: (site) => `¿Qué tal ha ido? Tu tour por Venecia con ${site}`,
+    hello: (n) => `Hola ${n},`,
+    intro: (title, date) => `gracias por haber elegido «${title}» (${date}). ¡Espero que lo hayas disfrutado!`,
+    ask: 'Si te apetece, una reseña ayuda muchísimo a quienes están eligiendo guía y a un pequeño negocio como el mío: solo lleva un minuto y un par de líneas.',
+    google: 'Escribe una reseña en Google',
+    tripadvisor: 'Escribe una reseña en Tripadvisor',
+    privateAsk: '¿Prefieres contármelo en privado (qué ha ido bien, qué se podría mejorar)?',
+    privateCta: 'Deja un comentario privado',
+    thanks: 'Gracias de nuevo y hasta pronto en Venecia,',
+    once: 'Este es el único correo que te envío después del tour.',
+  },
 };
 
 export function reviewLinks(app, lang) {
-  const tr = R[lang];
+  const tr = R[normLang(lang)];
   return [[app.cfg.reviews.googleUrl, tr.google], [app.cfg.reviews.tripadvisorUrl, tr.tripadvisor]].filter(([url]) => url);
 }
 
 export async function sendReviewRequest(app, b) {
-  const lang = b.lang;
+  const lang = normLang(b.lang);
   const tr = R[lang];
-  const ti = app.content.tour(b.tour_slug).i18n[lang];
+  const ti = tourText(app, b.tour_slug, lang);
   const links = reviewLinks(app, lang);
   const feedbackUrl = `${app.cfg.baseUrl}/${lang}/feedback/${b.ref}?t=${b.token}`;
   const intro = tr.intro(ti.title, fmtDate(b.date, lang, 'short'));
@@ -498,9 +572,32 @@ const PG = {
     sign: 'See you soon,',
     reply: 'Just reply to this email for anything.',
   },
+  es: {
+    receivedSubject: (ref) => `Solicitud recibida ${ref}: programa en Venecia`,
+    receivedIntro: 'he recibido tu solicitud de un programa de varios días. Te responderé con una propuesta, normalmente en un plazo de dos días hábiles.',
+    proposalSubject: (ref) => `Tu propuesta de programa en Venecia (${ref})`,
+    proposalIntro: 'aquí tienes la propuesta de programa que he preparado para ti.',
+    acceptedSubject: (ref) => `Propuesta aceptada ${ref}: solo falta el anticipo`,
+    acceptedIntro: (amount) => `¡gracias por aceptar la propuesta! Para confirmar el programa hace falta un anticipo de ${amount}.`,
+    acceptedNoOnline: 'Te escribiré en breve con las indicaciones para abonarlo.',
+    confirmedSubject: (ref) => `Programa confirmado ${ref}`,
+    confirmedIntro: 'tu programa está confirmado: las fechas quedan reservadas para ti y tu grupo. El archivo adjunto añade los días a tu calendario.',
+    cta: 'Consulta y acepta la propuesta',
+    pay: 'Paga el anticipo',
+    view: 'Abre la página del programa',
+    total: 'Total',
+    deposit: (p) => `Anticipo (${p}%)`,
+    valid: 'Válida hasta el',
+    participants: 'Personas',
+    dates: 'Fechas',
+    flexible: 'flexibles',
+    tbd: 'por definir',
+    sign: 'Hasta pronto,',
+    reply: 'Para cualquier cosa, responde a este correo.',
+  },
 };
 
-export const programUrl = (app, p, lang = p.lang) => `${app.cfg.baseUrl}/${lang}/programs/${p.ref}?t=${p.token}`;
+export const programUrl = (app, p, lang = normLang(p.lang)) => `${app.cfg.baseUrl}/${lang}/programs/${p.ref}?t=${p.token}`;
 
 function datesLabel(p, lang) {
   const tr = PG[lang];
@@ -512,10 +609,10 @@ function programDaysRows(app, p, lang) {
   return app.db.prepare('SELECT * FROM program_days WHERE program_id = ? ORDER BY date, start_time, position').all(p.id).map((d) => ({ ...d, label: `${fmtDate(d.date, lang, 'weekday')} · ${d.start_time}–${d.end_time}` }));
 }
 
-export function programIcs(app, p, lang = p.lang) {
+export function programIcs(app, p, lang = normLang(p.lang)) {
   const days = programDaysRows(app, p, lang);
   const host = new URL(app.cfg.baseUrl).hostname;
-  return calendar(`${app.cfg.site.name} — ${p.proposal_title ?? p.ref}`, days.map((d) => eventLines({ uid: `${p.ref}-${d.id}@${host}`, date: d.date, start: d.start_time, end: d.end_time, summary: `${p.proposal_title ?? 'Venezia'}: ${d.title}`, description: d.description ?? '', url: programUrl(app, p, lang) })));
+  return calendar(`${app.cfg.site.name} — ${p.proposal_title ?? p.ref}`, days.map((d) => eventLines({ uid: `${p.ref}-${d.id}@${host}`, date: d.date, start: d.start_time, end: d.end_time, summary: `${p.proposal_title ?? pick({ it: 'Venezia', en: 'Venice', es: 'Venecia' }, lang)}: ${d.title}`, description: d.description ?? '', url: programUrl(app, p, lang) })));
 }
 
 const proposalAttachments = (app, p, lang) => pdfAttachment(`proposta-${p.ref}.pdf`, (pdf) => pdf.renderProposalPdf(app, p, lang), 'proposta');
@@ -526,7 +623,7 @@ function programBody(app, p, lang, intro, { days = false, buttons = [] } = {}) {
   const interests = p.interests ? JSON.parse(p.interests).map((k) => t(`pg.int.${k}`)).join(', ') : '';
   const rows = [[tr.dates, datesLabel(p, lang)], [tr.participants, String(p.participants)], interests ? [t('pg.f.interests'), interests] : null].filter(Boolean);
   const dayRows = days ? programDaysRows(app, p, lang) : [];
-  return html`<p>${lang === 'it' ? `Ciao ${p.name},` : `Hi ${p.name},`}</p><p>${intro}</p>
+  return html`<p>${greet(lang, p.name)}</p><p>${intro}</p>
     <table style="border-collapse:collapse;width:100%;font-size:15px">${rows.map(([k, v]) => html`<tr><td style="padding:5px 12px 5px 0;color:#666;vertical-align:top">${k}</td><td style="padding:5px 0"><strong>${v}</strong></td></tr>`)}</table>
     ${dayRows.length
       ? html`<table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:14px">${dayRows.map((d) => html`<tr style="border-top:1px solid #eee"><td style="padding:8px 10px 8px 0;vertical-align:top;white-space:nowrap;color:#666">${d.label}</td><td style="padding:8px 0"><strong>${d.title}</strong>${d.description ? html`<br><span style="color:#555">${d.description}</span>` : ''}</td><td style="padding:8px 0 8px 10px;text-align:right;white-space:nowrap">${d.price_cents ? formatMoney(d.price_cents, lang, p.currency) : ''}</td></tr>`)}</table>
@@ -538,7 +635,7 @@ function programBody(app, p, lang, intro, { days = false, buttons = [] } = {}) {
 
 function programText(app, p, lang, intro, { days = false, links = [] } = {}) {
   const tr = PG[lang];
-  const lines = [lang === 'it' ? `Ciao ${p.name},` : `Hi ${p.name},`, '', intro, '', `${tr.dates}: ${datesLabel(p, lang)}`, `${tr.participants}: ${p.participants}`];
+  const lines = [greet(lang, p.name), '', intro, '', `${tr.dates}: ${datesLabel(p, lang)}`, `${tr.participants}: ${p.participants}`];
   if (days) {
     lines.push('');
     for (const d of programDaysRows(app, p, lang)) lines.push(`${d.label} — ${d.title}${d.price_cents ? ` (${formatMoney(d.price_cents, lang, p.currency)})` : ''}`);
@@ -551,7 +648,7 @@ function programText(app, p, lang, intro, { days = false, links = [] } = {}) {
 }
 
 export async function sendProgramReceived(app, p) {
-  const lang = p.lang;
+  const lang = normLang(p.lang);
   const tr = PG[lang];
   await app.mail.send({
     to: p.email,
@@ -563,7 +660,7 @@ export async function sendProgramReceived(app, p) {
 }
 
 export async function sendProposalEmail(app, p) {
-  const lang = p.lang;
+  const lang = normLang(p.lang);
   const tr = PG[lang];
   return app.mail.send({
     to: p.email,
@@ -576,7 +673,7 @@ export async function sendProposalEmail(app, p) {
 }
 
 export async function sendProgramAccepted(app, p) {
-  const lang = p.lang;
+  const lang = normLang(p.lang);
   const tr = PG[lang];
   const online = app.payments.live || app.payments.demo;
   const intro = `${tr.acceptedIntro(formatMoney(p.deposit_cents, lang, p.currency))}${online ? '' : ' ' + tr.acceptedNoOnline}`;
@@ -591,7 +688,7 @@ export async function sendProgramAccepted(app, p) {
 }
 
 export async function sendProgramConfirmed(app, p) {
-  const lang = p.lang;
+  const lang = normLang(p.lang);
   const tr = PG[lang];
   await app.mail.send({
     to: p.email,
@@ -629,7 +726,7 @@ export async function notifyGuideProgram(app, p, kind, text = '') {
 /** Manda all'intestatario la copia di cortesia (PDF) di una fattura emessa, con l'XML se richiesto. @returns {Promise<boolean>} */
 export async function sendInvoiceCopy(app, inv, to, { includeXml = false } = {}) {
   const buyer = JSON.parse(inv.buyer_json);
-  const lang = buyer.lang === 'en' ? 'en' : 'it';
+  const lang = normLang(buyer.lang);
   const t = makeT(lang);
   const kind = t(inv.doc_type === 'TD04' ? 'inv.mail.kindCredit' : 'inv.mail.kindInvoice');
   const Kind = kind.charAt(0).toUpperCase() + kind.slice(1);
@@ -637,8 +734,8 @@ export async function sendInvoiceCopy(app, inv, to, { includeXml = false } = {})
   const intro = t('inv.mail.intro', { kind, number: inv.number, date: fmtDate(inv.issue_date, lang, 'date'), total: formatMoney(inv.total_cents, lang, inv.currency) });
   const attachments = await pdfAttachment(`${inv.doc_type === 'TD04' ? 'nota-di-credito' : 'fattura'}-${String(inv.number).replace('/', '-')}.pdf`, (pdf) => pdf.renderInvoicePdf(app, inv), 'fattura', './pdf-invoice.js');
   if (includeXml && inv.xml) attachments.push({ filename: inv.file_name, content: inv.xml, contentType: 'application/xml' });
-  const hello = lang === 'it' ? `Ciao ${name},` : `Hi ${name},`;
-  const sign = `${lang === 'it' ? 'A presto,' : 'See you soon,'} ${app.cfg.site.name}`;
+  const hello = greet(lang, name);
+  const sign = `${bye(lang)} ${app.cfg.site.name}`;
   return app.mail.send({
     to,
     subject: t('inv.mail.subject', { kind: Kind, number: inv.number, name: app.cfg.site.name }),
@@ -648,3 +745,6 @@ export async function sendInvoiceCopy(app, inv, to, { includeXml = false } = {})
     replyTo: app.cfg.mail.notifyTo || undefined,
   });
 }
+
+/** I dizionari per lingua, esposti ai test: ogni lingua deve avere le stesse chiavi e gli stessi segnaposto. */
+export const EMAIL_TEXTS = { T, P, G, R, PG };

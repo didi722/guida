@@ -1,2430 +1,3042 @@
 {
  "nav.home": [
   "Home",
-  "Home"
+  "Home",
+  "Inicio"
  ],
  "nav.tours": [
   "Tour",
+  "Tours",
   "Tours"
  ],
  "nav.book": [
   "Prenota",
-  "Book"
+  "Book",
+  "Reservar"
  ],
  "nav.b2b": [
   "Per agenzie",
-  "For agencies"
+  "For agencies",
+  "Para agencias"
  ],
  "nav.blog": [
+  "Blog",
   "Blog",
   "Blog"
  ],
  "nav.about": [
   "Chi sono",
-  "About me"
+  "About me",
+  "Sobre mí"
  ],
  "nav.contact": [
   "Contatti",
-  "Contact"
+  "Contact",
+  "Contacto"
  ],
  "nav.myAccount": [
   "Il mio account",
-  "My account"
+  "My account",
+  "Mi cuenta"
  ],
  "nav.partnerLogin": [
   "Area partner",
-  "Partner login"
+  "Partner login",
+  "Área de socios"
  ],
  "a11y.skip": [
   "Vai al contenuto",
-  "Skip to content"
+  "Skip to content",
+  "Ir al contenido"
  ],
  "a11y.mainNav": [
   "Navigazione principale",
-  "Main navigation"
+  "Main navigation",
+  "Navegación principal"
  ],
  "a11y.menu": [
   "Apri il menu",
-  "Open menu"
+  "Open menu",
+  "Abrir el menú"
  ],
  "a11y.theme": [
   "Cambia tema chiaro/scuro",
-  "Switch light/dark theme"
+  "Switch light/dark theme",
+  "Cambiar tema claro/oscuro"
  ],
  "a11y.breadcrumbs": [
   "Percorso",
-  "Breadcrumbs"
+  "Breadcrumbs",
+  "Ruta de navegación"
  ],
  "footer.license": [
   "Abilitazione",
-  "Licence"
+  "Licence",
+  "Habilitación"
  ],
  "footer.vat": [
   "P.IVA",
-  "VAT"
+  "VAT",
+  "P. IVA"
  ],
  "footer.explore": [
   "Esplora",
-  "Explore"
+  "Explore",
+  "Explora"
  ],
  "footer.contact": [
   "Contatti",
-  "Contact"
+  "Contact",
+  "Contacto"
  ],
  "footer.privacy": [
   "Privacy",
-  "Privacy"
+  "Privacy",
+  "Privacidad"
  ],
  "footer.terms": [
   "Condizioni",
-  "Terms"
+  "Terms",
+  "Condiciones"
  ],
  "footer.cookies": [
   "Cookie",
+  "Cookies",
   "Cookies"
  ],
  "site.title": [
   "Guida turistica a Venezia",
-  "Tour guide in Venice"
+  "Tour guide in Venice",
+  "Guía turístico en Venecia"
  ],
  "site.description": [
   "Tour a piccoli gruppi e visite private a Venezia con una guida abilitata e storico delle religioni. Prenotazione online, anche per agenzie e DMC.",
-  "Small-group tours and private visits in Venice with a licensed guide and historian of religions. Book online, also for agencies and DMCs."
+  "Small-group tours and private visits in Venice with a licensed guide and historian of religions. Book online, also for agencies and DMCs.",
+  "Tours en grupos reducidos y visitas privadas en Venecia con un guía turístico habilitado e historiador de las religiones. Reserva online, también para agencias y DMC."
  ],
  "lang.it": [
   "Italiano",
-  "Italian"
+  "Italian",
+  "Italiano"
  ],
  "lang.en": [
   "Inglese",
-  "English"
+  "English",
+  "Inglés"
+ ],
+ "lang.es": [
+  "Spagnolo",
+  "Spanish",
+  "Español"
  ],
  "time.days": [
   "{n} giorni",
-  "{n} days"
+  "{n} days",
+  "{n} días"
  ],
  "time.hours": [
   "{n} ore",
-  "{n} hours"
+  "{n} hours",
+  "{n} horas"
  ],
  "home.eyebrow": [
   "Guida turistica abilitata · Storico delle religioni",
-  "Licensed tour guide · Historian of religions"
+  "Licensed tour guide · Historian of religions",
+  "Guía turístico habilitado · Historiador de las religiones"
  ],
  "home.h1": [
   "Venezia, oltre la cartolina.",
-  "Venice, beyond the postcard."
+  "Venice, beyond the postcard.",
+  "Venecia, más allá de la postal."
  ],
  "home.lead": [
   "Tour a piccoli gruppi e visite private con una guida che ama le storie dietro i monumenti. Prenota online in due minuti.",
-  "Small-group tours and private visits with a guide who loves the stories behind the monuments. Book online in two minutes."
+  "Small-group tours and private visits with a guide who loves the stories behind the monuments. Book online in two minutes.",
+  "Tours en grupos reducidos y visitas privadas con un guía que ama las historias que hay detrás de los monumentos. Reserva online en dos minutos."
  ],
  "home.allTours": [
   "Tutti i tour",
-  "All tours"
+  "All tours",
+  "Todos los tours"
  ],
  "home.forAgencies": [
   "Sei un’agenzia o una DMC?",
-  "Are you an agency or a DMC?"
+  "Are you an agency or a DMC?",
+  "¿Eres una agencia o una DMC?"
  ],
  "home.artAlt": [
   "Illustrazione di San Marco con il campanile e le cupole",
-  "Illustration of St Mark’s with the bell tower and domes"
+  "Illustration of St Mark’s with the bell tower and domes",
+  "Ilustración de la plaza de San Marcos con el campanario y las cúpulas"
  ],
  "home.toursTitle": [
   "Tour e servizi",
-  "Tours and services"
+  "Tours and services",
+  "Tours y servicios"
  ],
  "home.toursLead": [
   "Dai tour a piccoli gruppi alle visite private su misura.",
-  "From small-group tours to tailor-made private visits."
+  "From small-group tours to tailor-made private visits.",
+  "Desde tours en grupos reducidos hasta visitas privadas a medida."
  ],
  "home.b2bTitle": [
   "Lavori nel turismo?",
-  "Do you work in travel?"
+  "Do you work in travel?",
+  "¿Trabajas en el sector turístico?"
  ],
  "home.b2bLead": [
   "Tariffe riservate, slot in tempo reale e cancellazione gratuita estesa per DMC, tour operator e agenzie.",
-  "Reserved rates, real-time slots and extended free cancellation for DMCs, tour operators and agencies."
+  "Reserved rates, real-time slots and extended free cancellation for DMCs, tour operators and agencies.",
+  "Tarifas exclusivas, horarios en tiempo real y cancelación gratuita ampliada para DMC, operadores turísticos y agencias."
  ],
  "home.b2bMore": [
   "Scopri l’area partner",
-  "Discover the partner area"
+  "Discover the partner area",
+  "Descubre el área de socios"
  ],
  "home.b2b.1": [
   "Tariffe agevolate riservate ai partner",
-  "Discounted rates reserved for partners"
+  "Discounted rates reserved for partners",
+  "Tarifas con descuento exclusivas para socios"
  ],
  "home.b2b.2": [
   "Prenoti in autonomia, in tempo reale, 24 ore su 24",
-  "Book on your own, in real time, 24/7"
+  "Book on your own, in real time, 24/7",
+  "Reservas por tu cuenta, en tiempo real, las 24 horas"
  ],
  "home.b2b.3": [
   "Cancellazione gratuita fino a {when} prima",
-  "Free cancellation up to {when} before"
+  "Free cancellation up to {when} before",
+  "Cancelación gratuita hasta {when} antes"
  ],
  "home.b2b.4": [
   "Fattura elettronica e voucher pronti",
-  "E-invoice and vouchers ready"
+  "E-invoice and vouchers ready",
+  "Factura electrónica y voucher listos"
  ],
  "home.blogTitle": [
   "Dal blog",
-  "From the blog"
+  "From the blog",
+  "Del blog"
  ],
  "home.blogLead": [
   "Curiosità, storie e consigli pratici su Venezia.",
-  "Curiosities, stories and practical tips about Venice."
+  "Curiosities, stories and practical tips about Venice.",
+  "Curiosidades, historias y consejos prácticos sobre Venecia."
  ],
  "home.allPosts": [
   "Tutti gli articoli",
-  "All articles"
+  "All articles",
+  "Todos los artículos"
  ],
  "quick.date": [
   "Data",
-  "Date"
+  "Date",
+  "Fecha"
  ],
  "quick.guests": [
   "Persone",
-  "Guests"
+  "Guests",
+  "Personas"
  ],
  "quick.go": [
   "Vedi disponibilità",
-  "Check availability"
+  "Check availability",
+  "Ver disponibilidad"
  ],
  "trust.licensed": [
   "Guida abilitata",
-  "Licensed guide"
+  "Licensed guide",
+  "Guía habilitado"
  ],
  "trust.licensedSub": [
   "Professionista abilitato a Venezia",
-  "Qualified professional in Venice"
+  "Qualified professional in Venice",
+  "Profesional habilitado en Venecia"
  ],
  "trust.small": [
   "Gruppi piccoli",
-  "Small groups"
+  "Small groups",
+  "Grupos reducidos"
  ],
  "trust.smallSub": [
   "Per camminare e ascoltare meglio",
-  "Easier to walk, easier to listen"
+  "Easier to walk, easier to listen",
+  "Para caminar y escuchar mejor"
  ],
  "trust.cancel": [
   "Cancellazione gratuita fino a {when}",
-  "Free cancellation up to {when}"
+  "Free cancellation up to {when}",
+  "Cancelación gratuita hasta {when} antes"
  ],
  "trust.cancelSub": [
   "Se cambi programma, nessun problema",
-  "If your plans change, no problem"
+  "If your plans change, no problem",
+  "Si cambian tus planes, no pasa nada"
  ],
  "trust.pay": [
   "Paghi come preferisci",
-  "Pay your way"
+  "Pay your way",
+  "Pagas como prefieras"
  ],
  "trust.paySub": [
   "Online con carta o il giorno del tour",
-  "Online by card or on the day"
+  "Online by card or on the day",
+  "Online con tarjeta o el día del tour"
  ],
  "why.title": [
   "Un altro modo di guardare Venezia",
-  "Another way to see Venice"
+  "Another way to see Venice",
+  "Otra forma de mirar Venecia"
  ],
  "why.lead": [
   "Non un elenco di date, ma il filo che lega i luoghi alle persone che li hanno vissuti.",
-  "Not a list of dates, but the thread linking places to the people who lived them."
+  "Not a list of dates, but the thread linking places to the people who lived them.",
+  "No una lista de fechas, sino el hilo que une los lugares con las personas que los vivieron."
  ],
  "why.1.t": [
   "Sguardo da storico",
-  "A historian’s eye"
+  "A historian’s eye",
+  "Mirada de historiador"
  ],
  "why.1.p": [
   "Formazione e ricerca in storia delle religioni: spiego il perché delle cose, non solo il cosa.",
-  "Training and research in the history of religions: I explain the why of things, not just the what."
+  "Training and research in the history of religions: I explain the why of things, not just the what.",
+  "Formación e investigación en historia de las religiones: explico el porqué de las cosas, no solo el qué."
  ],
  "why.2.t": [
   "Gruppi piccoli",
-  "Small groups"
+  "Small groups",
+  "Grupos reducidos"
  ],
  "why.2.p": [
   "Poche persone per volta: si cammina meglio, si ascolta meglio e si possono fare domande.",
-  "Few people at a time: easier to walk, to listen and to ask questions."
+  "Few people at a time: easier to walk, to listen and to ask questions.",
+  "Pocas personas a la vez: se camina mejor, se escucha mejor y se pueden hacer preguntas."
  ],
  "why.3.t": [
   "Su misura",
-  "Tailor-made"
+  "Tailor-made",
+  "A medida"
  ],
  "why.3.p": [
   "Poco tempo, bambini o interessi particolari? Costruisco il percorso con te, anche in privato.",
-  "Short on time, travelling with children or with special interests? I build the route with you, privately if you like."
+  "Short on time, travelling with children or with special interests? I build the route with you, privately if you like.",
+  "¿Poco tiempo, niños o intereses especiales? Diseño el recorrido contigo, también en privado."
  ],
  "why.cta": [
   "Scopri chi sono",
-  "Meet your guide"
+  "Meet your guide",
+  "Conoce a tu guía"
  ],
  "how.title": [
   "Come funziona",
-  "How it works"
+  "How it works",
+  "Cómo funciona"
  ],
  "how.1.t": [
   "Scegli data e tour",
-  "Pick a date and a tour"
+  "Pick a date and a tour",
+  "Elige fecha y tour"
  ],
  "how.1.p": [
   "Vedi subito orari disponibili e prezzo, senza registrarti.",
-  "See available times and prices right away, no sign-up."
+  "See available times and prices right away, no sign-up.",
+  "Ves al instante los horarios disponibles y el precio, sin registrarte."
  ],
  "how.2.t": [
   "Prenota in due minuti",
-  "Book in two minutes"
+  "Book in two minutes",
+  "Reserva en dos minutos"
  ],
  "how.2.p": [
   "Inserisci i dati e scegli se pagare online o il giorno del tour.",
-  "Enter your details and choose to pay online or on the day."
+  "Enter your details and choose to pay online or on the day.",
+  "Introduce tus datos y elige si pagar online o el día del tour."
  ],
  "how.3.t": [
   "Incontriamoci a Venezia",
-  "Meet in Venice"
+  "Meet in Venice",
+  "Nos vemos en Venecia"
  ],
  "how.3.p": [
   "Ricevi conferma, punto d’incontro e calendario via email. Il resto lo faccio io.",
-  "You get confirmation, meeting point and calendar file by email. I take care of the rest."
+  "You get confirmation, meeting point and calendar file by email. I take care of the rest.",
+  "Recibes por correo la confirmación, el punto de encuentro y el archivo de calendario. De lo demás me encargo yo."
  ],
  "faq.title": [
   "Domande frequenti",
-  "Frequently asked questions"
+  "Frequently asked questions",
+  "Preguntas frecuentes"
  ],
  "faq.how.q": [
   "Come funziona la prenotazione?",
-  "How does booking work?"
+  "How does booking work?",
+  "¿Cómo funciona la reserva?"
  ],
  "faq.how.a": [
   "Scegli tour, data e orario: vedi disponibilità e prezzo in tempo reale. Inserisci i tuoi dati e ricevi subito la conferma via email, con punto d’incontro e file per il calendario.",
-  "Choose tour, date and time: you see availability and price in real time. Enter your details and receive an instant email confirmation with the meeting point and a calendar file."
+  "Choose tour, date and time: you see availability and price in real time. Enter your details and receive an instant email confirmation with the meeting point and a calendar file.",
+  "Elige tour, fecha y horario: ves la disponibilidad y el precio en tiempo real. Introduce tus datos y recibe al instante la confirmación por correo, con el punto de encuentro y un archivo para el calendario."
  ],
  "faq.cancel.q": [
   "Posso cancellare?",
-  "Can I cancel?"
+  "Can I cancel?",
+  "¿Puedo cancelar?"
  ],
  "faq.cancel.a": [
   "Sì: la cancellazione è gratuita fino a {cancel} prima dell’inizio, con rimborso integrale se hai già pagato. Dopo tale termine non è previsto rimborso.",
-  "Yes: cancellation is free up to {cancel} before the start, with a full refund if you have already paid. After that, no refund applies."
+  "Yes: cancellation is free up to {cancel} before the start, with a full refund if you have already paid. After that, no refund applies.",
+  "Sí: la cancelación es gratuita hasta {cancel} antes del inicio, con reembolso íntegro si ya has pagado. Pasado ese plazo no hay reembolso."
  ],
  "faq.pay.q": [
   "Come si paga?",
-  "How do I pay?"
+  "How do I pay?",
+  "¿Cómo se paga?"
  ],
  "faq.pay.a": [
   "Con carta online, in modo sicuro tramite Stripe, oppure (dove previsto) il giorno del servizio. Le agenzie possono pagare a fattura.",
-  "By card online, securely through Stripe, or (where offered) on the day. Agencies can pay by invoice."
+  "By card online, securely through Stripe, or (where offered) on the day. Agencies can pay by invoice.",
+  "Con tarjeta online, de forma segura a través de Stripe, o (cuando esté previsto) el día del servicio. Las agencias pueden pagar con factura."
  ],
  "faq.meet.q": [
   "Dove ci incontriamo?",
-  "Where do we meet?"
+  "Where do we meet?",
+  "¿Dónde nos encontramos?"
  ],
  "faq.meet.a": [
   "Il punto d’incontro è indicato nella scheda del tour e nell’email di conferma. Arriva con 10 minuti di anticipo: la guida attende al massimo 15 minuti.",
-  "The meeting point is on the tour page and in your confirmation email. Arrive 10 minutes early: the guide waits 15 minutes at most."
+  "The meeting point is on the tour page and in your confirmation email. Arrive 10 minutes early: the guide waits 15 minutes at most.",
+  "El punto de encuentro figura en la ficha del tour y en el correo de confirmación. Llega con 10 minutos de antelación: el guía espera 15 minutos como máximo."
  ],
  "faq.rain.q": [
   "Cosa succede se piove?",
-  "What if it rains?"
+  "What if it rains?",
+  "¿Qué pasa si llueve?"
  ],
  "faq.rain.a": [
   "Il tour si svolge anche con la pioggia (porta un ombrello!). In caso di condizioni davvero avverse concordiamo insieme un’altra data o un rimborso integrale.",
-  "Tours run in the rain (bring an umbrella!). In truly adverse conditions we agree on another date or a full refund."
+  "Tours run in the rain (bring an umbrella!). In truly adverse conditions we agree on another date or a full refund.",
+  "El tour se realiza también si llueve (¡lleva un paraguas!). En caso de condiciones realmente adversas, acordamos juntos otra fecha o un reembolso íntegro."
  ],
  "faq.access.q": [
   "Il tour è adatto a bambini e a chi ha difficoltà motorie?",
-  "Is the tour suitable for children and for people with reduced mobility?"
+  "Is the tour suitable for children and for people with reduced mobility?",
+  "¿El tour es apto para niños y para personas con movilidad reducida?"
  ],
  "faq.access.a": [
   "Venezia ha molti ponti con gradini. I bambini sono i benvenuti; per passeggini, sedie a rotelle o difficoltà motorie scrivimi: posso proporre percorsi adatti.",
-  "Venice has many bridges with steps. Children are welcome; for strollers, wheelchairs or reduced mobility please write to me: I can suggest suitable routes."
+  "Venice has many bridges with steps. Children are welcome; for strollers, wheelchairs or reduced mobility please write to me: I can suggest suitable routes.",
+  "Venecia tiene muchos puentes con escalones. Los niños son bienvenidos; para cochecitos, sillas de ruedas o movilidad reducida, escríbeme: puedo proponerte recorridos adecuados."
  ],
  "cta.title": [
   "Pronto a scoprire Venezia?",
-  "Ready to discover Venice?"
+  "Ready to discover Venice?",
+  "¿Todo listo para descubrir Venecia?"
  ],
  "cta.lead": [
   "Scegli la data e prenota in pochi minuti, oppure scrivimi per un percorso su misura.",
-  "Pick a date and book in minutes, or write to me for a tailor-made route."
+  "Pick a date and book in minutes, or write to me for a tailor-made route.",
+  "Elige la fecha y reserva en pocos minutos, o escríbeme para un recorrido a medida."
  ],
  "cta.book": [
   "Prenota ora",
-  "Book now"
+  "Book now",
+  "Reservar ahora"
  ],
  "cta.contact": [
   "Scrivimi",
-  "Get in touch"
+  "Get in touch",
+  "Escríbeme"
  ],
  "tours.title": [
   "Tour e servizi",
-  "Tours and services"
+  "Tours and services",
+  "Tours y servicios"
  ],
  "tours.lead": [
-  "Visite a piccoli gruppi con partenze fisse e servizi privati su misura, in italiano e inglese.",
-  "Small-group visits with fixed departures and tailor-made private services, in Italian and English."
+  "Visite a piccoli gruppi con partenze fisse e servizi privati su misura, in italiano, inglese e spagnolo.",
+  "Small-group visits with fixed departures and tailor-made private services, in Italian, English and Spanish.",
+  "Visitas en grupos reducidos con salidas fijas y servicios privados a medida, en italiano, inglés y español."
  ],
  "tours.groupTitle": [
   "Tour a piccoli gruppi",
-  "Small-group tours"
+  "Small-group tours",
+  "Tours en grupos reducidos"
  ],
  "tours.groupLead": [
   "Partenze fisse, prezzo a persona: ti unisci a un gruppo ristretto.",
-  "Fixed departures, price per person: you join a small group."
+  "Fixed departures, price per person: you join a small group.",
+  "Salidas fijas, precio por persona: te unes a un grupo reducido."
  ],
  "tours.privateTitle": [
   "Visite e servizi privati",
-  "Private visits and services"
+  "Private visits and services",
+  "Visitas y servicios privados"
  ],
  "tours.privateLead": [
   "Giorno e orario a tua scelta, prezzo per l’intero gruppo.",
-  "Day and time of your choice, price for the whole group."
+  "Day and time of your choice, price for the whole group.",
+  "Día y hora a tu elección, precio para todo el grupo."
  ],
  "tour.kindGroup": [
   "Piccolo gruppo",
-  "Small group"
+  "Small group",
+  "Grupo reducido"
  ],
  "tour.kindPrivate": [
   "Privato",
-  "Private"
+  "Private",
+  "Privado"
  ],
  "tour.maxPeople": [
   "max {n} persone",
-  "max {n} guests"
+  "max {n} guests",
+  "máx. {n} personas"
  ],
  "tour.upTo": [
   "fino a {n} persone",
-  "up to {n} guests"
+  "up to {n} guests",
+  "hasta {n} personas"
  ],
  "tour.duration": [
   "Durata",
-  "Duration"
+  "Duration",
+  "Duración"
  ],
  "tour.group": [
   "Gruppo",
-  "Group"
+  "Group",
+  "Grupo"
  ],
  "tour.languages": [
   "Lingue",
-  "Languages"
+  "Languages",
+  "Idiomas"
  ],
  "tour.start": [
   "Partenza",
-  "Start"
+  "Start",
+  "Salida"
  ],
  "tour.startFlexible": [
   "Orario a scelta",
-  "Time of your choice"
+  "Time of your choice",
+  "Hora a tu elección"
  ],
  "tour.highlights": [
   "Cosa vedremo",
-  "What we will see"
+  "What we will see",
+  "Qué veremos"
  ],
  "tour.includes": [
   "Incluso",
-  "Included"
+  "Included",
+  "Incluido"
  ],
  "tour.excludes": [
   "Non incluso",
-  "Not included"
+  "Not included",
+  "No incluido"
  ],
  "tour.meeting": [
   "Punto d’incontro",
-  "Meeting point"
+  "Meeting point",
+  "Punto de encuentro"
  ],
  "tour.openMap": [
   "apri la mappa",
-  "open map"
+  "open map",
+  "abrir el mapa"
  ],
  "tour.goodToKnow": [
   "Da sapere",
-  "Good to know"
+  "Good to know",
+  "Conviene saber"
  ],
  "tour.cancellation": [
   "Cancellazione",
-  "Cancellation"
+  "Cancellation",
+  "Cancelación"
  ],
  "tour.readMore": [
   "Per approfondire",
-  "Read more"
+  "Read more",
+  "Para profundizar"
  ],
  "price.perPerson": [
   "persona",
-  "person"
+  "person",
+  "persona"
  ],
  "price.perGroup": [
   "gruppo",
-  "group"
+  "group",
+  "grupo"
  ],
  "policy.free": [
   "Cancellazione gratuita fino a {when} prima dell’inizio.",
-  "Free cancellation up to {when} before the start."
+  "Free cancellation up to {when} before the start.",
+  "Cancelación gratuita hasta {when} antes del inicio."
  ],
  "policy.after": [
   "Dopo tale termine non è previsto rimborso.",
-  "After that, no refund applies."
+  "After that, no refund applies.",
+  "Pasado ese plazo, no hay reembolso."
  ],
  "policy.terms": [
   "Condizioni complete",
-  "Full terms"
+  "Full terms",
+  "Condiciones completas"
  ],
  "w.title": [
   "Prenota questo tour",
-  "Book this tour"
+  "Book this tour",
+  "Reserva este tour"
  ],
  "w.persons": [
   "Persone",
-  "Guests"
+  "Guests",
+  "Personas"
  ],
  "w.person1": [
   "1 persona",
-  "1 guest"
+  "1 guest",
+  "1 persona"
  ],
  "w.personN": [
   "{n} persone",
-  "{n} guests"
+  "{n} guests",
+  "{n} personas"
  ],
  "w.pickDate": [
   "Scegli la data",
-  "Pick a date"
+  "Pick a date",
+  "Elige la fecha"
  ],
  "w.pickTime": [
   "Scegli l’orario",
-  "Pick a time"
+  "Pick a time",
+  "Elige el horario"
  ],
  "w.noSlots": [
   "Nessun orario disponibile per questa data.",
-  "No times available on this date."
+  "No times available on this date.",
+  "No hay horarios disponibles para esta fecha."
  ],
  "w.noMonth": [
   "Nessuna disponibilità in questo mese: prova con il mese successivo.",
-  "No availability this month: try the next one."
+  "No availability this month: try the next one.",
+  "No hay disponibilidad este mes: prueba con el mes siguiente."
  ],
  "w.total": [
   "Totale",
+  "Total",
   "Total"
  ],
  "w.continue": [
   "Continua",
-  "Continue"
+  "Continue",
+  "Continuar"
  ],
  "w.left": [
   "Ne restano {n}",
-  "{n} left"
+  "{n} left",
+  "Plazas libres: {n}"
  ],
  "w.joined": [
   "Partenza confermata",
-  "Departure confirmed"
+  "Departure confirmed",
+  "Salida confirmada"
  ],
  "w.prev": [
   "Mese precedente",
-  "Previous month"
+  "Previous month",
+  "Mes anterior"
  ],
  "w.next": [
   "Mese successivo",
-  "Next month"
+  "Next month",
+  "Mes siguiente"
  ],
  "w.loading": [
   "Caricamento…",
-  "Loading…"
+  "Loading…",
+  "Cargando…"
  ],
  "w.error": [
   "Impossibile caricare le disponibilità. Riprova.",
-  "Could not load availability. Please try again."
+  "Could not load availability. Please try again.",
+  "No se ha podido cargar la disponibilidad. Inténtalo de nuevo."
  ],
  "w.legend": [
   "Date con disponibilità",
-  "Dates with availability"
+  "Dates with availability",
+  "Fechas con disponibilidad"
  ],
  "w.selected": [
   "selezionato",
-  "selected"
+  "selected",
+  "seleccionado"
  ],
  "w.min": [
   "Minimo 1 persona",
-  "At least 1 guest"
+  "At least 1 guest",
+  "Mínimo 1 persona"
  ],
  "w.max": [
   "Massimo {n} persone",
-  "At most {n} guests"
+  "At most {n} guests",
+  "Máximo {n} personas"
  ],
  "w.payOnSite": [
   "puoi anche pagare il giorno del tour",
-  "you can also pay on the day"
+  "you can also pay on the day",
+  "también puedes pagar el día del tour"
  ],
  "book.title": [
   "Prenota il tuo tour",
-  "Book your tour"
+  "Book your tour",
+  "Reserva tu tour"
  ],
  "book.lead": [
   "Scegli la data e vedi subito cosa è disponibile. Conferma immediata.",
-  "Pick a date and see what is available right away. Instant confirmation."
+  "Pick a date and see what is available right away. Instant confirmation.",
+  "Elige la fecha y consulta al instante qué hay disponible. Confirmación inmediata."
  ],
  "book.tour": [
+  "Tour",
   "Tour",
   "Tour"
  ],
  "book.allTours": [
   "Tutti i tour",
-  "All tours"
+  "All tours",
+  "Todos los tours"
  ],
  "book.resultsFor": [
   "Disponibilità per {date}",
-  "Availability for {date}"
+  "Availability for {date}",
+  "Disponibilidad para el {date}"
  ],
  "book.forPax": [
   "per {n} persone",
-  "for {n} guests"
+  "for {n} guests",
+  "para {n} personas"
  ],
  "book.forGroup": [
   "per tutto il gruppo",
-  "for the whole group"
+  "for the whole group",
+  "para todo el grupo"
  ],
  "book.confirmedDeparture": [
   "Partenza confermata",
-  "Departure confirmed"
+  "Departure confirmed",
+  "Salida confirmada"
  ],
  "book.newDeparture": [
   "Nuova partenza",
-  "New departure"
+  "New departure",
+  "Nueva salida"
  ],
  "book.private": [
   "Privato",
-  "Private"
+  "Private",
+  "Privado"
  ],
  "book.none": [
   "Nessuna disponibilità per questa data.",
-  "No availability on this date."
+  "No availability on this date.",
+  "No hay disponibilidad para esta fecha."
  ],
  "book.nextDates": [
   "Prossime date disponibili:",
-  "Next available dates:"
+  "Next available dates:",
+  "Próximas fechas disponibles:"
  ],
  "book.askUs": [
   "Hai esigenze particolari? Scrivimi:",
-  "Special requests? Write to me:"
+  "Special requests? Write to me:",
+  "¿Tienes alguna necesidad especial? Escríbeme:"
  ],
  "book.pickPrompt": [
   "Scegli una data per vedere gli orari disponibili.",
-  "Pick a date to see the available times."
+  "Pick a date to see the available times.",
+  "Elige una fecha para ver los horarios disponibles."
  ],
  "book.partnerNote": [
   "Tariffe riservate attive.",
-  "Reserved rates active."
+  "Reserved rates active.",
+  "Tarifas exclusivas activas."
  ],
  "checkout.title": [
   "Conferma la prenotazione",
-  "Confirm your booking"
+  "Confirm your booking",
+  "Confirma tu reserva"
  ],
  "checkout.contact": [
   "I tuoi dati",
-  "Your details"
+  "Your details",
+  "Tus datos"
  ],
  "checkout.contactB2b": [
   "Referente per questo servizio",
-  "Contact person for this service"
+  "Contact person for this service",
+  "Persona de contacto para este servicio"
  ],
  "checkout.payment": [
   "Pagamento",
-  "Payment"
+  "Payment",
+  "Pago"
  ],
  "checkout.refundable": [
   "Cancellazione gratuita fino a {until} ({when} prima).",
-  "Free cancellation until {until} ({when} before)."
+  "Free cancellation until {until} ({when} before).",
+  "Cancelación gratuita hasta el {until} ({when} antes)."
  ],
  "checkout.nonRefundable": [
   "Prenotazione a ridosso del servizio: non rimborsabile.",
-  "Booking close to the service date: non-refundable."
+  "Booking close to the service date: non-refundable.",
+  "Reserva con poca antelación: no reembolsable."
  ],
  "checkout.joined": [
   "Ti unirai a una partenza già confermata.",
-  "You will join an already confirmed departure."
+  "You will join an already confirmed departure.",
+  "Te unirás a una salida ya confirmada."
  ],
  "checkout.goneTitle": [
   "Questo orario non è più disponibile",
-  "This time is no longer available"
+  "This time is no longer available",
+  "Este horario ya no está disponible"
  ],
  "checkout.goneText": [
   "Qualcuno è stato più veloce di te, oppure la fascia è stata chiusa. Scegli un altro orario: ci vuole un attimo.",
-  "Someone was faster, or the slot has been closed. Pick another time: it only takes a moment."
+  "Someone was faster, or the slot has been closed. Pick another time: it only takes a moment.",
+  "Alguien se te ha adelantado, o el horario se ha cerrado. Elige otro horario: solo te llevará un momento."
  ],
  "checkout.pickAnother": [
   "Scegli un altro orario",
-  "Pick another time"
+  "Pick another time",
+  "Elegir otro horario"
  ],
  "f.name": [
   "Nome e cognome",
-  "Full name"
+  "Full name",
+  "Nombre y apellidos"
  ],
  "f.email": [
   "Email",
-  "Email"
+  "Email",
+  "Correo electrónico"
  ],
  "f.phone": [
   "Telefono / WhatsApp",
-  "Phone / WhatsApp"
+  "Phone / WhatsApp",
+  "Teléfono / WhatsApp"
  ],
  "f.phoneB2b": [
   "consigliato",
-  "recommended"
+  "recommended",
+  "recomendado"
  ],
  "f.optional": [
   "facoltativo",
-  "optional"
+  "optional",
+  "opcional"
  ],
  "f.lang": [
   "Lingua della conferma",
-  "Confirmation language"
+  "Confirmation language",
+  "Idioma de la confirmación"
  ],
  "f.notes": [
   "Note",
-  "Notes"
+  "Notes",
+  "Notas"
  ],
  "f.notesHint": [
   "Es. esigenze particolari, età dei bambini, interessi…",
-  "E.g. special needs, children’s ages, interests…"
+  "E.g. special needs, children’s ages, interests…",
+  "P. ej.: necesidades especiales, edad de los niños, intereses…"
  ],
  "f.notesHintB2b": [
   "Hotel, molo, orario di arrivo del gruppo, lingua, esigenze…",
-  "Hotel, pier, group arrival time, language, requirements…"
+  "Hotel, pier, group arrival time, language, requirements…",
+  "Hotel, embarcadero, hora de llegada del grupo, idioma, necesidades…"
  ],
  "f.clientRef": [
   "Riferimento pratica / gruppo",
-  "File / group reference"
+  "File / group reference",
+  "Referencia del expediente / grupo"
  ],
  "f.clientRefHint": [
   "es. nome del gruppo o n. pratica",
-  "e.g. group name or file no."
+  "e.g. group name or file no.",
+  "p. ej.: nombre del grupo o n.º de expediente"
  ],
  "f.invoiceAsk": [
   "Ti serve la fattura?",
-  "Do you need an invoice?"
+  "Do you need an invoice?",
+  "¿Necesitas factura?"
  ],
  "f.invoiceCheck": [
   "Richiedo fattura",
-  "I need an invoice"
+  "I need an invoice",
+  "Solicito factura"
  ],
  "f.invoiceData": [
   "Dati di fatturazione",
-  "Billing details"
+  "Billing details",
+  "Datos de facturación"
  ],
  "f.invoiceHint": [
   "Intestazione, indirizzo, codice fiscale / P.IVA, codice SDI o PEC",
-  "Name, address, tax / VAT number, SDI code or PEC"
+  "Name, address, tax / VAT number, SDI code or PEC",
+  "Nombre o razón social, dirección, código fiscal / P. IVA, código SDI o PEC"
  ],
  "f.consent": [
   "Ho letto e accetto le",
-  "I have read and accept the"
+  "I have read and accept the",
+  "He leído y acepto las"
  ],
  "f.password": [
   "Password",
-  "Password"
+  "Password",
+  "Contraseña"
  ],
  "pay.card.title": [
   "Paga ora con carta",
-  "Pay now by card"
+  "Pay now by card",
+  "Pagar ahora con tarjeta"
  ],
  "pay.card.desc": [
   "Pagamento sicuro con Stripe. Rimborso automatico se annulli nei termini.",
-  "Secure payment with Stripe. Automatic refund if you cancel in time."
+  "Secure payment with Stripe. Automatic refund if you cancel in time.",
+  "Pago seguro con Stripe. Reembolso automático si cancelas dentro del plazo."
  ],
  "pay.card.cta": [
   "Vai al pagamento",
-  "Go to payment"
+  "Go to payment",
+  "Ir al pago"
  ],
  "pay.onsite.title": [
   "Paga il giorno del servizio",
-  "Pay on the day"
+  "Pay on the day",
+  "Pagar el día del servicio"
  ],
  "pay.onsite.desc": [
   "Prenoti ora e paghi di persona (contanti o carta) al punto d’incontro.",
-  "Book now and pay in person (cash or card) at the meeting point."
+  "Book now and pay in person (cash or card) at the meeting point.",
+  "Reservas ahora y pagas en persona (efectivo o tarjeta) en el punto de encuentro."
  ],
  "pay.onsite.cta": [
   "Conferma prenotazione",
-  "Confirm booking"
+  "Confirm booking",
+  "Confirmar reserva"
  ],
  "pay.invoice.title": [
   "Fattura / bonifico",
-  "Invoice / bank transfer"
+  "Invoice / bank transfer",
+  "Factura / transferencia"
  ],
  "pay.invoice.desc": [
   "Il servizio viene fatturato secondo gli accordi (SDI).",
-  "The service is invoiced as agreed (e-invoice)."
+  "The service is invoiced as agreed (e-invoice).",
+  "El servicio se factura según lo acordado (factura electrónica)."
  ],
  "pay.invoice.cta": [
   "Conferma prenotazione",
-  "Confirm booking"
+  "Confirm booking",
+  "Confirmar reserva"
  ],
  "s.date": [
   "Data",
-  "Date"
+  "Date",
+  "Fecha"
  ],
  "s.time": [
   "Orario",
-  "Time"
+  "Time",
+  "Hora"
  ],
  "s.guests": [
   "Persone",
-  "Guests"
+  "Guests",
+  "Personas"
  ],
  "s.meeting": [
   "Punto d’incontro",
-  "Meeting point"
+  "Meeting point",
+  "Punto de encuentro"
  ],
  "s.total": [
   "Totale",
+  "Total",
   "Total"
  ],
  "s.name": [
   "Prenotato da",
-  "Booked by"
+  "Booked by",
+  "Reservado por"
  ],
  "s.ref": [
   "Codice",
-  "Reference"
+  "Reference",
+  "Código"
  ],
  "s.service": [
   "Servizio",
-  "Service"
+  "Service",
+  "Servicio"
  ],
  "err.fields": [
   "Controlla i dati inseriti: mancano delle informazioni o non sono valide.",
-  "Please check your details: some information is missing or invalid."
+  "Please check your details: some information is missing or invalid.",
+  "Revisa los datos introducidos: falta información o no es válida."
  ],
  "err.email": [
   "Indirizzo email non valido.",
-  "Invalid email address."
+  "Invalid email address.",
+  "Dirección de correo electrónico no válida."
  ],
  "err.password": [
   "La password deve avere almeno 10 caratteri.",
-  "The password must be at least 10 characters."
+  "The password must be at least 10 characters.",
+  "La contraseña debe tener al menos 10 caracteres."
  ],
  "err.sdi": [
   "Per le aziende italiane serve il codice SDI (7 caratteri) oppure una PEC.",
-  "Italian companies need an SDI code (7 characters) or a PEC address."
+  "Italian companies need an SDI code (7 characters) or a PEC address.",
+  "Las empresas italianas necesitan el código SDI (7 caracteres) o una PEC."
  ],
  "err.consent": [
   "Devi accettare le condizioni e l’informativa privacy.",
-  "You must accept the terms and the privacy policy."
+  "You must accept the terms and the privacy policy.",
+  "Debes aceptar las condiciones y la política de privacidad."
  ],
  "err.exists": [
   "Esiste già un account con questa email.",
-  "An account with this email already exists."
+  "An account with this email already exists.",
+  "Ya existe una cuenta con este correo electrónico."
  ],
  "err.payment": [
   "Non siamo riusciti ad avviare il pagamento. Riprova o scegli un altro metodo.",
-  "We could not start the payment. Please try again or choose another method."
+  "We could not start the payment. Please try again or choose another method.",
+  "No hemos podido iniciar el pago. Inténtalo de nuevo o elige otro método."
  ],
  "err.404.title": [
   "Pagina non trovata",
-  "Page not found"
+  "Page not found",
+  "Página no encontrada"
  ],
  "err.404.text": [
   "Forse il link è cambiato: riparti dalla home.",
-  "The link may have changed: start again from the home page."
+  "The link may have changed: start again from the home page.",
+  "Puede que el enlace haya cambiado: vuelve a empezar desde el inicio."
  ],
  "booking.confirmedTitle": [
   "Prenotazione confermata",
-  "Booking confirmed"
+  "Booking confirmed",
+  "Reserva confirmada"
  ],
  "booking.confirmedText": [
   "Ti abbiamo inviato i dettagli a {email}.",
-  "We have sent the details to {email}."
+  "We have sent the details to {email}.",
+  "Hemos enviado los detalles a {email}."
  ],
  "booking.heldTitle": [
   "In attesa di pagamento",
-  "Waiting for payment"
+  "Waiting for payment",
+  "Pendiente de pago"
  ],
  "booking.heldText": [
   "Lo slot è riservato per te ancora {n} minuti. Completa il pagamento per confermare.",
-  "Your slot is held for another {n} minutes. Complete the payment to confirm."
+  "Your slot is held for another {n} minutes. Complete the payment to confirm.",
+  "El horario está reservado para ti durante {n} minutos más. Completa el pago para confirmar."
  ],
  "booking.cancelledTitle": [
   "Prenotazione annullata",
-  "Booking cancelled"
+  "Booking cancelled",
+  "Reserva cancelada"
  ],
  "booking.cancelledText": [
   "Questa prenotazione non è più attiva.",
-  "This booking is no longer active."
+  "This booking is no longer active.",
+  "Esta reserva ya no está activa."
  ],
  "booking.expiredTitle": [
   "Prenotazione scaduta",
-  "Booking expired"
+  "Booking expired",
+  "Reserva caducada"
  ],
  "booking.expiredText": [
   "Il pagamento non è stato completato e lo slot è stato liberato. Puoi prenotare di nuovo.",
-  "The payment was not completed and the slot has been released. You can book again."
+  "The payment was not completed and the slot has been released. You can book again.",
+  "El pago no se completó y el horario se ha liberado. Puedes volver a reservar."
  ],
  "booking.paidOnline": [
   "pagato online",
-  "paid online"
+  "paid online",
+  "pagado online"
  ],
  "booking.cardPending": [
   "pagamento con carta",
-  "card payment"
+  "card payment",
+  "pago con tarjeta"
  ],
  "booking.onsite": [
   "da pagare il giorno del servizio",
-  "to be paid on the day"
+  "to be paid on the day",
+  "a pagar el día del servicio"
  ],
  "booking.invoice": [
   "a fattura / bonifico",
-  "by invoice / bank transfer"
+  "by invoice / bank transfer",
+  "con factura / transferencia"
  ],
  "booking.refunded": [
   "Rimborsati {amount}",
-  "{amount} refunded"
+  "{amount} refunded",
+  "Importe reembolsado: {amount}"
  ],
  "booking.refundFailed": [
   "Rimborso da completare: ti contatteremo",
-  "Refund pending: we will contact you"
+  "Refund pending: we will contact you",
+  "Reembolso pendiente: te contactaremos"
  ],
  "booking.payNow": [
   "Completa il pagamento",
-  "Complete payment"
+  "Complete payment",
+  "Completar el pago"
  ],
  "booking.canCancel": [
   "Puoi annullare gratuitamente fino a {until}.",
-  "You can cancel for free until {until}."
+  "You can cancel for free until {until}.",
+  "Puedes cancelar gratis hasta el {until}."
  ],
  "booking.cancelClosed": [
   "Il termine per la cancellazione gratuita è scaduto ({until}).",
-  "The free cancellation deadline has passed ({until})."
+  "The free cancellation deadline has passed ({until}).",
+  "El plazo de cancelación gratuita ha terminado ({until})."
  ],
  "booking.addCalendar": [
   "Aggiungi al calendario",
-  "Add to calendar"
+  "Add to calendar",
+  "Añadir al calendario"
  ],
  "booking.voucher": [
   "Scarica il voucher (PDF)",
-  "Download the voucher (PDF)"
+  "Download the voucher (PDF)",
+  "Descargar el voucher (PDF)"
  ],
  "booking.cancelBtn": [
   "Annulla la prenotazione",
-  "Cancel this booking"
+  "Cancel this booking",
+  "Cancelar la reserva"
  ],
  "booking.confirmCancel": [
   "Vuoi davvero annullare la prenotazione?",
-  "Do you really want to cancel this booking?"
+  "Do you really want to cancel this booking?",
+  "¿Seguro que quieres cancelar la reserva?"
  ],
  "booking.contactForChanges": [
   "Per modifiche o annullamenti scrivimi:",
-  "For changes or cancellations write to me:"
+  "For changes or cancellations write to me:",
+  "Para cambios o cancelaciones, escríbeme:"
  ],
  "booking.flash.cancelled": [
   "Prenotazione annullata.",
-  "Booking cancelled."
+  "Booking cancelled.",
+  "Reserva cancelada."
  ],
  "booking.flash.cancel-error": [
   "Non è possibile annullare online: scrivimi.",
-  "This cannot be cancelled online: please write to me."
+  "This cannot be cancelled online: please write to me.",
+  "No se puede cancelar online: escríbeme."
  ],
  "voucher.title": [
   "Voucher di prenotazione",
-  "Booking voucher"
+  "Booking voucher",
+  "Voucher de reserva"
  ],
  "voucher.note": [
   "Mostra questo voucher (anche dal telefono) al punto d’incontro.",
-  "Show this voucher (phone is fine) at the meeting point."
+  "Show this voucher (phone is fine) at the meeting point.",
+  "Muestra este voucher (también desde el teléfono) en el punto de encuentro."
  ],
  "demo.banner": [
   "MODALITÀ DEMO.",
-  "DEMO MODE."
+  "DEMO MODE.",
+  "MODO DEMO."
  ],
  "demo.text": [
   "Nessun addebito reale: questa pagina simula il pagamento.",
-  "No real charge: this page simulates the payment."
+  "No real charge: this page simulates the payment.",
+  "No se realiza ningún cargo real: esta página simula el pago."
  ],
  "demo.title": [
   "Pagamento (simulato)",
-  "Payment (simulated)"
+  "Payment (simulated)",
+  "Pago (simulado)"
  ],
  "demo.pay": [
   "Simula pagamento riuscito",
-  "Simulate successful payment"
+  "Simulate successful payment",
+  "Simular pago correcto"
  ],
  "demo.cancel": [
   "Annulla",
-  "Cancel"
+  "Cancel",
+  "Cancelar"
  ],
  "blog.title": [
+  "Blog",
   "Blog",
   "Blog"
  ],
  "blog.lead": [
   "Curiosità, storie e consigli pratici su Venezia.",
-  "Curiosities, stories and practical tips about Venice."
+  "Curiosities, stories and practical tips about Venice.",
+  "Curiosidades, historias y consejos prácticos sobre Venecia."
  ],
  "blog.minutes": [
   "{n} min di lettura",
-  "{n} min read"
+  "{n} min read",
+  "{n} min de lectura"
  ],
  "blog.tourCta": [
   "Vuoi vederlo dal vivo?",
-  "Want to see it in person?"
+  "Want to see it in person?",
+  "¿Quieres verlo en persona?"
  ],
  "contact.title": [
   "Contatti",
-  "Contact"
+  "Contact",
+  "Contacto"
  ],
  "contact.lead": [
   "Domande, richieste su misura o preventivi: scrivimi, rispondo di solito entro un giorno.",
-  "Questions, tailor-made requests or quotes: write to me, I usually reply within a day."
+  "Questions, tailor-made requests or quotes: write to me, I usually reply within a day.",
+  "Preguntas, solicitudes a medida o presupuestos: escríbeme, suelo responder en un día."
  ],
  "contact.message": [
   "Messaggio",
-  "Message"
+  "Message",
+  "Mensaje"
  ],
  "contact.privacy": [
   "Inviando accetti che usi i tuoi dati per risponderti. Vedi l’informativa:",
-  "By sending you agree that I use your details to reply. See the policy:"
+  "By sending you agree that I use your details to reply. See the policy:",
+  "Al enviar, aceptas que use tus datos para responderte. Consulta la política:"
  ],
  "contact.send": [
   "Invia messaggio",
-  "Send message"
+  "Send message",
+  "Enviar mensaje"
  ],
  "contact.sent": [
   "Grazie! Messaggio inviato, ti rispondo presto.",
-  "Thank you! Message sent, I will reply soon."
+  "Thank you! Message sent, I will reply soon.",
+  "¡Gracias! Mensaje enviado, te respondo pronto."
  ],
  "contact.direct": [
   "Scrivimi direttamente",
-  "Reach me directly"
+  "Reach me directly",
+  "Escríbeme directamente"
  ],
  "contact.reply": [
   "Rispondo di solito entro 24 ore.",
-  "I usually reply within 24 hours."
+  "I usually reply within 24 hours.",
+  "Suelo responder en menos de 24 horas."
  ],
  "about.cta": [
   "Vedi i tour",
-  "See the tours"
+  "See the tours",
+  "Ver los tours"
  ],
  "b2b.eyebrow": [
   "Per DMC, tour operator e agenzie",
-  "For DMCs, tour operators and agencies"
+  "For DMCs, tour operators and agencies",
+  "Para DMC, operadores turísticos y agencias"
  ],
  "b2b.title": [
   "Per agenzie e DMC",
-  "For agencies and DMCs"
+  "For agencies and DMCs",
+  "Para agencias y DMC"
  ],
  "b2b.h1": [
   "Una guida abilitata a Venezia per i tuoi clienti, a tariffe riservate.",
-  "A licensed guide in Venice for your clients, at reserved rates."
+  "A licensed guide in Venice for your clients, at reserved rates.",
+  "Un guía turístico habilitado en Venecia para tus clientes, con tarifas exclusivas."
  ],
  "b2b.lead": [
   "Prenota in autonomia slot e servizi guida per i tuoi gruppi, 24 ore su 24. Tariffe agevolate, cancellazione gratuita estesa, fattura elettronica.",
-  "Book guide slots and services for your groups on your own, 24/7. Discounted rates, extended free cancellation, e-invoicing."
+  "Book guide slots and services for your groups on your own, 24/7. Discounted rates, extended free cancellation, e-invoicing.",
+  "Reserva por tu cuenta horarios y servicios de guía para tus grupos, las 24 horas. Tarifas con descuento, cancelación gratuita ampliada y factura electrónica."
  ],
  "b2b.requestAccess": [
   "Richiedi accesso partner",
-  "Request partner access"
+  "Request partner access",
+  "Solicitar acceso de socio"
  ],
  "b2b.login": [
   "Accedi",
-  "Sign in"
+  "Sign in",
+  "Acceder"
  ],
  "b2b.loginTitle": [
   "Accesso area partner",
-  "Partner sign-in"
+  "Partner sign-in",
+  "Acceso al área de socios"
  ],
  "b2b.loginError": [
   "Email o password non corretti.",
-  "Wrong email or password."
+  "Wrong email or password.",
+  "Correo electrónico o contraseña incorrectos."
  ],
  "b2b.noAccount": [
   "Non hai ancora un account?",
-  "No account yet?"
+  "No account yet?",
+  "¿Aún no tienes una cuenta?"
  ],
  "b2b.logout": [
   "Esci",
-  "Sign out"
+  "Sign out",
+  "Cerrar sesión"
  ],
  "b2b.partnerRate": [
   "Tariffa partner",
-  "Partner rate"
+  "Partner rate",
+  "Tarifa de socio"
  ],
  "b2b.benefitsTitle": [
   "Cosa ottieni",
-  "What you get"
+  "What you get",
+  "Qué obtienes"
  ],
  "b2b.b1.t": [
   "Tariffe riservate",
-  "Reserved rates"
+  "Reserved rates",
+  "Tarifas exclusivas"
  ],
  "b2b.b1.p": [
   "Listino agevolato per DMC, tour operator e agenzie, visibile dopo l’approvazione. Per volumi o accordi annuali possiamo concordare condizioni dedicate.",
-  "A discounted rate card for DMCs, tour operators and agencies, visible after approval. For volumes or annual agreements we can set dedicated terms."
+  "A discounted rate card for DMCs, tour operators and agencies, visible after approval. For volumes or annual agreements we can set dedicated terms.",
+  "Lista de precios con descuento para DMC, operadores turísticos y agencias, visible tras la aprobación. Para volúmenes o acuerdos anuales podemos pactar condiciones a medida."
  ],
  "b2b.b2.t": [
   "Disponibilità in tempo reale",
-  "Real-time availability"
+  "Real-time availability",
+  "Disponibilidad en tiempo real"
  ],
  "b2b.b2.p": [
   "Vedi gli slot liberi e prenoti in autonomia, anche fuori orario. Preavviso minimo: {notice}.",
-  "See free slots and book on your own, even out of hours. Minimum notice: {notice}."
+  "See free slots and book on your own, even out of hours. Minimum notice: {notice}.",
+  "Ves los horarios libres y reservas por tu cuenta, incluso fuera de horario. Antelación mínima: {notice}."
  ],
  "b2b.b3.t": [
   "Cancellazione gratuita estesa",
-  "Extended free cancellation"
+  "Extended free cancellation",
+  "Cancelación gratuita ampliada"
  ],
  "b2b.b3.p": [
   "Se il programma cambia puoi annullare senza costi fino a {when} prima del servizio, direttamente dal tuo account.",
-  "If the programme changes you can cancel at no cost up to {when} before the service, straight from your account."
+  "If the programme changes you can cancel at no cost up to {when} before the service, straight from your account.",
+  "Si el programa cambia, puedes cancelar sin cargo hasta {when} antes del servicio, directamente desde tu cuenta."
  ],
  "b2b.b4.t": [
   "Fattura elettronica",
-  "E-invoicing"
+  "E-invoicing",
+  "Factura electrónica"
  ],
  "b2b.b4.p": [
   "Pagamento a fattura con bonifico, secondo gli accordi, oppure con carta. I tuoi dati SDI/PEC restano in anagrafica.",
-  "Pay by invoice and bank transfer as agreed, or by card. Your SDI/PEC details stay on file."
+  "Pay by invoice and bank transfer as agreed, or by card. Your SDI/PEC details stay on file.",
+  "Pago con factura y transferencia, según lo acordado, o con tarjeta. Tus datos SDI/PEC quedan guardados en tu cuenta."
  ],
  "b2b.b5.t": [
   "Voucher pronto",
-  "Voucher ready"
+  "Voucher ready",
+  "Voucher listo"
  ],
  "b2b.b5.p": [
   "Per ogni prenotazione trovi conferma, voucher stampabile e file per il calendario con punto d’incontro e riferimenti.",
-  "For every booking you get a confirmation, a printable voucher and a calendar file with meeting point and contacts."
+  "For every booking you get a confirmation, a printable voucher and a calendar file with meeting point and contacts.",
+  "En cada reserva recibes la confirmación, un voucher para imprimir y un archivo de calendario con el punto de encuentro y los datos de contacto."
  ],
  "b2b.b6.t": [
   "Una guida con una marcia in più",
-  "A guide with an edge"
+  "A guide with an edge",
+  "Un guía que marca la diferencia"
  ],
  "b2b.b6.p": [
   "Guida abilitata e storico delle religioni: contenuti solidi, ritmo adatto a gruppi diversi e programmi tematici su richiesta.",
-  "Licensed guide and historian of religions: solid content, a pace that suits different groups and themed programmes on request."
+  "Licensed guide and historian of religions: solid content, a pace that suits different groups and themed programmes on request.",
+  "Guía habilitado e historiador de las religiones: contenidos sólidos, ritmo adaptado a cada grupo y programas temáticos a petición."
  ],
  "b2b.howTitle": [
   "Come funziona",
-  "How it works"
+  "How it works",
+  "Cómo funciona"
  ],
  "b2b.s1.t": [
   "Richiedi l’accesso",
-  "Request access"
+  "Request access",
+  "Solicita el acceso"
  ],
  "b2b.s1.p": [
   "Compili il modulo con i dati della tua azienda: bastano due minuti.",
-  "Fill in the form with your company details: it takes two minutes."
+  "Fill in the form with your company details: it takes two minutes.",
+  "Completas el formulario con los datos de tu empresa: bastan dos minutos."
  ],
  "b2b.s2.t": [
   "Approvazione",
-  "Approval"
+  "Approval",
+  "Aprobación"
  ],
  "b2b.s2.p": [
   "Verifico la richiesta e attivo il tuo account, di norma entro uno o due giorni lavorativi.",
-  "I review the request and activate your account, usually within one or two business days."
+  "I review the request and activate your account, usually within one or two business days.",
+  "Reviso la solicitud y activo tu cuenta, normalmente en uno o dos días hábiles."
  ],
  "b2b.s3.t": [
   "Prenota gli slot",
-  "Book slots"
+  "Book slots",
+  "Reserva horarios"
  ],
  "b2b.s3.p": [
   "Scegli servizio, data e orario: vedi subito la tua tariffa e la politica di cancellazione.",
-  "Pick service, date and time: you see your rate and the cancellation policy straight away."
+  "Pick service, date and time: you see your rate and the cancellation policy straight away.",
+  "Eliges servicio, fecha y horario: ves al instante tu tarifa y la política de cancelación."
  ],
  "b2b.s4.t": [
   "Fattura e voucher",
-  "Invoice and voucher"
+  "Invoice and voucher",
+  "Factura y voucher"
  ],
  "b2b.s4.p": [
   "Ricevi conferma e voucher per il cliente; a servizio concluso emetto la fattura elettronica.",
-  "You get a confirmation and a voucher for your client; after the service I issue the e-invoice."
+  "You get a confirmation and a voucher for your client; after the service I issue the e-invoice.",
+  "Recibes la confirmación y el voucher para tu cliente; una vez prestado el servicio, emito la factura electrónica."
  ],
  "b2b.policyTitle": [
   "Condizioni in breve",
-  "Terms at a glance"
+  "Terms at a glance",
+  "Condiciones de un vistazo"
  ],
  "b2b.policy.1": [
   "Cancellazione gratuita fino a {when} prima dell’inizio del servizio. Dopo tale termine il servizio è dovuto.",
-  "Free cancellation up to {when} before the service starts. After that the service is due."
+  "Free cancellation up to {when} before the service starts. After that the service is due.",
+  "Cancelación gratuita hasta {when} antes del inicio del servicio. Pasado ese plazo, el servicio debe abonarse."
  ],
  "b2b.policy.2": [
   "Prenotazioni possibili con preavviso minimo di {notice}.",
-  "Bookings possible with a minimum notice of {notice}."
+  "Bookings possible with a minimum notice of {notice}.",
+  "Reservas posibles con una antelación mínima de {notice}."
  ],
  "b2b.policy.3": [
   "Gruppi fino a 25 persone, nel rispetto dei limiti stabiliti dal Comune di Venezia.",
-  "Groups of up to 25, in line with the limits set by the City of Venice."
+  "Groups of up to 25, in line with the limits set by the City of Venice.",
+  "Grupos de hasta 25 personas, dentro de los límites establecidos por el Ayuntamiento de Venecia."
  ],
  "b2b.policy.4": [
   "Pagamento a fattura (bonifico) o con carta. Le tariffe sono visibili nell’area riservata.",
-  "Pay by invoice (bank transfer) or card. Rates are visible in the partner area."
+  "Pay by invoice (bank transfer) or card. Rates are visible in the partner area.",
+  "Pago con factura (transferencia) o con tarjeta. Las tarifas están visibles en el área de socios."
  ],
  "b2b.policy.note": [
   "Le condizioni possono essere personalizzate per ogni partner (ad esempio finestre di cancellazione diverse o tariffe a volume).",
-  "Terms can be customised for each partner (for example different cancellation windows or volume rates)."
+  "Terms can be customised for each partner (for example different cancellation windows or volume rates).",
+  "Las condiciones pueden personalizarse para cada socio (por ejemplo, plazos de cancelación distintos o tarifas por volumen)."
  ],
  "b2b.servicesLead": [
   "Servizi pensati per il trade:",
-  "Services made for the trade:"
+  "Services made for the trade:",
+  "Servicios pensados para profesionales del sector:"
  ],
  "b2b.faq1.q": [
   "Quanto ci vuole per essere approvati?",
-  "How long does approval take?"
+  "How long does approval take?",
+  "¿Cuánto tarda la aprobación?"
  ],
  "b2b.faq1.a": [
   "Di norma uno o due giorni lavorativi. Se hai un servizio urgente scrivimi direttamente.",
-  "Usually one or two business days. If you have an urgent service, write to me directly."
+  "Usually one or two business days. If you have an urgent service, write to me directly.",
+  "Normalmente, uno o dos días hábiles. Si tienes un servicio urgente, escríbeme directamente."
  ],
  "b2b.faq2.q": [
   "Posso prenotare per gruppi numerosi?",
-  "Can I book for large groups?"
+  "Can I book for large groups?",
+  "¿Puedo reservar para grupos grandes?"
  ],
  "b2b.faq2.a": [
   "Sì, fino a 25 persone per servizio, nel rispetto dei limiti del Comune. Per gruppi più grandi organizziamo più guide: scrivimi.",
-  "Yes, up to 25 guests per service, within the City’s limits. For larger groups we arrange several guides: write to me."
+  "Yes, up to 25 guests per service, within the City’s limits. For larger groups we arrange several guides: write to me.",
+  "Sí, hasta 25 personas por servicio, dentro de los límites del Ayuntamiento. Para grupos más grandes organizamos varios guías: escríbeme."
  ],
  "b2b.faq3.q": [
   "E se non trovo la data che mi serve?",
-  "What if I cannot find the date I need?"
+  "What if I cannot find the date I need?",
+  "¿Y si no encuentro la fecha que necesito?"
  ],
  "b2b.faq3.a": [
   "Scrivimi: spesso riesco a riorganizzare gli impegni. Per programmi articolati o viaggi studio preparo un preventivo dedicato.",
-  "Write to me: I can often rearrange my commitments. For complex programmes or study trips I prepare a dedicated quote."
+  "Write to me: I can often rearrange my commitments. For complex programmes or study trips I prepare a dedicated quote.",
+  "Escríbeme: a menudo puedo reorganizar mi agenda. Para programas más elaborados o viajes de estudios preparo un presupuesto a medida."
  ],
  "b2b.faq4.q": [
   "Come funzionano i pagamenti?",
-  "How do payments work?"
+  "How do payments work?",
+  "¿Cómo funcionan los pagos?"
  ],
  "b2b.faq4.a": [
   "Per i partner approvati è disponibile il pagamento a fattura elettronica con bonifico; in alternativa puoi pagare con carta alla prenotazione.",
-  "Approved partners can pay by e-invoice and bank transfer; alternatively you can pay by card when booking."
+  "Approved partners can pay by e-invoice and bank transfer; alternatively you can pay by card when booking.",
+  "Los socios aprobados pueden pagar con factura electrónica y transferencia; también puedes pagar con tarjeta al reservar."
  ],
  "b2b.ctaTitle": [
   "Lavoriamo insieme?",
-  "Shall we work together?"
+  "Shall we work together?",
+  "¿Trabajamos juntos?"
  ],
  "b2b.ctaLead": [
   "Richiedi l’accesso o scrivimi per un preventivo su programmi e volumi.",
-  "Request access or write to me for a quote on programmes and volumes."
+  "Request access or write to me for a quote on programmes and volumes.",
+  "Solicita el acceso o escríbeme para pedir un presupuesto de programas y volúmenes."
  ],
  "b2b.ask": [
   "Chiedi un preventivo",
-  "Ask for a quote"
+  "Ask for a quote",
+  "Solicitar presupuesto"
  ],
  "b2b.reg.title": [
   "Richiedi l’accesso partner",
-  "Request partner access"
+  "Request partner access",
+  "Solicita acceso como socio"
  ],
  "b2b.reg.lead": [
   "Compila i dati della tua azienda. Dopo l’approvazione potrai vedere le tariffe riservate e prenotare.",
-  "Fill in your company details. After approval you will see the reserved rates and be able to book."
+  "Fill in your company details. After approval you will see the reserved rates and be able to book.",
+  "Completa los datos de tu empresa. Tras la aprobación podrás ver las tarifas exclusivas y reservar."
  ],
  "b2b.reg.company": [
   "Azienda",
-  "Company"
+  "Company",
+  "Empresa"
  ],
  "b2b.reg.companyName": [
   "Ragione sociale",
-  "Company name"
+  "Company name",
+  "Razón social"
  ],
  "b2b.reg.vat": [
   "P.IVA / VAT",
-  "VAT number"
+  "VAT number",
+  "P. IVA / VAT"
  ],
  "b2b.reg.country": [
   "Paese",
-  "Country"
+  "Country",
+  "País"
  ],
  "b2b.reg.other": [
   "Altro",
-  "Other"
+  "Other",
+  "Otro"
  ],
  "b2b.reg.website": [
   "Sito web",
-  "Website"
+  "Website",
+  "Sitio web"
  ],
  "b2b.reg.sdi": [
   "Codice SDI",
-  "SDI code"
+  "SDI code",
+  "Código SDI"
  ],
  "b2b.reg.sdiHint": [
   "(Italia: obbligatorio, in alternativa PEC)",
-  "(Italy: required, or PEC instead)"
+  "(Italy: required, or PEC instead)",
+  "(Italia: obligatorio, o bien una PEC)"
  ],
  "b2b.reg.pec": [
   "PEC",
-  "PEC"
+  "PEC",
+  "PEC (correo electrónico certificado)"
  ],
  "b2b.reg.address": [
   "Indirizzo",
-  "Address"
+  "Address",
+  "Dirección"
  ],
  "b2b.reg.contact": [
   "Referente",
-  "Contact person"
+  "Contact person",
+  "Persona de contacto"
  ],
  "b2b.reg.message": [
   "Come lavori?",
-  "How do you work?"
+  "How do you work?",
+  "¿Cómo trabajas?"
  ],
  "b2b.reg.messageHint": [
   "Tipologia di clientela, volumi indicativi, periodi…",
-  "Type of clients, approximate volumes, seasons…"
+  "Type of clients, approximate volumes, seasons…",
+  "Tipo de clientela, volúmenes orientativos, temporadas…"
  ],
  "b2b.reg.pwHint": [
   "(min. 10 caratteri)",
-  "(min. 10 characters)"
+  "(min. 10 characters)",
+  "(mín. 10 caracteres)"
  ],
  "b2b.reg.submit": [
   "Invia la richiesta",
-  "Send request"
+  "Send request",
+  "Enviar solicitud"
  ],
  "b2b.reg.doneTitle": [
   "Richiesta inviata",
-  "Request sent"
+  "Request sent",
+  "Solicitud enviada"
  ],
  "b2b.reg.doneText": [
   "Grazie! Ti ho inviato una email di conferma. Appena approvo il tuo account potrai prenotare con le tariffe riservate.",
-  "Thank you! I have sent you a confirmation email. As soon as I approve your account you can book at the reserved rates."
+  "Thank you! I have sent you a confirmation email. As soon as I approve your account you can book at the reserved rates.",
+  "¡Gracias! Te he enviado un correo de confirmación. En cuanto apruebe tu cuenta, podrás reservar con las tarifas exclusivas."
  ],
  "b2b.status": [
   "Stato dell’account",
-  "Account status"
+  "Account status",
+  "Estado de la cuenta"
  ],
  "b2b.st.pending": [
   "In attesa di approvazione",
-  "Awaiting approval"
+  "Awaiting approval",
+  "Pendiente de aprobación"
  ],
  "b2b.st.pending.text": [
   "Sto verificando la tua richiesta. Riceverai un’email appena l’account è attivo.",
-  "I am reviewing your request. You will get an email as soon as the account is active."
+  "I am reviewing your request. You will get an email as soon as the account is active.",
+  "Estoy revisando tu solicitud. Recibirás un correo en cuanto la cuenta esté activa."
  ],
  "b2b.st.approved": [
   "Attivo",
-  "Active"
+  "Active",
+  "Activa"
  ],
  "b2b.st.approved.text": [
   "Puoi prenotare con le tariffe riservate.",
-  "You can book at the reserved rates."
+  "You can book at the reserved rates.",
+  "Puedes reservar con las tarifas exclusivas."
  ],
  "b2b.st.rejected": [
   "Non approvato",
-  "Not approved"
+  "Not approved",
+  "No aprobada"
  ],
  "b2b.st.rejected.text": [
   "La richiesta non è stata approvata. Scrivimi per maggiori informazioni.",
-  "The request was not approved. Write to me for more information."
+  "The request was not approved. Write to me for more information.",
+  "La solicitud no ha sido aprobada. Escríbeme para más información."
  ],
  "b2b.st.suspended": [
   "Sospeso",
-  "Suspended"
+  "Suspended",
+  "Suspendida"
  ],
  "b2b.st.suspended.text": [
   "L’account è temporaneamente sospeso. Scrivimi per chiarimenti.",
-  "The account is temporarily suspended. Write to me for details."
+  "The account is temporarily suspended. Write to me for details.",
+  "La cuenta está suspendida temporalmente. Escríbeme para aclarar dudas."
  ],
  "b2b.cancelPolicy": [
   "Cancellazione gratuita fino a",
-  "Free cancellation up to"
+  "Free cancellation up to",
+  "Cancelación gratuita hasta"
  ],
  "b2b.discount": [
   "Sconto sulla tariffa partner",
-  "Discount on partner rate"
+  "Discount on partner rate",
+  "Descuento sobre la tarifa de socio"
  ],
  "b2b.baseRate": [
   "tariffa base",
-  "base rate"
+  "base rate",
+  "tarifa base"
  ],
  "b2b.payments": [
   "Pagamenti",
-  "Payments"
+  "Payments",
+  "Pagos"
  ],
  "b2b.payInvoiceCard": [
   "Fattura/bonifico o carta",
-  "Invoice/transfer or card"
+  "Invoice/transfer or card",
+  "Factura/transferencia o tarjeta"
  ],
  "b2b.payCardOnly": [
   "Carta",
-  "Card"
+  "Card",
+  "Tarjeta"
  ],
  "b2b.rates": [
   "Le tue tariffe",
-  "Your rates"
+  "Your rates",
+  "Tus tarifas"
  ],
  "b2b.public": [
   "Pubblico",
-  "Public"
+  "Public",
+  "Público"
  ],
  "b2b.yours": [
   "Tua tariffa",
-  "Your rate"
+  "Your rate",
+  "Tu tarifa"
  ],
  "b2b.myBookings": [
   "Le tue prenotazioni",
-  "Your bookings"
+  "Your bookings",
+  "Tus reservas"
  ],
  "b2b.noBookings": [
   "Non hai ancora prenotazioni.",
-  "You have no bookings yet."
+  "You have no bookings yet.",
+  "Aún no tienes reservas."
  ],
  "b2b.newBooking": [
   "Nuova prenotazione",
-  "New booking"
+  "New booking",
+  "Nueva reserva"
  ],
  "b2b.state": [
   "Stato",
-  "Status"
+  "Status",
+  "Estado"
  ],
  "b2b.bst.confirmed": [
   "Confermata",
-  "Confirmed"
+  "Confirmed",
+  "Confirmada"
  ],
  "b2b.bst.held": [
   "In pagamento",
-  "Payment pending"
+  "Payment pending",
+  "Pendiente de pago"
  ],
  "b2b.bst.cancelled": [
   "Annullata",
-  "Cancelled"
+  "Cancelled",
+  "Cancelada"
  ],
  "b2b.bst.expired": [
   "Scaduta",
-  "Expired"
+  "Expired",
+  "Caducada"
  ],
  "b2b.flash.welcome": [
   "Benvenuto!",
-  "Welcome!"
+  "Welcome!",
+  "¡Te damos la bienvenida!"
  ],
  "checkout.noPayment": [
   "Al momento non è possibile completare la prenotazione online. Scrivimi e ti confermo la disponibilità.",
-  "Online booking is not available right now. Write to me and I will confirm availability."
+  "Online booking is not available right now. Write to me and I will confirm availability.",
+  "Ahora mismo no es posible completar la reserva online. Escríbeme y te confirmo la disponibilidad."
  ],
  "promo.title": [
   "Hai un codice sconto o un buono regalo?",
-  "Do you have a discount code or a gift card?"
+  "Do you have a discount code or a gift card?",
+  "¿Tienes un código de descuento o una tarjeta regalo?"
  ],
  "promo.code": [
   "Codice sconto",
-  "Discount code"
+  "Discount code",
+  "Código de descuento"
  ],
  "promo.gift": [
   "Buono regalo",
-  "Gift card"
+  "Gift card",
+  "Tarjeta regalo"
  ],
  "promo.giftHint": [
   "Puoi inserire più buoni separati da spazio",
-  "You can enter several cards separated by spaces"
+  "You can enter several cards separated by spaces",
+  "Puedes introducir varias tarjetas separadas por un espacio"
  ],
  "promo.apply": [
   "Applica",
-  "Apply"
+  "Apply",
+  "Aplicar"
  ],
  "promo.applied": [
   "Codice {code} applicato",
-  "Code {code} applied"
+  "Code {code} applied",
+  "Código {code} aplicado"
  ],
  "promo.err.notfound": [
   "Questo codice sconto non esiste.",
-  "This discount code does not exist."
+  "This discount code does not exist.",
+  "Este código de descuento no existe."
  ],
  "promo.err.inactive": [
   "Questo codice sconto non è più attivo.",
-  "This discount code is no longer active."
+  "This discount code is no longer active.",
+  "Este código de descuento ya no está activo."
  ],
  "promo.err.not_started": [
   "Questo codice sconto non è ancora valido.",
-  "This discount code is not valid yet."
+  "This discount code is not valid yet.",
+  "Este código de descuento aún no es válido."
  ],
  "promo.err.expired": [
   "Questo codice sconto è scaduto.",
-  "This discount code has expired."
+  "This discount code has expired.",
+  "Este código de descuento ha caducado."
  ],
  "promo.err.service_window": [
   "Il codice non vale per la data del servizio scelta.",
-  "The code is not valid for the chosen service date."
+  "The code is not valid for the chosen service date.",
+  "El código no es válido para la fecha del servicio elegida."
  ],
  "promo.err.tour": [
   "Il codice non vale per questo tour.",
-  "The code is not valid for this tour."
+  "The code is not valid for this tour.",
+  "El código no es válido para este tour."
  ],
  "promo.err.min_total": [
   "Il codice vale solo per prenotazioni di importo maggiore.",
-  "The code only applies to bookings above a minimum amount."
+  "The code only applies to bookings above a minimum amount.",
+  "El código solo es válido para reservas que superen un importe mínimo."
  ],
  "promo.err.exhausted": [
   "Questo codice ha raggiunto il numero massimo di utilizzi.",
-  "This code has reached its maximum number of uses."
+  "This code has reached its maximum number of uses.",
+  "Este código ha alcanzado el número máximo de usos."
  ],
  "promo.err.email_used": [
   "Hai già usato questo codice con questa email.",
-  "You have already used this code with this email."
+  "You have already used this code with this email.",
+  "Ya has usado este código con este correo electrónico."
  ],
  "gift.err.notfound": [
   "Questo buono regalo non esiste.",
-  "This gift card does not exist."
+  "This gift card does not exist.",
+  "Esta tarjeta regalo no existe."
  ],
  "gift.err.inactive": [
   "Questo buono regalo non è più valido.",
-  "This gift card is no longer valid."
+  "This gift card is no longer valid.",
+  "Esta tarjeta regalo ya no es válida."
  ],
  "gift.err.expired": [
   "Questo buono regalo è scaduto.",
-  "This gift card has expired."
+  "This gift card has expired.",
+  "Esta tarjeta regalo ha caducado."
  ],
  "gift.err.empty": [
   "Questo buono regalo ha già il saldo esaurito.",
-  "This gift card has no balance left."
+  "This gift card has no balance left.",
+  "Esta tarjeta regalo ya no tiene saldo."
  ],
  "s.list": [
   "Prezzo di listino",
-  "List price"
+  "List price",
+  "Precio de lista"
  ],
  "s.discount": [
   "Sconto",
-  "Discount"
+  "Discount",
+  "Descuento"
  ],
  "s.giftUsed": [
   "Buono regalo",
-  "Gift card"
+  "Gift card",
+  "Tarjeta regalo"
  ],
  "s.due": [
   "Da pagare",
-  "To pay"
+  "To pay",
+  "A pagar"
  ],
  "s.giftLeft": [
   "Saldo residuo del buono: {amount}",
-  "Remaining gift card balance: {amount}"
+  "Remaining gift card balance: {amount}",
+  "Saldo restante de la tarjeta: {amount}"
  ],
  "checkout.nothingToPay": [
   "Il totale è interamente coperto: non devi pagare nulla.",
-  "The total is fully covered: you have nothing to pay."
+  "The total is fully covered: you have nothing to pay.",
+  "El total está cubierto por completo: no tienes nada que pagar."
  ],
  "pay.none.cta": [
   "Conferma prenotazione",
-  "Confirm booking"
+  "Confirm booking",
+  "Confirmar reserva"
  ],
  "booking.giftcard": [
   "pagato con buono regalo",
-  "paid with gift card"
+  "paid with gift card",
+  "pagado con tarjeta regalo"
  ],
  "booking.free": [
   "nessun pagamento dovuto",
-  "nothing to pay"
+  "nothing to pay",
+  "nada que pagar"
  ],
  "booking.giftUsedLine": [
   "Buono regalo {amount}",
-  "Gift card {amount}"
+  "Gift card {amount}",
+  "Tarjeta regalo {amount}"
  ],
  "booking.discountLine": [
   "Sconto {code}",
-  "Discount {code}"
+  "Discount {code}",
+  "Descuento {code}"
  ],
  "booking.dueOnSite": [
   "da pagare il giorno del servizio: {amount}",
-  "to pay on the day: {amount}"
+  "to pay on the day: {amount}",
+  "a pagar el día del servicio: {amount}"
  ],
  "gift.title": [
   "Regala Venezia",
-  "Give Venice"
+  "Give Venice",
+  "Regala Venecia"
  ],
  "gift.lead": [
   "Un buono regalo per scoprire la città con una guida abilitata: vale per tutti i tour e si può usare anche in più volte.",
-  "A gift card to discover the city with a licensed guide: it works for every tour and can be used in several bookings."
+  "A gift card to discover the city with a licensed guide: it works for every tour and can be used in several bookings.",
+  "Una tarjeta regalo para descubrir la ciudad con un guía turístico habilitado: vale para todos los tours y puede usarse en varias reservas."
  ],
  "gift.how.1": [
   "Scegli l’importo e a chi regalarlo",
-  "Choose the amount and who it is for"
+  "Choose the amount and who it is for",
+  "Elige el importe y a quién regalarla"
  ],
  "gift.how.2": [
   "Paghi online in modo sicuro",
-  "Pay securely online"
+  "Pay securely online",
+  "Pagas online de forma segura"
  ],
  "gift.how.3": [
   "Il buono arriva via email con un PDF da stampare",
-  "The card arrives by email with a printable PDF"
+  "The card arrives by email with a printable PDF",
+  "La tarjeta llega por correo con un PDF para imprimir"
  ],
  "gift.amount": [
   "Importo",
-  "Amount"
+  "Amount",
+  "Importe"
  ],
  "gift.custom": [
   "Altro importo",
-  "Other amount"
+  "Other amount",
+  "Otro importe"
  ],
  "gift.customHint": [
   "da {min} a {max}",
-  "from {min} to {max}"
+  "from {min} to {max}",
+  "de {min} a {max}"
  ],
  "gift.you": [
   "I tuoi dati",
-  "Your details"
+  "Your details",
+  "Tus datos"
  ],
  "gift.deliveryTitle": [
   "Come vuoi consegnarlo?",
-  "How would you like to deliver it?"
+  "How would you like to deliver it?",
+  "¿Cómo quieres entregarla?"
  ],
  "gift.deliveryMe": [
   "Lo ricevo io (da stampare o inoltrare)",
-  "Send it to me (to print or forward)"
+  "Send it to me (to print or forward)",
+  "La recibo yo (para imprimir o reenviar)"
  ],
  "gift.deliveryRecipient": [
   "Invialo direttamente al destinatario",
-  "Send it straight to the recipient"
+  "Send it straight to the recipient",
+  "Envíala directamente al destinatario"
  ],
  "gift.recipientName": [
   "Nome del destinatario",
-  "Recipient’s name"
+  "Recipient’s name",
+  "Nombre del destinatario"
  ],
  "gift.recipientEmail": [
   "Email del destinatario",
-  "Recipient’s email"
+  "Recipient’s email",
+  "Correo electrónico del destinatario"
  ],
  "gift.sendOn": [
   "Data di invio",
-  "Send on"
+  "Send on",
+  "Fecha de envío"
  ],
  "gift.sendOnHint": [
   "Il buono parte quel giorno alle 9:00. Tu ricevi subito la conferma.",
-  "The card is sent that day at 9:00. You get your confirmation straight away."
+  "The card is sent that day at 9:00. You get your confirmation straight away.",
+  "La tarjeta se envía ese día a las 9:00. Tú recibes la confirmación al instante."
  ],
  "gift.message": [
   "Messaggio per il destinatario",
-  "Message for the recipient"
+  "Message for the recipient",
+  "Mensaje para el destinatario"
  ],
  "gift.messageHint": [
   "Es. Buon compleanno! Una passeggiata per scoprire Venezia insieme.",
-  "E.g. Happy birthday! A walk to discover Venice together."
+  "E.g. Happy birthday! A walk to discover Venice together.",
+  "P. ej.: ¡Feliz cumpleaños! Un paseo para descubrir Venecia juntos."
  ],
  "gift.pay": [
   "Vai al pagamento",
-  "Go to payment"
+  "Go to payment",
+  "Ir al pago"
  ],
  "gift.terms": [
   "Il buono è valido {months} mesi dall’acquisto, utilizzabile anche in più prenotazioni fino a esaurimento del saldo. Non è rimborsabile né convertibile in denaro.",
-  "The card is valid for {months} months from purchase and can be used in several bookings until the balance runs out. It is non-refundable and cannot be exchanged for cash."
+  "The card is valid for {months} months from purchase and can be used in several bookings until the balance runs out. It is non-refundable and cannot be exchanged for cash.",
+  "La tarjeta es válida durante {months} meses desde la compra y puede usarse en varias reservas hasta agotar el saldo. No es reembolsable ni canjeable por dinero."
  ],
  "gift.unavailable": [
   "L’acquisto online dei buoni non è ancora attivo. Scrivimi e te ne preparo uno.",
-  "Buying gift cards online is not available yet. Write to me and I will prepare one for you."
+  "Buying gift cards online is not available yet. Write to me and I will prepare one for you.",
+  "La compra online de tarjetas regalo aún no está disponible. Escríbeme y te preparo una."
  ],
  "gift.err.amount": [
   "L’importo deve essere tra {min} e {max}.",
-  "The amount must be between {min} and {max}."
+  "The amount must be between {min} and {max}.",
+  "El importe debe estar entre {min} y {max}."
  ],
  "gift.err.buyer": [
   "Inserisci il tuo nome e un indirizzo email valido.",
-  "Please enter your name and a valid email address."
+  "Please enter your name and a valid email address.",
+  "Introduce tu nombre y una dirección de correo electrónico válida."
  ],
  "gift.err.recipient": [
   "Per inviarlo al destinatario serve un indirizzo email valido.",
-  "A valid email address is needed to send it to the recipient."
+  "A valid email address is needed to send it to the recipient.",
+  "Para enviarla al destinatario hace falta una dirección de correo electrónico válida."
  ],
  "gift.err.date": [
   "La data di invio non è valida.",
-  "The send date is not valid."
+  "The send date is not valid.",
+  "La fecha de envío no es válida."
  ],
  "gift.err.payment": [
   "Non siamo riusciti ad avviare il pagamento. Riprova tra poco.",
-  "We could not start the payment. Please try again shortly."
+  "We could not start the payment. Please try again shortly.",
+  "No hemos podido iniciar el pago. Vuelve a intentarlo en unos instantes."
  ],
  "gift.statusReady": [
   "Buono regalo pronto",
-  "Gift card ready"
+  "Gift card ready",
+  "Tarjeta regalo lista"
  ],
  "gift.statusReadyText": [
   "Ti abbiamo inviato il buono a {email}.",
-  "We have sent the gift card to {email}."
+  "We have sent the gift card to {email}.",
+  "Hemos enviado la tarjeta a {email}."
  ],
  "gift.statusPending": [
   "In attesa di pagamento",
-  "Waiting for payment"
+  "Waiting for payment",
+  "Pendiente de pago"
  ],
  "gift.statusPendingText": [
   "Completa il pagamento per ricevere il buono.",
-  "Complete the payment to receive the gift card."
+  "Complete the payment to receive the gift card.",
+  "Completa el pago para recibir la tarjeta."
  ],
  "gift.statusVoid": [
   "Buono non valido",
-  "Gift card not valid"
+  "Gift card not valid",
+  "Tarjeta no válida"
  ],
  "gift.statusVoidText": [
   "Questo ordine non è più attivo.",
-  "This order is no longer active."
+  "This order is no longer active.",
+  "Este pedido ya no está activo."
  ],
  "gift.code": [
   "Codice",
-  "Code"
+  "Code",
+  "Código"
  ],
  "gift.balance": [
   "Saldo",
-  "Balance"
+  "Balance",
+  "Saldo"
  ],
  "gift.validUntil": [
   "Valido fino al",
-  "Valid until"
+  "Valid until",
+  "Válida hasta el"
  ],
  "gift.download": [
   "Scarica il PDF",
-  "Download the PDF"
+  "Download the PDF",
+  "Descargar el PDF"
  ],
  "gift.useIt": [
   "Come si usa: scegli un tour, vai alla conferma e inserisci il codice nel campo «Buono regalo».",
-  "How to use it: pick a tour, go to the confirmation step and enter the code in the “Gift card” field."
+  "How to use it: pick a tour, go to the confirmation step and enter the code in the “Gift card” field.",
+  "Cómo se usa: elige un tour, ve al paso de confirmación e introduce el código en el campo «Tarjeta regalo»."
  ],
  "gift.scheduled": [
   "Verrà inviato a {name} il {date} alle 9:00.",
-  "It will be sent to {name} on {date} at 9:00."
+  "It will be sent to {name} on {date} at 9:00.",
+  "Se enviará a {name} el {date} a las 9:00."
  ],
  "gift.payNow": [
   "Completa il pagamento",
-  "Complete payment"
+  "Complete payment",
+  "Completar el pago"
  ],
  "gift.cta": [
   "Acquista un buono regalo",
-  "Buy a gift card"
+  "Buy a gift card",
+  "Comprar una tarjeta regalo"
  ],
  "gift.homeTitle": [
   "Un regalo che si cammina",
-  "A gift you walk through"
+  "A gift you walk through",
+  "Un regalo para pasear"
  ],
  "gift.homeLead": [
   "Regala una passeggiata tra le calli: il buono arriva via email, anche al destinatario nel giorno che scegli.",
-  "Give a walk through the alleys: the card arrives by email, to the recipient on the day you choose."
+  "Give a walk through the alleys: the card arrives by email, to the recipient on the day you choose.",
+  "Regala un paseo por las calles de Venecia: la tarjeta llega por correo, también al destinatario el día que elijas."
  ],
  "nav.gift": [
   "Regala",
-  "Gift cards"
+  "Gift cards",
+  "Tarjetas regalo"
  ],
  "fb.title": [
   "Com’è andato il tour?",
-  "How was the tour?"
+  "How was the tour?",
+  "¿Qué tal ha ido el tour?"
  ],
  "fb.lead": [
   "Il tuo parere mi aiuta a migliorare. Bastano un voto e, se vuoi, due righe.",
-  "Your opinion helps me improve. A rating and, if you like, a couple of lines is enough."
+  "Your opinion helps me improve. A rating and, if you like, a couple of lines is enough.",
+  "Tu opinión me ayuda a mejorar. Basta con una valoración y, si quieres, un par de líneas."
  ],
  "fb.rating": [
   "Il tuo voto",
-  "Your rating"
+  "Your rating",
+  "Tu valoración"
  ],
  "fb.star": [
   "{n} su 5",
-  "{n} out of 5"
+  "{n} out of 5",
+  "{n} de 5"
  ],
  "fb.comment": [
   "Commento",
-  "Comment"
+  "Comment",
+  "Comentario"
  ],
  "fb.commentHint": [
   "Cosa ti è piaciuto? Cosa potrei fare meglio?",
-  "What did you like? What could I do better?"
+  "What did you like? What could I do better?",
+  "¿Qué te ha gustado? ¿Qué podría hacer mejor?"
  ],
  "fb.publish": [
   "Puoi citare le mie parole sul sito (senza cognome)",
-  "You may quote my words on the website (without my surname)"
+  "You may quote my words on the website (without my surname)",
+  "Puedes citar mis palabras en el sitio web (sin apellido)"
  ],
  "fb.send": [
   "Invia il feedback",
-  "Send feedback"
+  "Send feedback",
+  "Enviar comentarios"
  ],
  "fb.thanksTitle": [
   "Grazie!",
-  "Thank you!"
+  "Thank you!",
+  "¡Gracias!"
  ],
  "fb.thanksText": [
   "Ho ricevuto il tuo feedback. Lo leggo personalmente.",
-  "I have received your feedback. I read every one personally."
+  "I have received your feedback. I read every one personally.",
+  "He recibido tus comentarios. Los leo personalmente."
  ],
  "fb.publicTitle": [
   "Ti va di condividerlo anche pubblicamente?",
-  "Would you also like to share it publicly?"
+  "Would you also like to share it publicly?",
+  "¿Te gustaría compartirlo también de forma pública?"
  ],
  "fb.publicText": [
   "Una recensione pubblica aiuta chi sta scegliendo una guida a Venezia.",
-  "A public review helps people choosing a guide in Venice."
+  "A public review helps people choosing a guide in Venice.",
+  "Una reseña pública ayuda a quien está eligiendo un guía en Venecia."
  ],
  "fb.google": [
   "Scrivi una recensione su Google",
-  "Write a Google review"
+  "Write a Google review",
+  "Escribir una reseña en Google"
  ],
  "fb.tripadvisor": [
   "Scrivi una recensione su Tripadvisor",
-  "Write a Tripadvisor review"
+  "Write a Tripadvisor review",
+  "Escribir una reseña en Tripadvisor"
  ],
  "fb.early": [
   "Potrai lasciare il feedback dopo il tour.",
-  "You will be able to leave feedback after the tour."
+  "You will be able to leave feedback after the tour.",
+  "Podrás dejar tus comentarios después del tour."
  ],
  "fb.err.rating": [
   "Scegli un voto da 1 a 5.",
-  "Please choose a rating from 1 to 5."
+  "Please choose a rating from 1 to 5.",
+  "Elige una valoración de 1 a 5."
  ],
  "fb.err.early": [
   "Potrai lasciare il feedback dopo il tour.",
-  "You will be able to leave feedback after the tour."
+  "You will be able to leave feedback after the tour.",
+  "Podrás dejar tus comentarios después del tour."
  ],
  "fb.err.booking": [
   "Questa prenotazione non può ricevere feedback.",
-  "This booking cannot receive feedback."
+  "This booking cannot receive feedback.",
+  "Esta reserva no puede recibir comentarios."
  ],
  "fb.already": [
   "Hai già lasciato un feedback: puoi aggiornarlo qui sotto.",
-  "You have already left feedback: you can update it below."
+  "You have already left feedback: you can update it below.",
+  "Ya has dejado tus comentarios: puedes actualizarlos más abajo."
  ],
  "nav.programs": [
   "Programmi",
-  "Programmes"
+  "Programmes",
+  "Programas"
  ],
  "pg.title": [
   "Programmi di più giorni",
-  "Multi-day programmes"
+  "Multi-day programmes",
+  "Programas de varios días"
  ],
  "pg.lead": [
   "Un soggiorno a Venezia da costruire insieme: itinerari su misura per più giorni, con una guida che conosce la città e un ritmo adatto a voi.",
-  "A stay in Venice to build together: tailor-made multi-day itineraries with a guide who knows the city, at a pace that suits you."
+  "A stay in Venice to build together: tailor-made multi-day itineraries with a guide who knows the city, at a pace that suits you.",
+  "Una estancia en Venecia para diseñar juntos: itinerarios a medida de varios días, con un guía que conoce la ciudad y un ritmo adaptado al grupo."
  ],
  "pg.ideas.title": [
   "Qualche idea di partenza",
-  "A few starting ideas"
+  "A few starting ideas",
+  "Algunas ideas para empezar"
  ],
  "pg.idea.1.t": [
   "Venezia in tre giorni",
-  "Venice in three days"
+  "Venice in three days",
+  "Venecia en tres días"
  ],
  "pg.idea.1.p": [
   "Il centro storico, i sestieri meno battuti e la laguna, con tempo per respirare tra una visita e l’altra.",
-  "The historic centre, the quieter districts and the lagoon, with time to breathe between visits."
+  "The historic centre, the quieter districts and the lagoon, with time to breathe between visits.",
+  "El centro histórico, los sestieri (barrios) menos concurridos y la laguna, con tiempo para respirar entre una visita y otra."
  ],
  "pg.idea.2.t": [
   "Un tema, più giorni",
-  "One theme, several days"
+  "One theme, several days",
+  "Un tema, varios días"
  ],
  "pg.idea.2.p": [
   "Religioni e culture, arte e architettura, cucina e tradizioni: un filo conduttore per leggere la città a strati.",
-  "Religions and cultures, art and architecture, food and traditions: a common thread to read the city in layers."
+  "Religions and cultures, art and architecture, food and traditions: a common thread to read the city in layers.",
+  "Religiones y culturas, arte y arquitectura, gastronomía y tradiciones: un hilo conductor para leer la ciudad por capas."
  ],
  "pg.idea.3.t": [
   "Gruppi di studio e scuole",
-  "Study groups and schools"
+  "Study groups and schools",
+  "Grupos de estudio y centros educativos"
  ],
  "pg.idea.3.p": [
   "Percorsi didattici per classi e gruppi universitari, concordati con i docenti.",
-  "Educational routes for classes and university groups, agreed with teachers."
+  "Educational routes for classes and university groups, agreed with teachers.",
+  "Recorridos didácticos para clases y grupos universitarios, acordados con los docentes."
  ],
  "pg.idea.4.t": [
   "Incentive e gruppi aziendali",
-  "Incentives and corporate groups"
+  "Incentives and corporate groups",
+  "Viajes de incentivo y grupos de empresa"
  ],
  "pg.idea.4.p": [
   "Giornate di esperienza per team e ospiti, con logistica curata insieme a voi.",
-  "Experience days for teams and guests, with logistics worked out together."
+  "Experience days for teams and guests, with logistics worked out together.",
+  "Jornadas de experiencias para equipos e invitados, con la logística coordinada contigo."
  ],
  "pg.form.title": [
   "Raccontami cosa immagini",
-  "Tell me what you have in mind"
+  "Tell me what you have in mind",
+  "Cuéntame lo que tienes en mente"
  ],
  "pg.form.lead": [
   "Più sono precise le informazioni, più la proposta sarà adatta. Ti rispondo di norma entro due giorni lavorativi, senza impegno.",
-  "The more precise the details, the better the proposal. I usually reply within two business days, with no commitment."
+  "The more precise the details, the better the proposal. I usually reply within two business days, with no commitment.",
+  "Cuanto más precisa sea la información, más ajustada será la propuesta. Suelo responder en dos días hábiles, sin compromiso."
  ],
  "pg.f.when": [
   "Quando",
-  "When"
+  "When",
+  "Cuándo"
  ],
  "pg.f.from": [
   "Dal",
-  "From"
+  "From",
+  "Desde"
  ],
  "pg.f.to": [
   "Al",
-  "To"
+  "To",
+  "Hasta"
  ],
  "pg.f.flexible": [
   "Le date sono flessibili",
-  "Dates are flexible"
+  "Dates are flexible",
+  "Las fechas son flexibles"
  ],
  "pg.f.participants": [
   "Quante persone",
-  "How many people"
+  "How many people",
+  "Cuántas personas"
  ],
  "pg.f.group": [
   "Che tipo di gruppo",
-  "What kind of group"
+  "What kind of group",
+  "Qué tipo de grupo"
  ],
  "pg.f.interests": [
   "Cosa vi interessa",
-  "What are you interested in"
+  "What are you interested in",
+  "Intereses"
  ],
  "pg.f.accommodation": [
   "Dove alloggiate (zona o hotel)",
-  "Where you are staying (area or hotel)"
+  "Where you are staying (area or hotel)",
+  "Alojamiento (zona u hotel)"
  ],
  "pg.f.mobility": [
   "Esigenze di mobilità o accessibilità",
-  "Mobility or accessibility needs"
+  "Mobility or accessibility needs",
+  "Necesidades de movilidad o accesibilidad"
  ],
  "pg.f.budget": [
   "Budget indicativo",
-  "Indicative budget"
+  "Indicative budget",
+  "Presupuesto orientativo"
  ],
  "pg.f.languages": [
   "Lingua del servizio",
-  "Service language"
+  "Service language",
+  "Idioma del servicio"
  ],
  "pg.f.message": [
   "Altro che vuoi dirmi",
-  "Anything else you would like to tell me"
+  "Anything else you would like to tell me",
+  "Algo más que quieras contarme"
  ],
  "pg.f.company": [
   "Agenzia / azienda",
-  "Agency / company"
+  "Agency / company",
+  "Agencia / empresa"
  ],
  "pg.f.messageHint": [
   "Occasione del viaggio, età dei partecipanti, cose che avete già visto, desideri particolari…",
-  "Occasion for the trip, ages, things you have already seen, special wishes…"
+  "Occasion for the trip, ages, things you have already seen, special wishes…",
+  "Motivo del viaje, edad de los participantes, lo que ya se ha visitado, deseos especiales…"
  ],
  "pg.send": [
   "Invia la richiesta",
-  "Send request"
+  "Send request",
+  "Enviar solicitud"
  ],
  "pg.group.family": [
   "Famiglia",
-  "Family"
+  "Family",
+  "Familia"
  ],
  "pg.group.friends": [
   "Amici",
-  "Friends"
+  "Friends",
+  "Amigos"
  ],
  "pg.group.school": [
   "Scuola / università",
-  "School / university"
+  "School / university",
+  "Centro educativo / universidad"
  ],
  "pg.group.corporate": [
   "Azienda / incentive",
-  "Company / incentive"
+  "Company / incentive",
+  "Empresa / incentivo"
  ],
  "pg.group.agency": [
   "Agenzia / DMC",
-  "Agency / DMC"
+  "Agency / DMC",
+  "Agencia / DMC"
  ],
  "pg.group.other": [
   "Altro",
-  "Other"
+  "Other",
+  "Otro"
  ],
  "pg.int.art": [
   "Arte e musei",
-  "Art and museums"
+  "Art and museums",
+  "Arte y museos"
  ],
  "pg.int.history": [
   "Storia",
-  "History"
+  "History",
+  "Historia"
  ],
  "pg.int.religions": [
   "Religioni e culture",
-  "Religions and cultures"
+  "Religions and cultures",
+  "Religiones y culturas"
  ],
  "pg.int.food": [
   "Cucina e vino",
-  "Food and wine"
+  "Food and wine",
+  "Gastronomía y vino"
  ],
  "pg.int.lagoon": [
   "Laguna e isole",
-  "Lagoon and islands"
+  "Lagoon and islands",
+  "Laguna e islas"
  ],
  "pg.int.photography": [
   "Fotografia",
-  "Photography"
+  "Photography",
+  "Fotografía"
  ],
  "pg.int.architecture": [
   "Architettura",
-  "Architecture"
+  "Architecture",
+  "Arquitectura"
  ],
  "pg.int.family": [
   "Con bambini",
-  "With children"
+  "With children",
+  "Con niños"
  ],
  "pg.budget.lt1000": [
   "Meno di 1.000 €",
-  "Under €1,000"
+  "Under €1,000",
+  "Menos de 1000 €"
  ],
  "pg.budget.1000_2500": [
   "1.000 – 2.500 €",
-  "€1,000 – 2,500"
+  "€1,000 – 2,500",
+  "1000 – 2500 €"
  ],
  "pg.budget.2500_5000": [
   "2.500 – 5.000 €",
-  "€2,500 – 5,000"
+  "€2,500 – 5,000",
+  "2500 – 5000 €"
  ],
  "pg.budget.gt5000": [
   "Oltre 5.000 €",
-  "Over €5,000"
+  "Over €5,000",
+  "Más de 5000 €"
  ],
  "pg.budget.tbd": [
   "Da definire",
-  "To be defined"
+  "To be defined",
+  "Por definir"
  ],
  "pg.err.fields": [
   "Controlla nome, email e numero di persone.",
-  "Please check your name, email and number of people."
+  "Please check your name, email and number of people.",
+  "Revisa el nombre, el correo electrónico y el número de personas."
  ],
  "pg.err.dates": [
   "Le date non sono valide: la data di inizio non può essere nel passato e la fine deve seguire l’inizio (massimo 60 giorni).",
-  "The dates are not valid: the start cannot be in the past and the end must follow the start (60 days at most)."
+  "The dates are not valid: the start cannot be in the past and the end must follow the start (60 days at most).",
+  "Las fechas no son válidas: la de inicio no puede estar en el pasado y la de fin debe ser posterior a la de inicio (máximo 60 días)."
  ],
  "pg.received.title": [
   "Richiesta ricevuta",
-  "Request received"
+  "Request received",
+  "Solicitud recibida"
  ],
  "pg.received.text": [
   "Grazie! Ti ho inviato una email di conferma. Ti rispondo con una proposta di norma entro due giorni lavorativi.",
-  "Thank you! I have sent you a confirmation email. I will reply with a proposal, usually within two business days."
+  "Thank you! I have sent you a confirmation email. I will reply with a proposal, usually within two business days.",
+  "¡Gracias! Te he enviado un correo de confirmación. Te responderé con una propuesta, normalmente en un plazo de dos días hábiles."
  ],
  "pg.status.new": [
   "Richiesta ricevuta",
-  "Request received"
+  "Request received",
+  "Solicitud recibida"
  ],
  "pg.status.new.text": [
   "Sto preparando la proposta: ti scrivo appena è pronta.",
-  "I am preparing the proposal: I will write as soon as it is ready."
+  "I am preparing the proposal: I will write as soon as it is ready.",
+  "Estoy preparando la propuesta: te escribo en cuanto esté lista."
  ],
  "pg.status.quoted": [
   "Proposta pronta",
-  "Proposal ready"
+  "Proposal ready",
+  "Propuesta lista"
  ],
  "pg.status.quoted.text": [
   "Guarda il programma qui sotto: puoi accettarlo, chiedere modifiche o declinare.",
-  "Have a look at the programme below: you can accept it, ask for changes or decline."
+  "Have a look at the programme below: you can accept it, ask for changes or decline.",
+  "Echa un vistazo al programa de abajo: puedes aceptarlo, pedir cambios o rechazarlo."
  ],
  "pg.status.accepted": [
   "Proposta accettata",
-  "Proposal accepted"
+  "Proposal accepted",
+  "Propuesta aceptada"
  ],
  "pg.status.accepted.text": [
   "Per confermare il programma serve l’acconto indicato qui sotto.",
-  "To confirm the programme the deposit shown below is needed."
+  "To confirm the programme the deposit shown below is needed.",
+  "Para confirmar el programa hace falta el anticipo indicado abajo."
  ],
  "pg.status.confirmed": [
   "Programma confermato",
-  "Programme confirmed"
+  "Programme confirmed",
+  "Programa confirmado"
  ],
  "pg.status.confirmed.text": [
   "Le date sono riservate per voi. Ti scrivo per i dettagli pratici.",
-  "The dates are reserved for you. I will write with the practical details."
+  "The dates are reserved for you. I will write with the practical details.",
+  "Las fechas quedan reservadas. Te escribo para los detalles prácticos."
  ],
  "pg.status.declined": [
   "Proposta rifiutata",
-  "Proposal declined"
+  "Proposal declined",
+  "Propuesta rechazada"
  ],
  "pg.status.declined.text": [
   "Grazie comunque. Se cambi idea scrivimi.",
-  "Thank you anyway. If you change your mind, write to me."
+  "Thank you anyway. If you change your mind, write to me.",
+  "Gracias de todos modos. Si cambias de idea, escríbeme."
  ],
  "pg.status.closed": [
   "Richiesta chiusa",
-  "Request closed"
+  "Request closed",
+  "Solicitud cerrada"
  ],
  "pg.status.closed.text": [
   "Questa richiesta non è più attiva. Se serve scrivimi.",
-  "This request is no longer active. Write to me if needed."
+  "This request is no longer active. Write to me if needed.",
+  "Esta solicitud ya no está activa. Si lo necesitas, escríbeme."
  ],
  "pg.request": [
   "La tua richiesta",
-  "Your request"
+  "Your request",
+  "Tu solicitud"
  ],
  "pg.proposal": [
   "La proposta",
-  "The proposal"
+  "The proposal",
+  "La propuesta"
  ],
  "pg.days": [
   "Programma",
-  "Itinerary"
+  "Itinerary",
+  "Programa"
  ],
  "pg.total": [
   "Totale",
+  "Total",
   "Total"
  ],
  "pg.deposit": [
   "Acconto per confermare ({percent}%)",
-  "Deposit to confirm ({percent}%)"
+  "Deposit to confirm ({percent}%)",
+  "Anticipo para confirmar ({percent}%)"
  ],
  "pg.balance": [
   "Saldo",
-  "Balance"
+  "Balance",
+  "Saldo"
  ],
  "pg.validUntil": [
   "Proposta valida fino al {date}",
-  "Proposal valid until {date}"
+  "Proposal valid until {date}",
+  "Propuesta válida hasta el {date}"
  ],
  "pg.expired": [
   "Questa proposta è scaduta: scrivimi e la riattivo volentieri.",
-  "This proposal has expired: write to me and I will gladly reactivate it."
+  "This proposal has expired: write to me and I will gladly reactivate it.",
+  "Esta propuesta ha caducado: escríbeme y la reactivo con gusto."
  ],
  "pg.notes": [
   "Condizioni e note",
-  "Terms and notes"
+  "Terms and notes",
+  "Condiciones y notas"
  ],
  "pg.accept": [
   "Accetta la proposta",
-  "Accept the proposal"
+  "Accept the proposal",
+  "Aceptar la propuesta"
  ],
  "pg.acceptConfirm": [
   "Confermi di accettare la proposta?",
-  "Do you confirm you accept the proposal?"
+  "Do you confirm you accept the proposal?",
+  "¿Confirmas que aceptas la propuesta?"
  ],
  "pg.decline": [
   "Non fa per me",
-  "Not for me"
+  "Not for me",
+  "No es para mí"
  ],
  "pg.declineConfirm": [
   "Vuoi rifiutare la proposta?",
-  "Do you want to decline the proposal?"
+  "Do you want to decline the proposal?",
+  "¿Quieres rechazar la propuesta?"
  ],
  "pg.changes": [
   "Vuoi modifiche?",
-  "Want changes?"
+  "Want changes?",
+  "¿Quieres cambiar algo?"
  ],
  "pg.changesHint": [
   "Scrivimi cosa cambieresti: ti rispondo con una versione aggiornata.",
-  "Tell me what you would change: I will reply with an updated version."
+  "Tell me what you would change: I will reply with an updated version.",
+  "Cuéntame qué cambiarías: te respondo con una versión actualizada."
  ],
  "pg.sendMessage": [
   "Invia",
-  "Send"
+  "Send",
+  "Enviar"
  ],
  "pg.payDeposit": [
   "Paga l’acconto",
-  "Pay the deposit"
+  "Pay the deposit",
+  "Pagar el anticipo"
  ],
  "pg.depositPaid": [
   "Acconto ricevuto",
-  "Deposit received"
+  "Deposit received",
+  "Anticipo recibido"
  ],
  "pg.depositManual": [
   "Ti scrivo io le indicazioni per versare l’acconto.",
-  "I will send you the instructions to pay the deposit."
+  "I will send you the instructions to pay the deposit.",
+  "Te enviaré las indicaciones para abonar el anticipo."
  ],
  "pg.download": [
   "Scarica la proposta (PDF)",
-  "Download the proposal (PDF)"
+  "Download the proposal (PDF)",
+  "Descargar la propuesta (PDF)"
  ],
  "pg.flash.accepted": [
   "Proposta accettata, grazie!",
-  "Proposal accepted, thank you!"
+  "Proposal accepted, thank you!",
+  "Propuesta aceptada, ¡gracias!"
  ],
  "pg.flash.declined": [
   "Ho registrato il tuo rifiuto.",
-  "I have recorded your decision."
+  "I have recorded your decision.",
+  "He registrado tu decisión."
  ],
  "pg.flash.message": [
   "Messaggio inviato: ti rispondo presto.",
-  "Message sent: I will reply soon."
+  "Message sent: I will reply soon.",
+  "Mensaje enviado: te respondo pronto."
  ],
  "pg.flash.expired": [
   "La proposta è scaduta: scrivimi per riattivarla.",
-  "The proposal has expired: write to me to reactivate it."
+  "The proposal has expired: write to me to reactivate it.",
+  "La propuesta ha caducado: escríbeme para reactivarla."
  ],
  "pg.flash.conflict": [
   "Alcune date non sono più disponibili: scrivimi e troviamo un’alternativa.",
-  "Some dates are no longer available: write to me and we will find an alternative."
+  "Some dates are no longer available: write to me and we will find an alternative.",
+  "Algunas fechas ya no están disponibles: escríbeme y buscamos una alternativa."
  ],
  "pg.flash.error": [
   "Non è stato possibile completare l’operazione.",
-  "The operation could not be completed."
+  "The operation could not be completed.",
+  "No se ha podido completar la operación."
  ],
  "pg.ref": [
   "Codice richiesta",
-  "Request reference"
+  "Request reference",
+  "Código de solicitud"
  ],
  "pg.dates": [
   "Date",
-  "Dates"
+  "Dates",
+  "Fechas"
  ],
  "pg.datesFlexible": [
   "flessibili",
-  "flexible"
+  "flexible",
+  "flexibles"
  ],
  "pg.datesTbd": [
   "da definire",
-  "to be defined"
+  "to be defined",
+  "por definir"
  ],
  "pg.toursLink": [
   "Servono più giorni? Costruiamo un programma su misura.",
-  "Need more days? Let us build a tailor-made programme."
+  "Need more days? Let us build a tailor-made programme.",
+  "¿Necesitas más días? Diseñemos un programa a medida."
  ],
  "pg.b2bLink": [
   "Programmi di più giorni per i tuoi clienti",
-  "Multi-day programmes for your clients"
+  "Multi-day programmes for your clients",
+  "Programas de varios días para tus clientes"
  ],
  "pdf.bookingRef": [
   "Codice prenotazione",
-  "Booking reference"
+  "Booking reference",
+  "Código de reserva"
  ],
  "pdf.agency": [
   "Agenzia",
-  "Agency"
+  "Agency",
+  "Agencia"
  ],
  "pdf.included": [
   "Incluso",
-  "Included"
+  "Included",
+  "Incluido"
  ],
  "pdf.excluded": [
   "Non incluso",
-  "Not included"
+  "Not included",
+  "No incluido"
  ],
  "pdf.goodToKnow": [
   "Da sapere",
-  "Good to know"
+  "Good to know",
+  "Conviene saber"
  ],
  "pdf.b2bNoPay": [
   "Nessun pagamento da effettuare sul posto: il servizio è regolato direttamente con l’agenzia.",
-  "No payment is due on site: the service is settled directly with the agency."
+  "No payment is due on site: the service is settled directly with the agency.",
+  "No hay que pagar nada en el lugar: el servicio se liquida directamente con la agencia."
  ],
  "pdf.manage": [
   "Gestisci o annulla la prenotazione online:",
-  "Manage or cancel your booking online:"
+  "Manage or cancel your booking online:",
+  "Gestiona o cancela la reserva online:"
  ],
  "pdf.payment": [
   "Pagamento",
-  "Payment"
+  "Payment",
+  "Pago"
  ],
  "pdf.guideContact": [
   "La tua guida",
-  "Your guide"
+  "Your guide",
+  "Tu guía"
  ],
  "pdf.page": [
   "Pagina {n} di {total}",
-  "Page {n} of {total}"
+  "Page {n} of {total}",
+  "Página {n} de {total}"
  ],
  "pdf.giftTitle": [
   "Buono regalo",
-  "Gift card"
+  "Gift card",
+  "Tarjeta regalo"
  ],
  "pdf.giftFor": [
   "Per",
-  "For"
+  "For",
+  "Para"
  ],
  "pdf.giftFrom": [
   "Da parte di",
-  "From"
+  "From",
+  "De parte de"
  ],
  "pdf.giftWhere": [
   "Si usa su {url}",
-  "Redeem it at {url}"
+  "Redeem it at {url}",
+  "Se canjea en {url}"
  ],
  "pdf.proposal": [
   "Proposta di programma",
-  "Programme proposal"
+  "Programme proposal",
+  "Propuesta de programa"
  ],
  "pdf.proposalFor": [
   "Preparata per",
-  "Prepared for"
+  "Prepared for",
+  "Preparada para"
  ],
  "pdf.proposalAccept": [
   "Per accettare la proposta e versare l’acconto apri questo indirizzo (link riservato):",
-  "To accept the proposal and pay the deposit open this address (private link):"
+  "To accept the proposal and pay the deposit open this address (private link):",
+  "Para aceptar la propuesta y abonar el anticipo, abre esta dirección (enlace privado):"
  ],
  "pdf.proposalTransfer": [
   "Acconto con bonifico",
-  "Deposit by bank transfer"
+  "Deposit by bank transfer",
+  "Anticipo por transferencia"
  ],
  "pdf.colDay": [
   "Giorno",
-  "Day"
+  "Day",
+  "Día"
  ],
  "pdf.colTime": [
   "Orario",
-  "Time"
+  "Time",
+  "Hora"
  ],
  "pdf.colWhat": [
   "Programma",
-  "Programme"
+  "Programme",
+  "Programa"
  ],
  "pdf.colPrice": [
   "Prezzo",
-  "Price"
+  "Price",
+  "Precio"
  ],
  "pdf.generated": [
   "Documento generato il {date}",
-  "Document generated on {date}"
+  "Document generated on {date}",
+  "Documento generado el {date}"
  ],
  "inv.pdf.invoice": [
   "Fattura",
-  "Invoice"
+  "Invoice",
+  "Factura"
  ],
  "inv.pdf.credit": [
   "Nota di credito",
-  "Credit note"
+  "Credit note",
+  "Nota de crédito"
  ],
  "inv.pdf.courtesy": [
   "Copia di cortesia",
-  "Courtesy copy"
+  "Courtesy copy",
+  "Copia de cortesía"
  ],
  "inv.pdf.number": [
   "n. {number} del {date}",
-  "no. {number} of {date}"
+  "no. {number} of {date}",
+  "n.º {number} del {date}"
  ],
  "inv.pdf.seller": [
   "Cedente / prestatore",
-  "Supplier"
+  "Supplier",
+  "Proveedor"
  ],
  "inv.pdf.buyer": [
   "Cessionario / committente",
-  "Customer"
+  "Customer",
+  "Cliente"
  ],
  "inv.pdf.vat": [
   "P.IVA",
-  "VAT no."
+  "VAT no.",
+  "P. IVA"
  ],
  "inv.pdf.taxCode": [
   "C.F.",
-  "Tax code"
+  "Tax code",
+  "Código fiscal"
  ],
  "inv.pdf.regime": [
   "Regime fiscale",
-  "Tax regime"
+  "Tax regime",
+  "Régimen fiscal"
  ],
  "inv.pdf.regime.RF19": [
   "Regime forfettario",
-  "Flat-rate regime"
+  "Flat-rate regime",
+  "Régimen forfetario"
  ],
  "inv.pdf.regime.RF01": [
   "Regime ordinario",
-  "Ordinary regime"
+  "Ordinary regime",
+  "Régimen ordinario"
  ],
  "inv.pdf.regime.RF02": [
   "Contribuenti minimi",
-  "Minimum taxpayers regime"
+  "Minimum taxpayers regime",
+  "Régimen de contribuyentes mínimos"
  ],
  "inv.pdf.sdi": [
   "Codice destinatario",
-  "Recipient code"
+  "Recipient code",
+  "Código de destinatario"
  ],
  "inv.pdf.pec": [
   "PEC",
-  "Certified email"
+  "Certified email",
+  "Correo certificado (PEC)"
  ],
  "inv.pdf.desc": [
   "Descrizione",
-  "Description"
+  "Description",
+  "Descripción"
  ],
  "inv.pdf.amount": [
   "Importo",
-  "Amount"
+  "Amount",
+  "Importe"
  ],
  "inv.pdf.vatCol": [
   "IVA",
-  "VAT"
+  "VAT",
+  "IVA"
  ],
  "inv.pdf.taxable": [
   "Imponibile",
-  "Taxable amount"
+  "Taxable amount",
+  "Base imponible"
  ],
  "inv.pdf.contribution": [
   "Rivalsa INPS {percent}%",
-  "Social security contribution {percent}%"
+  "Social security contribution {percent}%",
+  "Cotización a la seguridad social (INPS) {percent}%"
  ],
  "inv.pdf.vatAmount": [
   "IVA {rate}%",
-  "VAT {rate}%"
+  "VAT {rate}%",
+  "IVA {rate}%"
  ],
  "inv.pdf.noVat": [
   "IVA",
-  "VAT"
+  "VAT",
+  "IVA"
  ],
  "inv.pdf.bollo": [
   "Imposta di bollo assolta in modo virtuale",
-  "Stamp duty paid virtually"
+  "Stamp duty paid virtually",
+  "Impuesto de timbre (bollo) pagado de forma virtual"
  ],
  "inv.pdf.rounding": [
   "Arrotondamento",
-  "Rounding"
+  "Rounding",
+  "Redondeo"
  ],
  "inv.pdf.total": [
   "Totale documento",
-  "Document total"
+  "Document total",
+  "Total del documento"
  ],
  "inv.pdf.withholding": [
   "Ritenuta d’acconto {percent}%",
-  "Withholding tax {percent}%"
+  "Withholding tax {percent}%",
+  "Retención a cuenta {percent}%"
  ],
  "inv.pdf.payable": [
   "Netto a pagare",
-  "Net amount due"
+  "Net amount due",
+  "Neto a pagar"
  ],
  "inv.pdf.payment": [
   "Pagamento",
-  "Payment"
+  "Payment",
+  "Pago"
  ],
  "inv.pdf.pay.MP08": [
   "Carta di pagamento",
-  "Card"
+  "Card",
+  "Tarjeta de pago"
  ],
  "inv.pdf.pay.MP05": [
   "Bonifico",
-  "Bank transfer"
+  "Bank transfer",
+  "Transferencia"
  ],
  "inv.pdf.pay.MP01": [
   "Contanti",
-  "Cash"
+  "Cash",
+  "Efectivo"
  ],
  "inv.pdf.paid": [
   "già pagato",
-  "already paid"
+  "already paid",
+  "ya pagado"
  ],
  "inv.pdf.dueOn": [
   "entro il {date}",
-  "due by {date}"
+  "due by {date}",
+  "vence el {date}"
  ],
  "inv.pdf.iban": [
+  "IBAN",
   "IBAN",
   "IBAN"
  ],
  "inv.pdf.related": [
   "Storna la fattura n. {number} del {date}.",
-  "Credits invoice no. {number} of {date}."
+  "Credits invoice no. {number} of {date}.",
+  "Anula la factura n.º {number} del {date}."
  ],
  "inv.pdf.notes": [
   "Note",
-  "Notes"
+  "Notes",
+  "Notas"
  ],
  "inv.pdf.footer": [
   "Copia di cortesia priva di valore fiscale. La fattura elettronica originale è il file XML trasmesso tramite il Sistema di Interscambio: la trovi nella tua area riservata dell’Agenzia delle Entrate (Fatture e Corrispettivi) o presso il tuo intermediario.",
-  "Courtesy copy with no tax value. The original electronic invoice is the XML file sent through the Italian Exchange System (SdI); in Italy it is available in your Agenzia delle Entrate private area or through your intermediary."
+  "Courtesy copy with no tax value. The original electronic invoice is the XML file sent through the Italian Exchange System (SdI); in Italy it is available in your Agenzia delle Entrate private area or through your intermediary.",
+  "Copia de cortesía sin valor fiscal. La factura electrónica original es el archivo XML transmitido a través del Sistema de Intercambio italiano (SdI); en Italia está disponible en tu área reservada de la Agenzia delle Entrate (Fatture e Corrispettivi) o a través de tu intermediario."
  ],
  "inv.mail.subject": [
+  "{kind} {number} — {name}",
   "{kind} {number} — {name}",
   "{kind} {number} — {name}"
  ],
  "inv.mail.intro": [
   "in allegato trovi la copia di cortesia della {kind} {number} del {date}, di {total}.",
-  "please find attached the courtesy copy of {kind} {number} of {date}, for {total}."
+  "please find attached the courtesy copy of {kind} {number} of {date}, for {total}.",
+  "te adjunto la copia de cortesía de la {kind} {number} del {date}, por un importe de {total}."
  ],
  "inv.mail.xml": [
   "Allego anche il file XML della fattura elettronica.",
-  "The XML file of the electronic invoice is attached as well."
+  "The XML file of the electronic invoice is attached as well.",
+  "También adjunto el archivo XML de la factura electrónica."
  ],
  "inv.mail.kindInvoice": [
   "fattura",
-  "invoice"
+  "invoice",
+  "factura"
  ],
  "inv.mail.kindCredit": [
   "nota di credito",
-  "credit note"
+  "credit note",
+  "nota de crédito"
  ],
  "legal.payBoth": [
   "online con carta oppure, dove previsto, il giorno del servizio",
-  "online by card or, where offered, on the day of the service"
+  "online by card or, where offered, on the day of the service",
+  "online con tarjeta o, cuando esté previsto, el día del servicio"
  ],
  "legal.payCard": [
   "online con carta",
-  "online by card"
+  "online by card",
+  "online con tarjeta"
  ],
  "trust.paySubCard": [
   "Online con carta, in modo sicuro",
-  "Secure online card payment"
+  "Secure online card payment",
+  "Online con tarjeta, de forma segura"
  ],
  "how.2.pCard": [
   "Inserisci i dati e paga online in modo sicuro con carta.",
-  "Enter your details and pay securely online by card."
+  "Enter your details and pay securely online by card.",
+  "Introduce tus datos y paga online de forma segura con tarjeta."
  ],
  "faq.pay.aCard": [
   "Con carta online, in modo sicuro tramite Stripe. Le agenzie possono pagare a fattura.",
-  "Online by card, securely through Stripe. Agencies can pay by invoice."
+  "Online by card, securely through Stripe. Agencies can pay by invoice.",
+  "Con tarjeta online, de forma segura a través de Stripe. Las agencias pueden pagar con factura."
  ],
  "trust.payCard": [
   "Pagamento sicuro",
-  "Secure payment"
+  "Secure payment",
+  "Pago seguro"
  ]
 }

@@ -7,7 +7,7 @@ maxParticipants: 25
 price: 240
 b2bPrice: 190
 art: walk
-languages: [it, en]
+languages: [it, en, es]
 
 it:
   title: Servizio guida mezza giornata
@@ -50,3 +50,24 @@ en:
   excludes:
     - Entry tickets, transport, audio guides, tips
   notes: Price for the whole group. Discounted rate reserved for DMCs, tour operators and agencies with a partner account.
+
+es:
+  title: Servicio de guía de media jornada
+  subtitle: 4 horas de servicio para grupos y agencias
+  summary: "La fórmula clásica para grupos, DMC y operadores turísticos: un guía turístico habilitado para media jornada."
+  meetingPoint: A convenir contigo (hotel, muelle, terminal)
+  meetingUrl: ''
+  description: |
+    Servicio de guía turístico habilitado de 4 horas de duración, con inicio a tu elección. Pensado para grupos organizados, agencias y DMC que necesitan un profesional fiable, puntual y conocedor de Venecia.
+
+    El itinerario se acuerda con antelación en función del programa del grupo, del tiempo disponible y de las necesidades logísticas (llegada desde el hotel, un barco de crucero, el muelle o la terminal).
+  highlights:
+    - Guía turístico habilitado durante 4 horas consecutivas
+    - Itinerario acordado con antelación
+    - Grupos de hasta 25 personas, dentro de los límites previstos por el Ayuntamiento
+  includes:
+    - Guía turístico habilitado
+    - Coordinación previa con la persona de contacto / el jefe de grupo
+  excludes:
+    - Entradas, transportes, radioguías, propinas
+  notes: Precio para todo el grupo. Tarifa con descuento reservada a DMC, operadores turísticos y agencias con cuenta de socio.

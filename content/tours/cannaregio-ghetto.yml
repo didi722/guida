@@ -8,7 +8,7 @@ maxParticipants: 10
 price: 35
 b2bPrice: 28
 art: ghetto
-languages: [it, en]
+languages: [it, en, es]
 
 it:
   title: Cannaregio e il Ghetto
@@ -28,7 +28,7 @@ it:
     - La Madonna dell'Orto, parrocchia e sepolcro di Tintoretto
     - Fondamenta, botteghe e angoli lontani dal turismo di massa
   includes:
-    - Guida abilitata, in italiano o inglese
+    - Guida abilitata, in italiano, inglese o spagnolo
     - Gruppo di massimo 10 persone
     - Indicazioni per bacari e osterie di quartiere
   excludes:
@@ -54,10 +54,36 @@ en:
     - Madonna dell'Orto, Tintoretto's parish church and burial place
     - Quaysides, workshops and corners far from mass tourism
   includes:
-    - Licensed guide, in Italian or English
+    - Licensed guide, in Italian, English or Spanish
     - Group of 10 guests at most
     - Tips for neighbourhood bacari and taverns
   excludes:
     - Entry to the Jewish Museum and the synagogues
     - Tips and drinks
   notes: The Ghetto is a living, sacred place for the Jewish community. We ask for respectful dress and behaviour.
+
+es:
+  title: Cannaregio y el Ghetto
+  subtitle: La Venecia de las comunidades y las minorías
+  summary: El barrio más auténtico, el primer Ghetto de la historia y la iglesia donde descansa Tintoretto.
+  meetingPoint: Ponte delle Guglie, Cannaregio (el punto exacto se indica en el correo de confirmación)
+  meetingUrl: https://www.google.com/maps/search/?api=1&query=Ponte+delle+Guglie+Venezia
+  description: |
+    Cannaregio es el sestiere donde Venecia vuelve a ser una ciudad en la que se vive. Aquí, en 1516, la República estableció el Ghetto: un lugar de segregación, pero también un extraordinario laboratorio de cultura, comercio y fe, del que nace la propia palabra «ghetto».
+
+    Caminamos entre plazas, fondamenta y tiendas de barrio, nos adentramos en la historia de las distintas comunidades que han habitado la ciudad (la judía, pero también la griega, la armenia y la alemana) y llegamos a la Madonna dell'Orto, la iglesia de Tintoretto.
+
+    Un recorrido para quien quiere entender Venecia también a través de las religiones y de las formas de convivencia que la han moldeado.
+  highlights:
+    - "El Ghetto Nuovo y el Ghetto Vecchio: historia, arquitectura y vida cotidiana"
+    - Las sinagogas, vistas desde el exterior (visita opcional al museo)
+    - La Madonna dell'Orto, parroquia y sepulcro de Tintoretto
+    - Fondamenta, tiendas y rincones lejos del turismo de masas
+  includes:
+    - Guía turístico habilitado, en italiano, inglés o español
+    - Grupo de 10 personas como máximo
+    - Sugerencias de bacari y tabernas del barrio
+  excludes:
+    - Entrada al Museo Judío y a las sinagogas
+    - Propinas y consumiciones
+  notes: El Ghetto es un lugar vivo y sagrado para la comunidad judía. Pedimos una vestimenta y un comportamiento respetuosos.

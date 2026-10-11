@@ -33,7 +33,7 @@ export function createServices(app) {
         lang: booking.lang,
         successUrl: `${cfg.baseUrl}/${lang}/booking/${booking.ref}?t=${booking.token}&paid=1`,
         cancelUrl: `${cfg.baseUrl}/${lang}/booking/${booking.ref}?t=${booking.token}&canceled=1`,
-        demoUrl: `${cfg.baseUrl}/pay/demo/${booking.ref}?t=${booking.token}`,
+        demoUrl: `${cfg.baseUrl}/pay/demo/${booking.ref}?t=${booking.token}&lang=${lang}`,
         nowMs,
         attempt,
       });

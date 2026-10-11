@@ -116,7 +116,7 @@ ul.plain, ol.plain { list-style: none; margin: 0; padding: 0; }
 .brand { display: flex; flex-direction: column; text-decoration: none; color: var(--header-ink); line-height: 1.1; margin-right: auto; min-width: 0; }
 .brand:hover { color: var(--header-ink); }
 .brand-name { font-weight: 700; font-size: 1.55rem; letter-spacing: 0.01em; transition: font-size 0.35s ease; white-space: nowrap; }
-.brand-sub { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; font-weight: 400; transition: opacity 0.3s, max-height 0.3s; max-height: 20px; overflow: hidden; }
+.brand-sub { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; font-weight: 400; transition: opacity 0.3s, max-height 0.3s; max-height: 24px; overflow: hidden; padding-top: 5px; margin-top: -5px; } /* il padding lascia spazio agli accenti sulle maiuscole (GUÍA, TURÍSTICO) */
 .site-header.shrink .brand-name { font-size: 1.25rem; }
 .site-header.shrink .brand-sub { opacity: 0; max-height: 0; }
 .main-nav { display: flex; gap: 26px; }
@@ -326,6 +326,7 @@ textarea { resize: vertical; min-height: 90px; }
 .cal { margin: 6px 0 14px; transition: opacity 0.2s; } .cal.is-loading { opacity: 0.55; }
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .cal-title { text-transform: capitalize; font-size: 1.05rem; }
+html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title::first-letter { text-transform: uppercase; } /* «octubre de 2026»: solo la prima lettera */
 .cal-nav { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--field); font-size: 1.4rem; line-height: 1; cursor: pointer; color: var(--accent-text); font-family: inherit; }
 .cal-nav:hover:not(:disabled) { border-color: var(--bronze); background: var(--gold-soft); } .cal-nav:disabled { opacity: 0.3; cursor: not-allowed; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }

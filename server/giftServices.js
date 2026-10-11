@@ -1,8 +1,10 @@
 // Buoni regalo: collega acquisto, pagamento ed email.
 import { notifyGuideGift, sendGiftToBuyer, sendGiftToRecipient } from './emails.js';
 import { GiftError, activateGift, claimDelivery, createAdminGift, createGiftOrder, getGift, getGiftByRef, giftsDueForDelivery, voidAbandonedGifts } from './gifts.js';
+import { normLang, pick } from './langs.js';
 
-const PRODUCT = { it: 'Buono regalo', en: 'Gift card' };
+// Nome del prodotto per Stripe e per la pagina di pagamento, nella lingua del cliente
+const PRODUCT = { it: 'Buono regalo', en: 'Gift card', es: 'Tarjeta regalo' };
 
 export function createGiftServices(app) {
   const { db, cfg, payments } = app;
@@ -14,17 +16,19 @@ export function createGiftServices(app) {
     },
 
     async startCheckout(card, lang, nowMs = Date.now(), attempt = 0) {
+      const cardLang = normLang(card.lang);
+      const product = pick(PRODUCT, cardLang);
       const session = await payments.createCheckout({
         ref: card.ref,
         email: card.buyer_email,
         amountCents: card.initial_cents,
         currency: card.currency,
-        title: `${PRODUCT[card.lang]} — ${cfg.site.name}`,
-        description: card.recipient_name ? `${PRODUCT[card.lang]} · ${card.recipient_name}` : PRODUCT[card.lang],
-        lang: card.lang,
+        title: `${product} — ${cfg.site.name}`,
+        description: card.recipient_name ? `${product} · ${card.recipient_name}` : product,
+        lang: cardLang,
         successUrl: `${cfg.baseUrl}/${lang}/gift/${card.ref}?t=${card.token}&paid=1`,
         cancelUrl: `${cfg.baseUrl}/${lang}/gift/${card.ref}?t=${card.token}&canceled=1`,
-        demoUrl: `${cfg.baseUrl}/pay/demo/${card.ref}?t=${card.token}`,
+        demoUrl: `${cfg.baseUrl}/pay/demo/${card.ref}?t=${card.token}&lang=${lang}`,
         nowMs,
         attempt,
       });
@@ -102,7 +106,7 @@ export function createGiftServices(app) {
     find: (ref) => getGiftByRef(db, ref),
     dueCents: (c) => c.initial_cents,
     isOpen: (c) => c.status === 'pending',
-    title: (c, lang) => PRODUCT[lang] ?? PRODUCT.it,
+    title: (c, lang) => pick(PRODUCT, normLang(lang)),
     onPaid: (c, pi, nowMs) => svc.handlePaid(c.id, pi, nowMs),
     onExpired: () => {}, // l'ordine resta in attesa: il cliente può riprovare dal link
     startCheckout: (c, lang, nowMs, attempt) => svc.startCheckout(c, lang, nowMs, attempt),

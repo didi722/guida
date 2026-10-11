@@ -7,7 +7,7 @@ maxParticipants: 12
 price: 320
 b2bPrice: 260
 art: islands
-languages: [it, en]
+languages: [it, en, es]
 
 it:
   title: Murano, Burano e Torcello
@@ -60,3 +60,29 @@ en:
     - Entry to Torcello cathedral
     - Lunch, tips and drinks
   notes: Price for the whole group, up to 12 guests. In case of severe weather we agree on an alternative or another date together.
+
+es:
+  title: Murano, Burano y Torcello
+  subtitle: Media jornada en la laguna
+  summary: "El vidrio, el encaje y la catedral de los primeros venecianos: tres islas, tres historias."
+  meetingPoint: A convenir contigo (normalmente en la parada de Fondamente Nove o en la zona de San Marcos)
+  meetingUrl: ''
+  description: |
+    La laguna no es solo el «telón de fondo» de Venecia: es el lugar donde todo empezó. Con un guía se entiende mejor el hilo que une las islas.
+
+    En Murano seguimos la historia del vidrio y entramos en una fornace (horno de vidrio); en Burano paseamos entre casas de colores y encajes; en Torcello llegamos a la catedral de Santa Maria Assunta, con sus mosaicos bizantinos, en uno de los primeros asentamientos de la laguna.
+
+    Los desplazamientos se hacen en vaporetto (o en barco privado, a petición): un ritmo lento, pensado para quien prefiere ver menos cosas pero entenderlas mejor.
+  highlights:
+    - "Murano: la historia del vidrio y una demostración en el horno"
+    - "Burano: casas de colores, encajes y vida isleña"
+    - "Torcello: la catedral y los mosaicos bizantinos"
+    - La laguna vista desde el agua
+  includes:
+    - Guía turístico habilitado durante toda la excursión
+    - Itinerario y horarios adaptados a tu grupo
+  excludes:
+    - Billetes de vaporetto o alquiler de barco privado
+    - Entrada a la catedral de Torcello
+    - Almuerzo, propinas y consumiciones
+  notes: Precio para todo el grupo, hasta 12 personas. En caso de mal tiempo severo, acordamos juntos una alternativa u otra fecha.

@@ -270,7 +270,7 @@ export function createProgramServices(app) {
         lang: p.lang,
         successUrl: `${cfg.baseUrl}/${lang}/programs/${p.ref}?t=${p.token}&paid=1`,
         cancelUrl: `${cfg.baseUrl}/${lang}/programs/${p.ref}?t=${p.token}&canceled=1`,
-        demoUrl: `${cfg.baseUrl}/pay/demo/${p.ref}?t=${p.token}`,
+        demoUrl: `${cfg.baseUrl}/pay/demo/${p.ref}?t=${p.token}&lang=${lang}`,
         nowMs,
         attempt,
       });

@@ -2,9 +2,11 @@
 import { COLORS as C, CW, PAGE, createDoc, ensure, finishDoc, fold, sectionTitle, title } from './pdf.js';
 import { invoiceLines, optionsOf, parseJson } from './invoices.js';
 import { makeT } from './i18n.js';
+import { localeOf, normLang } from './langs.js';
 import { fmtDate } from './time.js';
 
-const C2 = (cents, lang) => new Intl.NumberFormat(lang === 'en' ? 'en-GB' : 'it-IT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+// Importi e date seguono la lingua del cliente; le percentuali restano all'italiana (è un documento fiscale italiano).
+const C2 = (cents, lang) => new Intl.NumberFormat(localeOf(lang), { style: 'currency', currency: 'EUR' }).format(cents / 100);
 const pct = (bp) => (bp / 100).toLocaleString('it-IT', { maximumFractionDigits: 2 });
 
 function partyLines(p, t, { isSeller = false, routing = null } = {}) {
@@ -52,7 +54,7 @@ function partyBox(doc, x, y, w, heading, lines) {
 /** Copia di cortesia della fattura (o nota di credito) emessa. */
 export async function renderInvoicePdf(app, inv) {
   const buyer = parseJson(inv.buyer_json);
-  const lang = buyer.lang === 'en' ? 'en' : 'it';
+  const lang = normLang(buyer.lang);
   const t = makeT(lang);
   const cfgSnap = parseJson(inv.config_json);
   const seller = cfgSnap.seller ?? { ...app.cfg.invoice.seller, vatNumber: app.cfg.site.vatNumber, phone: app.cfg.site.phone, email: app.cfg.site.email };
@@ -118,7 +120,8 @@ export async function renderInvoicePdf(app, inv) {
   doc.moveDown(0.4);
   const row = (label, value, { big = false, muted = false } = {}) => {
     const y = doc.y;
-    doc.font(big ? 'B' : 'R').fontSize(big ? 13 : 10).fillColor(muted ? C.muted : C.ink).text(fold(label), PAGE.m + CW - 340, y, { width: 210, align: 'right', lineBreak: false });
+    // la colonna delle etichette è larga: in spagnolo alcune («Impuesto de timbre (bollo) pagado de forma virtual») sono molto più lunghe che in italiano e, con una larghezza fissa, andrebbero a capo sulla riga successiva
+    doc.font(big ? 'B' : 'R').fontSize(big ? 13 : 10).fillColor(muted ? C.muted : C.ink).text(fold(label), PAGE.m + CW - 440, y, { width: 310, align: 'right', lineBreak: false });
     doc.font('B').fontSize(big ? 13 : 10).text(value, PAGE.m + CW - 120, y, { width: 120, align: 'right', lineBreak: false });
     doc.x = PAGE.m;
     doc.y = y + (big ? 22 : 16);

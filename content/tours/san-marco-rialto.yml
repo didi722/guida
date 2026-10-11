@@ -11,7 +11,7 @@ maxParticipants: 10
 price: 35                # € a persona (pubblico)
 b2bPrice: 28             # € a persona (tariffa agevolata per agenzie/DMC)
 art: dome
-languages: [it, en]
+languages: [it, en, es]
 
 it:
   title: San Marco e Rialto
@@ -31,7 +31,7 @@ it:
     - Le calli meno battute fra San Marco e Rialto
     - Il Ponte di Rialto e il mercato storico
   includes:
-    - Guida abilitata, in italiano o inglese
+    - Guida abilitata, in italiano, inglese o spagnolo
     - Gruppo di massimo 10 persone
     - Consigli personalizzati su dove mangiare e cosa vedere dopo il tour
   excludes:
@@ -57,10 +57,36 @@ en:
     - The quieter alleys between St Mark's and Rialto
     - The Rialto Bridge and the historic market
   includes:
-    - Licensed guide, in Italian or English
+    - Licensed guide, in Italian, English or Spanish
     - Group of 10 guests at most
     - Personal tips on where to eat and what to see next
   excludes:
     - Tickets for the Basilica and the Doge's Palace (happy to help you book them)
     - Tips and drinks
   notes: About 3 km on foot, with bridges and steps. Comfortable shoes recommended.
+
+es:
+  title: San Marcos y Rialto
+  subtitle: El corazón de Venecia en dos horas y media
+  summary: De la plaza al puente más famoso, leyendo fachadas, mosaicos y calles como páginas de historia.
+  meetingPoint: Plaza de San Marcos, frente a la basílica (el punto exacto se indica en el correo de confirmación)
+  meetingUrl: https://www.google.com/maps/search/?api=1&query=Piazza+San+Marco+Venezia
+  description: |
+    La plaza de San Marcos es el salón de Venecia, pero también un gran libro de piedra: cada fachada, cada mosaico, cada columna cuenta cómo una república de mercaderes construyó su imagen, su poder y su fe.
+
+    Partimos de la basílica y del Palacio Ducal para entender *por qué* Venecia es así; luego dejamos atrás a la multitud y atravesamos las calles hacia Rialto, el centro económico de la ciudad, entre tiendas, mercado y curiosidades que no encontrarás en las guías.
+
+    Grupos pequeños, ritmo relajado, muchas historias y pocos nombres que aprender de memoria.
+  highlights:
+    - La plaza y la fachada de la basílica, entre mosaicos y símbolos del poder veneciano
+    - La Torre del Reloj y el Palacio Ducal, vistos desde el exterior
+    - Las calles menos transitadas entre San Marcos y Rialto
+    - El Puente de Rialto y el mercado histórico
+  includes:
+    - Guía turístico habilitado, en italiano, inglés o español
+    - Grupo de 10 personas como máximo
+    - Consejos personalizados sobre dónde comer y qué ver después del tour
+  excludes:
+    - Entradas a la basílica y al Palacio Ducal (te ayudo a reservarlas, si quieres)
+    - Propinas y consumiciones
+  notes: Recorrido a pie de unos 3 km, con puentes y escalones. Se recomienda calzado cómodo.

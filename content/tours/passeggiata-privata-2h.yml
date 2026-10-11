@@ -6,7 +6,7 @@ maxParticipants: 12
 price: 150
 b2bPrice: 120
 art: bridge
-languages: [it, en]
+languages: [it, en, es]
 
 it:
   title: Passeggiata privata (2 ore)
@@ -23,7 +23,7 @@ it:
     - Orario di inizio a scelta
     - "Tema a scelta: storia, arte, religioni, cucina veneziana, fotografia"
   includes:
-    - Guida abilitata, in italiano o inglese
+    - Guida abilitata, in italiano, inglese o spagnolo
   excludes:
     - Ingressi, trasporti, mance
   notes: Prezzo per l'intero gruppo, fino a 12 persone.
@@ -43,7 +43,27 @@ en:
     - Start time of your choice
     - "Theme of your choice: history, art, religions, Venetian food, photography"
   includes:
-    - Licensed guide, in Italian or English
+    - Licensed guide, in Italian, English or Spanish
   excludes:
     - Entry tickets, transport, tips
   notes: Price for the whole group, up to 12 guests.
+
+es:
+  title: Paseo privado (2 horas)
+  subtitle: Un guía solo para ti, con el tema que elijas
+  summary: "Dos horas a medida: historia, arte, gastronomía, fotografía o simplemente la Venecia que no conoces."
+  meetingPoint: A convenir contigo al hacer la reserva
+  meetingUrl: ''
+  description: |
+    La fórmula más sencilla y flexible: eliges el día y la hora, eliges un tema y lo preparamos juntos. Desde los puentes y las plazuelas escondidos hasta los lugares de la gastronomía y las tradiciones, desde el Renacimiento hasta las historias de familia.
+
+    Perfecta para quien tiene poco tiempo, para quien viaja con niños o para quien quiere una primera orientación antes de explorar por su cuenta.
+  highlights:
+    - Itinerario hecho a tu medida
+    - Hora de inicio a tu elección
+    - "Tema a tu elección: historia, arte, religiones, cocina veneciana, fotografía"
+  includes:
+    - Guía turístico habilitado, en italiano, inglés o español
+  excludes:
+    - Entradas, transportes, propinas
+  notes: Precio para todo el grupo, hasta 12 personas.

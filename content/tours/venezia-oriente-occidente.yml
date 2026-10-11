@@ -7,7 +7,7 @@ maxParticipants: 15
 price: 190               # € a gruppo
 b2bPrice: 150
 art: eastwest
-languages: [it, en]
+languages: [it, en, es]
 
 it:
   title: Venezia tra Oriente e Occidente
@@ -28,7 +28,7 @@ it:
     - San Giorgio dei Greci e il mondo ortodosso a Venezia
     - "Il Giappone a Venezia: l'ambasceria Tenshō del 1585"
   includes:
-    - Guida abilitata e storico delle religioni, in italiano o inglese
+    - Guida abilitata e storico delle religioni, in italiano, inglese o spagnolo
     - Itinerario costruito sui vostri interessi
     - Orario a vostra scelta
   excludes:
@@ -55,10 +55,37 @@ en:
     - San Giorgio dei Greci and the Orthodox world in Venice
     - "Japan in Venice: the 1585 Tenshō embassy"
   includes:
-    - Licensed guide and historian of religions, in Italian or English
+    - Licensed guide and historian of religions, in Italian, English or Spanish
     - Itinerary built around your interests
     - Start time of your choice
   excludes:
     - Entry tickets to monuments and museums
     - Tips and drinks
   notes: Price for the whole group, up to 15 guests.
+
+es:
+  title: Venecia entre Oriente y Occidente
+  subtitle: Visita privada temática, a cargo de un historiador de las religiones
+  summary: "Bizancio, el islam, comunidades griegas y armenias, incluso Japón: la ciudad puente contada a través de sus religiones."
+  meetingPoint: A convenir contigo según la zona del hotel (normalmente cerca de San Marcos)
+  meetingUrl: ''
+  description: |
+    Venecia siempre ha sido una puerta: hacia Constantinopla, hacia el mundo islámico, hacia Asia. Por eso la ciudad está llena de huellas que no esperarías: mosaicos bizantinos, arcos que miran hacia Oriente, almacenes de mercaderes otomanos, iglesias de las comunidades griega y armenia.
+
+    En esta visita privada seguimos el hilo de las religiones y de los intercambios culturales, desde la basílica hasta las calles de los mercaderes, y llegamos a una historia poco conocida: en 1585 una delegación de jóvenes japoneses cristianos, educados por los jesuitas, fue recibida con grandes honores por la República.
+
+    Se puede adaptar a los intereses, las edades y el tiempo disponible: ideal para parejas, familias con adolescentes, grupos de amigos o visitantes que ya han visto «los clásicos».
+  highlights:
+    - La basílica de San Marcos como puente con Bizancio
+    - Huellas islámicas y orientales en la arquitectura veneciana
+    - El Fondaco dei Turchi y las comunidades de mercaderes extranjeros
+    - San Giorgio dei Greci y el mundo ortodoxo en Venecia
+    - "Japón en Venecia: la embajada Tenshō de 1585"
+  includes:
+    - Guía turístico habilitado e historiador de las religiones, en italiano, inglés o español
+    - Itinerario construido según tus intereses
+    - Horario a tu elección
+  excludes:
+    - Entradas a monumentos y museos
+    - Propinas y consumiciones
+  notes: Precio para todo el grupo, hasta 15 personas.

@@ -6,7 +6,7 @@ maxParticipants: 25
 price: 400
 b2bPrice: 320
 art: walk
-languages: [it, en]
+languages: [it, en, es]
 
 it:
   title: Servizio guida giornata intera
@@ -49,3 +49,24 @@ en:
   excludes:
     - Entry tickets, transport, lunch, tips
   notes: Price for the whole group, up to 25 guests. Discounted rate reserved for partners.
+
+es:
+  title: Servicio de guía de jornada completa
+  subtitle: 8 horas de servicio para grupos y agencias
+  summary: Un día entero con el mismo guía turístico habilitado, con la pausa para el almuerzo incluida en el horario.
+  meetingPoint: A convenir contigo (hotel, muelle, terminal)
+  meetingUrl: ''
+  description: |
+    Servicio de guía turístico habilitado para una jornada completa (8 horas, con pausa para el almuerzo), pensado para programas elaborados: Venecia y la laguna, tours temáticos, grupos de incentivo.
+
+    El programa, el ritmo y las paradas se definen juntos con antelación, para que la jornada resulte fluida para el grupo y sencilla de gestionar para quien organiza.
+  highlights:
+    - Guía turístico habilitado durante 8 horas
+    - Pausa para el almuerzo incluida en el horario de servicio
+    - Programa diseñado contigo
+  includes:
+    - Guía turístico habilitado
+    - Coordinación previa con la persona de contacto / el jefe de grupo
+  excludes:
+    - Entradas, transportes, almuerzo, propinas
+  notes: Precio para todo el grupo, hasta 25 personas. Tarifa con descuento reservada a los socios.

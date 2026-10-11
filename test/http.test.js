@@ -183,6 +183,40 @@ test('prenotazione B2C con pagamento demo, voucher, calendario e annullo con rim
   }
 });
 
+test('prenotazione in spagnolo: pagamento demo, conferma, email e voucher restano in spagnolo', async () => {
+  const s = await start();
+  try {
+    const f = s.jar();
+    const date = day(24);
+    const data = { tour: 'san-marco-rialto', date, time: '09:30', pax: '2', name: 'Carmen Ruiz', email: 'carmen@example.com', lang: 'es', paymentMethod: 'card', consent: '1' };
+    const res = await f('/es/book/checkout', form(data));
+    assert.equal(res.status, 303);
+    const demo = new URL(loc(res), 'http://x');
+    assert.equal(demo.searchParams.get('lang'), 'es', 'la pagina del pagamento demo conosce la lingua');
+    assert.ok((await (await f(demo.pathname + demo.search)).text()).includes('<html lang="es">'));
+    const paid = await f(demo.pathname + '/complete', form({ t: demo.searchParams.get('t'), lang: 'es' }));
+    assert.equal(paid.status, 303);
+    const bookingUrl = loc(paid);
+    assert.match(bookingUrl, /\/es\/booking\/VE-/);
+    const page = await (await f(bookingUrl)).text();
+    assert.ok(page.includes('<html lang="es">'));
+    const [path, qs] = bookingUrl.split('?');
+    const voucher = await f(`${path}/voucher.pdf?${qs.split('&')[0]}`);
+    assert.equal(voucher.status, 200);
+    assert.ok(isPdf(Buffer.from(await voucher.arrayBuffer())));
+    const mail = s.app.mail.sent.find((m) => m.to === 'carmen@example.com');
+    assert.match(mail.subject, /Reserva confirmada/);
+    assert.match(mail.text, /Hola Carmen Ruiz,/);
+    assert.ok(mail.text.includes('/es/booking/'));
+    // una lingua sconosciuta ripiega sull'italiano
+    const odd = await f('/it/book/checkout', form({ ...data, time: '14:30', email: 'odd@example.com', lang: 'xx' }));
+    assert.equal(odd.status, 303);
+    assert.equal(new URL(loc(odd), 'http://x').searchParams.get('lang'), 'it');
+  } finally {
+    s.close();
+  }
+});
+
 test('pagamento in sede: conferma immediata; fattura negata ai non partner; CSRF', async () => {
   const s = await start();
   try {
