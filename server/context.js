@@ -3,7 +3,9 @@ import { createCalendars } from './calendars.js';
 import { createGiftServices } from './giftServices.js';
 import { createLimits } from './http.js';
 import { createInvoiceServices } from './invoiceServices.js';
+import path from 'node:path';
 import { createMailer } from './mail.js';
+import { createMedia } from './media.js';
 import { createPecMailer } from './pec.js';
 import { createProgramServices } from './programs.js';
 import { createReviewServices } from './reviews.js';
@@ -23,6 +25,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
       }
     }
   };
+  app.media = createMedia({ db, dir: path.join(cfg.dataDir, 'media') });
   app.mail = mail ?? createMailer(cfg);
   app.payments = payments ?? createPayments(cfg);
   app.payables = createPayables(app);

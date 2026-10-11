@@ -4,6 +4,7 @@ import { freeCancelHours, unitPriceFor } from '../bookings.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
 import { LANGS, LANG_META } from '../langs.js';
+import { MEDIA_NAME, smallName } from '../media.js';
 
 /** <option> di tutte le lingue del sito, con quella indicata selezionata. */
 export const langOptions = (selected) => html`${LANGS.map((l) => html`<option value="${l}" ${l === selected ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}`;
@@ -18,9 +19,19 @@ export function fmtHours(t, h) {
   return h >= 48 && h % 24 === 0 ? t('time.days', { n: h / 24 }) : t('time.hours', { n: h });
 }
 
+/** Immagine caricata dal pannello (due misure: `srcset`) oppure un percorso diretto a un file in public/. */
+export function mediaImg(image, alt = '', { sizes = '(max-width: 700px) 100vw, 50vw', eager = false } = {}) {
+  if (!image) return '';
+  const loading = eager ? raw('fetchpriority="high"') : raw('loading="lazy"');
+  if (MEDIA_NAME.test(image)) return html`<img src="/media/${image}" srcset="/media/${smallName(image)} 640w, /media/${image} 1600w" sizes="${sizes}" alt="${alt}" ${loading} decoding="async">`;
+  return html`<img src="${image}" alt="${alt}" ${loading} decoding="async">`;
+}
+/** Indirizzo assoluto dell'immagine di copertina (anteprima quando si condivide la pagina). */
+export const mediaUrl = (cfg, image) => (image && MEDIA_NAME.test(image) ? `${cfg.baseUrl}/media/${image}` : null);
+
 export function tourMedia(ctx, tour, label) {
   const ti = tour.i18n[ctx.lang];
-  return tour.image ? html`<img src="${tour.image}" alt="${label ?? ti.title}" loading="lazy" decoding="async">` : art(tour.art, { label: label ?? ti.title });
+  return tour.image ? mediaImg(tour.image, label ?? ti.title) : art(tour.art, { label: label ?? ti.title });
 }
 
 /** "€35 / persona" oppure "€190 / gruppo", con tariffa B2B se il visitatore è un partner approvato. */
@@ -52,7 +63,7 @@ export function postCard(ctx, post) {
   const { lang, u, t } = ctx;
   const pi = post.i18n[lang];
   return html`<a class="card post-card reveal" href="${u('/blog/' + post.slug)}">
-    <div class="card-media">${art(post.art, { label: '' })}</div>
+    <div class="card-media">${post.image ? mediaImg(post.image, '') : art(post.art, { label: '' })}</div>
     <div class="card-body">
       <p class="eyebrow small">${fmtDate(post.date, lang, 'short')} · ${t('blog.minutes', { n: pi.minutes })}</p>
       <h3>${pi.title}</h3>

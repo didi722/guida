@@ -11,6 +11,11 @@ import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
 import { adminMailRouter } from './admin-mail.js';
 import { adminPartnersRouter } from './admin-partners.js';
+import { adminStatsRouter } from './admin-stats.js';
+import { adminMediaRouter } from './admin-media.js';
+import { adminToursRouter } from './admin-tours.js';
+import { adminBlogRouter } from './admin-blog.js';
+import { adminTextsRouter } from './admin-texts.js';
 import { adminInvoicesRouter } from './admin-invoices.js';
 import { dayConflicts } from '../programs.js';
 import { feedbackStats } from '../reviews.js';
@@ -99,6 +104,11 @@ export function adminRouter(app) {
   r.use(adminInvoicesRouter(app));
   r.use(adminMailRouter(app));
   r.use(adminPartnersRouter(app));
+  r.use(adminStatsRouter(app));
+  r.use(adminMediaRouter(app));
+  r.use(adminToursRouter(app));
+  r.use(adminBlogRouter(app));
+  r.use(adminTextsRouter(app));
 
   r.get('/feedback', (req, res) => {
     const items = db.prepare(`SELECT f.*, b.name, b.email, b.tour_slug, b.date FROM feedback f JOIN bookings b ON b.id = f.booking_id ORDER BY f.created_at DESC LIMIT 200`).all();

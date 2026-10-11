@@ -4,7 +4,7 @@ import { paymentOptions, unitPriceFor } from '../bookings.js';
 import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
-import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, postCard, priceParts, sectionHead, tourCard, tourMedia } from './components.js';
+import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, tourCard, tourMedia } from './components.js';
 import { LANGS, pick } from '../langs.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
@@ -240,7 +240,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     provider: { '@type': 'Person', name: cfg.site.name },
     offers: { '@type': 'Offer', price: (unitPriceFor(tour, 'b2c') / 100).toFixed(2), priceCurrency: 'EUR', url: `${cfg.baseUrl}/${lang}/tours/${tour.slug}` },
   };
-  return page(ctx, { title: ti.title, description: ti.summary, path: `/${lang}/tours/${tour.slug}`, body, ld, activeNav: 'tours', bodyClass: 'tour-page', scripts: raw('<script src="/js/booking.js?v=' + app.assetVersion + '" defer></script>') });
+  return page(ctx, { title: ti.title, description: ti.summary, path: `/${lang}/tours/${tour.slug}`, body, ld, ogImage: mediaUrl(cfg, tour.image), activeNav: 'tours', bodyClass: 'tour-page', scripts: raw('<script src="/js/booking.js?v=' + app.assetVersion + '" defer></script>') });
 }
 
 // ───────────────────────── Blog ─────────────────────────
@@ -269,12 +269,12 @@ export function postPage(ctx, post) {
     <p class="lead">${pi.summary}</p>
     <ul class="tags">${pi.tags.map((x) => html`<li>${x}</li>`)}</ul>
   </header>
-  <div class="article-art">${art(post.art, { label: '' })}</div>
+  <div class="article-art">${post.image ? mediaImg(post.image, '', { sizes: '(max-width: 900px) 100vw, 900px', eager: true }) : art(post.art, { label: '' })}</div>
   <div class="prose article-body">${raw(pi.html)}</div>
   ${tours.length ? html`<aside class="article-cta"><h2>${t('blog.tourCta')}</h2><div class="grid grid-2">${tours.map((x) => tourCard(ctx, x))}</div></aside>` : ''}
 </article>`;
   const ld = { '@context': 'https://schema.org', '@type': 'Article', headline: pi.title, datePublished: post.date, author: { '@type': 'Person', name: app.cfg.site.name }, inLanguage: lang };
-  return page(ctx, { title: pi.title, description: pi.summary, path: `/${lang}/blog/${post.slug}`, body, article: true, ld, activeNav: 'blog' });
+  return page(ctx, { title: pi.title, description: pi.summary, path: `/${lang}/blog/${post.slug}`, body, article: true, ld, activeNav: 'blog', ogImage: mediaUrl(app.cfg, post.image) });
 }
 
 // ───────────────────────── Pagine statiche ─────────────────────────

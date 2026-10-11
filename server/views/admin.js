@@ -7,16 +7,13 @@ import { dayOfWeek, fmtDate, fmtMonth, monthDates } from '../time.js';
 import { formatMoney } from '../util.js';
 import { langName, normLang } from '../langs.js';
 
-const NAV = [
-  ['/admin', 'Agenda'],
-  ['/admin/bookings', 'Prenotazioni'],
-  ['/admin/programs', 'Programmi'],
-  ['/admin/invoices', 'Fatture'],
-  ['/admin/availability', 'Disponibilità'],
-  ['/admin/partners', 'Partner'],
-  ['/admin/discounts', 'Sconti'],
-  ['/admin/feedback', 'Feedback'],
-  ['/admin/mail', 'Email'],
+// Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
+export const ADMIN_GROUPS = [
+  { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità']] },
+  { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
+  { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
+  { label: 'Sito', items: [['/admin/tours', 'Tour'], ['/admin/prices', 'Listino'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini']] },
+  { label: 'Aiuto', items: [['/admin/guide', 'Guida'], ['/admin/mail', 'Email']] },
 ];
 
 const WEEKDAYS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
@@ -27,23 +24,25 @@ export const PAY_IT = { card: 'Carta', onsite: 'Sul posto', invoice: 'Fattura', 
 export const PAYSTATUS_IT = { unpaid: 'Da incassare', paid: 'Pagata', refunded: 'Rimborsata', refund_failed: 'Rimborso fallito' };
 const chipFor = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
 
-export function adminLayout(ctx, { title, active, body, flash = '', error = '', scripts = '' }) {
+export function adminLayout(ctx, { title, active, body, flash = '', error = '', scripts = '', styles = [] }) {
   const { app } = ctx;
+  const group = ADMIN_GROUPS.find((g) => g.items.some(([href]) => href === active));
   return html`<!doctype html>
 <html lang="it"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow"><title>${title} · Admin</title>
 <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/css/style.css?v=${app.assetVersion}"><script src="/js/theme.js"></script>
+<link rel="stylesheet" href="/css/style.css?v=${app.assetVersion}">${styles.map((href) => html`<link rel="stylesheet" href="${href}?v=${app.assetVersion}">`)}<script src="/js/theme.js"></script>
 </head><body class="admin">
 <header class="admin-bar"><div class="admin-bar-inner">
   <a class="brand" href="/admin"><span class="brand-name">${app.cfg.site.name}</span><span class="brand-sub">Pannello</span></a>
-  <nav class="admin-nav" aria-label="Admin">${NAV.map(([href, label]) => html`<a href="${href}" ${active === href ? raw('aria-current="page"') : ''}>${label}</a>`)}</nav>
+  <nav class="admin-nav" aria-label="Admin">${ADMIN_GROUPS.map((g) => html`<a href="${g.items[0][0]}" ${g === group ? raw('aria-current="page"') : ''}>${g.label}</a>`)}</nav>
   <form method="post" action="/admin/logout"><button class="tool" type="submit" title="Esci">Esci</button></form>
 </div></header>
 <main class="wrap admin-main">
   ${flash ? html`<div class="notice notice-ok" role="status">${flash}</div>` : ''}
   ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
+  ${group && group.items.length > 1 ? html`<nav class="tabs admin-subnav" aria-label="${group.label}">${group.items.map(([href, label]) => html`<a href="${href}" ${active === href ? raw('aria-current="page"') : ''}>${label}</a>`)}</nav>` : ''}
   <h1>${title}</h1>
   ${body}
 </main>

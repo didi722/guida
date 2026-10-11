@@ -317,6 +317,24 @@ ALTER TABLE bookings ADD COLUMN cancel_percent INTEGER;            -- annullata:
 ALTER TABLE bookings ADD COLUMN retained_cents INTEGER NOT NULL DEFAULT 0;  -- annullata: importo che resta dovuto (penale), trattenuto o da fatturare
 `;
 
+const V9_CONTENT = `
+-- Contenuti modificabili dal pannello: tour, articoli, pagine, testi del sito, immagini
+CREATE TABLE content_tours (slug TEXT PRIMARY KEY, data_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE content_posts (slug TEXT PRIMARY KEY, data_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE content_pages (name TEXT PRIMARY KEY, data_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE content_texts (key TEXT NOT NULL, lang TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (key, lang));
+CREATE TABLE media (
+  id          INTEGER PRIMARY KEY,
+  name        TEXT NOT NULL UNIQUE,   -- file a risoluzione piena (nome = impronta del contenuto + estensione)
+  small_name  TEXT,                   -- versione piccola per gli elenchi
+  mime        TEXT NOT NULL,
+  bytes       INTEGER NOT NULL,
+  width       INTEGER,
+  height      INTEGER,
+  created_at  TEXT NOT NULL
+);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -334,6 +352,8 @@ export const MIGRATIONS = [
   V7_INVOICE_FILES,
   // v8 — condizioni dedicate ai partner (listino, scaglioni di annullo)
   V8_PARTNER_TERMS,
+  // v9 — contenuti nel database (tour, articoli, pagine, testi, immagini)
+  V9_CONTENT,
 ];
 
 export function migrate(db) {

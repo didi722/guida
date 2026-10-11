@@ -7,6 +7,15 @@ export { LANGS, isLang };
 
 const DICT = JSON.parse(fs.readFileSync(path.join(ROOT, 'server', 'strings.json'), 'utf8'));
 
+// Testi modificati dal pannello (admin → Testi del sito): hanno la precedenza su strings.json.
+let overrides = new Map();
+export function setTextOverrides(map) {
+  overrides = map;
+}
+export const textOverrideKey = (lang, key) => `${lang}\u0000${key}`;
+/** I testi originali di una chiave: [it, en, es], oppure undefined. */
+export const defaultText = (key) => DICT[key];
+
 export function makeT(lang) {
   const i = Math.max(0, LANGS.indexOf(lang));
   return (key, vars) => {
@@ -15,7 +24,7 @@ export function makeT(lang) {
       if (process.env.NODE_ENV !== 'production') console.warn(`[i18n] chiave mancante: ${key}`);
       return key;
     }
-    let s = entry[i] ?? entry[1] ?? entry[0]; // senza traduzione: inglese, poi italiano
+    let s = overrides.get(textOverrideKey(lang, key)) ?? entry[i] ?? entry[1] ?? entry[0]; // senza traduzione: inglese, poi italiano
     if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, String(v));
     return s;
   };

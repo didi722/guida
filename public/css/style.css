@@ -585,3 +585,56 @@ body.admin { --header-h: 64px; }
 .form .tier-row select, .tier-row select { width: auto; min-width: 7rem; }
 .tier-list { margin: 8px 0 0; padding: 0; } .tier-list li { padding: 2px 0; }
 .copy-form { margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .copy-form select { width: auto; max-width: 100%; }
+
+/* Admin: immagini */
+.media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-top: 18px; }
+.media-item { margin: 0; } .media-item img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--soft); }
+.media-item figcaption { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.upload-btn { cursor: pointer; }
+.media-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin: 10px 0; }
+.media-choice { position: relative; display: block; cursor: pointer; border: 2px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--soft); min-height: 70px; }
+.media-choice input { position: absolute; top: 6px; left: 6px; z-index: 1; width: 18px; height: 18px; accent-color: var(--bronze); }
+.media-choice img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.media-choice:has(input:checked) { border-color: var(--bronze); box-shadow: 0 0 0 2px var(--gold-soft); }
+.media-choice .media-none { display: grid; place-items: center; min-height: 70px; padding: 8px; text-align: center; font-size: 0.8rem; color: var(--muted); }
+
+/* Admin: moduli dei contenuti (tour, articoli, pagine, testi) */
+.tour-form { display: grid; gap: 18px; }
+.tour-form fieldset { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; } .tour-form legend { padding: 0; }
+.check-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.inline-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lang-block summary { cursor: pointer; list-style: none; } .lang-block summary::-webkit-details-marker { display: none; } .lang-block summary h2 { margin: 0; }
+.lang-block[open] summary { margin-bottom: 14px; }
+.sticky-actions { position: sticky; bottom: 0; z-index: 5; background: var(--bg); padding: 12px 0; border-top: 1px solid var(--line); }
+.md-preview { padding: 14px; border: 1px dashed var(--line); border-radius: 10px; background: var(--soft); }
+.text-table textarea { min-height: 3.2em; }
+
+/* Tabelle su telefono: ogni riga diventa una scheda; le etichette vengono dalle intestazioni (vedi main.js) */
+@media (max-width: 640px) {
+  .table-wrap { overflow-x: visible; }
+  .table, .table tbody, .table tr, .table td { display: block; }
+  .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .table tr { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .table tr:last-child { border-bottom: 0; }
+  .table td { padding: 2px 0; border: 0; text-align: left; }
+  .table .num { text-align: left; white-space: normal; }
+  .table td::before { content: attr(data-label); display: inline-block; min-width: 6.5em; margin-right: 10px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .table td:first-child::before, .table td:not([data-label])::before, .table td[data-label='']::before { content: none; }
+  .table td:first-child { padding-bottom: 6px; font-size: 1.02rem; }
+  .table td.actions { padding-top: 10px; white-space: normal; display: flex; flex-wrap: wrap; gap: 8px; }
+  .table td.actions form { margin: 0; }
+  .table td.actions::before { content: none; }
+  .table .price-input { width: 120px; } .price-table td::before { min-width: 10.5em; }
+}
+@media (max-width: 640px) {
+  .admin-nav { justify-content: space-between; gap: 0; }
+  .admin-nav a { padding: 8px 9px; font-size: 0.76rem; letter-spacing: 0.05em; }
+}
+@media (max-width: 640px) {
+  .table tbody th { display: block; white-space: normal; }
+  .queue-table .group-row { padding: 0; } .queue-table .group-row th { padding: 12px 16px; }
+  .queue-table tr:not(.group-row) { display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 6px; }
+  .queue-table tr:not(.group-row) td { grid-column: 2; }
+  .queue-table tr:not(.group-row) td:first-child { grid-column: 1; grid-row: 1 / span 4; padding: 2px 0 0; }
+  .row-overdue { background: var(--err-bg); } .row-overdue td { background: transparent; }
+}

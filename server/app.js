@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import { createConfig, ROOT } from './config.js';
-import { loadContent } from './content.js';
+import { createContentStore } from './contentStore.js';
+import { MEDIA_NAME, MIME_BY_EXT } from './media.js';
 import { openDb } from './db.js';
 import { createContext } from './context.js';
 import { LANGS } from './i18n.js';
@@ -31,7 +32,7 @@ function assetVersion() {
 export function createApp(overrides = {}) {
   const cfg = overrides.cfg ?? createConfig();
   const db = overrides.db ?? openDb(cfg.dbFile);
-  const content = overrides.content ?? loadContent(ROOT);
+  const content = overrides.content ?? createContentStore({ db, root: ROOT });
   const app = createContext({ cfg, db, content, mail: overrides.mail, payments: overrides.payments, pec: overrides.pec, fetchImpl: overrides.fetchImpl, assetVersion: assetVersion() });
 
   const server = express();
@@ -48,6 +49,12 @@ export function createApp(overrides = {}) {
   server.use(sessionMiddleware(app));
 
   server.get('/', (req, res) => res.redirect(302, `/${preferredLang(req)}/`));
+  // immagini caricate dal pannello: il nome è l'impronta del contenuto, quindi si possono tenere in cache per sempre
+  server.get('/media/:name', (req, res, next) => {
+    const name = String(req.params.name);
+    if (!MEDIA_NAME.test(name) || !fs.existsSync(app.media.file(name))) return next();
+    res.type(MIME_BY_EXT[name.split('.').pop()]).set({ 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' }).sendFile(app.media.file(name));
+  });
   server.get('/robots.txt', (req, res) =>
     res.type('text/plain').send(app.payments.demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
   );
