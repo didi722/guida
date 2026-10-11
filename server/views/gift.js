@@ -5,6 +5,7 @@ import { formatMoney } from '../util.js';
 import { art } from '../art.js';
 import { page } from './layout.js';
 import { breadcrumbs, checkIcon } from './components.js';
+import { pick } from '../langs.js';
 
 export function giftPage(ctx, { values = {}, error = '', unavailable = false } = {}) {
   const { t, lang, app } = ctx;
@@ -91,7 +92,7 @@ export function giftStatusPage(ctx, card, { flash = '' } = {}) {
       ${active ? html`<div><dt>${t('gift.code')}</dt><dd><strong class="gift-code">${formatGiftCode(card.code)}</strong></dd></div>
       <div><dt>${t('gift.balance')}</dt><dd>${formatMoney(card.balance_cents, lang, card.currency)}</dd></div>
       <div><dt>${t('gift.validUntil')}</dt><dd>${fmtDate(card.expires_at, lang, 'date')}</dd></div>` : ''}
-      ${card.recipient_email ? html`<div><dt>${lang === 'it' ? 'Destinatario' : 'Recipient'}</dt><dd>${card.recipient_name ? card.recipient_name + ' · ' : ''}${card.recipient_email}${card.delivered_at ? '' : card.deliver_on ? html`<br><small class="muted">${t('gift.scheduled', { name: card.recipient_name || card.recipient_email, date: fmtDate(card.deliver_on, lang, 'short') })}</small>` : ''}</dd></div>` : ''}
+      ${card.recipient_email ? html`<div><dt>${pick({ it: 'Destinatario', en: 'Recipient', es: 'Destinatario' }, lang)}</dt><dd>${card.recipient_name ? card.recipient_name + ' · ' : ''}${card.recipient_email}${card.delivered_at ? '' : card.deliver_on ? html`<br><small class="muted">${t('gift.scheduled', { name: card.recipient_name || card.recipient_email, date: fmtDate(card.deliver_on, lang, 'short') })}</small>` : ''}</dd></div>` : ''}
     </dl>
     ${active ? html`<p class="muted">${t('gift.useIt')}</p><p class="btn-row"><a class="btn btn-outline" href="/${lang}/gift/${card.ref}/card.pdf${q}">${t('gift.download')}</a> <a class="btn btn-gold" href="/${lang}/tours">${t('nav.tours')}</a></p>` : ''}
     ${card.status === 'pending' ? html`<p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${card.ref}${q}&lang=${lang}">${t('gift.payNow')}</a></p>` : ''}

@@ -4,6 +4,7 @@ import { tx } from './db.js';
 import { sendProgramAccepted, sendProgramConfirmed, sendProgramReceived, sendProposalEmail, notifyGuideProgram } from './emails.js';
 import { addDays, isDate, isTime, nowRome, toMin } from './time.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
+import { normLang, pick } from './langs.js';
 
 export const INTERESTS = ['art', 'history', 'religions', 'food', 'lagoon', 'photography', 'architecture', 'family'];
 export const GROUP_TYPES = ['family', 'friends', 'school', 'corporate', 'agency', 'other'];
@@ -59,7 +60,7 @@ export function createProgramRequest(app, input, nowMs = Date.now()) {
     channel,
     account_id: channel === 'b2b' ? (input.account?.id ?? null) : null,
     client_ref: cleanText(input.clientRef, 120) || null,
-    lang: input.lang === 'en' ? 'en' : 'it',
+    lang: normLang(input.lang),
     name,
     email,
     phone: cleanText(input.phone, 40) || null,
@@ -264,7 +265,7 @@ export function createProgramServices(app) {
         email: p.email,
         amountCents: p.deposit_cents,
         currency: p.currency,
-        title: `${p.lang === 'it' ? 'Acconto programma' : 'Programme deposit'} — ${p.proposal_title ?? p.ref}`,
+        title: `${pick({ it: 'Acconto programma', en: 'Programme deposit', es: 'Anticipo del programa' }, p.lang)} — ${p.proposal_title ?? p.ref}`,
         description: `${p.ref} · ${p.deposit_percent}%`,
         lang: p.lang,
         successUrl: `${cfg.baseUrl}/${lang}/programs/${p.ref}?t=${p.token}&paid=1`,

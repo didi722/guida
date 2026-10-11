@@ -2,6 +2,8 @@ import { html, raw } from '../html.js';
 import { STATUS_LABEL, sdiNext } from '../invoices.js';
 import { fmtDate } from '../time.js';
 import { adminLayout } from './admin.js';
+import { normLang } from '../langs.js';
+import { langOptions } from './components.js';
 
 const eur = (cents) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 const euroInput = (cents) => (cents ? (cents / 100).toFixed(2).replace('.', ',') : '');
@@ -150,7 +152,7 @@ function buyerFields(b) {
     <label class="field"><span class="label">Codice destinatario SdI <em>(7 caratteri)</em></span><input name="b_sdiCode" maxlength="7" value="${v('sdiCode')}" class="upper"></label>
     <label class="field"><span class="label">PEC del cliente <em>(se non ha il codice)</em></span><input name="b_pec" maxlength="200" value="${v('pec')}"></label>
     <label class="field"><span class="label">Email per la copia di cortesia</span><input type="email" name="b_email" maxlength="200" value="${v('email')}"></label>
-    <label class="field"><span class="label">Lingua della copia</span><select name="b_lang"><option value="it" ${b.lang !== 'en' ? raw('selected') : ''}>Italiano</option><option value="en" ${b.lang === 'en' ? raw('selected') : ''}>English</option></select></label>
+    <label class="field"><span class="label">Lingua della copia</span><select name="b_lang">${langOptions(normLang(b.lang))}</select></label>
   </div>`;
 }
 

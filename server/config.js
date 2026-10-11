@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { LANGS } from './langs.js';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -51,7 +52,7 @@ export function createConfig(overrides = {}) {
 
     site: {
       name: e.SITE_NAME || 'Davide Tomio',
-      tagline: { it: 'Guida turistica · Venezia', en: 'Tour guide · Venice' },
+      tagline: { it: 'Guida turistica · Venezia', en: 'Tour guide · Venice', es: 'Guía turístico · Venecia' },
       email: e.CONTACT_EMAIL || 'info@example.com',
       phone: e.CONTACT_PHONE || '',
       whatsapp: e.CONTACT_WHATSAPP || '', // solo cifre con prefisso, es. 393331234567
@@ -63,7 +64,7 @@ export function createConfig(overrides = {}) {
       address: e.LEGAL_ADDRESS || '',
     },
 
-    languages: ['it', 'en'],
+    languages: LANGS,
     defaultLang: 'it',
 
     admin: { password: overrides.adminPassword ?? e.ADMIN_PASSWORD ?? (isProd ? '' : 'admin') },

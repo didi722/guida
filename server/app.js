@@ -52,10 +52,12 @@ export function createApp(overrides = {}) {
     res.type('text/plain').send(`User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
   );
   server.get('/sitemap.xml', (req, res) => {
-    const paths = ['/', '/tours', '/book', '/gift', '/programs', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((x) => `/tours/${x.slug}`), ...content.postsFor('it').map((p) => `/blog/${p.slug}`)];
+    const all = ['/', '/tours', '/book', '/gift', '/programs', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((x) => `/tours/${x.slug}`)].map((p) => ({ p, langs: LANGS }));
+    // un articolo compare solo nelle lingue in cui è tradotto
+    const posts = content.posts.map((post) => ({ p: `/blog/${post.slug}`, langs: LANGS.filter((l) => post.i18n[l]) }));
     const url = (lang, p) => `${cfg.baseUrl}/${lang}${p === '/' ? '/' : p}`;
-    const body = paths
-      .flatMap((p) => LANGS.map((l) => `<url><loc>${url(l, p)}</loc>${LANGS.map((a) => `<xhtml:link rel="alternate" hreflang="${a}" href="${url(a, p)}"/>`).join('')}</url>`))
+    const body = [...all, ...posts]
+      .flatMap(({ p, langs }) => langs.map((l) => `<url><loc>${url(l, p)}</loc>${langs.map((a) => `<xhtml:link rel="alternate" hreflang="${a}" href="${url(a, p)}"/>`).join('')}</url>`))
       .join('');
     res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${body}</urlset>`);
   });

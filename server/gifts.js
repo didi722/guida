@@ -3,6 +3,7 @@ import { tx } from './db.js';
 import { ledgerAdd } from './pricing.js';
 import { addMonths, isDate, nowRome } from './time.js';
 import { cleanText, isEmail, newGiftCode, newRef, newToken } from './util.js';
+import { normLang } from './langs.js';
 
 export class GiftError extends Error {
   constructor(code, message) {
@@ -46,7 +47,7 @@ function validate(app, input, nowMs, { admin = false } = {}) {
     recipientName: cleanText(input.recipientName, 120) || null,
     recipientEmail: recipientEmail || null,
     message: cleanText(input.message, 400) || null,
-    lang: input.lang === 'en' ? 'en' : 'it',
+    lang: normLang(input.lang),
     deliverOn,
   };
 }

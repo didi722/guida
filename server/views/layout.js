@@ -1,4 +1,5 @@
 import { esc, html, jsonLd, raw } from '../html.js';
+import { LANGS, LANG_META } from '../langs.js';
 
 const ICON = {
   sun: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
@@ -27,7 +28,7 @@ const NAV = [
 export function page(ctx, { title, description = '', path, body, bodyClass = '', ld = null, noindex = false, article = false, ogImage = null, activeNav = '', scripts = '' }) {
   const { app, lang, t } = ctx;
   const { cfg } = app;
-  const other = lang === 'it' ? 'en' : 'it';
+  const others = LANGS.filter((l) => l !== lang);
   const canonical = `${cfg.baseUrl}${path}`;
   const fullTitle = title ? `${title} · ${cfg.site.name}` : `${cfg.site.name} — ${t('site.title')}`;
   const desc = description || t('site.description');
@@ -44,13 +45,14 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   ${noindex ? raw('<meta name="robots" content="noindex, nofollow">') : ''}
   <meta name="theme-color" content="#d6bb51">
   <link rel="canonical" href="${canonical}">
-  ${noindex ? '' : [html`<link rel="alternate" hreflang="${lang}" href="${canonical}">`, html`<link rel="alternate" hreflang="${other}" href="${cfg.baseUrl}${swapLang(path, lang, other)}">`]}
+  ${noindex ? '' : [...LANGS.map((l) => html`<link rel="alternate" hreflang="${l}" href="${cfg.baseUrl}${swapLang(path, lang, l)}">`), html`<link rel="alternate" hreflang="x-default" href="${cfg.baseUrl}${swapLang(path, lang, cfg.defaultLang)}">`]}
   <meta property="og:site_name" content="${cfg.site.name}">
   <meta property="og:title" content="${fullTitle}">
   <meta property="og:description" content="${desc}">
   <meta property="og:type" content="${article ? 'article' : 'website'}">
   <meta property="og:url" content="${canonical}">
-  <meta property="og:locale" content="${lang === 'it' ? 'it_IT' : 'en_GB'}">
+  <meta property="og:locale" content="${LANG_META[lang].og}">
+  ${others.map((l) => html`<meta property="og:locale:alternate" content="${LANG_META[l].og}">`)}
   ${ogImage ? html`<meta property="og:image" content="${ogImage}">` : ''}
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/josefin-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -73,7 +75,10 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
     </nav>
     <div class="header-tools">
       <a class="btn btn-sm btn-dark header-cta" href="${u('/book')}">${t('nav.book')}</a>
-      <a class="tool lang-switch" href="${swapLang(path, lang, other)}" hreflang="${other}" lang="${other}" title="${other === 'en' ? 'English' : 'Italiano'}">${other.toUpperCase()}</a>
+      <details class="lang-menu">
+        <summary class="tool lang-switch" aria-label="${LANG_META[lang].name}" title="${LANG_META[lang].name}">${LANG_META[lang].short}</summary>
+        <ul class="lang-list">${LANGS.map((l) => html`<li><a href="${swapLang(path, lang, l)}" hreflang="${l}" lang="${l}" ${l === lang ? raw('aria-current="true"') : ''}>${LANG_META[l].name}</a></li>`)}</ul>
+      </details>
       <button class="tool theme-toggle" type="button" aria-label="${t('a11y.theme')}"><span class="i-sun">${icon('sun')}</span><span class="i-moon">${icon('moon')}</span></button>
       <button class="hamburger" type="button" aria-label="${t('a11y.menu')}" aria-expanded="false" aria-controls="side-menu"><span></span><span></span><span></span></button>
     </div>
@@ -86,7 +91,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   <a href="${u('/gift')}" ${activeNav === 'gift' ? raw('aria-current="page"') : ''}>${t('nav.gift')}</a>
   <a href="${u('/contact')}">${t('nav.contact')}</a>
   <a class="side-sub" href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}">${ctx.acct ? t('nav.myAccount') : t('nav.partnerLogin')}</a>
-  <a class="side-sub" href="${swapLang(path, lang, other)}" hreflang="${other}">${other === 'en' ? 'English' : 'Italiano'}</a>
+  <div class="side-langs">${others.map((l) => html`<a class="side-sub" href="${swapLang(path, lang, l)}" hreflang="${l}" lang="${l}">${LANG_META[l].name}</a>`)}</div>
 </nav>
 <div class="scrim" id="scrim" hidden></div>
 

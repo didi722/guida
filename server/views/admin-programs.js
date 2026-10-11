@@ -4,6 +4,8 @@ import { isLocked, proposalExpired } from '../programs.js';
 import { addDays, fmtDate, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
 import { adminLayout, invoiceRow } from './admin.js';
+import { langName } from '../langs.js';
+import { langOptions } from './components.js';
 
 const eur = (c, cur = 'EUR') => formatMoney(c, 'it', cur);
 const when = (iso) => (iso ? new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'short', timeStyle: 'short' }) : '');
@@ -52,7 +54,7 @@ ${items.length
       <label class="field"><span class="label">Al</span><input type="date" name="dateTo" value="${values.dateTo ?? ''}"></label>
       <label class="field"><span class="label">Persone</span><input type="number" name="participants" min="1" max="80" required value="${values.participants ?? '2'}"></label>
       <label class="field"><span class="label">Canale</span><select name="channel"><option value="b2c">Privato</option><option value="b2b" ${values.channel === 'b2b' ? raw('selected') : ''}>Agenzia / B2B</option></select></label>
-      <label class="field"><span class="label">Lingua del cliente</span><select name="lang"><option value="it">Italiano</option><option value="en" ${values.lang === 'en' ? raw('selected') : ''}>English</option></select></label>
+      <label class="field"><span class="label">Lingua del cliente</span><select name="lang">${langOptions(values.lang)}</select></label>
     </div>
     <label class="field"><span class="label">Cosa ti ha chiesto</span><textarea name="message" rows="3" maxlength="3000">${values.message ?? ''}</textarea></label>
     <button class="btn btn-gold" type="submit">Crea e prepara la proposta</button>
@@ -131,7 +133,7 @@ ${anyConflict && p.status !== 'declined' && p.status !== 'closed' ? html`<div cl
       ${p.mobility ? html`<div><dt>Mobilità / esigenze</dt><dd>${p.mobility}</dd></div>` : ''}
       ${p.client_ref ? html`<div><dt>Rif. pratica</dt><dd>${p.client_ref}</dd></div>` : ''}
       ${p.message ? html`<div><dt>Messaggio</dt><dd class="pre">${p.message}</dd></div>` : ''}
-      <div><dt>Lingua</dt><dd>${p.lang === 'en' ? 'English' : 'Italiano'}</dd></div>
+      <div><dt>Lingua</dt><dd>${langName(p.lang)}</dd></div>
     </dl>
   </div>
 

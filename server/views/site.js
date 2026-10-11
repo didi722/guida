@@ -5,6 +5,7 @@ import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, postCard, priceParts, sectionHead, tourCard, tourMedia } from './components.js';
+import { LANGS, pick } from '../langs.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
 export function minBookableDate(app, channel = 'b2c', nowMs = Date.now()) {
@@ -126,7 +127,8 @@ ${posts.length
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: cfg.site.name,
-    jobTitle: lang === 'it' ? 'Guida turistica abilitata a Venezia' : 'Licensed tour guide in Venice',
+    jobTitle: pick({ it: 'Guida turistica abilitata a Venezia', en: 'Licensed tour guide in Venice', es: 'Guía turístico habilitado en Venecia' }, lang),
+    knowsLanguage: LANGS,
     url: `${cfg.baseUrl}/${lang}/`,
     sameAs: [cfg.site.instagram, 'https://davidetomio.it'].filter(Boolean),
     areaServed: 'Venezia',
@@ -234,7 +236,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     '@type': 'TouristTrip',
     name: ti.title,
     description: ti.summary,
-    touristType: lang === 'it' ? 'Turisti a Venezia' : 'Visitors to Venice',
+    touristType: pick({ it: 'Turisti a Venezia', en: 'Visitors to Venice', es: 'Visitantes de Venecia' }, lang),
     provider: { '@type': 'Person', name: cfg.site.name },
     offers: { '@type': 'Offer', price: (unitPriceFor(tour, 'b2c') / 100).toFixed(2), priceCurrency: 'EUR', url: `${cfg.baseUrl}/${lang}/tours/${tour.slug}` },
   };

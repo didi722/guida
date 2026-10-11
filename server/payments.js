@@ -1,5 +1,6 @@
 // Pagamenti con Stripe Checkout (chiamate HTTP dirette, nessun SDK) + modalità demo.
 import crypto from 'node:crypto';
+import { LANG_META, normLang } from './langs.js';
 
 const API = 'https://api.stripe.com/v1';
 
@@ -54,7 +55,7 @@ export function createPayments(cfg, fetchImpl = globalThis.fetch) {
           'payment_intent_data[metadata][ref]': ref,
           success_url: successUrl,
           cancel_url: cancelUrl,
-          locale: lang === 'it' ? 'it' : 'en',
+          locale: LANG_META[normLang(lang)].stripe,
           // Stripe richiede almeno 30 minuti: la sessione scade poco prima della "hold" interna
           expires_at: String(Math.floor(nowMs / 1000) + 31 * 60),
         },

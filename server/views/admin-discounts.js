@@ -3,6 +3,7 @@ import { formatGiftCode } from '../pricing.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
 import { adminLayout, invoiceRow } from './admin.js';
+import { langOptions } from './components.js';
 
 const eur = (c) => formatMoney(c, 'it');
 const GIFT_STATUS = { active: ['Attivo', 'chip-ok'], pending: ['In attesa di pagamento', 'chip-warn'], void: ['Annullato', 'chip-err'] };
@@ -66,7 +67,7 @@ ${promos.length
       <label class="field"><span class="label">Email acquirente</span><input type="email" name="buyer_email" maxlength="200"></label>
       <label class="field"><span class="label">Destinatario</span><input name="recipient_name" maxlength="120"></label>
       <label class="field"><span class="label">Email destinatario</span><input type="email" name="recipient_email" maxlength="200"></label>
-      <label class="field"><span class="label">Lingua</span><select name="lang"><option value="it">Italiano</option><option value="en">English</option></select></label>
+      <label class="field"><span class="label">Lingua</span><select name="lang">${langOptions('it')}</select></label>
       <label class="field"><span class="label">Invia email</span><select name="notify"><option value="none">Nessuna (consegno io)</option><option value="buyer">All’acquirente</option><option value="recipient">Al destinatario</option></select></label>
     </div>
     <label class="field"><span class="label">Messaggio <em>(facoltativo)</em></span><textarea name="message" rows="2" maxlength="400"></textarea></label>

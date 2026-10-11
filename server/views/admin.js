@@ -2,6 +2,7 @@ import { html, raw } from '../html.js';
 import { cancellationState } from '../bookings.js';
 import { dayOfWeek, fmtDate, fmtMonth, monthDates } from '../time.js';
 import { formatMoney } from '../util.js';
+import { langName } from '../langs.js';
 
 const NAV = [
   ['/admin', 'Agenda'],
@@ -161,7 +162,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       <div><dt>Nome</dt><dd>${b.name}</dd></div>
       <div><dt>Email</dt><dd><a href="mailto:${b.email}">${b.email}</a></dd></div>
       ${b.phone ? html`<div><dt>Telefono</dt><dd><a href="tel:${b.phone}">${b.phone}</a>${wa ? html` · <a href="https://wa.me/${wa}" rel="noopener">WhatsApp</a>` : ''}</dd></div>` : ''}
-      <div><dt>Lingua</dt><dd>${b.lang === 'en' ? 'English' : 'Italiano'}</dd></div>
+      <div><dt>Lingua</dt><dd>${langName(b.lang)}</dd></div>
       ${account ? html`<div><dt>Partner</dt><dd><a href="/admin/partners/${account.id}">${account.company}</a></dd></div>` : ''}
       ${b.client_ref ? html`<div><dt>Rif. pratica</dt><dd>${b.client_ref}</dd></div>` : ''}
       ${b.notes ? html`<div><dt>Note del cliente</dt><dd>${b.notes}</dd></div>` : ''}

@@ -11,6 +11,7 @@ import { renderVoucherPdf } from '../pdf.js';
 import { accountPage, loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
+import { normLang, pick } from '../langs.js';
 
 const clampInt = (v, min, max, d) => {
   const n = Number.parseInt(v, 10);
@@ -56,7 +57,7 @@ export function publicRouter(app) {
     address: cfg.site.address || '[indirizzo — da inserire]',
     giftMonths: String(cfg.gift.validityMonths),
     payMethods: cfg.policy.allowPayOnSite ? ctx.t('legal.payBoth') : ctx.t('legal.payCard'),
-    license: cfg.site.guideLicense || (ctx.lang === 'it' ? '[n. abilitazione — da inserire]' : '[licence no. — to be added]'),
+    license: cfg.site.guideLicense || pick({ it: '[n. abilitazione — da inserire]', en: '[licence no. — to be added]', es: '[n.º de habilitación — por añadir]' }, ctx.lang),
     b2cHours: ctx.t(cfg.policy.b2cFreeCancelHours >= 48 && cfg.policy.b2cFreeCancelHours % 24 === 0 ? 'time.days' : 'time.hours', { n: cfg.policy.b2cFreeCancelHours >= 48 && cfg.policy.b2cFreeCancelHours % 24 === 0 ? cfg.policy.b2cFreeCancelHours / 24 : cfg.policy.b2cFreeCancelHours }),
     b2bHours: ctx.t(cfg.policy.b2bFreeCancelHours >= 48 && cfg.policy.b2bFreeCancelHours % 24 === 0 ? 'time.days' : 'time.hours', { n: cfg.policy.b2bFreeCancelHours >= 48 && cfg.policy.b2bFreeCancelHours % 24 === 0 ? cfg.policy.b2bFreeCancelHours / 24 : cfg.policy.b2bFreeCancelHours }),
   });
@@ -137,7 +138,7 @@ export function publicRouter(app) {
     const p = readSlotParams(b);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(b.tour ?? '')), date: null, pax: 2 }), 400);
     if (!b.apply) await app.calendars.ensureFresh(); // riallinea il calendario personale prima di prenotare
-    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: b.lang === 'en' ? 'en' : 'it', notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
+    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {
       const slot = slotStillOpen(app, p.tour, p.date, p.time, p.pax, channel);

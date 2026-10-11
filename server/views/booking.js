@@ -3,7 +3,7 @@ import { bookingDue, cancellationState, freeCancelHours, paymentOptions, priceFo
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
-import { breadcrumbs, fmtDuration, fmtHours, tourMedia } from './components.js';
+import { breadcrumbs, fmtDuration, fmtHours, langOptions, tourMedia } from './components.js';
 
 const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
 
@@ -80,7 +80,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? acct.contact_name : '')}"></label>
       <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? acct.email : '')}"></label>
       <label class="field"><span class="label">${t('f.phone')} <em>${isB2b ? t('f.phoneB2b') : t('f.optional')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', isB2b ? (acct.phone ?? '') : '')}"></label>
-      <label class="field"><span class="label">${t('f.lang')}</span><select name="lang"><option value="it" ${v('lang', lang) === 'it' ? raw('selected') : ''}>Italiano</option><option value="en" ${v('lang', lang) === 'en' ? raw('selected') : ''}>English</option></select></label>
+      <label class="field"><span class="label">${t('f.lang')}</span><select name="lang">${langOptions(v('lang', lang))}</select></label>
     </div>
     ${isB2b ? html`<label class="field"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${v('clientRef')}" placeholder="${t('f.clientRefHint')}"></label>` : ''}
     <label class="field"><span class="label">${t('f.notes')} <em>${t('f.optional')}</em></span><textarea name="notes" rows="3" maxlength="1000" placeholder="${isB2b ? t('f.notesHintB2b') : t('f.notesHint')}">${v('notes')}</textarea></label>

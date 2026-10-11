@@ -1,5 +1,6 @@
 // Tutte le date/ore del sito sono "ora locale di Venezia" (Europe/Rome).
 // Le date sono stringhe 'YYYY-MM-DD', le ore 'HH:MM'; gli istanti sono millisecondi UTC.
+import { localeOf } from './langs.js';
 
 export const TZ = 'Europe/Rome';
 
@@ -94,7 +95,7 @@ export const instantToIso = (ms) => new Date(ms).toISOString();
 const dateFmtCache = new Map();
 function dtf(lang, opts) {
   const key = lang + JSON.stringify(opts);
-  if (!dateFmtCache.has(key)) dateFmtCache.set(key, new Intl.DateTimeFormat(lang === 'it' ? 'it-IT' : 'en-GB', { timeZone: 'UTC', ...opts }));
+  if (!dateFmtCache.has(key)) dateFmtCache.set(key, new Intl.DateTimeFormat(localeOf(lang), { timeZone: 'UTC', ...opts }));
   return dateFmtCache.get(key);
 }
 

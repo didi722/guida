@@ -6,6 +6,7 @@ import { buildInvoiceXml, buyerProblems, causaleChunks, computeDocument, invoice
 import { formatGiftCode } from './pricing.js';
 import { addDays, fmtDate, isDate, nowRome } from './time.js';
 import { cleanText } from './util.js';
+import { normLang } from './langs.js';
 
 export class InvoiceError extends Error {
   constructor(code, message, problems = []) {
@@ -73,7 +74,7 @@ function buyerFromAccount(a) {
     sdiCode: String(saved.sdiCode ?? a.sdi_code ?? '').toUpperCase(),
     pec: saved.pec ?? a.pec ?? '',
     email: a.email,
-    lang: a.lang === 'en' ? 'en' : 'it',
+    lang: normLang(a.lang),
   };
 }
 const buyerFromPerson = (name, email, lang) => ({ kind: 'person', ...splitName(name), name: '', country: lang === 'it' ? 'IT' : '', vat: '', taxCode: '', address: '', zip: '', city: '', province: '', sdiCode: '', pec: '', email, lang: lang === 'en' ? 'en' : 'it' });
@@ -410,7 +411,7 @@ export function saveDraft(app, id, form, nowMs = Date.now()) {
       sdiCode: cleanText(b.sdiCode, 7).toUpperCase(),
       pec: cleanText(b.pec, 200),
       email: cleanText(b.email, 200).toLowerCase(),
-      lang: b.lang === 'en' ? 'en' : 'it',
+      lang: normLang(b.lang),
     };
     const lines = (form.lines ?? []).map((l) => {
       const prev = l.key ? old.find((o) => o.source_type && keyOf(o.source_type, o.source_id) === l.key) : null;

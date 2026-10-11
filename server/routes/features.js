@@ -13,6 +13,7 @@ import { feedbackPage } from '../views/feedback.js';
 import { ProgramError, declineProgram, getProgramByRef, validateProgramInput } from '../programs.js';
 import { notifyGuideProgram } from '../emails.js';
 import { programStatusPage, programsPage } from '../views/programs.js';
+import { localeOf } from '../langs.js';
 
 export function featuresRouter(app) {
   const r = express.Router();
@@ -49,7 +50,7 @@ export function featuresRouter(app) {
     if (!app.gifts.available) return fail(t('gift.unavailable'));
     if (!b.consent) return fail(t('err.consent'));
     const euros = values.amount === 'custom' ? Number(values.custom.replace(',', '.')) : Number(values.amount) / 100;
-    const money = (c) => new Intl.NumberFormat(req.lang === 'it' ? 'it-IT' : 'en-GB', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(c / 100);
+    const money = (c) => new Intl.NumberFormat(localeOf(req.lang), { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(c / 100);
     try {
       const { redirect } = await app.gifts.buy({ amountCents: Math.round(euros * 100), ...values, lang: req.lang }, req.lang);
       res.redirect(303, redirect);
