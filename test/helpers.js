@@ -40,13 +40,13 @@ export const FIXTURE_TOURS = [
 // "Adesso" di riferimento nei test: lunedì 4 gennaio 2027, 10:00 a Venezia
 export const NOW = localToInstant('2027-01-04', '10:00');
 
-export function makeApp(overrides = {}, { fetchImpl } = {}) {
+export function makeApp(overrides = {}, { fetchImpl, pec } = {}) {
   const dir = path.join(ROOT, 'data', 'test-' + crypto.randomBytes(4).toString('hex'));
   const cfg = createConfig({ __skipDotEnv: true, dataDir: dir, demoPayments: true, policy: { allowPayOnSite: true }, ...overrides });
   const db = openDb(':memory:');
   const tours = FIXTURE_TOURS;
   const content = { tours, tour: (s) => tours.find((t) => t.slug === s), postsFor: () => [], post: () => null, page: () => null };
-  const app = createContext({ cfg, db, content, fetchImpl });
+  const app = createContext({ cfg, db, content, fetchImpl, pec });
   app.cleanup = () => fs.rmSync(dir, { recursive: true, force: true });
   return app;
 }

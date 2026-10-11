@@ -118,6 +118,33 @@ export function createConfig(overrides = {}) {
       validityDays: num(e.PROGRAM_VALIDITY_DAYS, 7), // validità predefinita di una proposta
     },
 
+    // Fatturazione elettronica (FatturaPA). I dati fiscali vanno concordati con il commercialista.
+    invoice: {
+      seller: {
+        name: e.INVOICE_NAME || '', // denominazione, se emetti come società; altrimenti nome e cognome
+        firstName: e.INVOICE_FIRST_NAME || '',
+        lastName: e.INVOICE_LAST_NAME || '',
+        fiscalCode: (e.FISCAL_CODE || '').toUpperCase(),
+        regime: e.INVOICE_REGIME || 'RF19', // RF19 forfettario, RF01 ordinario, RF02 minimi…
+        address: { street: e.INVOICE_ADDRESS || '', zip: e.INVOICE_ZIP || '', city: e.INVOICE_CITY || '', province: (e.INVOICE_PROVINCE || '').toUpperCase() },
+      },
+      vatBp: Math.round(num(e.INVOICE_VAT_RATE, (e.INVOICE_REGIME || 'RF19') === 'RF19' ? 0 : 22) * 100),
+      nature: e.INVOICE_NATURE ?? ((e.INVOICE_REGIME || 'RF19') === 'RF19' || num(e.INVOICE_VAT_RATE, 22) === 0 ? 'N2.2' : ''),
+      vatIncluded: { b2c: bool(e.INVOICE_PRICES_INCLUDE_VAT_B2C, true), b2b: bool(e.INVOICE_PRICES_INCLUDE_VAT_B2B, false) }, // i prezzi pubblici comprendono l'IVA? (conta solo con IVA > 0)
+      bollo: e.INVOICE_BOLLO === 'never' ? 'never' : 'auto',
+      contributionPercent: num(e.INVOICE_CONTRIBUTION_PERCENT, 0), // rivalsa INPS (TC22) proposta nelle fatture a imprese
+      withholdingPercent: num(e.INVOICE_WITHHOLDING_PERCENT, 0), // ritenuta d'acconto proposta nelle fatture a imprese italiane
+      withholdingCause: e.INVOICE_WITHHOLDING_CAUSE || 'A',
+      notes: e.INVOICE_NOTES ?? ((e.INVOICE_REGIME || 'RF19') === 'RF19' ? 'Operazione effettuata ai sensi dell’art. 1, commi da 54 a 89, della Legge n. 190/2014 – Regime forfettario. | Operazione non soggetta a ritenuta d’acconto ai sensi dell’art. 1, comma 67, della Legge n. 190/2014.' : ''), // causali, separate da |
+      legalReference: e.INVOICE_LEGAL_REFERENCE ?? ((e.INVOICE_REGIME || 'RF19') === 'RF19' ? 'Regime forfettario - art. 1, commi 54-89, L. 190/2014' : 'Operazione non soggetta a IVA'),
+      iban: (e.INVOICE_IBAN || '').replace(/\s+/g, '').toUpperCase(),
+      bank: e.INVOICE_BANK || '',
+      b2bDueDays: num(e.INVOICE_B2B_DUE_DAYS, 30), // scadenza di pagamento delle fatture ai partner
+      giftInvoiceAt: e.INVOICE_GIFT_AT === 'redemption' ? 'redemption' : 'sale', // buono monouso: fattura alla vendita; multiuso: all'utilizzo
+      sdiAddress: e.SDI_PEC_ADDRESS || 'sdi01@pec.fatturapa.it',
+      pec: { host: e.PEC_SMTP_HOST || '', port: num(e.PEC_SMTP_PORT, 465), user: e.PEC_SMTP_USER || '', pass: e.PEC_SMTP_PASS || '', secure: bool(e.PEC_SMTP_SECURE, true), from: e.PEC_FROM || e.PEC_SMTP_USER || '' },
+    },
+
     gift: {
       validityMonths: num(e.GIFT_VALIDITY_MONTHS, 24), // validità dei buoni regalo
       minCents: num(e.GIFT_MIN_EUR, 20) * 100,

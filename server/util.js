@@ -29,3 +29,11 @@ export function safeEqual(a, b) {
   const hb = crypto.createHash('sha256').update(String(b)).digest();
   return crypto.timingSafeEqual(ha, hb);
 }
+
+/** "12,50" → 1250 (centesimi); null se non è un importo valido. */
+export function parseEuros(input) {
+  const raw = String(input ?? '').trim().replace(/\s+/g, '').replace(/€/g, '');
+  if (!/^-?\d+([.,]\d{1,2})?$/.test(raw.replace(/\.(?=\d{3}(\D|$))/g, ''))) return null;
+  const n = Number(raw.replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+  return Number.isFinite(n) ? Math.round(n * 100) : null;
+}

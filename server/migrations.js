@@ -249,6 +249,59 @@ CREATE INDEX program_days_date ON program_days(date);
 CREATE INDEX program_days_program ON program_days(program_id);
 `;
 
+const V6_INVOICES = `
+-- Fatture elettroniche (FatturaPA) e note di credito
+CREATE TABLE invoices (
+  id                  INTEGER PRIMARY KEY,
+  status              TEXT NOT NULL DEFAULT 'draft',   -- draft | issued | sent | delivered | rejected | undelivered
+  doc_type            TEXT NOT NULL DEFAULT 'TD01',    -- TD01 fattura | TD04 nota di credito
+  year                INTEGER, seq INTEGER, number TEXT,   -- assegnati all'emissione: N/AAAA, senza buchi
+  issue_date          TEXT,
+  related_id          INTEGER REFERENCES invoices(id), -- nota di credito: la fattura stornata
+  credited            INTEGER NOT NULL DEFAULT 0,      -- la fattura è stata stornata per intero
+  account_id          INTEGER REFERENCES accounts(id),
+  buyer_json          TEXT NOT NULL,                   -- intestatario (copia: non cambia se cambiano i dati del partner)
+  options_json        TEXT NOT NULL DEFAULT '{}',      -- bollo addebitato, rivalsa, ritenuta, causale aggiuntiva, tentativi di invio…
+  config_json         TEXT,                            -- impostazioni fiscali usate all'emissione (regime, aliquota, natura…)
+  taxable_cents       INTEGER NOT NULL DEFAULT 0,
+  vat_cents           INTEGER NOT NULL DEFAULT 0,
+  bollo_cents         INTEGER NOT NULL DEFAULT 0,      -- bollo virtuale dovuto (2 €)
+  bollo_charged       INTEGER NOT NULL DEFAULT 0,      -- 1 = addebitato al cliente con una riga in fattura
+  contribution_cents  INTEGER NOT NULL DEFAULT 0,
+  withholding_cents   INTEGER NOT NULL DEFAULT 0,
+  rounding_cents      INTEGER NOT NULL DEFAULT 0,
+  total_cents         INTEGER NOT NULL DEFAULT 0,
+  payable_cents       INTEGER NOT NULL DEFAULT 0,
+  currency            TEXT NOT NULL DEFAULT 'EUR',
+  payments_json       TEXT,                            -- [{method, cents, dueDate}]
+  file_name           TEXT, xml TEXT,
+  sent_at             TEXT, emailed_at TEXT, status_at TEXT, sdi_note TEXT,
+  created_at          TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX invoices_number ON invoices(year, seq) WHERE seq IS NOT NULL;
+CREATE INDEX invoices_status ON invoices(status);
+CREATE INDEX invoices_related ON invoices(related_id);
+
+CREATE TABLE invoice_lines (
+  id            INTEGER PRIMARY KEY,
+  invoice_id    INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+  position      INTEGER NOT NULL,
+  description   TEXT NOT NULL,
+  amount_cents  INTEGER NOT NULL,                      -- importo come indicato (lordo se i prezzi comprendono l'IVA)
+  net_cents     INTEGER NOT NULL DEFAULT 0,
+  vat_bp        INTEGER NOT NULL DEFAULT 0,            -- aliquota in punti base (2200 = 22%)
+  nature        TEXT,
+  source_type   TEXT,                                  -- booking | gift | program: da dove viene la riga
+  source_id     INTEGER,
+  source_payments TEXT,                                -- JSON [{method: MP08|MP05|MP01|null, cents, paid}]: come è stata o sarà pagata
+  released      INTEGER NOT NULL DEFAULT 0             -- 1 = la voce è di nuovo fatturabile (fattura stornata)
+);
+CREATE UNIQUE INDEX invoice_lines_source ON invoice_lines(source_type, source_id) WHERE source_type IS NOT NULL AND released = 0;
+CREATE INDEX invoice_lines_invoice ON invoice_lines(invoice_id);
+
+ALTER TABLE accounts ADD COLUMN billing_json TEXT;     -- dati di fatturazione strutturati del partner, per precompilare le prossime fatture
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -260,6 +313,8 @@ export const MIGRATIONS = [
   V4_CALENDARS,
   // v5 — programmi di più giorni
   V5_PROGRAMS,
+  // v6 — fatture elettroniche
+  V6_INVOICES,
 ];
 
 export function migrate(db) {

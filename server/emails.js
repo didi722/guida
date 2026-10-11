@@ -145,9 +145,9 @@ function textBody(app, b, lang, intro, extra = []) {
 }
 
 /** Allega un PDF generato al volo; se la generazione fallisce la mail parte comunque, senza allegato. */
-async function pdfAttachment(filename, render, what) {
+async function pdfAttachment(filename, render, what, file = './pdf.js') {
   try {
-    const pdf = await import('./pdf.js');
+    const pdf = await import(file);
     return [{ filename, content: await render(pdf), contentType: 'application/pdf' }];
   } catch (err) {
     console.error(`[pdf] ${what} non generato:`, err.message);
@@ -623,4 +623,28 @@ export async function notifyGuideProgram(app, p, kind, text = '') {
     `${app.cfg.baseUrl}/admin/programs/${p.id}`,
   ].filter((x) => x !== null);
   await app.mail.send({ to, subject: `${label}: ${p.name} (${p.ref})`, text: lines.join('\n'), replyTo: kind === 'message' || kind === 'new' ? p.email : undefined });
+}
+
+// ───────────── Fatture ─────────────
+/** Manda all'intestatario la copia di cortesia (PDF) di una fattura emessa, con l'XML se richiesto. @returns {Promise<boolean>} */
+export async function sendInvoiceCopy(app, inv, to, { includeXml = false } = {}) {
+  const buyer = JSON.parse(inv.buyer_json);
+  const lang = buyer.lang === 'en' ? 'en' : 'it';
+  const t = makeT(lang);
+  const kind = t(inv.doc_type === 'TD04' ? 'inv.mail.kindCredit' : 'inv.mail.kindInvoice');
+  const Kind = kind.charAt(0).toUpperCase() + kind.slice(1);
+  const name = buyer.kind === 'person' ? buyer.firstName : buyer.name;
+  const intro = t('inv.mail.intro', { kind, number: inv.number, date: fmtDate(inv.issue_date, lang, 'date'), total: formatMoney(inv.total_cents, lang, inv.currency) });
+  const attachments = await pdfAttachment(`${inv.doc_type === 'TD04' ? 'nota-di-credito' : 'fattura'}-${String(inv.number).replace('/', '-')}.pdf`, (pdf) => pdf.renderInvoicePdf(app, inv), 'fattura', './pdf-invoice.js');
+  if (includeXml && inv.xml) attachments.push({ filename: inv.file_name, content: inv.xml, contentType: 'application/xml' });
+  const hello = lang === 'it' ? `Ciao ${name},` : `Hi ${name},`;
+  const sign = `${lang === 'it' ? 'A presto,' : 'See you soon,'} ${app.cfg.site.name}`;
+  return app.mail.send({
+    to,
+    subject: t('inv.mail.subject', { kind: Kind, number: inv.number, name: app.cfg.site.name }),
+    text: [hello, '', intro, includeXml ? t('inv.mail.xml') : '', '', sign].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n'),
+    html: String(layout(app, lang, html`<p>${hello}</p><p>${intro}${includeXml ? html` ${t('inv.mail.xml')}` : ''}</p><p style="color:#666;font-size:13px">${sign}</p>`)),
+    attachments,
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
 }

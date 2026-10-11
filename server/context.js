@@ -2,14 +2,16 @@
 import { createCalendars } from './calendars.js';
 import { createGiftServices } from './giftServices.js';
 import { createLimits } from './http.js';
+import { createInvoiceServices } from './invoiceServices.js';
 import { createMailer } from './mail.js';
+import { createPecMailer } from './pec.js';
 import { createProgramServices } from './programs.js';
 import { createReviewServices } from './reviews.js';
 import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
 import { createServices } from './services.js';
 
-export function createContext({ cfg, db, content, mail, payments, fetchImpl, assetVersion = '0' }) {
+export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl, assetVersion = '0' }) {
   const app = { cfg, db, content, assetVersion, jobs: [], limits: createLimits() };
   /** Lavori periodici (ogni minuto): ogni modulo aggiunge i suoi a `app.jobs`. */
   app.runJobs = async (nowMs = Date.now()) => {
@@ -29,5 +31,7 @@ export function createContext({ cfg, db, content, mail, payments, fetchImpl, ass
   app.reviews = createReviewServices(app);
   app.calendars = createCalendars(app, fetchImpl);
   app.programs = createProgramServices(app);
+  app.pec = pec ?? createPecMailer(cfg);
+  app.invoices = createInvoiceServices(app);
   return app;
 }

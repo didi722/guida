@@ -2238,5 +2238,169 @@
  "pdf.generated": [
   "Documento generato il {date}",
   "Document generated on {date}"
+ ],
+ "inv.pdf.invoice": [
+  "Fattura",
+  "Invoice"
+ ],
+ "inv.pdf.credit": [
+  "Nota di credito",
+  "Credit note"
+ ],
+ "inv.pdf.courtesy": [
+  "Copia di cortesia",
+  "Courtesy copy"
+ ],
+ "inv.pdf.number": [
+  "n. {number} del {date}",
+  "no. {number} of {date}"
+ ],
+ "inv.pdf.seller": [
+  "Cedente / prestatore",
+  "Supplier"
+ ],
+ "inv.pdf.buyer": [
+  "Cessionario / committente",
+  "Customer"
+ ],
+ "inv.pdf.vat": [
+  "P.IVA",
+  "VAT no."
+ ],
+ "inv.pdf.taxCode": [
+  "C.F.",
+  "Tax code"
+ ],
+ "inv.pdf.regime": [
+  "Regime fiscale",
+  "Tax regime"
+ ],
+ "inv.pdf.regime.RF19": [
+  "Regime forfettario",
+  "Flat-rate regime"
+ ],
+ "inv.pdf.regime.RF01": [
+  "Regime ordinario",
+  "Ordinary regime"
+ ],
+ "inv.pdf.regime.RF02": [
+  "Contribuenti minimi",
+  "Minimum taxpayers regime"
+ ],
+ "inv.pdf.sdi": [
+  "Codice destinatario",
+  "Recipient code"
+ ],
+ "inv.pdf.pec": [
+  "PEC",
+  "Certified email"
+ ],
+ "inv.pdf.desc": [
+  "Descrizione",
+  "Description"
+ ],
+ "inv.pdf.amount": [
+  "Importo",
+  "Amount"
+ ],
+ "inv.pdf.vatCol": [
+  "IVA",
+  "VAT"
+ ],
+ "inv.pdf.taxable": [
+  "Imponibile",
+  "Taxable amount"
+ ],
+ "inv.pdf.contribution": [
+  "Rivalsa INPS {percent}%",
+  "Social security contribution {percent}%"
+ ],
+ "inv.pdf.vatAmount": [
+  "IVA {rate}%",
+  "VAT {rate}%"
+ ],
+ "inv.pdf.noVat": [
+  "IVA",
+  "VAT"
+ ],
+ "inv.pdf.bollo": [
+  "Imposta di bollo assolta in modo virtuale",
+  "Stamp duty paid virtually"
+ ],
+ "inv.pdf.rounding": [
+  "Arrotondamento",
+  "Rounding"
+ ],
+ "inv.pdf.total": [
+  "Totale documento",
+  "Document total"
+ ],
+ "inv.pdf.withholding": [
+  "Ritenuta d’acconto {percent}%",
+  "Withholding tax {percent}%"
+ ],
+ "inv.pdf.payable": [
+  "Netto a pagare",
+  "Net amount due"
+ ],
+ "inv.pdf.payment": [
+  "Pagamento",
+  "Payment"
+ ],
+ "inv.pdf.pay.MP08": [
+  "Carta di pagamento",
+  "Card"
+ ],
+ "inv.pdf.pay.MP05": [
+  "Bonifico",
+  "Bank transfer"
+ ],
+ "inv.pdf.pay.MP01": [
+  "Contanti",
+  "Cash"
+ ],
+ "inv.pdf.paid": [
+  "già pagato",
+  "already paid"
+ ],
+ "inv.pdf.dueOn": [
+  "entro il {date}",
+  "due by {date}"
+ ],
+ "inv.pdf.iban": [
+  "IBAN",
+  "IBAN"
+ ],
+ "inv.pdf.related": [
+  "Storna la fattura n. {number} del {date}.",
+  "Credits invoice no. {number} of {date}."
+ ],
+ "inv.pdf.notes": [
+  "Note",
+  "Notes"
+ ],
+ "inv.pdf.footer": [
+  "Copia di cortesia priva di valore fiscale. La fattura elettronica originale è il file XML trasmesso tramite il Sistema di Interscambio: la trovi nella tua area riservata dell’Agenzia delle Entrate (Fatture e Corrispettivi) o presso il tuo intermediario.",
+  "Courtesy copy with no tax value. The original electronic invoice is the XML file sent through the Italian Exchange System (SdI); in Italy it is available in your Agenzia delle Entrate private area or through your intermediary."
+ ],
+ "inv.mail.subject": [
+  "{kind} {number} — {name}",
+  "{kind} {number} — {name}"
+ ],
+ "inv.mail.intro": [
+  "in allegato trovi la copia di cortesia della {kind} {number} del {date}, di {total}.",
+  "please find attached the courtesy copy of {kind} {number} of {date}, for {total}."
+ ],
+ "inv.mail.xml": [
+  "Allego anche il file XML della fattura elettronica.",
+  "The XML file of the electronic invoice is attached as well."
+ ],
+ "inv.mail.kindInvoice": [
+  "fattura",
+  "invoice"
+ ],
+ "inv.mail.kindCredit": [
+  "nota di credito",
+  "credit note"
  ]
 }

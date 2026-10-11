@@ -32,7 +32,7 @@ export function createApp(overrides = {}) {
   const cfg = overrides.cfg ?? createConfig();
   const db = overrides.db ?? openDb(cfg.dbFile);
   const content = overrides.content ?? loadContent(ROOT);
-  const app = createContext({ cfg, db, content, mail: overrides.mail, payments: overrides.payments, fetchImpl: overrides.fetchImpl, assetVersion: assetVersion() });
+  const app = createContext({ cfg, db, content, mail: overrides.mail, payments: overrides.payments, pec: overrides.pec, fetchImpl: overrides.fetchImpl, assetVersion: assetVersion() });
 
   const server = express();
   server.disable('x-powered-by');

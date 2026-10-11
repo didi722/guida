@@ -3,7 +3,7 @@ import { adjustGift, getGift, giftLedger, setGiftExpiry, voidGift, GiftError } f
 import { normalizePromo, promoUses } from '../pricing.js';
 import { sendGiftToBuyer, sendGiftToRecipient } from '../emails.js';
 import { isDate, nowRome } from '../time.js';
-import { cleanText } from '../util.js';
+import { cleanText, parseEuros } from '../util.js';
 import { send, sendPdf } from '../http.js';
 import { renderGiftCardPdf } from '../pdf.js';
 import { discountsPage, giftDetailPage } from '../views/admin-discounts.js';
@@ -27,12 +27,6 @@ const ERR = {
   giftfail: 'Impossibile creare il buono: controlla importo ed email.',
   adjust: 'Rettifica non valida (il saldo non può diventare negativo).',
 };
-
-/** "12,50" → 1250 (centesimi); null se non valido. */
-export function parseEuros(s) {
-  const n = Number(String(s ?? '').trim().replace(',', '.'));
-  return Number.isFinite(n) && String(s ?? '').trim() !== '' ? Math.round(n * 100) : null;
-}
 
 export function adminDiscountsRouter(app) {
   const r = express.Router();

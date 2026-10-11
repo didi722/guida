@@ -1,0 +1,614 @@
+// Fatture elettroniche: coda delle voci da fatturare, bozze, emissione numerata, note di credito.
+// L'invio (PEC verso SdI, copia al cliente) sta in createInvoiceServices, in fondo.
+import { bookingDue } from './bookings.js';
+import { tx } from './db.js';
+import { buildInvoiceXml, buyerProblems, causaleChunks, computeDocument, invoiceFileName, sellerProblems } from './fatturapa.js';
+import { formatGiftCode } from './pricing.js';
+import { addDays, fmtDate, isDate, nowRome } from './time.js';
+import { cleanText } from './util.js';
+
+export class InvoiceError extends Error {
+  constructor(code, message, problems = []) {
+    super(message);
+    this.code = code; // notfound | state | config | buyer | lines | amount | date | source | pec
+    this.problems = problems;
+  }
+}
+
+export const STATUS_LABEL = { draft: 'Bozza', issued: 'Emessa', sent: 'Inviata a SdI', delivered: 'Consegnata', rejected: 'Scartata da SdI', undelivered: 'Mancata consegna' };
+const EDITABLE = ['draft', 'rejected'];
+
+// ───────────── impostazioni ─────────────
+/** Impostazioni fiscali con i dati del cedente (te) presi dal profilo del sito. */
+export function settingsOf(cfg) {
+  const i = cfg.invoice;
+  return { ...i, seller: { ...i.seller, vatNumber: cfg.site.vatNumber, phone: cfg.site.phone, email: cfg.site.email } };
+}
+
+/** Cosa manca o non torna nei dati fiscali: finché c'è qualcosa non si può emettere. */
+export function configProblems(cfg) {
+  const s = settingsOf(cfg);
+  const out = sellerProblems({ ...s.seller, vatBp: s.vatBp, nature: s.nature });
+  if (s.seller.regime === 'RF19' && s.vatBp > 0) out.push('Il regime forfettario (RF19) non prevede IVA: imposta INVOICE_VAT_RATE=0.');
+  return out;
+}
+
+// ───────────── voci fatturabili ─────────────
+const keyOf = (type, id) => `${type}:${id}`;
+export function parseKey(key) {
+  const m = /^(booking|gift|program):(\d+)$/.exec(String(key));
+  return m ? { type: m[1], id: Number(m[2]) } : null;
+}
+
+const splitName = (full) => {
+  const parts = cleanText(full, 120).split(/\s+/).filter(Boolean);
+  return parts.length < 2 ? { firstName: parts[0] ?? '', lastName: '' } : { firstName: parts.slice(0, -1).join(' '), lastName: parts.at(-1) };
+};
+/** Paese dell'account (codice a due lettere); «OTHER» o un valore sconosciuto lasciano il campo vuoto, da scegliere a mano. */
+const countryOf = (raw) => {
+  const c = String(raw ?? '').trim().toUpperCase();
+  if (!c) return 'IT';
+  return /^[A-Z]{2}$/.test(c) ? c : '';
+};
+
+function buyerFromAccount(a) {
+  const saved = a.billing_json ? JSON.parse(a.billing_json) : {};
+  return {
+    kind: 'company',
+    name: a.company,
+    country: countryOf(saved.country ?? a.country),
+    vat: String(saved.vat ?? a.vat ?? '').replace(/\s+/g, '').toUpperCase().replace(/^IT(?=\d{11}$)/, ''),
+    taxCode: saved.taxCode ?? '',
+    address: saved.address ?? a.address ?? '',
+    zip: saved.zip ?? '',
+    city: saved.city ?? '',
+    province: saved.province ?? '',
+    sdiCode: String(saved.sdiCode ?? a.sdi_code ?? '').toUpperCase(),
+    pec: saved.pec ?? a.pec ?? '',
+    email: a.email,
+    lang: a.lang === 'en' ? 'en' : 'it',
+  };
+}
+const buyerFromPerson = (name, email, lang) => ({ kind: 'person', ...splitName(name), name: '', country: lang === 'it' ? 'IT' : '', vat: '', taxCode: '', address: '', zip: '', city: '', province: '', sdiCode: '', pec: '', email, lang: lang === 'en' ? 'en' : 'it' });
+
+const dateOf = (iso) => (iso ? nowRome(Date.parse(iso)).date : null);
+
+/**
+ * Descrive una voce fatturabile (prenotazione, buono regalo, programma):
+ * cliente, importo da fatturare, come è stata pagata e testo della riga.
+ */
+export function describeSource(app, type, id, nowMs = Date.now()) {
+  const { db, cfg, content } = app;
+  const s = settingsOf(cfg);
+  const today = nowRome(nowMs).date;
+  const account = (accountId) => (accountId ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(accountId) : null);
+  const common = { key: keyOf(type, id), type, id };
+
+  if (type === 'booking') {
+    const b = db.prepare('SELECT * FROM bookings WHERE id = ?').get(id);
+    if (!b) return null;
+    const tour = content.tour(b.tour_slug);
+    const acct = b.channel === 'b2b' ? account(b.account_id) : null;
+    // la parte pagata con un buono regalo è già stata fatturata alla vendita del buono (se è considerato monouso)
+    const cents = s.giftInvoiceAt === 'sale' ? bookingDue(b) : b.total_cents;
+    const paidNow = b.payment_status === 'paid';
+    const method = { card: 'MP08', onsite: 'MP01', invoice: 'MP05' }[b.payment_method] ?? null;
+    const payments = [];
+    if (bookingDue(b) > 0) payments.push({ method, cents: bookingDue(b), paid: paidNow });
+    if (cents > bookingDue(b)) payments.push({ method: null, cents: cents - bookingDue(b), paid: true });
+    const served = b.date <= today;
+    const paidDate = b.payment_method === 'card' && b.confirmed_at ? dateOf(b.confirmed_at) : null;
+    const trigger = paidDate && paidDate < b.date ? paidDate : b.date;
+    return {
+      ...common,
+      ref: b.ref,
+      label: `${tour?.i18n.it.title ?? b.tour_slug} · ${fmtDate(b.date, 'it', 'short')} ${b.start_time} · ${b.participants} pers.`,
+      date: b.date,
+      served,
+      channel: b.channel,
+      accountId: acct?.id ?? null,
+      buyerKey: acct ? `account:${acct.id}` : `email:${b.email}`,
+      customer: acct ? acct.company : b.name,
+      buyer: acct ? buyerFromAccount(acct) : buyerFromPerson(b.name, b.email, b.lang),
+      hint: b.billing_json ? (JSON.parse(b.billing_json).text ?? null) : null,
+      description: `${tour?.i18n.it.title ?? b.tour_slug} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${b.participants} ${b.participants === 1 ? 'persona' : 'persone'}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
+      amountCents: cents,
+      payments,
+      dueBy: addDays(trigger, 12),
+    };
+  }
+
+  if (type === 'gift') {
+    const g = db.prepare('SELECT * FROM gift_cards WHERE id = ?').get(id);
+    if (!g) return null;
+    const web = g.source === 'web';
+    const date = dateOf(g.activated_at ?? g.created_at);
+    return {
+      ...common,
+      ref: g.ref,
+      label: `Buono regalo ${formatGiftCode(g.code)}`,
+      date,
+      served: true,
+      channel: 'b2c',
+      accountId: null,
+      buyerKey: `email:${g.buyer_email ?? g.ref}`,
+      customer: g.buyer_name ?? g.buyer_email ?? g.ref,
+      buyer: buyerFromPerson(g.buyer_name ?? '', g.buyer_email ?? '', g.lang),
+      hint: null,
+      description: `Buono regalo ${formatGiftCode(g.code)}${g.expires_at ? ` – valido fino al ${fmtDate(g.expires_at, 'it', 'date')}` : ''}`,
+      amountCents: g.initial_cents,
+      payments: [{ method: web ? 'MP08' : 'MP01', cents: g.initial_cents, paid: true }],
+      dueBy: addDays(date, 12),
+    };
+  }
+
+  if (type === 'program') {
+    const p = db.prepare('SELECT * FROM programs WHERE id = ?').get(id);
+    if (!p) return null;
+    const days = db.prepare('SELECT date FROM program_days WHERE program_id = ? ORDER BY date').all(p.id);
+    const first = days[0]?.date;
+    const last = days.at(-1)?.date ?? first ?? today;
+    const acct = p.channel === 'b2b' ? account(p.account_id) : null;
+    const total = p.total_cents ?? 0;
+    const payments = [];
+    if (p.deposit_status === 'paid' && p.deposit_cents) {
+      payments.push({ method: p.stripe_payment_intent ? 'MP08' : 'MP05', cents: p.deposit_cents, paid: true });
+      if (total > p.deposit_cents) payments.push({ method: 'MP05', cents: total - p.deposit_cents, paid: false });
+    } else payments.push({ method: 'MP05', cents: total, paid: false });
+    const range = first ? (last !== first ? `dal ${fmtDate(first, 'it', 'short')} al ${fmtDate(last, 'it', 'short')}` : `il ${fmtDate(first, 'it', 'short')}`) : '';
+    return {
+      ...common,
+      ref: p.ref,
+      label: `Programma ${p.proposal_title ?? p.ref}${range ? ` · ${range}` : ''}`,
+      date: last,
+      served: last <= today,
+      channel: p.channel,
+      accountId: acct?.id ?? null,
+      buyerKey: acct ? `account:${acct.id}` : `email:${p.email}`,
+      customer: acct ? acct.company : (p.company || p.name),
+      buyer: acct ? buyerFromAccount(acct) : p.company ? { ...buyerFromPerson('', p.email, p.lang), kind: 'company', name: p.company } : buyerFromPerson(p.name, p.email, p.lang),
+      hint: null,
+      description: `Programma «${p.proposal_title ?? p.ref}»${range ? ` ${range}` : ''} – ${days.length} ${days.length === 1 ? 'giornata' : 'giornate'}${p.client_ref ? ` – rif. ${p.client_ref}` : ''}`,
+      amountCents: total,
+      payments,
+      dueBy: addDays(last, 12),
+    };
+  }
+  return null;
+}
+
+const isReserved = (db, type, id) => !!db.prepare('SELECT 1 FROM invoice_lines WHERE source_type = ? AND source_id = ? AND released = 0').get(type, id);
+
+/** Voci ancora da fatturare: prenotazioni confermate (pagate o già svolte), buoni venduti, programmi conclusi. */
+export function invoiceQueue(app, nowMs = Date.now()) {
+  const { db, cfg } = app;
+  const today = nowRome(nowMs).date;
+  const items = [];
+  const push = (type, id) => {
+    if (isReserved(db, type, id)) return;
+    const item = describeSource(app, type, id, nowMs);
+    if (item && item.amountCents > 0) items.push({ ...item, overdue: item.dueBy < today });
+  };
+  for (const { id } of db.prepare(`SELECT id FROM bookings WHERE status = 'confirmed' AND (payment_status = 'paid' OR date <= ?) ORDER BY date, start_time`).all(today)) push('booking', id);
+  if (settingsOf(cfg).giftInvoiceAt === 'sale') for (const { id } of db.prepare(`SELECT id FROM gift_cards WHERE status = 'active' ORDER BY id`).all()) push('gift', id);
+  for (const { id } of db.prepare(`SELECT id FROM programs WHERE status = 'confirmed' ORDER BY id`).all()) {
+    const item = describeSource(app, 'program', id, nowMs);
+    if (item?.served) push('program', id);
+  }
+  return items;
+}
+
+// ───────────── lettura ─────────────
+export const getInvoice = (db, id) => db.prepare('SELECT * FROM invoices WHERE id = ?').get(id);
+export const invoiceLines = (db, id) => db.prepare('SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY position, id').all(id);
+export const parseJson = (s, d = {}) => {
+  try {
+    return s ? JSON.parse(s) : d;
+  } catch {
+    return d;
+  }
+};
+export const buyerOf = (inv) => parseJson(inv.buyer_json);
+export const optionsOf = (inv) => parseJson(inv.options_json);
+
+// ───────────── calcolo ─────────────
+function reconcilePayments(lines, calc, s, dueDate, isCredit) {
+  if (isCredit) return [];
+  const merged = new Map();
+  const add = (method, cents, paid) => {
+    if (cents <= 0) return;
+    const k = `${method ?? 'none'}|${paid ? 1 : 0}`;
+    merged.set(k, { method, paid, cents: (merged.get(k)?.cents ?? 0) + cents });
+  };
+  for (const l of lines) {
+    const parts = parseJson(l.source_payments, null);
+    if (parts) parts.forEach((p) => add(p.method, p.cents, p.paid));
+    else add('MP05', l.amount_cents, false);
+  }
+  const items = [...merged.values()];
+  const sum = () => items.reduce((a, b) => a + b.cents, 0);
+  let diff = calc.payableCents - sum();
+  if (diff > 0) {
+    const open = items.filter((i) => !i.paid && i.method).at(-1);
+    if (open) open.cents += diff;
+    else items.push({ method: 'MP05', paid: false, cents: diff });
+  } else if (diff < 0) {
+    for (const item of [...items].sort((a, b) => Number(a.paid) - Number(b.paid)).reverse()) {
+      const cut = Math.min(item.cents, -diff);
+      item.cents -= cut;
+      diff += cut;
+      if (!diff) break;
+    }
+  }
+  return items
+    .filter((i) => i.method && i.cents > 0)
+    .map((i) => ({ method: i.method, cents: i.cents, paid: i.paid, dueDate: !i.paid && i.method === 'MP05' ? dueDate : null, iban: i.method === 'MP05' ? s.iban : null, bank: s.bank }));
+}
+
+/** Calcola importi e pagamenti di una fattura a partire dalle sue righe e opzioni. */
+export function calcInvoice(app, inv, lines) {
+  const s = settingsOf(app.cfg);
+  const opts = optionsOf(inv);
+  const isCredit = inv.doc_type === 'TD04';
+  const vatIncluded = s.vatBp > 0 && !!opts.vatIncluded;
+  let calc;
+  try {
+    calc = computeDocument({
+      lines: lines.map((l) => ({ description: l.description, amountCents: l.amount_cents, sourceKey: l.source_type ? keyOf(l.source_type, l.source_id) : null })),
+      vatBp: s.vatBp,
+      nature: s.vatBp === 0 ? s.nature : null,
+      vatIncluded,
+      bolloMode: s.bollo,
+      bolloCharged: !!opts.bolloCharged && !vatIncluded,
+      contributionPercent: vatIncluded ? 0 : opts.contributionPercent,
+      withholdingPercent: opts.withholdingPercent,
+      withholdingCause: s.withholdingCause,
+      targetTotalCents: vatIncluded ? lines.reduce((a, l) => a + l.amount_cents, 0) : null,
+      isCreditNote: isCredit,
+    });
+  } catch (err) {
+    throw new InvoiceError('amount', err.message);
+  }
+  const payments = reconcilePayments(lines, calc, s, opts.dueDate ?? null, isCredit);
+  return { calc, payments, settings: s, options: opts };
+}
+
+function persistCalc(db, id, calc, payments, nowMs) {
+  db.prepare(
+    `UPDATE invoices SET taxable_cents = ?, vat_cents = ?, bollo_cents = ?, bollo_charged = ?, contribution_cents = ?, withholding_cents = ?, rounding_cents = ?, total_cents = ?, payable_cents = ?, payments_json = ?, updated_at = ? WHERE id = ?`,
+  ).run(calc.taxableCents, calc.vatCents, calc.bolloCents, calc.bolloCharged ? 1 : 0, calc.contributionCents, calc.withholdingCents, calc.roundingCents, calc.totalCents, calc.payableCents, JSON.stringify(payments), new Date(nowMs).toISOString(), id);
+}
+
+function writeLines(db, id, lines, calc) {
+  db.prepare('DELETE FROM invoice_lines WHERE invoice_id = ?').run(id);
+  const ins = db.prepare('INSERT INTO invoice_lines(invoice_id, position, description, amount_cents, net_cents, vat_bp, nature, source_type, source_id, source_payments) VALUES(?,?,?,?,?,?,?,?,?,?)');
+  lines.forEach((l, i) => {
+    const c = calc.lines[i];
+    ins.run(id, i, l.description, l.amount_cents, c.netCents, c.vatBp, c.nature, l.source_type ?? null, l.source_id ?? null, l.source_payments ?? null);
+  });
+}
+
+// ───────────── bozze ─────────────
+function defaultOptions(s, buyer, sources, issueDate) {
+  const company = buyer.kind === 'company';
+  const unpaid = sources.some((x) => x.payments.some((p) => p.method && !p.paid));
+  const b2b = company || sources.some((x) => x.channel === 'b2b');
+  const vatIncluded = s.vatBp > 0 && (b2b ? s.vatIncluded.b2b : s.vatIncluded.b2c);
+  const italianBusiness = company && String(buyer.country).toUpperCase() === 'IT' && !!buyer.vat;
+  return {
+    vatIncluded,
+    bolloCharged: unpaid, // se il cliente deve ancora pagare, il bollo gli si addebita; se ha già pagato il prezzo concordato lo assorbi tu
+    contributionPercent: company && unpaid && !vatIncluded ? s.contributionPercent : 0,
+    withholdingPercent: italianBusiness && unpaid ? s.withholdingPercent : 0,
+    notes: '',
+    dueDate: unpaid && sources.some((x) => x.payments.some((p) => p.method === 'MP05' && !p.paid)) ? addDays(issueDate, s.b2bDueDays) : null,
+    hint: sources.map((x) => x.hint).filter(Boolean).join(' | ') || null,
+    attempt: 0,
+  };
+}
+
+function insertDraft(app, group, nowMs) {
+  const { db, cfg } = app;
+  const s = settingsOf(cfg);
+  const today = nowRome(nowMs).date;
+  const first = group[0];
+  const buyer = first.buyer;
+  const options = defaultOptions(s, buyer, group, today);
+  const now = new Date(nowMs).toISOString();
+  const info = db
+    .prepare(`INSERT INTO invoices(status, doc_type, issue_date, account_id, buyer_json, options_json, currency, created_at, updated_at) VALUES('draft', 'TD01', ?, ?, ?, ?, 'EUR', ?, ?)`)
+    .run(today, first.accountId, JSON.stringify(buyer), JSON.stringify(options), now, now);
+  const id = Number(info.lastInsertRowid);
+  const lines = group.map((x) => ({ description: x.description, amount_cents: x.amountCents, source_type: x.type, source_id: x.id, source_payments: JSON.stringify(x.payments) }));
+  const inv = getInvoice(db, id);
+  const { calc, payments } = calcInvoice(app, inv, lines);
+  writeLines(db, id, lines, calc);
+  persistCalc(db, id, calc, payments, nowMs);
+  return getInvoice(db, id);
+}
+
+/** Crea una bozza per ciascun cliente tra le voci scelte (le voci dello stesso partner finiscono nella stessa fattura). */
+export function createDrafts(app, keys, nowMs = Date.now()) {
+  const { db } = app;
+  const parsed = [...new Set(keys)].map(parseKey).filter(Boolean);
+  if (!parsed.length) throw new InvoiceError('source', 'nessuna voce selezionata');
+  return tx(db, () => {
+    const sources = parsed.map(({ type, id }) => {
+      const item = describeSource(app, type, id, nowMs);
+      if (!item) throw new InvoiceError('source', 'voce non trovata');
+      if (isReserved(db, type, id)) throw new InvoiceError('source', `${item.ref} è già in una fattura`);
+      if (item.amountCents <= 0) throw new InvoiceError('source', `${item.ref}: nulla da fatturare`);
+      return item;
+    });
+    const groups = new Map();
+    for (const x of sources) groups.set(x.buyerKey, [...(groups.get(x.buyerKey) ?? []), x]);
+    return [...groups.values()].map((g) => insertDraft(app, g, nowMs));
+  });
+}
+
+/** Bozza senza voci collegate (servizio reso di persona, fattura a mano). */
+export function createManualDraft(app, nowMs = Date.now()) {
+  const { db, cfg } = app;
+  const s = settingsOf(cfg);
+  const today = nowRome(nowMs).date;
+  const now = new Date(nowMs).toISOString();
+  const buyer = { ...buyerFromPerson('', '', 'it'), country: 'IT' };
+  const options = { vatIncluded: s.vatBp > 0 && s.vatIncluded.b2c, bolloCharged: true, contributionPercent: 0, withholdingPercent: 0, notes: '', dueDate: null, hint: null, attempt: 0 };
+  const id = Number(db.prepare(`INSERT INTO invoices(status, doc_type, issue_date, buyer_json, options_json, currency, created_at, updated_at) VALUES('draft', 'TD01', ?, ?, ?, 'EUR', ?, ?)`).run(today, JSON.stringify(buyer), JSON.stringify(options), now, now).lastInsertRowid);
+  return getInvoice(db, id);
+}
+
+const num = (v, max) => {
+  const n = Number(String(v ?? '').replace(',', '.'));
+  return Number.isFinite(n) && n >= 0 && n <= max ? n : 0;
+};
+
+/**
+ * Salva le modifiche a una bozza (o a una fattura scartata da SdI).
+ * form: { buyer, lines: [{ key?, description, amountCents }], issueDate, options: { bolloCharged, contributionPercent, withholdingPercent, notes, dueDate } }
+ */
+export function saveDraft(app, id, form, nowMs = Date.now()) {
+  const { db } = app;
+  return tx(db, () => {
+    const inv = getInvoice(db, id);
+    if (!inv) throw new InvoiceError('notfound', 'fattura non trovata');
+    if (!EDITABLE.includes(inv.status)) throw new InvoiceError('state', 'una fattura emessa non si modifica: emetti una nota di credito');
+    const old = invoiceLines(db, id);
+    const b = form.buyer ?? {};
+    const buyer = {
+      kind: b.kind === 'person' ? 'person' : 'company',
+      name: cleanText(b.name, 120),
+      firstName: cleanText(b.firstName, 60),
+      lastName: cleanText(b.lastName, 60),
+      country: cleanText(b.country, 2).toUpperCase(),
+      vat: cleanText(b.vat, 30).replace(/\s+/g, '').toUpperCase(),
+      taxCode: cleanText(b.taxCode, 20).replace(/\s+/g, '').toUpperCase(),
+      address: cleanText(b.address, 120),
+      zip: cleanText(b.zip, 10),
+      city: cleanText(b.city, 80),
+      province: cleanText(b.province, 3).toUpperCase(),
+      sdiCode: cleanText(b.sdiCode, 7).toUpperCase(),
+      pec: cleanText(b.pec, 200),
+      email: cleanText(b.email, 200).toLowerCase(),
+      lang: b.lang === 'en' ? 'en' : 'it',
+    };
+    const lines = (form.lines ?? []).map((l) => {
+      const prev = l.key ? old.find((o) => o.source_type && keyOf(o.source_type, o.source_id) === l.key) : null;
+      return { description: cleanText(l.description, 400), amount_cents: l.amountCents, source_type: prev?.source_type ?? null, source_id: prev?.source_id ?? null, source_payments: prev?.source_payments ?? null };
+    });
+    if (!lines.length) throw new InvoiceError('lines', 'serve almeno una riga');
+    lines.forEach((l, i) => {
+      if (l.description.length < 2) throw new InvoiceError('lines', `riga ${i + 1}: manca la descrizione`);
+      if (!Number.isInteger(l.amount_cents) || l.amount_cents <= 0) throw new InvoiceError('amount', `riga ${i + 1}: importo non valido`);
+    });
+    const issueDate = isDate(form.issueDate) ? form.issueDate : inv.issue_date;
+    const prev = optionsOf(inv);
+    const o = form.options ?? {};
+    const options = {
+      ...prev,
+      bolloCharged: !!o.bolloCharged,
+      contributionPercent: num(o.contributionPercent, 100),
+      withholdingPercent: num(o.withholdingPercent, 100),
+      notes: cleanText(o.notes, 600),
+      dueDate: isDate(o.dueDate) ? o.dueDate : null,
+    };
+    // un rifiuto di SdI si corregge tenendo numero e data: la data non si cambia
+    const keepDate = inv.status === 'rejected';
+    db.prepare('UPDATE invoices SET buyer_json = ?, options_json = ?, issue_date = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(buyer), JSON.stringify(options), keepDate ? inv.issue_date : issueDate, new Date(nowMs).toISOString(), id);
+    const fresh = getInvoice(db, id);
+    const { calc, payments } = calcInvoice(app, fresh, lines);
+    writeLines(db, id, lines, calc);
+    persistCalc(db, id, calc, payments, nowMs);
+    return getInvoice(db, id);
+  });
+}
+
+export function deleteDraft(app, id) {
+  const inv = getInvoice(app.db, id);
+  if (!inv) throw new InvoiceError('notfound', 'fattura non trovata');
+  if (inv.status !== 'draft') throw new InvoiceError('state', 'si possono eliminare solo le bozze');
+  app.db.prepare('DELETE FROM invoices WHERE id = ?').run(id);
+}
+
+// ───────────── emissione ─────────────
+const base36 = (n) => n.toString(36).toUpperCase();
+/** Progressivo di invio del file (max 5 caratteri alfanumerici): cambia a ogni nuovo tentativo dopo uno scarto. */
+export const progressiveFor = (id, attempt = 0) => base36(id * 10 + attempt).padStart(5, '0').slice(-5);
+
+function causaliFor(app, inv, s, opts) {
+  const out = String(s.notes ?? '').split('|').map((x) => x.trim()).filter(Boolean);
+  if (inv.doc_type === 'TD04' && inv.related_id) {
+    const rel = getInvoice(app.db, inv.related_id);
+    if (rel) out.unshift(`Nota di credito relativa alla fattura n. ${rel.number} del ${fmtDate(rel.issue_date, 'it', 'date')}.`);
+  }
+  if (opts.notes) out.push(opts.notes);
+  return out;
+}
+
+/**
+ * Emette la fattura: controlla i dati, assegna il numero progressivo dell'anno (senza buchi), genera l'XML.
+ * Una fattura scartata da SdI si riemette con lo stesso numero e la stessa data.
+ */
+export function issueInvoice(app, id, nowMs = Date.now()) {
+  const { db, cfg } = app;
+  return tx(db, () => {
+    const inv = getInvoice(db, id);
+    if (!inv) throw new InvoiceError('notfound', 'fattura non trovata');
+    if (!EDITABLE.includes(inv.status)) throw new InvoiceError('state', 'la fattura è già stata emessa');
+    const s = settingsOf(cfg);
+    const cp = configProblems(cfg);
+    if (cp.length) throw new InvoiceError('config', 'i dati fiscali non sono completi', cp);
+    const buyer = buyerOf(inv);
+    const bp = buyerProblems(buyer);
+    if (bp.length) throw new InvoiceError('buyer', 'i dati dell’intestatario non sono completi', bp);
+    const lines = invoiceLines(db, id);
+    if (!lines.length) throw new InvoiceError('lines', 'serve almeno una riga');
+    const today = nowRome(nowMs).date;
+    const reissue = inv.status === 'rejected';
+    const date = inv.issue_date;
+    if (!isDate(date)) throw new InvoiceError('date', 'la data della fattura non è valida');
+    if (!reissue && date > today) throw new InvoiceError('date', 'la data della fattura non può essere futura');
+
+    let { year, seq, number } = inv;
+    const attempt = reissue ? (optionsOf(inv).attempt ?? 0) + 1 : 0;
+    if (!reissue) {
+      year = Number(date.slice(0, 4));
+      const last = db.prepare('SELECT MAX(seq) AS seq FROM invoices WHERE year = ?').get(year).seq ?? 0;
+      // la numerazione segue l'ordine cronologico: niente fatture con data precedente all'ultima già emessa nell'anno
+      const lastDate = last ? db.prepare('SELECT issue_date FROM invoices WHERE year = ? AND seq = ?').get(year, last).issue_date : null;
+      if (lastDate && date < lastDate) throw new InvoiceError('date', `la data non può essere precedente all'ultima fattura emessa (${fmtDate(lastDate, 'it', 'date')}): le fatture si numerano in ordine di data`);
+      seq = last + 1;
+      number = `${seq}/${year}`;
+    }
+
+    const fresh = { ...inv, number, issue_date: date, options_json: JSON.stringify({ ...optionsOf(inv), attempt }) };
+    const { calc, payments, options } = calcInvoice(app, fresh, lines);
+    const progressive = progressiveFor(id, attempt);
+    const related = inv.related_id ? getInvoice(db, inv.related_id) : null;
+    const xml = buildInvoiceXml({
+      progressive,
+      seller: s.seller,
+      buyer,
+      type: inv.doc_type,
+      date,
+      number,
+      currency: 'EUR',
+      calc,
+      causali: causaliFor(app, fresh, s, options),
+      related: related ? { number: related.number, date: related.issue_date } : null,
+      payments,
+      legalReference: s.legalReference,
+    });
+    const snapshot = { regime: s.seller.regime, vatBp: s.vatBp, nature: s.nature, vatIncluded: options.vatIncluded, notes: s.notes, legalReference: s.legalReference, seller: s.seller };
+    db.prepare(
+      `UPDATE invoices SET status = 'issued', year = ?, seq = ?, number = ?, options_json = ?, config_json = ?, file_name = ?, xml = ?, sdi_note = NULL, status_at = ?, updated_at = ? WHERE id = ?`,
+    ).run(year, seq, number, JSON.stringify({ ...options, attempt }), JSON.stringify(snapshot), invoiceFileName(s.seller.vatNumber, progressive), xml, new Date(nowMs).toISOString(), new Date(nowMs).toISOString(), id);
+    persistCalc(db, id, calc, payments, nowMs);
+    writeLines(db, id, lines, calc);
+
+    // intestatario memorizzato per le prossime fatture dello stesso partner
+    if (inv.account_id) {
+      const { kind, name, firstName, lastName, email, lang, ...saved } = buyer;
+      db.prepare('UPDATE accounts SET billing_json = ? WHERE id = ?').run(JSON.stringify(saved), inv.account_id);
+    }
+    // nota di credito: se storna per intero la fattura, le sue voci tornano fatturabili
+    if (inv.doc_type === 'TD04' && related) {
+      const credited = db.prepare(`SELECT COALESCE(SUM(total_cents), 0) AS s FROM invoices WHERE related_id = ? AND doc_type = 'TD04' AND status != 'draft'`).get(related.id).s;
+      if (credited >= related.total_cents && !related.credited) {
+        db.prepare('UPDATE invoices SET credited = 1 WHERE id = ?').run(related.id);
+        db.prepare('UPDATE invoice_lines SET released = 1 WHERE invoice_id = ? AND source_type IS NOT NULL').run(related.id);
+      }
+    }
+    return getInvoice(db, id);
+  });
+}
+
+/** Nota di credito (TD04) che storna una fattura emessa: nasce come bozza con le stesse righe, da rivedere. */
+export function createCreditNote(app, relatedId, nowMs = Date.now()) {
+  const { db } = app;
+  return tx(db, () => {
+    const rel = getInvoice(db, relatedId);
+    if (!rel) throw new InvoiceError('notfound', 'fattura non trovata');
+    if (rel.doc_type !== 'TD01' || !['issued', 'sent', 'delivered'].includes(rel.status)) throw new InvoiceError('state', 'si può stornare solo una fattura emessa');
+    if (rel.credited) throw new InvoiceError('state', 'la fattura è già stata stornata per intero');
+    if (db.prepare(`SELECT 1 FROM invoices WHERE related_id = ? AND doc_type = 'TD04' AND status = 'draft'`).get(relatedId)) throw new InvoiceError('state', 'c’è già una nota di credito in bozza per questa fattura');
+    const now = new Date(nowMs).toISOString();
+    const opts = { ...optionsOf(rel), bolloCharged: false, contributionPercent: 0, withholdingPercent: 0, notes: '', dueDate: null, attempt: 0 };
+    const id = Number(
+      db.prepare(`INSERT INTO invoices(status, doc_type, issue_date, related_id, account_id, buyer_json, options_json, currency, created_at, updated_at) VALUES('draft', 'TD04', ?, ?, ?, ?, ?, 'EUR', ?, ?)`).run(nowRome(nowMs).date, rel.id, rel.account_id, rel.buyer_json, JSON.stringify(opts), now, now).lastInsertRowid,
+    );
+    const lines = invoiceLines(db, rel.id)
+      .filter((l) => !/^Imposta di bollo/.test(l.description))
+      .map((l) => ({ description: `Storno: ${l.description}`.slice(0, 400), amount_cents: l.amount_cents, source_type: null, source_id: null, source_payments: null }));
+    const inv = getInvoice(db, id);
+    const { calc, payments } = calcInvoice(app, inv, lines);
+    writeLines(db, id, lines, calc);
+    persistCalc(db, id, calc, payments, nowMs);
+    return getInvoice(db, id);
+  });
+}
+
+/** Riporta in bozza l'ultima fattura emessa dell'anno se non è mai partita: libera il numero senza lasciare buchi. */
+export function discardIssued(app, id, nowMs = Date.now()) {
+  const { db } = app;
+  return tx(db, () => {
+    const inv = getInvoice(db, id);
+    if (!inv) throw new InvoiceError('notfound', 'fattura non trovata');
+    if (inv.status !== 'issued' || inv.sent_at || inv.emailed_at) throw new InvoiceError('state', 'si può annullare solo una fattura emessa che non è stata inviata né mandata al cliente');
+    const last = db.prepare('SELECT MAX(seq) AS seq FROM invoices WHERE year = ?').get(inv.year).seq;
+    if (inv.seq !== last) throw new InvoiceError('state', 'si può annullare solo l’ultima fattura dell’anno (altrimenti la numerazione avrebbe un buco): emetti una nota di credito');
+    db.prepare(`UPDATE invoices SET status = 'draft', year = NULL, seq = NULL, number = NULL, file_name = NULL, xml = NULL, config_json = NULL, updated_at = ? WHERE id = ?`).run(new Date(nowMs).toISOString(), id);
+    return getInvoice(db, id);
+  });
+}
+
+/** Esito comunicato da SdI (lo registri tu, leggendo le ricevute). */
+export function setSdiStatus(app, id, status, note = '', nowMs = Date.now()) {
+  const { db } = app;
+  if (!['sent', 'delivered', 'rejected', 'undelivered'].includes(status)) throw new InvoiceError('state', 'stato non valido');
+  const inv = getInvoice(db, id);
+  if (!inv) throw new InvoiceError('notfound', 'fattura non trovata');
+  if (inv.status === 'draft') throw new InvoiceError('state', 'la bozza non è stata emessa');
+  const now = new Date(nowMs).toISOString();
+  db.prepare('UPDATE invoices SET status = ?, status_at = ?, sdi_note = ?, sent_at = CASE WHEN ? = \'sent\' AND sent_at IS NULL THEN ? ELSE sent_at END, updated_at = ? WHERE id = ?').run(status, now, cleanText(note, 500) || null, status, now, now, id);
+  return getInvoice(db, id);
+}
+
+// ───────────── registro ─────────────
+const money = (c) => (c / 100).toFixed(2).replace('.', ',');
+const cell = (v) => {
+  const s = String(v ?? '');
+  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+/** Registro delle fatture emesse in un anno, in CSV (separatore «;», decimali con la virgola) per il commercialista. */
+export function invoicesCsv(app, year) {
+  const rows = app.db.prepare(`SELECT * FROM invoices WHERE year = ? AND status != 'draft' ORDER BY seq`).all(year);
+  const head = ['Numero', 'Data', 'Tipo', 'Cliente', 'Paese', 'P.IVA / ID fiscale', 'Codice fiscale', 'Imponibile', 'IVA', 'Bollo', 'Contributo', 'Ritenuta', 'Totale', 'Da pagare', 'Stato', 'Fattura collegata', 'File XML'];
+  const lines = rows.map((r) => {
+    const b = buyerOf(r);
+    const related = r.related_id ? getInvoice(app.db, r.related_id)?.number : '';
+    return [r.number, r.issue_date, r.doc_type === 'TD04' ? 'Nota di credito' : 'Fattura', b.kind === 'person' ? `${b.firstName} ${b.lastName}` : b.name, b.country, b.vat, b.taxCode, money(r.taxable_cents), money(r.vat_cents), money(r.bollo_cents), money(r.contribution_cents), money(r.withholding_cents), money(r.total_cents), money(r.payable_cents), STATUS_LABEL[r.status], related, r.file_name].map(cell).join(';');
+  });
+  return String.fromCharCode(0xfeff) + [head.join(';'), ...lines].join('\r\n') + '\r\n';
+}
+
+/** Dettaglio per la pagina: fattura, righe, importi calcolati e problemi da risolvere prima di emettere. */
+export function invoiceDetail(app, id) {
+  const inv = getInvoice(app.db, id);
+  if (!inv) return null;
+  const lines = invoiceLines(app.db, id);
+  const buyer = buyerOf(inv);
+  const out = { inv, lines, buyer, options: optionsOf(inv), payments: parseJson(inv.payments_json, []), related: inv.related_id ? getInvoice(app.db, inv.related_id) : null };
+  if (EDITABLE.includes(inv.status)) {
+    out.problems = [...configProblems(app.cfg), ...buyerProblems(buyer)];
+    try {
+      out.calc = calcInvoice(app, inv, lines).calc;
+    } catch (err) {
+      out.problems.push(err.message);
+    }
+  }
+  out.causali = causaliFor(app, inv, settingsOf(app.cfg), out.options).flatMap((c) => causaleChunks(c));
+  return out;
+}
+

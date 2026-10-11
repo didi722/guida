@@ -2,10 +2,9 @@ import express from 'express';
 import { ProgramError, createProgramRequest, dayConflicts, getProgram, programDays, saveProposal, setProgramStatus } from '../programs.js';
 import { notifyGuideProgram, programUrl } from '../emails.js';
 import { toMin } from '../time.js';
-import { cleanText } from '../util.js';
+import { cleanText, parseEuros } from '../util.js';
 import { send, sendPdf } from '../http.js';
 import { renderProposalPdf } from '../pdf.js';
-import { parseEuros } from './admin-discounts.js';
 import { programDetailPage, programsAdminPage } from '../views/admin-programs.js';
 
 const FLASH = {
