@@ -2,9 +2,30 @@
 import { nowRome } from './time.js';
 
 /** Prezzo unitario. B2B: tariffa B2B del tour, meno lo sconto extra dell'account. */
+const priceLists = new WeakMap();
+/** Listino dedicato di un partner: { slug: centesimi } (vuoto se non ne ha). */
+export function accountPrices(account) {
+  if (!account?.prices_json) return {};
+  if (!priceLists.has(account)) {
+    let list = {};
+    try {
+      const raw = JSON.parse(account.prices_json);
+      for (const [slug, cents] of Object.entries(raw ?? {})) if (Number.isInteger(cents) && cents >= 0) list[slug] = cents;
+    } catch {
+      list = {};
+    }
+    priceLists.set(account, list);
+  }
+  return priceLists.get(account);
+}
+
+/** Prezzo di un tour per un canale: ai partner, il prezzo dedicato se c'è; altrimenti la tariffa B2B meno lo sconto del partner. */
 export function unitPriceFor(tour, channel, account = null) {
-  let unit = channel === 'b2b' ? tour.b2bPriceCents : tour.priceCents;
-  if (channel === 'b2b' && account?.discount_percent) unit = Math.round(unit * (1 - account.discount_percent / 100));
+  if (channel !== 'b2b') return tour.priceCents;
+  const dedicated = accountPrices(account)[tour.slug];
+  if (dedicated != null) return dedicated;
+  let unit = tour.b2bPriceCents;
+  if (account?.discount_percent) unit = Math.round(unit * (1 - account.discount_percent / 100));
   return unit;
 }
 

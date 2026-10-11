@@ -5,6 +5,7 @@ import { isDate, isTime, localToInstant } from './time.js';
 import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
 import { normLang } from './langs.js';
+import { freeHoursOf, hasFreeTier, parseTiers, policyFor, refundPercentAt, singleTier, splitAmounts } from './policy.js';
 
 export { priceFor, unitPriceFor };
 
@@ -19,8 +20,7 @@ const HOUR = 3600_000;
 
 /** Ore di preavviso entro cui la cancellazione è gratuita. */
 export function freeCancelHours(cfg, tour, channel, account = null) {
-  if (channel === 'b2b') return account?.cancel_hours ?? cfg.policy.b2bFreeCancelHours;
-  return tour.cancelHours ?? cfg.policy.b2cFreeCancelHours;
+  return freeHoursOf(policyFor(cfg, tour, channel, account));
 }
 
 /** Importo che il cliente deve ancora pagare con carta/in sede/fattura (totale meno quanto coperto da buoni regalo). */
@@ -74,7 +74,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
   if (name.length < 2) throw new BookingError('invalid', 'name');
   if (!isEmail(email)) throw new BookingError('invalid', 'email');
 
-  const hours = freeCancelHours(cfg, tour, channel, account);
+  const tiers = policyFor(cfg, tour, channel, account); // dei partner o dei privati; se ne conserva una copia nella prenotazione
   const startInstant = localToInstant(input.date, input.time);
 
   return tx(db, () => {
@@ -122,7 +122,8 @@ export function createBooking(app, input, nowMs = Date.now()) {
       payment_method: method,
       payment_status: prepaid ? 'paid' : 'unpaid',
       hold_expires_at: status === 'held' ? new Date(nowMs + cfg.policy.holdMinutes * 60_000).toISOString() : null,
-      free_cancel_until: new Date(startInstant - hours * HOUR).toISOString(),
+      free_cancel_until: hasFreeTier(tiers) ? new Date(startInstant - freeHoursOf(tiers) * HOUR).toISOString() : now, // senza periodo gratuito: già scaduto
+      cancel_policy_json: JSON.stringify(tiers),
       created_at: now,
       confirmed_at: status === 'confirmed' ? now : null,
     };
@@ -182,40 +183,49 @@ export function confirmPaid(app, bookingId, paymentIntent = null, nowMs = Date.n
 export function cancellationState(b, nowMs = Date.now()) {
   const until = Date.parse(b.free_cancel_until);
   const startsAt = localToInstant(b.date, b.start_time);
+  // le prenotazioni più vecchie non hanno gli scaglioni: avevano un solo termine gratuito
+  const tiers = parseTiers(b.cancel_policy_json) ?? singleTier(Math.round((startsAt - until) / HOUR));
+  const percent = refundPercentAt(tiers, startsAt, nowMs);
   return {
-    until,
-    free: nowMs <= until && nowMs < startsAt,
+    until, // fine del periodo gratuito
+    tiers,
+    startsAt,
+    percent, // rimborso se si annulla adesso (0-100)
+    free: percent === 100,
     started: nowMs >= startsAt,
-    // false se la prenotazione è stata fatta quando il termine era già passato
-    everRefundable: Date.parse(b.created_at) <= until,
+    // false se la prenotazione è stata fatta quando non c'era già più nulla da rimborsare
+    everRefundable: refundPercentAt(tiers, startsAt, Date.parse(b.created_at)) > 0,
   };
 }
 
 /**
- * Annulla la prenotazione (solo DB). Calcola quanto va rimborsato:
- * refund: 'auto' (entro il termine di cancellazione gratuita) | 'full' | 'none'.
- * Il rimborso riguarda la quota pagata con carta; la quota pagata con buoni regalo torna sul buono.
- * Una prenotazione ancora in attesa di pagamento non ha incassato nulla: i buoni tornano sempre disponibili.
- * @returns {{booking: object, refundCents: number, giftRestoredCents: number}}
+ * Annulla la prenotazione (solo DB). Calcola quanto va rimborsato e quanto resta dovuto (penale):
+ * refund: 'auto' (percentuale dello scaglione in cui ci si trova) | 'full' (nessuna penale) | 'none' (penale per l'intero importo).
+ * Il rimborso riguarda la quota pagata con carta; chi non ha ancora pagato (fattura, sul posto) deve la penale.
+ * La quota pagata con buoni regalo torna sul buono solo se il rimborso è totale.
+ * Una prenotazione ancora in attesa di pagamento non ha incassato nulla e non deve nulla: i buoni tornano sempre disponibili.
+ * @returns {{booking: object, refundCents: number, retainedCents: number, percent: number, giftRestoredCents: number}}
  */
 export function cancelBooking(app, bookingId, { by, reason = null, refund = 'auto' }, nowMs = Date.now()) {
   const { db } = app;
   return tx(db, () => {
     const b = getBooking(db, bookingId);
     if (!b) throw new BookingError('invalid', 'booking not found');
-    if (b.status === 'cancelled' || b.status === 'expired') return { booking: b, refundCents: 0, giftRestoredCents: 0, already: true };
+    if (b.status === 'cancelled' || b.status === 'expired') return { booking: b, refundCents: 0, retainedCents: 0, percent: 0, giftRestoredCents: 0, already: true };
 
-    const refundable = refund === 'full' || (refund === 'auto' && cancellationState(b, nowMs).free);
-    const refundCents = b.payment_status === 'paid' && refundable ? bookingDue(b) : 0;
+    const percent = refund === 'full' ? 100 : refund === 'none' ? 0 : cancellationState(b, nowMs).percent;
+    const { refundCents, retainedCents } = b.status === 'confirmed' ? splitAmounts({ paidCents: b.payment_status === 'paid' ? bookingDue(b) : 0, dueCents: bookingDue(b) }, percent) : { refundCents: 0, retainedCents: 0 };
 
-    db.prepare(`UPDATE bookings SET status = 'cancelled', cancelled_at = ?, cancelled_by = ?, cancel_reason = ?, hold_expires_at = NULL WHERE id = ?`).run(
+    db.prepare(`UPDATE bookings SET status = 'cancelled', cancelled_at = ?, cancelled_by = ?, cancel_reason = ?, cancel_percent = ?, retained_cents = ?, hold_expires_at = NULL WHERE id = ?`).run(
       new Date(nowMs).toISOString(),
       by,
       cleanText(reason, 300) || null,
+      percent,
+      retainedCents,
       b.id,
     );
-    const giftRestoredCents = b.status === 'held' || refundable ? restoreGifts(db, b.id, nowMs) : 0;
-    return { booking: getBooking(db, b.id), refundCents, giftRestoredCents };
+    const giftRestoredCents = b.status === 'held' || percent === 100 ? restoreGifts(db, b.id, nowMs) : 0;
+    return { booking: getBooking(db, b.id), refundCents, retainedCents, percent, giftRestoredCents };
   });
 }
 

@@ -2,7 +2,6 @@ import crypto from 'node:crypto';
 import express from 'express';
 import { getBooking } from '../bookings.js';
 import { calendar, eventLines } from '../ics.js';
-import { sendPartnerApproved } from '../emails.js';
 import { getSetting, setSetting } from '../db.js';
 import { addDays, isDate, isMonth, isTime, monthDates, nowRome, toMin } from '../time.js';
 import { cleanText, safeEqual } from '../util.js';
@@ -11,13 +10,14 @@ import { renderVoucherPdf } from '../pdf.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
 import { adminMailRouter } from './admin-mail.js';
+import { adminPartnersRouter } from './admin-partners.js';
 import { adminInvoicesRouter } from './admin-invoices.js';
 import { dayConflicts } from '../programs.js';
 import { feedbackStats } from '../reviews.js';
 import { maskUrl } from '../calendars.js';
 import { feedbackAdminPage } from '../views/admin-feedback.js';
 import { invoiceForSource } from '../invoices.js';
-import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage, partnerDetailPage, partnersPage } from '../views/admin.js';
+import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage } from '../views/admin.js';
 
 const ERR = {
   calurl: 'Inserisci un nome e un indirizzo iCal valido (https://… oppure webcal://…).',
@@ -39,8 +39,6 @@ const FLASH = {
   custom: 'Orario speciale impostato.',
   block: 'Blocco aggiunto.',
   unblock: 'Blocco eliminato.',
-  partner: 'Partner aggiornato.',
-  approved: 'Partner approvato: gli ho inviato un’email.',
 };
 
 export function adminRouter(app) {
@@ -100,6 +98,7 @@ export function adminRouter(app) {
   r.use(adminProgramsRouter(app));
   r.use(adminInvoicesRouter(app));
   r.use(adminMailRouter(app));
+  r.use(adminPartnersRouter(app));
 
   r.get('/feedback', (req, res) => {
     const items = db.prepare(`SELECT f.*, b.name, b.email, b.tour_slug, b.date FROM feedback f JOIN bookings b ON b.id = f.booking_id ORDER BY f.created_at DESC LIMIT 200`).all();
@@ -265,32 +264,6 @@ export function adminRouter(app) {
   r.post('/availability/block/:id/delete', form, (req, res) => {
     db.prepare('DELETE FROM blocks WHERE id = ?').run(Number(req.params.id));
     res.redirect(303, back(req.body.m, 'unblock'));
-  });
-
-  // ───── partner B2B ─────
-  r.get('/partners', (req, res) => {
-    const f = ['all', 'pending', 'approved'].includes(req.query.f) ? req.query.f : 'all';
-    const items = db.prepare(`SELECT a.*, (SELECT COUNT(*) FROM bookings b WHERE b.account_id = a.id AND b.status = 'confirmed') AS bookings FROM accounts a ${f === 'all' ? '' : 'WHERE a.status = ?'} ORDER BY a.status = 'pending' DESC, a.created_at DESC`).all(...(f === 'all' ? [] : [f]));
-    send(res, partnersPage(ctxOf(req), { items, filter: f }));
-  });
-  r.get('/partners/:id', (req, res, next) => {
-    const a = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(req.params.id));
-    if (!a) return next();
-    const bookings = db.prepare('SELECT * FROM bookings WHERE account_id = ? ORDER BY date DESC LIMIT 100').all(a.id);
-    send(res, partnerDetailPage(ctxOf(req), a, bookings, flash(req)));
-  });
-  r.post('/partners/:id', form, async (req, res, next) => {
-    const a = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(req.params.id));
-    if (!a) return next();
-    const status = ['pending', 'approved', 'rejected', 'suspended'].includes(req.body.status) ? req.body.status : a.status;
-    const discount = Math.min(60, Math.max(0, Number(req.body.discount_percent) || 0));
-    const cancel = req.body.cancel_hours === '' || req.body.cancel_hours == null ? null : Math.max(0, Math.min(2000, Number.parseInt(req.body.cancel_hours, 10) || 0));
-    const justApproved = status === 'approved' && a.status !== 'approved';
-    db.prepare(`UPDATE accounts SET status = ?, discount_percent = ?, cancel_hours = ?, allow_invoice = ?, admin_notes = ?, approved_at = CASE WHEN ? THEN ? ELSE approved_at END WHERE id = ?`).run(
-      status, discount, cancel, req.body.allow_invoice ? 1 : 0, cleanText(req.body.admin_notes, 2000) || null, justApproved ? 1 : 0, new Date().toISOString(), a.id,
-    );
-    if (justApproved) await sendPartnerApproved(app, db.prepare('SELECT * FROM accounts WHERE id = ?').get(a.id));
-    res.redirect(303, `/admin/partners/${a.id}?ok=${justApproved ? 'approved' : 'partner'}`);
   });
 
   return r;

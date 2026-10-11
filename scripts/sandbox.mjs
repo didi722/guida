@@ -55,7 +55,7 @@ async function seed() {
     const id = Number(db.prepare(`INSERT INTO accounts(${cols.join(',')}) VALUES(${cols.map(() => '?').join(',')})`).run(...Object.values(row)).lastInsertRowid);
     return db.prepare('SELECT * FROM accounts WHERE id = ?').get(id);
   };
-  const lagoon = addAccount({ email: 'giulia@lagoon-dmc.example', company: 'Lagoon DMC', vat: '01234567897', sdi_code: 'ABC1234', address: 'Fondamenta Test 1, Venezia', contact_name: 'Giulia Bianchi', phone: '+39 041 000001', status: 'approved', approved_at: iso, discount_percent: 15, cancel_hours: 168, admin_notes: 'Partner di prova: sconto 15% e cancellazione gratuita fino a 7 giorni prima.' });
+  const lagoon = addAccount({ email: 'giulia@lagoon-dmc.example', company: 'Lagoon DMC', vat: '01234567897', sdi_code: 'ABC1234', address: 'Fondamenta Test 1, Venezia', contact_name: 'Giulia Bianchi', phone: '+39 041 000001', status: 'approved', approved_at: iso, discount_percent: 15, prices_json: JSON.stringify({ 'cannaregio-ghetto': 2250 }), cancel_policy_json: JSON.stringify([{ hours: 168, refund: 100 }, { hours: 72, refund: 50 }]), admin_notes: 'Partner di prova: sconto 15%, Cannaregio a 22,50 €, rimborso totale fino a 7 giorni prima e 50% fino a 3 giorni prima.' });
   const bluesail = addAccount({ email: 'luca@bluesail.example', company: 'Blue Sail Tours', vat: '09876543210', sdi_code: 'XYZ9876', contact_name: 'Luca Neri', phone: '+39 041 000002', status: 'approved', approved_at: iso, allow_invoice: 0, admin_notes: 'Partner di prova: condizioni standard, solo carta.' });
   addAccount({ email: 'marco@rialto-travel.example', company: 'Rialto Travel', vat: '01111111111', sdi_code: 'RLT0001', contact_name: 'Marco Verdi', phone: '+39 041 000003', status: 'pending', message: 'Siamo un tour operator di Milano e vorremmo riservare guide per i nostri gruppi.' });
 
@@ -76,8 +76,8 @@ async function seed() {
   book('John Smith: Cannaregio fra 9 giorni, pagata con carta (in inglese)', { tourSlug: 'cannaregio-ghetto', date: d(9), time: '15:00', pax: 4, name: 'John Smith', email: 'john.smith@example.com', lang: 'en', paymentMethod: 'card' }, { paid: true });
   book('Carmen Ruiz: San Marco fra 2 giorni (in spagnolo)', { tourSlug: 'san-marco-rialto', date: d(2), time: '14:30', pax: 3, name: 'Carmen Ruiz', email: 'carmen.ruiz@example.com', lang: 'es', paymentMethod: 'card' }, { paid: true });
   // partner
-  book('Lagoon DMC: passeggiata privata fra 12 giorni, a fattura (sconto 15%, rimborsabile fino a 7 giorni prima)', { tourSlug: 'passeggiata-privata-2h', date: d(12), time: '10:00', pax: 8, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Rossi' });
-  book('Lagoon DMC: San Marco fra 4 giorni, a fattura (già dentro i 7 giorni: non rimborsabile)', { tourSlug: 'san-marco-rialto', date: d(4), time: '14:30', pax: 6, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Bianchi' });
+  book('Lagoon DMC: passeggiata privata fra 12 giorni, a fattura (sconto 15%, rimborso totale fino a 7 giorni prima)', { tourSlug: 'passeggiata-privata-2h', date: d(12), time: '10:00', pax: 8, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Rossi' });
+  book('Lagoon DMC: San Marco fra 4 giorni, a fattura (dentro i 7 giorni: rimborso 50%, penale 50% se annulla)', { tourSlug: 'san-marco-rialto', date: d(4), time: '14:30', pax: 6, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Bianchi' });
   book('Blue Sail Tours: San Marco fra 8 giorni, pagata con carta', { tourSlug: 'san-marco-rialto', date: d(8), time: '09:30', pax: 2, channel: 'b2b', account: bluesail, name: 'Luca Neri', email: bluesail.email, lang: 'en', paymentMethod: 'card' }, { paid: true });
   // già svolte (finiscono in «Da fatturare» e fanno partire la richiesta di recensione)
   book('Laura Bianchi: San Marco di 6 giorni fa, pagata con carta', { tourSlug: 'san-marco-rialto', date: d(-6), time: '09:30', pax: 2, name: 'Laura Bianchi', email: 'laura.bianchi@example.com', lang: 'it', paymentMethod: 'card' }, { paid: true, at: earlier });
@@ -124,7 +124,7 @@ Sito         http://localhost:${PORT}
 Pannello     http://localhost:${PORT}/admin        password: admin
 Email        http://localhost:${PORT}/admin/mail   (le email non partono: le leggi qui)
 Pagamenti    simulati (nessuna carta vera)
-Partner      giulia@lagoon-dmc.example  (approvato, sconto 15%, rimborso fino a 7 giorni prima, paga a fattura)
+Partner      giulia@lagoon-dmc.example  (approvato: sconto 15%, un prezzo dedicato, annullo a scaglioni, paga a fattura)
              luca@bluesail.example      (approvato, condizioni standard, solo carta)
              password di entrambi: prova-prova-1      (Rialto Travel è "da approvare")
 Codici       sconto PROVA10${giftCode ? `   ·   buono regalo ${giftCode}` : ''}

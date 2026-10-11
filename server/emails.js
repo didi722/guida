@@ -9,6 +9,7 @@ import { formatMoney } from './util.js';
 import { formatGiftCode } from './pricing.js';
 import { makeT } from './i18n.js';
 import { normLang, pick } from './langs.js';
+import { isSimplePolicy, tierSentences } from './policyText.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
 const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,' }, lang);
@@ -26,6 +27,9 @@ const T = {
     cancelledIntro: 'la prenotazione è stata annullata.',
     refundLine: (m) => `Rimborso: ${m}, accreditato sul metodo di pagamento originale (di solito entro 5–10 giorni lavorativi).`,
     noRefundLine: 'Nessun rimborso previsto per questa cancellazione.',
+    refundPartialLine: (m, p) => `Rimborso parziale (${p}%): ${m}, accreditato sul metodo di pagamento originale (di solito entro 5–10 giorni lavorativi).`,
+    penaltyLine: (m) => `Come da condizioni, per questo annullo si applica una penale di ${m}: sarà inclusa nella fattura.`,
+    retainedLine: (m) => `Importo trattenuto come penale di annullo: ${m}.`,
     conflictSubject: (ref) => `Prenotazione ${ref}: slot non più disponibile, rimborso in corso`,
     conflictBody: 'purtroppo il pagamento è arrivato dopo la scadenza del blocco e nel frattempo lo slot è stato assegnato ad altri. Ti abbiamo rimborsato l’intero importo. Scusaci: puoi sceglierne un altro sul sito o scrivermi.',
     tour: 'Servizio',
@@ -56,6 +60,9 @@ const T = {
     cancelledIntro: 'your booking has been cancelled.',
     refundLine: (m) => `Refund: ${m}, returned to the original payment method (usually within 5–10 business days).`,
     noRefundLine: 'No refund applies to this cancellation.',
+    refundPartialLine: (m, p) => `Partial refund (${p}%): ${m}, returned to the original payment method (usually within 5–10 business days).`,
+    penaltyLine: (m) => `As per the terms, a cancellation fee of ${m} applies and will be included in the invoice.`,
+    retainedLine: (m) => `Amount kept as cancellation fee: ${m}.`,
     conflictSubject: (ref) => `Booking ${ref}: slot no longer available, refund issued`,
     conflictBody: 'unfortunately your payment arrived after the hold expired and the slot has meanwhile been taken. We have refunded the full amount. Sorry about that: you can pick another time on the website or write to me.',
     tour: 'Service',
@@ -86,6 +93,9 @@ const T = {
     cancelledIntro: 'la reserva ha sido cancelada.',
     refundLine: (m) => `Reembolso: ${m}, abonado en el método de pago original (normalmente entre 5 y 10 días hábiles).`,
     noRefundLine: 'Esta cancelación no da derecho a reembolso.',
+    refundPartialLine: (m, p) => `Reembolso parcial (${p}%): ${m}, abonado en el método de pago original (normalmente entre 5 y 10 días hábiles).`,
+    penaltyLine: (m) => `Según las condiciones, se aplica una penalización por cancelación de ${m}, que se incluirá en la factura.`,
+    retainedLine: (m) => `Importe retenido como penalización por cancelación: ${m}.`,
     conflictSubject: (ref) => `Reserva ${ref}: horario ya no disponible, reembolso en curso`,
     conflictBody: 'por desgracia, el pago llegó cuando el bloqueo de la reserva ya había caducado y, entretanto, ese horario se ha asignado a otras personas. Te hemos reembolsado el importe íntegro. Disculpa las molestias: puedes elegir otro horario en la web o escribirme.',
     tour: 'Servicio',
@@ -136,7 +146,8 @@ function policyLine(b, lang, nowMs) {
   const tr = T[lang];
   const st = cancellationState(b, nowMs);
   if (!st.everRefundable) return tr.policyNone;
-  return `${tr.policyFree(fmtInstant(st.until, lang))} ${tr.policyAfter}`;
+  if (isSimplePolicy(st.tiers)) return `${tr.policyFree(fmtInstant(st.until, lang))} ${tr.policyAfter}`;
+  return tierSentences(makeT(lang), lang, st.tiers, st.startsAt).join(' '); // politica a scaglioni: una frase per scaglione
 }
 
 export function icsFor(app, b, lang = normLang(b.lang)) {
@@ -215,7 +226,12 @@ export async function sendBookingConfirmed(app, b, nowMs = Date.now()) {
 export async function sendBookingCancelled(app, b, refundCents) {
   const lang = normLang(b.lang);
   const tr = T[lang];
-  const line = refundCents ? tr.refundLine(formatMoney(refundCents, lang, b.currency)) : b.payment_status === 'paid' || b.payment_method === 'card' ? tr.noRefundLine : '';
+  const money = (c) => formatMoney(c, lang, b.currency);
+  const parts = [];
+  if (refundCents) parts.push(b.cancel_percent != null && b.cancel_percent < 100 ? tr.refundPartialLine(money(refundCents), b.cancel_percent) : tr.refundLine(money(refundCents)));
+  else if (b.payment_status === 'paid' || b.payment_method === 'card') parts.push(tr.noRefundLine);
+  if (b.retained_cents > 0) parts.push(b.payment_status === 'unpaid' ? tr.penaltyLine(money(b.retained_cents)) : tr.retainedLine(money(b.retained_cents)));
+  const line = parts.join(' ');
   await app.mail.send({
     to: b.email,
     subject: tr.cancelledSubject(b.ref),
@@ -252,7 +268,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
     b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
     b.notes ? `Note: ${b.notes}` : null,
     `Totale: ${formatMoney(b.total_cents, 'it', b.currency)}${b.discount_cents ? ` (sconto ${b.promo_code}: −${formatMoney(b.discount_cents, 'it', b.currency)})` : ''}${b.gift_cents ? ` · buono regalo: −${formatMoney(b.gift_cents, 'it', b.currency)}` : ''} · pagamento: ${b.payment_method} (${b.payment_status})`,
-    kind === 'cancelled' ? `Rimborso: ${refundCents ? formatMoney(refundCents, 'it', b.currency) : 'nessuno'}${b.cancelled_by ? ` · annullata da: ${b.cancelled_by}` : ''}` : null,
+    kind === 'cancelled' ? `Rimborso: ${refundCents ? formatMoney(refundCents, 'it', b.currency) : 'nessuno'}${b.cancel_percent != null ? ` (${b.cancel_percent}%)` : ''}${b.retained_cents > 0 ? ` · penale: ${formatMoney(b.retained_cents, 'it', b.currency)}${b.payment_status === 'unpaid' ? ' (da fatturare)' : ' (trattenuta)'}` : ''}${b.cancelled_by ? ` · annullata da: ${b.cancelled_by}` : ''}` : null,
     '',
     `${app.cfg.baseUrl}/admin/bookings/${b.id}`,
   ].filter((x) => x !== null);

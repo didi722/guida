@@ -41,11 +41,14 @@ test('sandbox: dati d’esempio creati senza errori, sito di prova, partner con 
   assert.match(await admin('/admin/partners?f=pending'), /Rialto Travel/);
   assert.match(await admin('/admin/mail'), /La tua proposta di programma/);
 
-  // il partner d'esempio entra con la password indicata e vede la tariffa dedicata (28 € − 15% = 23,80 €)
+  // il partner d'esempio entra con la password indicata e vede il suo listino: prezzo dedicato per Cannaregio, sconto del 15% sul resto
   const pl = await fetch(`${base}/it/b2b/login`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: base }, body: new URLSearchParams({ email: 'giulia@lagoon-dmc.example', password: 'prova-prova-1' }).toString() });
   assert.equal(pl.status, 303);
   const pcookie = pl.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
-  const tour = await (await fetch(`${base}/it/tours/cannaregio-ghetto`, { headers: { cookie: pcookie } })).text();
-  assert.match(tour, /23,80\s*€/);
-  assert.match(tour, /Tariffa partner/);
+  const dedicated = await (await fetch(`${base}/it/tours/cannaregio-ghetto`, { headers: { cookie: pcookie } })).text();
+  assert.match(dedicated, /22,50\s*€/, 'prezzo dedicato');
+  assert.match(dedicated, /Tariffa partner/);
+  assert.match(await (await fetch(`${base}/it/tours/san-marco-rialto`, { headers: { cookie: pcookie } })).text(), /23,80\s*€/, '28 € − 15%');
+  // e la sua politica di annullo a scaglioni è nella scheda del partner
+  assert.match(await admin('/admin/partners/1'), /Rimborso del 50% fino al/);
 });

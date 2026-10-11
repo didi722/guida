@@ -308,6 +308,15 @@ ALTER TABLE invoices ADD COLUMN file_seq INTEGER;
 CREATE UNIQUE INDEX invoices_file_seq ON invoices(file_seq) WHERE file_seq IS NOT NULL;
 `;
 
+const V8_PARTNER_TERMS = `
+-- Condizioni dedicate ai partner: listino e politica di annullo a scaglioni
+ALTER TABLE accounts ADD COLUMN prices_json TEXT;                  -- listino dedicato {"slug-del-tour": centesimi}; assente = tariffa B2B meno lo sconto %
+ALTER TABLE accounts ADD COLUMN cancel_policy_json TEXT;           -- [{"hours":168,"refund":100},{"hours":72,"refund":50}]; NULL = ore singole (cancel_hours) o predefinito del sito
+ALTER TABLE bookings ADD COLUMN cancel_policy_json TEXT;           -- scaglioni validi al momento della prenotazione (non cambiano se poi cambi le condizioni)
+ALTER TABLE bookings ADD COLUMN cancel_percent INTEGER;            -- annullata: percentuale di rimborso applicata
+ALTER TABLE bookings ADD COLUMN retained_cents INTEGER NOT NULL DEFAULT 0;  -- annullata: importo che resta dovuto (penale), trattenuto o da fatturare
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -323,6 +332,8 @@ export const MIGRATIONS = [
   V6_INVOICES,
   // v7 — progressivo univoco dei file di fattura
   V7_INVOICE_FILES,
+  // v8 — condizioni dedicate ai partner (listino, scaglioni di annullo)
+  V8_PARTNER_TERMS,
 ];
 
 export function migrate(db) {

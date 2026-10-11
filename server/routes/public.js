@@ -185,7 +185,7 @@ export function publicRouter(app) {
     const b = loadBooking(req);
     if (!b) return next();
     const back = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}`);
-    if (b.status !== 'confirmed' || !cancellationState(b).free) return back('cancel-error');
+    if (b.status !== 'confirmed' || cancellationState(b).percent <= 0) return back('cancel-error'); // senza rimborso si scrive alla guida
     await services.cancel(b.id, { by: 'customer' });
     back('cancelled');
   });

@@ -1,5 +1,7 @@
 import { html, raw } from '../html.js';
-import { bookingDue, cancellationState, freeCancelHours, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
+import { bookingDue, cancellationState, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
+import { freeHoursOf, hasFreeTier, policyFor, refundPercentAt } from '../policy.js';
+import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
@@ -59,9 +61,12 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
   pricing ??= { listCents: priceFor(tour, pax, channel, acct), discountCents: 0, totalCents: priceFor(tour, pax, channel, acct), giftCents: 0, dueCents: priceFor(tour, pax, channel, acct), promo: null, gifts: [], errors: {} };
   const nothingToPay = pricing.dueCents === 0;
   const options = paymentOptions(app, tour, channel, acct);
-  const hours = freeCancelHours(cfg, tour, channel, acct);
-  const deadline = localToInstant(date, time) - hours * 3600_000;
-  const refundable = Date.now() <= deadline;
+  const tiers = policyFor(cfg, tour, channel, acct);
+  const startMs = localToInstant(date, time);
+  const hours = freeHoursOf(tiers);
+  const deadline = startMs - hours * 3600_000;
+  const refundable = hasFreeTier(tiers) && Date.now() <= deadline;
+  const refundNow = refundPercentAt(tiers, startMs, Date.now());
   const method = values.paymentMethod && options.includes(values.paymentMethod) ? values.paymentMethod : (options[0] ?? null);
   const isB2b = channel === 'b2b';
   const v = (k, d = '') => values[k] ?? d;
@@ -135,7 +140,9 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
         ${pricing.giftCents ? html`<div class="row-discount"><dt>${t('s.giftUsed')}</dt><dd>−${formatMoney(pricing.giftCents, lang)}</dd></div>` : ''}
         <div class="summary-total"><dt>${pricing.discountCents || pricing.giftCents ? t('s.due') : t('s.total')}</dt><dd>${formatMoney(pricing.dueCents, lang)}${isB2b ? html` <span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}</dd></div>
       </dl>
-      <p class="policy-box ${refundable ? 'ok' : 'warn'}">${refundable ? t('checkout.refundable', { until: fmtInstant(deadline, lang), when: fmtHours(t, hours) }) : t('checkout.nonRefundable')}</p>
+      ${isSimplePolicy(tiers)
+        ? html`<p class="policy-box ${refundable ? 'ok' : 'warn'}">${refundable ? t('checkout.refundable', { until: fmtInstant(deadline, lang), when: fmtHours(t, hours) }) : t('checkout.nonRefundable')}</p>`
+        : html`<div class="policy-box ${refundNow === 100 ? 'ok' : 'warn'}"><strong>${t('policy.title')}</strong><ul class="plain tier-list">${tierSentences(t, lang, tiers, startMs).map((x) => html`<li>${x}</li>`)}</ul>${refundNow === 0 ? html`<p>${t('checkout.nonRefundable')}</p>` : ''}</div>`}
       ${slot.joined ? html`<p class="small muted">${t('checkout.joined')}</p>` : ''}
     </div>
   </aside>
@@ -177,7 +184,7 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
     giftcard: t('booking.giftcard'),
     free: t('booking.free'),
   }[b.payment_method];
-  const paymentNote = b.payment_status === 'refunded' ? html` · <strong>${t('booking.refunded', { amount: formatMoney(b.refund_cents, lang, b.currency) })}</strong>` : b.payment_status === 'refund_failed' ? html` · <strong>${t('booking.refundFailed')}</strong>` : '';
+  const paymentNote = b.payment_status === 'refunded' ? html` · <strong>${b.cancel_percent != null && b.cancel_percent < 100 ? t('booking.refundedPartial', { amount: formatMoney(b.refund_cents, lang, b.currency), percent: b.cancel_percent }) : t('booking.refunded', { amount: formatMoney(b.refund_cents, lang, b.currency) })}</strong>` : b.payment_status === 'refund_failed' ? html` · <strong>${t('booking.refundFailed')}</strong>` : '';
 
   const body = html`
 <section class="page-head"><div class="wrap narrow">
@@ -200,6 +207,7 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
       ${b.gift_cents ? html`<div class="row-discount"><dt>${t('s.giftUsed')}</dt><dd>−${formatMoney(b.gift_cents, lang, b.currency)}</dd></div>` : ''}
       <div class="summary-total"><dt>${b.discount_cents || b.gift_cents ? t('s.due') : t('s.total')}</dt><dd>${formatMoney(due, lang, b.currency)} <span class="muted">· ${payLabel}</span>${paymentNote}</dd></div>
     </dl>
+    ${b.status === 'cancelled' && b.retained_cents > 0 ? html`<p class="policy-box warn">${t('booking.penalty', { amount: formatMoney(b.retained_cents, lang, b.currency) })}</p>` : ''}
 
     ${b.status === 'held'
       ? html`<p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${b.ref}${q}&lang=${lang}">${t('booking.payNow')}</a></p>`
@@ -207,13 +215,16 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
 
     ${b.status === 'confirmed'
       ? html`
-      <p class="policy-box ${st.free ? 'ok' : 'warn'}">${st.everRefundable ? (st.free ? t('booking.canCancel', { until: fmtInstant(st.until, lang) }) : t('booking.cancelClosed', { until: fmtInstant(st.until, lang) })) : t('checkout.nonRefundable')}</p>
+      ${isSimplePolicy(st.tiers)
+        ? html`<p class="policy-box ${st.free ? 'ok' : 'warn'}">${st.everRefundable ? (st.free ? t('booking.canCancel', { until: fmtInstant(st.until, lang) }) : t('booking.cancelClosed', { until: fmtInstant(st.until, lang) })) : t('checkout.nonRefundable')}</p>`
+        : html`<div class="policy-box ${st.percent === 100 ? 'ok' : 'warn'}"><strong>${t('policy.title')}</strong><ul class="plain tier-list">${tierSentences(t, lang, st.tiers, st.startsAt).map((x) => html`<li>${x}</li>`)}</ul></div>
+        ${st.percent > 0 && st.percent < 100 ? html`<p class="small">${due && b.payment_status !== 'paid' ? t('booking.cancelNowFee', { percent: 100 - st.percent, amount: formatMoney(due - Math.round((due * st.percent) / 100), lang, b.currency) }) : t('booking.cancelNow', { percent: st.percent, amount: formatMoney(Math.round((due * st.percent) / 100), lang, b.currency) })}</p>` : ''}`}
       <p class="btn-row">
         <a class="btn btn-outline" href="${base}/calendar.ics${q}">${t('booking.addCalendar')}</a>
         <a class="btn btn-outline" href="${base}/voucher.pdf${q}" target="_blank" rel="noopener">${t('booking.voucher')}</a>
       </p>
-      ${st.free
-        ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
+      ${st.percent > 0
+        ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${st.percent < 100 && b.payment_status !== 'paid' ? t('booking.confirmCancelFee') : t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
         : st.started ? '' : html`<p class="small muted">${t('booking.contactForChanges')} <a href="mailto:${cfg.site.email}">${cfg.site.email}</a>${cfg.site.whatsapp ? html` · <a href="https://wa.me/${cfg.site.whatsapp}">WhatsApp</a>` : ''}</p>`}`
       : ''}
   </div>

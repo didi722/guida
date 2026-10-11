@@ -33,14 +33,11 @@ Per provare anche le **fatture** aggiungi dati fiscali finti: `VAT_NUMBER=IT1234
 
 1. **L'azienda si registra.** Apri `/it/b2b/register` (da «Per agenzie»), compila il modulo con dati inventati (per un'azienda italiana servono P.IVA e codice SDI o PEC) e scegli una password di almeno 10 caratteri.
 2. **Tu ricevi la richiesta.** In **Admin → Email** compaiono «Nuova richiesta partner» (per te) e «Richiesta di accesso partner ricevuta» (per l'azienda). In **Admin → Partner** l'azienda è «Da approvare».
-3. **Approvi e imposti le condizioni dedicate.** Apri l'azienda e imposta:
-   - **Stato** → *Approvato*;
-   - **Sconto extra sulla tariffa B2B (%)** → il prezzo dedicato: tariffa B2B del tour (`b2bPrice` in `content/tours/*.yml`) meno questa percentuale;
-   - **Cancellazione gratuita fino a (ore prima)** → la scadenza di rimborso dedicata; vuoto = quella standard B2B (72 ore);
-   - **Può pagare a fattura / bonifico** → spuntato: fattura o carta; non spuntato: solo carta.
-
-   Salva: all'azienda parte «Il tuo account partner è attivo» (la leggi in Admin → Email).
-4. **Il partner prenota.** Accede da `/it/b2b/login` (la registrazione apre già la sessione), apre un tour: vede **«Tariffa partner»** con lo sconto applicato; nel riepilogo trova «Cancellazione gratuita fino a …» calcolata con le **sue** ore. Sceglie fattura o carta; con la carta il pagamento è simulato.
+3. **Approvi e imposti le condizioni dedicate.** Apri l'azienda; la scheda ha tre blocchi:
+   - **Stato e pagamento**: *Approvato*; **sconto su tutto il listino (%)**; se può pagare a fattura/bonifico o solo con carta. Salva: all'azienda parte «Il tuo account partner è attivo» (la leggi in Admin → Email).
+   - **Listino dedicato**: per ogni tour puoi scrivere il **prezzo che paga questo partner**; se lo lasci vuoto vale la tariffa B2B meno lo sconto. La colonna «Applicato» mostra cosa vedrà il partner.
+   - **Politica di annullo**: fino a 3 scaglioni «fino a N giorni/ore prima → rimborso X%» (per esempio 7 giorni 100%, 3 giorni 50%); dopo l'ultimo non si rimborsa nulla. I pulsanti «Modelli» compilano i casi più comuni e sotto vedi un esempio con le date. Vuoto = politica standard del sito (72 ore).
+4. **Il partner prenota.** Accede da `/it/b2b/login` (la registrazione apre già la sessione), apre un tour: vede **«Tariffa partner»** con lo sconto applicato; nel riepilogo trova le **sue** condizioni di annullo (gli scaglioni, con le date). Sceglie fattura o carta; con la carta il pagamento è simulato.
 5. **Controlli tu.** In **Admin → Prenotazioni** la prenotazione compare come «B2B», con la scadenza di cancellazione («scaduta» se è già passata).
 
 ## 3. Provare le scadenze di rimborso
@@ -49,10 +46,12 @@ Non si può far scorrere il tempo: le scadenze si provano scegliendo la **data d
 
 | Per provare… | Fai così |
 |---|---|
-| Annullo **gratuito** con rimborso | Partner con 120 ore → prenota un tour fra 10 giorni → annulla subito: rimborso (se pagato con carta) |
-| Annullo **oltre il termine** | Stesso partner → prenota un tour fra 3 giorni (dentro le 120 ore): nel riepilogo il termine è già passato; annullando **non c'è rimborso** |
+| Annullo **con rimborso totale** | Partner con «7 giorni 100%» → prenota un tour fra 12 giorni → annulla subito: rimborso totale (se pagato con carta) o nessuna penale (se a fattura) |
+| Annullo **in uno scaglione parziale** | Stesso partner con «3 giorni 50%» → prenota fra 5 giorni: la pagina della prenotazione dice «annullando ora ricevi il 50%»; annulla: rimborso parziale (carta) oppure **penale** del 50% (fattura) |
+| Annullo **oltre l'ultimo scaglione** | Prenota fra 2 giorni: rimborso 0%; online non si può annullare (il cliente deve scriverti); dal pannello annulli tu e la **penale è l'intero importo** |
+| La penale in fattura | **Admin → Fatture → Da fatturare**: la penale compare come «Penale di annullo» (da incassare se il partner pagava a fattura; già incassata se aveva pagato con carta) |
 | Politica standard dei privati | Cliente privato (48 ore, `B2C_FREE_CANCEL_HOURS`) → prenota fra 6 giorni (rimborsabile) e fra 2 giorni (non rimborsabile) |
-| Decidi tu | In **Admin → Prenotazioni → (la prenotazione) → Annulla prenotazione** scegli *Automatico / Rimborsa tutto / Nessun rimborso* |
+| Decidi tu | **Admin → Prenotazioni → la prenotazione → Annulla prenotazione**: *Secondo la politica* (con l'anteprima di rimborso/penale), *Nessuna penale / rimborso totale* oppure *Penale totale / nessun rimborso* |
 
 Per annullare **come lo vede il cliente**: nella scheda della prenotazione, riga **«Pagina del cliente → Apri come la vede il cliente»**. Poi controlla lo stato in Admin: la prenotazione risulta *Annullata* e il pagamento *Rimborsato* oppure no. (Il preavviso minimo per prenotare è 24 ore per i privati e 12 per i partner.)
 

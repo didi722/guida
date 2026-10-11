@@ -589,6 +589,61 @@
   "Full terms",
   "Condiciones completas"
  ],
+ "policy.title": [
+  "Condizioni di annullo",
+  "Cancellation terms",
+  "Condiciones de cancelación"
+ ],
+ "policy.tierFull": [
+  "Rimborso totale fino al {until}.",
+  "Full refund until {until}.",
+  "Reembolso total hasta el {until}."
+ ],
+ "policy.tier": [
+  "Rimborso del {percent}% fino al {until}.",
+  "{percent}% refund until {until}.",
+  "Reembolso del {percent}% hasta el {until}."
+ ],
+ "policy.rest": [
+  "Dopo: nessun rimborso.",
+  "After that: no refund.",
+  "Después: sin reembolso."
+ ],
+ "policy.tierHoursFull": [
+  "Rimborso totale fino a {when} prima dell’inizio.",
+  "Full refund up to {when} before the start.",
+  "Reembolso total hasta {when} antes del inicio."
+ ],
+ "policy.tierHours": [
+  "Rimborso del {percent}% fino a {when} prima dell’inizio.",
+  "{percent}% refund up to {when} before the start.",
+  "Reembolso del {percent}% hasta {when} antes del inicio."
+ ],
+ "booking.cancelNow": [
+  "Annullando ora ricevi un rimborso del {percent}% ({amount}).",
+  "If you cancel now you get a {percent}% refund ({amount}).",
+  "Si cancelas ahora recibes un reembolso del {percent}% ({amount})."
+ ],
+ "booking.cancelNowFee": [
+  "Annullando ora si applica una penale del {percent}% ({amount}), che verrà fatturata.",
+  "If you cancel now a {percent}% cancellation fee applies ({amount}), to be invoiced.",
+  "Si cancelas ahora se aplica una penalización del {percent}% ({amount}), que se facturará."
+ ],
+ "booking.confirmCancelFee": [
+  "Annullando ora si applica una penale. Vuoi procedere?",
+  "A cancellation fee applies if you cancel now. Continue?",
+  "Si cancelas ahora se aplica una penalización. ¿Continuar?"
+ ],
+ "booking.penalty": [
+  "Penale di annullo: {amount}",
+  "Cancellation fee: {amount}",
+  "Penalización por cancelación: {amount}"
+ ],
+ "booking.refundedPartial": [
+  "Rimborsati {amount} ({percent}%)",
+  "{amount} refunded ({percent}%)",
+  "Reembolsado: {amount} ({percent}%)"
+ ],
  "w.title": [
   "Prenota questo tour",
   "Book this tour",

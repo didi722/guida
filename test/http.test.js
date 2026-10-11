@@ -10,7 +10,8 @@ import { openDb } from '../server/db.js';
 import { makeT } from '../server/i18n.js';
 import { createPayments } from '../server/payments.js';
 import { addDays, localToInstant, nowRome } from '../server/time.js';
-import { base as bookingBase, isPdf } from './helpers.js';
+import { addAccount, base as bookingBase, isPdf } from './helpers.js';
+import { hashPassword } from '../server/auth.js';
 import { validateInvoiceXml } from './xsd.js';
 import { confirmPaid, createBooking } from '../server/bookings.js';
 
@@ -394,8 +395,9 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     assert.equal((await admin('/admin/login', form({ password: 'no' }))).status, 401);
     assert.equal((await admin('/admin/login', form({ password: 'segreto-admin' }))).status, 303);
     const id = s.app.db.prepare('SELECT id FROM accounts').get().id;
-    const ap = await admin(`/admin/partners/${id}`, form({ status: 'approved', discount_percent: '5', cancel_hours: '120', allow_invoice: '1' }));
+    const ap = await admin(`/admin/partners/${id}`, form({ status: 'approved', discount_percent: '5', allow_invoice: '1' }));
     assert.equal(ap.status, 303);
+    assert.match(loc(await admin(`/admin/partners/${id}/policy`, form({ h1: '5', u1: 'd', r1: '100' }))), /ok=policy/, 'politica del partner: 5 giorni, rimborso totale');
     assert.ok(s.app.mail.sent.some((m) => m.to === 'dmc@example.com' && /attivo|active/i.test(m.subject)));
 
     // partner approvato
@@ -427,6 +429,89 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     await admin(`/admin/partners/${id}`, form({ status: 'suspended', discount_percent: '5' }));
     const susp = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
     assert.equal(susp.slots[0].totalCents, 24000);
+  } finally {
+    s.close();
+  }
+});
+
+test('partner: listino dedicato e politica di annullo gestiti dall’admin (validazioni, effetto su prezzi e riepilogo, copia tra partner)', async () => {
+  const s = await start();
+  try {
+    const admin = s.jar();
+    const partner = s.jar();
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+    const hash = await hashPassword('password-lunga-1');
+    const a1 = addAccount(s.app.db, { email: 'uno@example.com', company: 'Uno Viaggi', password_hash: hash, discount_percent: 10 });
+    const a2 = addAccount(s.app.db, { email: 'due@example.com', company: 'Due Viaggi', password_hash: hash });
+    const row = (id) => s.app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(id);
+
+    const page = await (await admin(`/admin/partners/${a1.id}`)).text();
+    assert.match(page, /Listino dedicato/);
+    assert.match(page, /Politica di annullo/);
+    assert.match(page, /name="price_servizio-mezza-giornata"/);
+    assert.match(page, /Ora vale quella predefinita del sito/);
+
+    // listino: un valore sbagliato blocca tutto; i vuoti usano la tariffa standard
+    assert.match(loc(await admin(`/admin/partners/${a1.id}/prices`, form({ 'price_servizio-mezza-giornata': 'abc' }))), /err=price/);
+    assert.equal(row(a1.id).prices_json, null, 'nulla salvato');
+    assert.match(loc(await admin(`/admin/partners/${a1.id}/prices`, form({ 'price_servizio-mezza-giornata': '150,50', 'price_cannaregio-ghetto': '' }))), /ok=prices/);
+    assert.deepEqual(JSON.parse(row(a1.id).prices_json), { 'servizio-mezza-giornata': 15050 });
+    assert.match(await (await admin(`/admin/partners/${a1.id}`)).text(), /150,50/);
+
+    // il partner vede il prezzo dedicato e, per gli altri tour, tariffa B2B meno sconto
+    assert.equal((await partner('/it/b2b/login', form({ email: 'uno@example.com', password: 'password-lunga-1' }))).status, 303);
+    const date = day(40);
+    const dedicated = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
+    assert.equal(dedicated.slots[0].totalCents, 15050);
+    const discounted = await (await partner(`/api/slots?tour=cannaregio-ghetto&date=${date}&pax=2`)).json();
+    assert.equal(discounted.slots[0].totalCents, 5040, '2 × (28 € − 10%)');
+    assert.match(await (await partner('/it/b2b/account')).text(), /150,50/);
+
+    // politica: validazioni, poi salvataggio (giorni → ore)
+    for (const [fields, err] of [
+      [{ h1: '7', u1: 'd', r1: '100', h2: '3', u2: 'd', r2: '150' }, 'refund'],
+      [{ h1: '3', u1: 'd', r1: '50', h2: '1', u2: 'd', r2: '80' }, 'order'],
+      [{ h1: 'x', u1: 'd', r1: '100' }, 'hours'],
+      [{ h1: '3', u1: 'd', r1: '100', h2: '72', u2: 'h', r2: '50' }, 'duplicate'],
+      [{ h1: '7', u1: 'd', r1: '100', h2: '5', u2: 'd', r2: '75', h3: '3', u3: 'd', r3: '50', h4: '1', u4: 'd', r4: '25' }, null],
+    ]) {
+      const res = loc(await admin(`/admin/partners/${a1.id}/policy`, form(fields)));
+      if (err) assert.match(res, new RegExp(`err=${err}`), JSON.stringify(fields));
+    }
+    assert.equal(row(a1.id).cancel_policy_json, JSON.stringify([{ hours: 168, refund: 100 }, { hours: 120, refund: 75 }, { hours: 72, refund: 50 }]), 'l’ultimo caso (4 righe) ne tiene 3: la quarta è ignorata dal modulo');
+    assert.match(loc(await admin(`/admin/partners/${a1.id}/policy`, form({ h1: '7', u1: 'd', r1: '100', h2: '3', u2: 'd', r2: '50' }))), /ok=policy/);
+    assert.equal(row(a1.id).cancel_policy_json, JSON.stringify([{ hours: 168, refund: 100 }, { hours: 72, refund: 50 }]));
+    const edited = await (await admin(`/admin/partners/${a1.id}`)).text();
+    assert.match(edited, /Questo partner ha una politica propria/);
+    assert.match(edited, /Rimborso del 50% fino al/);
+
+    // il riepilogo del partner mostra gli scaglioni; la prenotazione li conserva; la pagina della prenotazione li spiega
+    const q = `tour=servizio-mezza-giornata&date=${date}&time=09:00&pax=10`;
+    assert.match(await (await partner(`/it/book/checkout?${q}`)).text(), /Rimborso del 50% fino al/);
+    const booked = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata', date, time: '09:00', pax: '10', name: 'Anna', email: 'uno@example.com', lang: 'it', paymentMethod: 'invoice', consent: '1' }));
+    assert.equal(booked.status, 303);
+    const b = s.app.db.prepare('SELECT * FROM bookings WHERE account_id = ?').get(a1.id);
+    assert.equal(JSON.parse(b.cancel_policy_json).length, 2);
+    assert.match(await (await partner(loc(booked))).text(), /Rimborso del 50% fino al/);
+    // modificare le condizioni del partner dopo non cambia la prenotazione già fatta
+    await admin(`/admin/partners/${a1.id}/policy`, form({ h1: '1', u1: 'h', r1: '100' }));
+    assert.equal(JSON.parse(s.app.db.prepare('SELECT cancel_policy_json FROM bookings WHERE id = ?').get(b.id).cancel_policy_json).length, 2);
+    // salvare stato e sconto non cancella la politica
+    await admin(`/admin/partners/${a1.id}`, form({ status: 'approved', discount_percent: '10', allow_invoice: '1' }));
+    assert.ok(row(a1.id).cancel_policy_json);
+
+    // copia verso un altro partner
+    assert.match(loc(await admin(`/admin/partners/${a2.id}/prices`, form({ action: 'copy', copy_from: String(a1.id) }))), /ok=copied/);
+    assert.equal(row(a2.id).prices_json, row(a1.id).prices_json);
+    assert.match(loc(await admin(`/admin/partners/${a2.id}/policy`, form({ action: 'copy', copy_from: String(a1.id) }))), /ok=copied/);
+    assert.equal(row(a2.id).cancel_policy_json, row(a1.id).cancel_policy_json);
+    assert.match(loc(await admin(`/admin/partners/${a2.id}/policy`, form({ action: 'copy', copy_from: '9999' }))), /err=copy/);
+    // «svuota» = predefinito del sito
+    await admin(`/admin/partners/${a2.id}/policy`, form({}));
+    assert.equal(row(a2.id).cancel_policy_json, null);
+    // i partner non vedono né modificano nulla
+    assert.equal(loc(await partner(`/admin/partners/${a1.id}`)), '/admin/login');
+    assert.equal(loc(await partner(`/admin/partners/${a1.id}/prices`, form({ 'price_cannaregio-ghetto': '1' }))), '/admin/login');
   } finally {
     s.close();
   }
@@ -515,10 +600,11 @@ test('codici sconto e buoni regalo: checkout con "Applica", buono acquistato onl
     assert.equal(card.balance_cents, 5000);
     assert.ok(card.expires_at > day(700), 'valido 24 mesi');
     assert.ok(status.includes(card.code.slice(0, 4) + '-' + card.code.slice(4, 8)), 'il codice è mostrato');
+    await s.app.runJobs(localToInstant(day(0), '10:00')); // la consegna «oggi» parte dalle 9: il test non deve dipendere dall'ora in cui gira
     const mails = s.app.mail.sent.filter((m) => m.subject.match(/buono regalo|regalato/i));
     assert.ok(mails.some((m) => m.to === 'anna@example.com'), 'conferma all’acquirente');
     assert.ok(mails.some((m) => m.to === 'luca@example.com' && /Buon compleanno!/.test(m.text) && m.text.includes(card.code.slice(0, 4))), 'consegna al destinatario con messaggio e codice');
-    assert.ok(card.delivered_at);
+    assert.ok(s.app.db.prepare('SELECT delivered_at FROM gift_cards WHERE id = ?').get(card.id).delivered_at, 'consegna registrata');
     assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /Buono regalo venduto/.test(m.subject)));
     for (const to of ['anna@example.com', 'luca@example.com']) {
       const m = mails.find((x) => x.to === to);
