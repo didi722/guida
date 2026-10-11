@@ -5,12 +5,12 @@ import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
-import { breadcrumbs, fmtDuration, fmtHours, langOptions, tourMedia } from './components.js';
+import { breadcrumbs, departuresList, fmtDuration, fmtHours, langOptions, tourMedia } from './components.js';
 
 const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
 
 // ───────────────────────── Pagina "Prenota" (prima la data) ─────────────────────────
-export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, channel }) {
+export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures = [], channel }) {
   const { t, lang, u, app } = ctx;
   const tours = app.content.tours;
   const body = html`
@@ -48,7 +48,8 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
         : html`<div class="card pad empty"><p>${t('book.none')}</p>
             ${suggestions.length ? html`<p>${t('book.nextDates')}</p><p class="date-chips">${suggestions.map((d) => html`<a class="chip chip-link" href="${u('/book')}?date=${d}&pax=${pax}${tourSlug ? '&tour=' + tourSlug : ''}">${fmtDate(d, lang, 'weekday')}</a>`)}</p>` : ''}
             <p class="small muted">${t('book.askUs')} <a href="${u('/contact')}">${t('nav.contact')}</a></p></div>`}`
-    : html`<p class="muted spaced">${t('book.pickPrompt')}</p>`}
+    : html`<p class="muted spaced">${t('book.pickPrompt')}</p>
+      ${departures.length ? html`<h2 class="h-sub spaced">${t('departures.title')}</h2>${departuresList(ctx, departures, { pax })}` : ''}`}
 </div></section>`;
   return page(ctx, { title: t('nav.book'), description: t('book.lead'), path: `/${lang}/book`, body, activeNav: 'book' });
 }
@@ -79,7 +80,8 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
 <section class="section tight"><div class="wrap checkout-grid">
   <form class="card pad form" method="post" action="${u('/book/checkout')}" id="checkout-form">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
-    <input type="hidden" name="tour" value="${tour.slug}"><input type="hidden" name="date" value="${date}"><input type="hidden" name="time" value="${time}"><input type="hidden" name="pax" value="${pax}">
+    <input type="hidden" name="tour" value="${tour.slug}"><input type="hidden" name="date" value="${date}"><input type="hidden" name="time" value="${time}">
+    <button type="submit" name="apply" value="1" formnovalidate hidden tabindex="-1" id="pax-apply"></button>
     <h2>${isB2b ? t('checkout.contactB2b') : t('checkout.contact')}</h2>
     <div class="form-grid">
       <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? acct.contact_name : '')}"></label>
@@ -133,7 +135,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       <dl class="summary-list">
         <div><dt>${t('s.date')}</dt><dd>${fmtDate(date, lang)}</dd></div>
         <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${fmtDuration(tour.durationMin)})</span></dd></div>
-        <div><dt>${t('s.guests')}</dt><dd>${pax}</dd></div>
+        <div><dt><label for="pax-select">${t('s.guests')}</label></dt><dd><select name="pax" id="pax-select" form="checkout-form" class="pax-select">${Array.from({ length: Math.max(pax, Math.min(25, tour.maxParticipants, slot.left ?? tour.maxParticipants)) }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select><noscript> <button class="btn btn-outline btn-sm" type="submit" name="apply" value="1" form="checkout-form" formnovalidate>${t('checkout.update')}</button></noscript></dd></div>
         <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}</dd></div>
         ${pricing.discountCents || pricing.giftCents ? html`<div><dt>${t('s.list')}</dt><dd>${formatMoney(pricing.listCents, lang)}</dd></div>` : ''}
         ${pricing.discountCents ? html`<div class="row-discount"><dt>${t('s.discount')} · ${pricing.promo.code}</dt><dd>−${formatMoney(pricing.discountCents, lang)}</dd></div>` : ''}

@@ -4,7 +4,7 @@ import { paymentOptions, unitPriceFor } from '../bookings.js';
 import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
-import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, tourCard, tourMedia } from './components.js';
+import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, tourCard, tourMedia } from './components.js';
 import { LANGS, pick } from '../langs.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
@@ -22,7 +22,7 @@ function faqItems(ctx, keys) {
 }
 
 // ───────────────────────── Home ─────────────────────────
-export function homePage(ctx) {
+export function homePage(ctx, { departures = [] } = {}) {
   const { t, lang, u, app } = ctx;
   const { content, cfg } = app;
   const featured = content.tours.filter((x) => x.featured);
@@ -44,9 +44,17 @@ export function homePage(ctx) {
       </form>
       <p class="hero-links"><a href="${u('/tours')}">${t('home.allTours')} →</a> <span aria-hidden="true">·</span> <a href="${u('/b2b')}">${t('home.forAgencies')}</a></p>
     </div>
-    <div class="hero-art">${art('dome', { label: t('home.artAlt') })}</div>
+    <div class="hero-art">${siteArt(ctx, 'home', 'dome', { label: t('home.artAlt'), alt: t('site.title'), sizes: '(max-width: 900px) 100vw, 560px', eager: true })}</div>
   </div>
 </section>
+
+${departures.length ? html`<section class="section tight departures">
+  <div class="wrap">
+    <h2 class="h-sub">${t('departures.title')}</h2>
+    <p class="muted">${t('departures.lead')}</p>
+    ${departuresList(ctx, departures)}
+  </div>
+</section>` : ''}
 
 <section class="trust">
   <div class="wrap trust-grid">
@@ -281,12 +289,15 @@ export function postPage(ctx, post) {
 export function staticPage(ctx, name, pg, vars, { activeNav = '' } = {}) {
   const { t, lang } = ctx;
   const htmlBody = String(pg.html).replace(/\{\{(\w+)\}\}/g, (_, k) => (k in vars ? esc(vars[k]) : ''));
+  const portrait = name === 'about' ? ctx.app.siteImages?.get('about') : null;
   const body = html`
 <section class="page-head"><div class="wrap narrow">
   ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [pg.title]])}
   <h1>${pg.title}</h1>
 </div></section>
-<section class="section tight"><div class="wrap narrow"><div class="prose">${raw(htmlBody)}</div>
+<section class="section tight"><div class="wrap narrow">
+  ${portrait ? html`<figure class="portrait">${mediaImg(portrait, pg.title, { sizes: '(max-width: 640px) 100vw, 260px', eager: true })}</figure>` : ''}
+  <div class="prose">${raw(htmlBody)}</div>
   ${name === 'about' ? html`<p class="btn-row"><a class="btn btn-gold" href="/${lang}/tours">${t('about.cta')}</a> <a class="btn btn-outline" href="/${lang}/contact">${t('cta.contact')}</a></p>` : ''}
 </div></section>`;
   return page(ctx, { title: pg.title, description: pg.description, path: `/${lang}/${name}`, body, activeNav, noindex: false });
@@ -346,7 +357,7 @@ export function b2bLandingPage(ctx) {
         ${ctx.acct ? html`<a class="btn btn-gold" href="${u('/b2b/account')}">${t('nav.myAccount')}</a>` : html`<a class="btn btn-gold" href="${u('/b2b/register')}">${t('b2b.requestAccess')}</a> <a class="btn btn-outline" href="${u('/b2b/login')}">${t('b2b.login')}</a>`}
       </p>
     </div>
-    <div class="hero-art">${art('walk', { label: '' })}</div>
+    <div class="hero-art">${siteArt(ctx, 'b2b', 'walk', { alt: t('b2b.h1'), sizes: '(max-width: 900px) 100vw, 560px', eager: true })}</div>
   </div>
 </section>
 

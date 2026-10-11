@@ -237,6 +237,63 @@ test('immagini: caricamento (validato lato server), copertina del tour, servite 
 });
 
 /** I campi del modulo di un tour, a partire dalla definizione salvata (per modificarne uno solo). */
+test('immagini del sito: home, chi sono, agenzie, regalo e anteprima social si scelgono dalla libreria', async () => {
+  const s = await start();
+  try {
+    const { admin } = s;
+    const anon = s.jar();
+    const upload = async (buf) => (await (await admin('/admin/media', json({ large: dataUrl(buf), small: dataUrl(buf), width: 1600, height: 900 }))).json()).name;
+    const photoA = await upload(JPEG);
+    const photoB = await upload(Buffer.concat([JPEG, Buffer.from('b')]));
+    assert.notEqual(photoA, photoB);
+
+    // senza scelta: illustrazioni e nessuna anteprima social
+    let home = await (await anon('/it/')).text();
+    assert.match(home, /class="art art-dome"/);
+    assert.doesNotMatch(home, /og:image/);
+    assert.match(await (await admin('/admin/media')).text(), /Immagini del sito/);
+
+    // la foto della home sostituisce l'illustrazione e diventa l'anteprima di tutte le pagine senza copertina
+    assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'home', name: photoA }))), '/admin/media?ok=slot');
+    home = await (await anon('/it/')).text();
+    assert.match(home, new RegExp(`<div class="hero-art"><img src="/media/${photoA}" srcset="/media/${photoA.replace('.jpg', '-s.jpg')} 640w`));
+    assert.match(home, new RegExp(`og:image" content="http://localhost/media/${photoA}"`));
+    assert.match(home, /twitter:card" content="summary_large_image"/);
+    assert.match(await (await anon('/en/blog')).text(), new RegExp(`og:image" content="http://localhost/media/${photoA}"`));
+
+    // le altre posizioni
+    await admin('/admin/media/slots', form({ slot: 'about', name: photoB }));
+    await admin('/admin/media/slots', form({ slot: 'b2b', name: photoB }));
+    await admin('/admin/media/slots', form({ slot: 'gift', name: photoB }));
+    assert.match(await (await anon('/it/about')).text(), new RegExp(`<figure class="portrait"><img src="/media/${photoB}"`));
+    assert.match(await (await anon('/it/b2b')).text(), new RegExp(`<div class="hero-art"><img src="/media/${photoB}"`));
+    assert.match(await (await anon('/it/gift')).text(), new RegExp(`<div class="gift-art"><img src="/media/${photoB}"`));
+    assert.doesNotMatch(await (await anon('/it/privacy')).text(), /class="portrait"/, 'il ritratto è solo in «Chi sono»');
+    // l'anteprima social dedicata vince sulla foto della home
+    await admin('/admin/media/slots', form({ slot: 'og', name: photoB }));
+    assert.match(await (await anon('/it/')).text(), new RegExp(`og:image" content="http://localhost/media/${photoB}"`));
+
+    // controlli
+    assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'inesistente', name: photoA }))), '/admin/media?err=slot');
+    assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'home', name: 'ffffffffffffffffffffffff.jpg' }))), '/admin/media?err=missing');
+    assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'home', name: '../../etc/passwd' }))), '/admin/media?err=missing');
+    assert.equal(loc(await anon('/admin/media/slots', form({ slot: 'home', name: photoA }))), '/admin/login');
+    // in uso: non si elimina; tolta la foto, sì
+    const rowA = s.app.media.list().find((m) => m.name === photoA);
+    assert.equal(loc(await admin(`/admin/media/${rowA.id}/delete`, form({}))), '/admin/media?err=used');
+    assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'home', clear: '1' }))), '/admin/media?ok=slot');
+    home = await (await anon('/it/')).text();
+    assert.match(home, /class="art art-dome"/);
+    assert.equal(loc(await admin(`/admin/media/${rowA.id}/delete`, form({}))), '/admin/media?ok=deleted');
+    // se un file sparisce dalla libreria, il sito torna all'illustrazione senza rompersi
+    s.app.media.remove(photoB);
+    assert.match(await (await anon('/it/')).text(), /class="art art-dome"/);
+    assert.match(await (await anon('/it/about')).text(), /Chi sono/);
+  } finally {
+    s.close();
+  }
+});
+
 import { defToValues } from '../server/views/admin-tours.js';
 function tourFormFromDef(def) {
   const v = defToValues(def, '');

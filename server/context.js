@@ -7,6 +7,7 @@ import path from 'node:path';
 import { createMailer } from './mail.js';
 import { createMedia } from './media.js';
 import { createPecMailer } from './pec.js';
+import { createSiteImages } from './siteImages.js';
 import { createProgramServices } from './programs.js';
 import { createReviewServices } from './reviews.js';
 import { createPayables } from './payables.js';
@@ -26,6 +27,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
     }
   };
   app.media = createMedia({ db, dir: path.join(cfg.dataDir, 'media') });
+  app.siteImages = createSiteImages({ db, media: app.media });
   app.mail = mail ?? createMailer(cfg);
   app.payments = payments ?? createPayments(cfg);
   app.payables = createPayables(app);

@@ -9,11 +9,12 @@ export function adminMediaRouter(app) {
   const json = express.json({ limit: '12mb' });
   const form = express.urlencoded({ extended: false, limit: '10kb' });
   const ctxOf = (req) => ({ app, req });
-  const FLASH = { deleted: 'Immagine eliminata.' };
-  const ERR = { used: 'L’immagine è usata da un tour o da un articolo: toglila da lì prima di eliminarla.', missing: 'Immagine non trovata.' };
+  const FLASH = { deleted: 'Immagine eliminata.', slot: 'Fatto: la modifica è già visibile sul sito.' };
+  const ERR = { used: 'L’immagine è in uso (tour, articolo o pagina del sito): toglila da lì prima di eliminarla.', missing: 'Immagine non trovata.', slot: 'Posizione non valida.' };
+  const usedNames = () => new Set([...(app.content.usedImages?.() ?? []), ...app.siteImages.used()]);
 
   r.get('/media', (req, res) => {
-    send(res, mediaPage(ctxOf(req), { items: app.media.list(), used: app.content.usedImages?.() ?? new Set(), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
+    send(res, mediaPage(ctxOf(req), { items: app.media.list(), used: usedNames(), slots: app.siteImages.slots.map((sl) => ({ ...sl, name: app.siteImages.get(sl.key) })), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
   });
 
   r.post('/media', json, (req, res) => {
@@ -26,10 +27,21 @@ export function adminMediaRouter(app) {
     }
   });
 
+  // sceglie (o toglie) la foto di una pagina del sito: home, chi sono, agenzie, buono regalo, anteprima social
+  r.post('/media/slots', form, (req, res) => {
+    try {
+      app.siteImages.set(String(req.body.slot ?? ''), req.body.clear ? null : String(req.body.name ?? ''));
+    } catch (err) {
+      if (!(err instanceof MediaError)) throw err;
+      return res.redirect(303, `/admin/media?err=${/Posizione/.test(err.message) ? 'slot' : 'missing'}`);
+    }
+    res.redirect(303, '/admin/media?ok=slot');
+  });
+
   r.post('/media/:id/delete', form, (req, res) => {
     const row = app.db.prepare('SELECT * FROM media WHERE id = ?').get(Number(req.params.id));
     if (!row) return res.redirect(303, '/admin/media?err=missing');
-    if (app.content.usedImages?.().has(row.name)) return res.redirect(303, '/admin/media?err=used');
+    if (usedNames().has(row.name)) return res.redirect(303, '/admin/media?err=used');
     app.media.remove(row.name);
     res.redirect(303, '/admin/media?ok=deleted');
   });

@@ -3098,5 +3098,35 @@
   "Pagamento sicuro",
   "Secure payment",
   "Pago seguro"
+ ],
+ "departures.title": [
+  "Prossime partenze",
+  "Next departures",
+  "Próximas salidas"
+ ],
+ "departures.lead": [
+  "Tour in piccolo gruppo con posti liberi nei prossimi giorni. Tocca un orario per prenotare.",
+  "Small-group tours with free places in the coming days. Tap a departure to book.",
+  "Tours en grupo reducido con plazas libres en los próximos días. Toca una salida para reservar."
+ ],
+ "departures.left": [
+  "Ultimi {n} posti",
+  "Last {n} places",
+  "Últimas {n} plazas"
+ ],
+ "departures.left1": [
+  "Ultimo posto",
+  "Last place",
+  "Última plaza"
+ ],
+ "departures.more": [
+  "Cerca un’altra data",
+  "Look for another date",
+  "Buscar otra fecha"
+ ],
+ "checkout.update": [
+  "Aggiorna",
+  "Update",
+  "Actualizar"
  ]
 }

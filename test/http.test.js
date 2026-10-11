@@ -1210,3 +1210,40 @@ test('accesso admin: la password si tollera con spazi attorno; da variabile d’
     for (const d of fs.readdirSync(path.join(ROOT, 'data')).filter((x) => x.startsWith('test-cfg-'))) fs.rmSync(path.join(ROOT, 'data', d), { recursive: true, force: true });
   }
 });
+
+test('prossime partenze: in home e in «Prenota» (senza data), con prezzo, posti e collegamento diretto al pagamento', async () => {
+  const s = await start();
+  try {
+    const f = s.jar();
+    const home = await (await f('/it/')).text();
+    assert.match(home, /Prossime partenze/);
+    const hrefs = (html) => [...html.matchAll(/class="dep" href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+    const links = hrefs(home);
+    assert.ok(links.length >= 1 && links.length <= 4, `${links.length} partenze in home`);
+    assert.match(home, /class="dep-price"><strong>[^<]*€/);
+    // il collegamento porta a un pagamento valido per quella partenza
+    const checkout = await f(links[0]);
+    assert.equal(checkout.status, 200);
+    const checkoutHtml = await checkout.text();
+    assert.match(checkoutHtml, /name="time" value="\d\d:\d\d"/);
+    // il numero di persone si cambia in pagina: ricalcola i posti e tiene i dati già scritti
+    assert.match(checkoutHtml, /<select name="pax" id="pax-select" form="checkout-form"/);
+    const q = new URL('http://x' + links[0]).searchParams;
+    const changed = await f('/it/book/checkout', form({ tour: q.get('tour'), date: q.get('date'), time: q.get('time'), pax: '4', apply: '1', name: 'Mario Rossi', email: 'mario@example.com' }));
+    assert.equal(changed.status, 200);
+    const changedHtml = await changed.text();
+    assert.match(changedHtml, /<option value="4" selected>4<\/option>/);
+    assert.match(changedHtml, /value="Mario Rossi"/);
+    assert.equal((await f('/it/book/checkout', form({ tour: q.get('tour'), date: q.get('date'), time: q.get('time'), pax: '99', apply: '1' }))).status, 400, 'più persone dei posti: partenza non più disponibile');
+    // «Prenota» senza data: elenco (6 al massimo); con una data scelta c'è solo l'elenco degli orari
+    const book = await (await f('/en/book')).text();
+    assert.match(book, /Next departures/);
+    assert.ok(hrefs(book).length >= 1 && hrefs(book).length <= 6);
+    assert.doesNotMatch(await (await f(`/en/book?date=${day(3)}`)).text(), /class="dep-list"/);
+    assert.match(await (await f('/es/')).text(), /Próximas salidas/);
+    // se la persona ha scelto 5 persone, il collegamento le porta con sé
+    assert.ok(hrefs(await (await f('/it/book?pax=5')).text()).every((h) => /pax=5\b/.test(h)), 'pax conservato');
+  } finally {
+    s.close();
+  }
+});

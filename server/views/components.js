@@ -29,6 +29,12 @@ export function mediaImg(image, alt = '', { sizes = '(max-width: 700px) 100vw, 5
 /** Indirizzo assoluto dell'immagine di copertina (anteprima quando si condivide la pagina). */
 export const mediaUrl = (cfg, image) => (image && MEDIA_NAME.test(image) ? `${cfg.baseUrl}/media/${image}` : null);
 
+/** Immagine fissa del sito: la foto scelta nel pannello (Immagini) oppure, se manca, l'illustrazione. */
+export function siteArt(ctx, slot, artKey, { label = '', alt = label, sizes, eager = false } = {}) {
+  const name = ctx.app.siteImages?.get(slot);
+  return name ? mediaImg(name, alt, { sizes, eager }) : art(artKey, { label });
+}
+
 export function tourMedia(ctx, tour, label) {
   const ti = tour.i18n[ctx.lang];
   return tour.image ? mediaImg(tour.image, label ?? ti.title) : art(tour.art, { label: label ?? ti.title });
@@ -39,6 +45,22 @@ export function priceParts(ctx, tour) {
   const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
   const unit = unitPriceFor(tour, channel, ctx.acct);
   return { channel, unit, money: formatMoney(unit, ctx.lang), per: tour.model === 'person' ? ctx.t('price.perPerson') : ctx.t('price.perGroup') };
+}
+
+/** «Prossime partenze»: i primi orari prenotabili dei tour a partenza fissa; un tocco porta al pagamento. */
+export function departuresList(ctx, departures, { pax = 2 } = {}) {
+  const { t, lang, u } = ctx;
+  if (!departures.length) return '';
+  return html`<ul class="dep-list">${departures.map((d) => {
+    const { money, per } = priceParts(ctx, d.tour);
+    const n = Math.max(1, Math.min(pax, d.left));
+    const note = d.left <= 3 ? (d.left === 1 ? t('departures.left1') : t('departures.left', { n: d.left })) : d.joined ? t('book.confirmedDeparture') : fmtDuration(d.tour.durationMin);
+    return html`<li><a class="dep" href="${u('/book/checkout')}?tour=${encodeURIComponent(d.tour.slug)}&date=${d.date}&time=${d.time}&pax=${n}">
+      <span class="dep-when"><strong>${fmtDate(d.date, lang, 'weekday')}</strong><span class="dep-time">${d.time}</span></span>
+      <span class="dep-what"><strong>${d.tour.i18n[lang].title}</strong><small class="${d.left <= 3 ? 'dep-few' : ''}">${note}</small></span>
+      <span class="dep-price"><strong>${money}</strong><small>/ ${per}</small></span>
+    </a></li>`;
+  })}</ul>`;
 }
 
 export function tourCard(ctx, tour) {
