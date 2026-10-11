@@ -177,6 +177,10 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
   return null;
 }
 
+/** La fattura (anche in bozza) che contiene una prenotazione, un buono o un programma. */
+export const invoiceForSource = (db, type, id) =>
+  db.prepare(`SELECT i.id, i.number, i.status, i.doc_type FROM invoice_lines l JOIN invoices i ON i.id = l.invoice_id WHERE l.source_type = ? AND l.source_id = ? AND l.released = 0`).get(type, id) ?? null;
+
 const isReserved = (db, type, id) => !!db.prepare('SELECT 1 FROM invoice_lines WHERE source_type = ? AND source_id = ? AND released = 0').get(type, id);
 
 /** Voci ancora da fatturare: prenotazioni confermate (pagate o già svolte), buoni venduti, programmi conclusi. */
@@ -394,12 +398,12 @@ export function saveDraft(app, id, form, nowMs = Date.now()) {
     };
     const lines = (form.lines ?? []).map((l) => {
       const prev = l.key ? old.find((o) => o.source_type && keyOf(o.source_type, o.source_id) === l.key) : null;
-      return { description: cleanText(l.description, 400), amount_cents: l.amountCents, source_type: prev?.source_type ?? null, source_id: prev?.source_id ?? null, source_payments: prev?.source_payments ?? null };
+      return { description: cleanText(l.description, 400), amount_cents: l.amountCents, rowNo: l.rowNo, source_type: prev?.source_type ?? null, source_id: prev?.source_id ?? null, source_payments: prev?.source_payments ?? null };
     });
     if (!lines.length) throw new InvoiceError('lines', 'serve almeno una riga');
     lines.forEach((l, i) => {
-      if (l.description.length < 2) throw new InvoiceError('lines', `riga ${i + 1}: manca la descrizione`);
-      if (!Number.isInteger(l.amount_cents) || l.amount_cents <= 0) throw new InvoiceError('amount', `riga ${i + 1}: importo non valido`);
+      if (l.description.length < 2) throw new InvoiceError('lines', `riga ${l.rowNo ?? i + 1}: manca la descrizione`);
+      if (!Number.isInteger(l.amount_cents) || l.amount_cents <= 0) throw new InvoiceError('amount', `riga ${l.rowNo ?? i + 1}: importo non valido`);
     });
     const issueDate = isDate(form.issueDate) ? form.issueDate : inv.issue_date;
     const prev = optionsOf(inv);

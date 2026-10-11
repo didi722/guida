@@ -9,7 +9,9 @@ import { loadContent } from '../server/content.js';
 import { openDb } from '../server/db.js';
 import { createPayments } from '../server/payments.js';
 import { addDays, localToInstant, nowRome } from '../server/time.js';
-import { isPdf } from './helpers.js';
+import { base as bookingBase, isPdf } from './helpers.js';
+import { validateInvoiceXml } from './xsd.js';
+import { confirmPaid, createBooking } from '../server/bookings.js';
 
 process.env.GUIDA_QUIET = '1';
 
@@ -17,7 +19,7 @@ const tmp = path.join(ROOT, 'data', 'test-http-' + crypto.randomBytes(3).toStrin
 const content = loadContent(ROOT);
 const day = (n) => addDays(nowRome().date, n);
 
-async function start({ fakeStripe = false, noOnSite = false, fetchImpl: calFetch } = {}) {
+async function start({ fakeStripe = false, noOnSite = false, fetchImpl: calFetch, cfgOver = {}, pec } = {}) {
   const cfg = createConfig({
     __skipDotEnv: true,
     dataDir: tmp,
@@ -26,6 +28,7 @@ async function start({ fakeStripe = false, noOnSite = false, fetchImpl: calFetch
     mail: { notifyTo: 'guida@example.com' },
     policy: { allowPayOnSite: !noOnSite },
     ...(fakeStripe ? { stripe: { secretKey: 'sk_test_x', webhookSecret: 'whsec_test' }, demoPayments: false } : { demoPayments: true }),
+    ...cfgOver,
   });
   const calls = [];
   const fakeFetch = async (url, init) => {
@@ -35,7 +38,7 @@ async function start({ fakeStripe = false, noOnSite = false, fetchImpl: calFetch
     if (url.endsWith('/refunds')) return new Response(JSON.stringify({ id: 're_1' }), { status: 200 });
     return new Response('{}', { status: 404 });
   };
-  const { app, server } = createApp({ cfg, db: openDb(':memory:'), content, payments: createPayments(cfg, fakeFetch), fetchImpl: calFetch });
+  const { app, server } = createApp({ cfg, db: openDb(':memory:'), content, payments: createPayments(cfg, fakeFetch), fetchImpl: calFetch, pec });
   const http = await new Promise((resolve) => {
     const s = server.listen(0, () => resolve(s));
   });
@@ -75,6 +78,7 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
         const html = await res.text();
         assert.ok(html.includes(`<html lang="${lang}">`), `/${lang}${p} lang`);
         assert.ok(!html.includes('undefined') && !html.includes('[object'), `/${lang}${p} contiene un valore non renderizzato`);
+        assert.ok(!/<[a-z][^>]*\sstyle=/i.test(html) && !/<script(?![^>]*\ssrc=)[^>]*>[^<]/i.test(html.replace(/<script type="application\/ld\+json">[^]*?<\/script>/g, '')), `/${lang}${p}: la CSP vieta stili e script in linea`);
       }
     }
     assert.equal((await f('/it/nope')).status, 404);
@@ -756,6 +760,179 @@ test('programmi: il partner B2B ha il modulo precompilato e il programma resta c
     const anon = await s.jar()('/it/programs', form({ name: 'Anna', email: 'anna@example.com', participants: '2', channel: 'b2b', clientRef: 'X', consent: '1' }));
     assert.equal(anon.status, 303);
     assert.equal(s.app.db.prepare('SELECT channel FROM programs WHERE email = ?').get('anna@example.com').channel, 'b2c');
+  } finally {
+    s.close();
+  }
+});
+
+
+const FISCAL = {
+  site: { vatNumber: 'IT12345678903' },
+  invoice: { seller: { fiscalCode: 'RSSMRA80A01H501U', firstName: 'Mario', lastName: 'Rossi', address: { street: 'Calle del Test 1', zip: '30100', city: 'Venezia', province: 'VE' } }, iban: 'IT60X0542811101000000123456', bank: 'Banca di Prova' },
+};
+const buyerForm = (over = {}) => ({ b_kind: 'person', b_firstName: 'Matteo', b_lastName: 'Moretti', b_country: 'IT', b_taxCode: 'MRTMTT91D08F205J', b_address: 'Via Roma 1', b_zip: '20100', b_city: 'Milano', b_province: 'MI', b_email: 'matteo@example.com', b_lang: 'it', ...over });
+const formList2 = (entries) => ({ method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(entries).toString() });
+
+test('fatture nel pannello: dati fiscali mancanti, coda, bozza, emissione, XML valido, PDF, email, SdI, nota di credito, registro', async () => {
+  const sent = [];
+  const s = await start({ cfgOver: FISCAL, pec: { live: true, send: async (m) => { sent.push(m); return true; } } });
+  try {
+    const anon = s.jar();
+    const admin = s.jar();
+    for (const p of ['/admin/invoices', '/admin/invoices/export.csv?year=2027', '/admin/invoices/1/xml', '/admin/invoices/1/pdf']) assert.equal(loc(await anon(p)), '/admin/login', p);
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+    const year = nowRome().date.slice(0, 4);
+
+    // una prenotazione di un privato pagata con carta e una di un partner a fattura
+    const mine = createBooking(s.app, bookingBase({ channel: 'b2c', tourSlug: 'san-marco-rialto', date: day(20), time: '09:30', pax: 3, name: 'Matteo Moretti', email: 'matteo@example.com', paymentMethod: 'card', consent: '1' }), Date.now());
+    confirmPaid(s.app, mine.id, 'pi_http', Date.now());
+    const acct = s.app.db.prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, country, address, contact_name, status, allow_invoice, created_at) VALUES('dmc@example.com','x','Venice DMC S.r.l.','00743110157','ABCDEFG','IT','Fondamenta Nuove 10','Anna','approved',1,?)`).run(new Date().toISOString());
+    const b2b = createBooking(s.app, { tourSlug: 'servizio-mezza-giornata', date: day(21), time: '09:00', pax: 5, channel: 'b2b', account: s.app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(acct.lastInsertRowid)), name: 'Anna', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 42' }, Date.now());
+
+    s.app.db.prepare('UPDATE bookings SET date = ? WHERE id = ?').run(day(-2), b2b.id); // il servizio al partner è stato svolto
+    // elenco: coda con le due voci, nessun problema fiscale
+    const queue = await (await admin('/admin/invoices')).text();
+    assert.match(queue, /Da fatturare \(2\)/);
+    assert.match(queue, /Venice DMC S\.r\.l\./);
+    assert.match(queue, new RegExp(`value="booking:${mine.id}"`));
+    assert.match(queue, /Carta · incassato/);
+    assert.match(queue, /Bonifico · da incassare/);
+    assert.ok(!/Prima di emettere completa i dati fiscali/.test(queue));
+    assert.equal((await admin('/admin/invoices/draft', form({}))).status, 400, 'senza voci scelte');
+
+    // bozza dalla prenotazione del privato; l'intestatario è da completare
+    const draftRes = await admin('/admin/invoices/draft', formList2([['src', `booking:${mine.id}`]]));
+    assert.equal(draftRes.status, 303);
+    const draftUrl = loc(draftRes);
+    assert.match(draftUrl, /^\/admin\/invoices\/\d+\?ok=created$/);
+    const id = Number(draftUrl.match(/invoices\/(\d+)/)[1]);
+    const page = await (await admin(draftUrl)).text();
+    assert.ok(!/\sstyle="/.test(page) && !/<script>/.test(page), 'la CSP vieta stili e script in linea');
+    assert.match(page, /Fattura in bozza/);
+    assert.match(page, /value="Matteo"/);
+    assert.match(page, /Prima di emettere/);
+    assert.match(page, /codice fiscale/);
+    assert.match(page, /name="l_desc"/);
+
+    const lineEntries = (extra = []) => [['l_key', `booking:${mine.id}`], ['l_desc', 'Tour di prova – 12 gen – 3 persone'], ['l_amount', '105,00'], ['l_key', ''], ['l_desc', ''], ['l_amount', ''], ...extra];
+    // emissione con dati incompleti → resta bozza, errore con il motivo
+    const incomplete = await admin(`/admin/invoices/${id}/save`, formList2([...Object.entries(buyerForm({ b_taxCode: '' })), ...lineEntries(), ['issue_date', nowRome().date], ['action', 'issue']]));
+    assert.equal(incomplete.status, 400);
+    assert.match(await incomplete.text(), /Per un cliente italiano privato serve il codice fiscale/);
+    assert.equal(s.app.db.prepare('SELECT status FROM invoices WHERE id = ?').get(id).status, 'draft');
+    // importo non valido: si rivede il modulo con quanto scritto
+    const badAmount = await admin(`/admin/invoices/${id}/save`, formList2([...Object.entries(buyerForm()), ['l_key', `booking:${mine.id}`], ['l_desc', 'Riga scritta a mano'], ['l_amount', 'abc'], ['issue_date', nowRome().date], ['action', 'save']]));
+    assert.equal(badAmount.status, 400);
+    const badHtml = await badAmount.text();
+    assert.match(badHtml, /riga 1: importo non valido/i);
+    assert.match(badHtml, /value="Riga scritta a mano"/, 'quanto digitato resta nel modulo');
+
+    // dati completi → emessa
+    const issue = await admin(`/admin/invoices/${id}/save`, formList2([...Object.entries(buyerForm()), ...lineEntries(), ['issue_date', nowRome().date], ['action', 'issue']]));
+    assert.equal(issue.status, 303, await issue.text());
+    assert.equal(loc(issue), `/admin/invoices/${id}?ok=issued`);
+    const issued = await (await admin(`/admin/invoices/${id}?ok=issued`)).text();
+    assert.ok(!/\sstyle="/.test(issued), 'nessuno stile in linea');
+    assert.match(issued, new RegExp(`Fattura 1/${year}`));
+    assert.match(issued, /Fattura emessa/);
+    assert.match(issued, /Scarica l’XML/);
+
+    // XML valido per lo schema, nome file e intestazioni
+    const xmlRes = await admin(`/admin/invoices/${id}/xml`);
+    assert.equal(xmlRes.status, 200);
+    assert.match(xmlRes.headers.get('content-type'), /application\/xml/);
+    assert.match(xmlRes.headers.get('content-disposition'), /attachment; filename="IT12345678903_[0-9A-Z]{5}\.xml"/);
+    const xml = await xmlRes.text();
+    const check = await validateInvoiceXml(xml);
+    assert.ok(check.valid, check.errors.join('\n'));
+    assert.match(xml, new RegExp(`<Numero>1/${year}</Numero>`));
+    const pdf = await admin(`/admin/invoices/${id}/pdf`);
+    assert.equal(pdf.headers.get('content-type'), 'application/pdf');
+    assert.ok(isPdf(Buffer.from(await pdf.arrayBuffer())));
+
+    // la voce non è più in coda, la scheda della prenotazione indica la fattura
+    assert.match(await (await admin('/admin/invoices')).text(), /Da fatturare \(1\)/);
+    const bookingPage = await (await admin(`/admin/bookings/${mine.id}`)).text();
+    assert.match(bookingPage, new RegExp(`href="/admin/invoices/${id}">n\\. 1/${year}`));
+    assert.match(bookingPage, /stornala con una nota di credito/);
+    assert.equal(s.app.db.prepare('SELECT COUNT(*) n FROM invoices').get().n, 1);
+    // una fattura emessa non si modifica
+    assert.equal((await admin(`/admin/invoices/${id}/save`, formList2([...Object.entries(buyerForm()), ...lineEntries(), ['action', 'save']]))).status, 400);
+
+    // email al cliente, trasmissione a SdI, esito
+    assert.equal((await admin(`/admin/invoices/${id}/email`, form({ to: 'nonvalida' }))).status, 400);
+    assert.equal(loc(await admin(`/admin/invoices/${id}/email`, form({ to: 'matteo@example.com', xml: '1' }))), `/admin/invoices/${id}?ok=emailed`);
+    const mail = s.app.mail.sent.at(-1);
+    assert.deepEqual(mail.attachments.map((a) => a.filename.replace(/_[0-9A-Z]{5}/, '_X')), [`fattura-1-${year}.pdf`, 'IT12345678903_X.xml']);
+    assert.equal(loc(await admin(`/admin/invoices/${id}/sdi`, form({}))), `/admin/invoices/${id}?ok=sent`);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].to, 'sdi01@pec.fatturapa.it');
+    assert.equal(sent[0].attachments[0].content, xml);
+    assert.equal(loc(await admin(`/admin/invoices/${id}/status`, form({ status: 'delivered', note: 'ricevuta RC' }))), `/admin/invoices/${id}?ok=status`);
+    const list = await (await admin('/admin/invoices?tab=issued')).text();
+    assert.match(list, /Consegnata/);
+    assert.match(list, new RegExp(`1/${year}`));
+
+    // fattura al partner: tutto precompilato dall'account tranne CAP, comune e provincia
+    const b2bDraft = await admin('/admin/invoices/draft', formList2([['src', `booking:${b2b.id}`]]));
+    const id2 = Number(loc(b2bDraft).match(/invoices\/(\d+)/)[1]);
+    const p2 = await (await admin(`/admin/invoices/${id2}`)).text();
+    assert.match(p2, /value="Venice DMC S\.r\.l\."/);
+    assert.match(p2, /value="00743110157"/);
+    assert.match(p2, /value="ABCDEFG"/);
+    assert.match(p2, /PRATICA 42/);
+    const second = await admin(`/admin/invoices/${id2}/save`, formList2([...Object.entries(buyerForm({ b_kind: 'company', b_name: 'Venice DMC S.r.l.', b_firstName: '', b_lastName: '', b_vat: '00743110157', b_taxCode: '', b_address: 'Fondamenta Nuove 10', b_zip: '30121', b_city: 'Venezia', b_province: 'VE', b_sdiCode: 'ABCDEFG' })), ['l_key', `booking:${b2b.id}`], ['l_desc', 'Servizio mezza giornata – PRATICA 42'], ['l_amount', '190,00'], ['issue_date', nowRome().date], ['opt_bollo', '1'], ['opt_due', day(51)], ['action', 'issue']]));
+    assert.equal(loc(second), `/admin/invoices/${id2}?ok=issued`);
+    const x2 = (await (await admin(`/admin/invoices/${id2}/xml`)).text());
+    assert.ok((await validateInvoiceXml(x2)).valid);
+    assert.match(x2, /<CodiceDestinatario>ABCDEFG<\/CodiceDestinatario>/);
+    assert.match(x2, /<ImportoTotaleDocumento>192\.00<\/ImportoTotaleDocumento>/, '190 € più il bollo addebitato');
+    assert.match(await (await admin('/admin/invoices')).text(), /Niente da fatturare/);
+
+    // nota di credito sulla prima fattura
+    const credit = await admin(`/admin/invoices/${id}/credit-note`, form({}));
+    assert.equal(credit.status, 303);
+    const creditId = Number(loc(credit).match(/invoices\/(\d+)/)[1]);
+    const cPage = await (await admin(loc(credit))).text();
+    assert.match(cPage, /Nota di credito in bozza/);
+    assert.match(cPage, new RegExp(`che storna la fattura <a href="/admin/invoices/${id}">1/${year}`));
+    assert.match(cPage, /Storno: Tour di prova/);
+    const cIssue = await admin(`/admin/invoices/${creditId}/save`, formList2([...Object.entries(buyerForm()), ['l_key', ''], ['l_desc', 'Storno: Tour di prova'], ['l_amount', '105,00'], ['issue_date', nowRome().date], ['action', 'issue']]));
+    assert.equal(loc(cIssue), `/admin/invoices/${creditId}?ok=issued`);
+    const credited = await (await admin(`/admin/invoices/${id}`)).text();
+    assert.match(credited, /Stornata/);
+    assert.match(await (await admin('/admin/invoices')).text(), /Da fatturare \(1\)/, 'la prenotazione stornata si può fatturare di nuovo');
+
+    // registro CSV
+    const csv = await admin(`/admin/invoices/export.csv?year=${year}`);
+    assert.match(csv.headers.get('content-type'), /text\/csv/);
+    const text = await csv.text();
+    assert.equal(text.trim().split('\r\n').length, 4, 'intestazione + fattura al privato + fattura al partner + nota di credito');
+    assert.match(text, /Nota di credito/);
+  } finally {
+    s.close();
+  }
+});
+
+test('fatture nel pannello: finché mancano i dati fiscali non si emette; senza PEC si ricorda il caricamento manuale', async () => {
+  const s = await start();
+  try {
+    const admin = s.jar();
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+    const settings = await (await admin('/admin/invoices?tab=settings')).text();
+    assert.match(settings, /Mancano o non tornano questi dati/);
+    assert.match(settings, /Partita IVA mancante/);
+    assert.match(settings, /Fatture e Corrispettivi/);
+    const manual = await admin('/admin/invoices/manual', form({}));
+    const id = Number(loc(manual).match(/invoices\/(\d+)/)[1]);
+    const res = await admin(`/admin/invoices/${id}/save`, formList2([...Object.entries(buyerForm()), ['l_key', ''], ['l_desc', 'Servizio'], ['l_amount', '50'], ['issue_date', nowRome().date], ['action', 'issue']]));
+    assert.equal(res.status, 400);
+    assert.match(await res.text(), /dati fiscali non sono completi/i);
+    assert.equal(s.app.db.prepare('SELECT status FROM invoices WHERE id = ?').get(id).status, 'draft');
+    assert.match(await (await admin(`/admin/invoices/${id}`)).text(), /Partita IVA mancante/);
+    // bozza eliminabile
+    assert.equal(loc(await admin(`/admin/invoices/${id}/delete`, form({}))), '/admin/invoices?tab=drafts&ok=deleted');
+    assert.equal(s.app.db.prepare('SELECT COUNT(*) n FROM invoices').get().n, 0);
   } finally {
     s.close();
   }

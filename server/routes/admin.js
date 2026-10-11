@@ -10,10 +10,12 @@ import { loginAdmin, logoutAdmin, send, sendPdf, tooMany } from '../http.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
+import { adminInvoicesRouter } from './admin-invoices.js';
 import { dayConflicts } from '../programs.js';
 import { feedbackStats } from '../reviews.js';
 import { maskUrl } from '../calendars.js';
 import { feedbackAdminPage } from '../views/admin-feedback.js';
+import { invoiceForSource } from '../invoices.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage, partnerDetailPage, partnersPage } from '../views/admin.js';
 
 const ERR = {
@@ -94,6 +96,7 @@ export function adminRouter(app) {
 
   r.use(adminDiscountsRouter(app));
   r.use(adminProgramsRouter(app));
+  r.use(adminInvoicesRouter(app));
 
   r.get('/feedback', (req, res) => {
     const items = db.prepare(`SELECT f.*, b.name, b.email, b.tour_slug, b.date FROM feedback f JOIN bookings b ON b.id = f.booking_id ORDER BY f.created_at DESC LIMIT 200`).all();
@@ -119,7 +122,8 @@ export function adminRouter(app) {
     const programs = db.prepare(`SELECT COALESCE(SUM(status = 'new'), 0) AS todo, COALESCE(SUM(status IN ('quoted', 'accepted')), 0) AS waiting FROM programs`).get();
     const pendingPartners = db.prepare(`SELECT COUNT(*) n FROM accounts WHERE status = 'pending'`).get().n;
     const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(new Date().toISOString()).n;
-    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), today, days, pendingPartners, held, programs, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
+    const invoicesDue = app.invoices.queue().filter((i) => i.overdue).length;
+    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, today, days, pendingPartners, held, programs, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
   });
 
   // ───── prenotazioni ─────
@@ -139,7 +143,7 @@ export function adminRouter(app) {
     const b = getBooking(db, Number(req.params.id));
     if (!b) return next();
     const account = b.account_id ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
-    send(res, bookingDetailPage(ctxOf(req), b, account, flash(req)));
+    send(res, bookingDetailPage(ctxOf(req), b, account, flash(req), invoiceForSource(db, 'booking', b.id)));
   });
   r.get('/bookings/:id/voucher.pdf', async (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));

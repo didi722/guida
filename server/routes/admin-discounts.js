@@ -4,6 +4,7 @@ import { normalizePromo, promoUses } from '../pricing.js';
 import { sendGiftToBuyer, sendGiftToRecipient } from '../emails.js';
 import { isDate, nowRome } from '../time.js';
 import { cleanText, parseEuros } from '../util.js';
+import { invoiceForSource } from '../invoices.js';
 import { send, sendPdf } from '../http.js';
 import { renderGiftCardPdf } from '../pdf.js';
 import { discountsPage, giftDetailPage } from '../views/admin-discounts.js';
@@ -98,7 +99,7 @@ export function adminDiscountsRouter(app) {
   r.get('/discounts/gifts/:id', (req, res, next) => {
     const card = getGift(db, Number(req.params.id));
     if (!card) return next();
-    send(res, giftDetailPage(ctxOf(req), card, giftLedger(db, card.id), nowRome().date, FLASH[String(req.query.ok ?? '')] ?? '', ERR[String(req.query.err ?? '')] ?? ''));
+    send(res, giftDetailPage(ctxOf(req), card, giftLedger(db, card.id), nowRome().date, FLASH[String(req.query.ok ?? '')] ?? '', ERR[String(req.query.err ?? '')] ?? '', invoiceForSource(db, 'gift', card.id)));
   });
   const here = (id, k, v) => `/admin/discounts/gifts/${id}?${k}=${v}`;
   r.get('/discounts/gifts/:id/card.pdf', async (req, res, next) => {

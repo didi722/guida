@@ -2,7 +2,7 @@ import { html, raw } from '../html.js';
 import { formatGiftCode } from '../pricing.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
-import { adminLayout } from './admin.js';
+import { adminLayout, invoiceRow } from './admin.js';
 
 const eur = (c) => formatMoney(c, 'it');
 const GIFT_STATUS = { active: ['Attivo', 'chip-ok'], pending: ['In attesa di pagamento', 'chip-warn'], void: ['Annullato', 'chip-err'] };
@@ -88,7 +88,7 @@ ${gifts.length
   return adminLayout(ctx, { title: 'Sconti e buoni', active: '/admin/discounts', body, flash, error });
 }
 
-export function giftDetailPage(ctx, card, ledger, today, flash = '', error = '') {
+export function giftDetailPage(ctx, card, ledger, today, flash = '', error = '', invoice = null) {
   const [label, cls] = giftState(card, today);
   const body = html`
 <p><a href="/admin/discounts?tab=gifts">← Tutti i buoni</a></p>
@@ -102,6 +102,7 @@ export function giftDetailPage(ctx, card, ledger, today, flash = '', error = '')
       <div><dt>Acquirente</dt><dd>${card.buyer_name ?? '—'}${card.buyer_email ? html` · <a href="mailto:${card.buyer_email}">${card.buyer_email}</a>` : ''}</dd></div>
       <div><dt>Destinatario</dt><dd>${card.recipient_name ?? '—'}${card.recipient_email ? html` · <a href="mailto:${card.recipient_email}">${card.recipient_email}</a>` : ''}${card.deliver_on ? html`<br><small class="muted">invio ${fmtDate(card.deliver_on, 'it', 'short')}${card.delivered_at ? ' (inviato)' : ' (da inviare)'}</small>` : ''}</dd></div>
       ${card.message ? html`<div><dt>Messaggio</dt><dd>${card.message}</dd></div>` : ''}
+      ${card.status === 'active' || invoice ? invoiceRow(invoice, { warn: true }) : ''}
     </dl>
     <p class="btn-row">
       <a class="btn btn-outline btn-sm" href="/admin/discounts/gifts/${card.id}/card.pdf">PDF del buono</a>

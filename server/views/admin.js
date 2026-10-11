@@ -7,9 +7,10 @@ const NAV = [
   ['/admin', 'Agenda'],
   ['/admin/bookings', 'Prenotazioni'],
   ['/admin/programs', 'Programmi'],
+  ['/admin/invoices', 'Fatture'],
   ['/admin/availability', 'Disponibilità'],
-  ['/admin/partners', 'Partner B2B'],
-  ['/admin/discounts', 'Sconti e buoni'],
+  ['/admin/partners', 'Partner'],
+  ['/admin/discounts', 'Sconti'],
   ['/admin/feedback', 'Feedback'],
 ];
 
@@ -44,6 +45,12 @@ export function adminLayout(ctx, { title, active, body, flash = '', error = '', 
 <script src="/js/main.js?v=${app.assetVersion}" defer></script>
 ${raw(scripts)}
 </body></html>`;
+}
+
+/** Riga «Fattura» nelle schede di prenotazioni, buoni e programmi. */
+export function invoiceRow(invoice, { warn = false } = {}) {
+  if (!invoice) return html`<div><dt>Fattura</dt><dd class="muted">non ancora fatturata · <a href="/admin/invoices">Fatture</a></dd></div>`;
+  return html`<div><dt>Fattura</dt><dd><a href="/admin/invoices/${invoice.id}">${invoice.number ? `n. ${invoice.number}` : 'bozza'}</a>${warn && invoice.number ? html`<br><small class="field-error">Se la annulli, stornala con una nota di credito.</small>` : ''}</dd></div>`;
 }
 
 export function adminLoginPage(ctx, { error = '' } = {}) {
@@ -85,9 +92,10 @@ function calendarWarning(problems) {
     : '';
 }
 
-export function dashboardPage(ctx, { today, days, pendingPartners, held, programs, feedUrl, flash, problems }) {
+export function dashboardPage(ctx, { today, days, pendingPartners, held, programs, invoicesDue = 0, feedUrl, flash, problems }) {
   const body = html`
 ${calendarWarning(problems)}
+${invoicesDue ? html`<div class="notice notice-err" role="alert"><strong>${invoicesDue} ${invoicesDue === 1 ? 'voce' : 'voci'} da fatturare oltre i 12 giorni.</strong> <a href="/admin/invoices">Apri le fatture</a></div>` : ''}
 <div class="grid grid-4 kpis">
   <div class="card pad kpi"><span class="muted">Oggi</span><strong>${days.find((d) => d.date === today)?.items.length ?? 0}</strong><small>servizi</small></div>
   <div class="card pad kpi"><span class="muted">Programmi da preparare</span><strong>${programs.todo}</strong><small>${programs.waiting} in attesa del cliente</small><a href="/admin/programs">Apri</a></div>
@@ -121,7 +129,7 @@ ${items.length
   return adminLayout(ctx, { title: 'Prenotazioni', active: '/admin/bookings', body });
 }
 
-export function bookingDetailPage(ctx, b, account, flash = '') {
+export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
   const tour = ctx.app.content.tour(b.tour_slug);
   const st = cancellationState(b);
   const live = b.status === 'confirmed' || b.status === 'held';
@@ -143,6 +151,7 @@ export function bookingDetailPage(ctx, b, account, flash = '') {
       ${b.channel === 'b2c' && b.status === 'confirmed' ? html`<div><dt>Richiesta recensione</dt><dd>${b.review_status === 'sent' ? `inviata il ${new Date(b.review_sent_at).toLocaleDateString('it-IT')}` : b.review_status === 'skipped' ? 'non verrà inviata' : 'parte il giorno dopo il tour'}
         ${!b.review_status ? html`<form method="post" action="/admin/bookings/${b.id}/review" class="inline-form"><button class="btn btn-sm btn-outline" type="submit" name="action" value="send">Invia ora</button> <button class="btn btn-sm btn-outline" type="submit" name="action" value="skip">Non inviare</button></form>` : ''}</dd></div>` : ''}
       ${b.status === 'cancelled' ? html`<div><dt>Annullata</dt><dd>${b.cancelled_by ?? ''}${b.cancel_reason ? ' · ' + b.cancel_reason : ''}</dd></div>` : ''}
+      ${b.status === 'confirmed' || invoice ? invoiceRow(invoice, { warn: true }) : ''}
     </dl>
     ${b.status === 'confirmed' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/voucher.pdf" target="_blank" rel="noopener">Voucher PDF</a></p>` : ''}
   </div>

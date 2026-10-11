@@ -3,7 +3,7 @@ import { makeT } from '../i18n.js';
 import { isLocked, proposalExpired } from '../programs.js';
 import { addDays, fmtDate, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
-import { adminLayout } from './admin.js';
+import { adminLayout, invoiceRow } from './admin.js';
 
 const eur = (c, cur = 'EUR') => formatMoney(c, 'it', cur);
 const when = (iso) => (iso ? new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'short', timeStyle: 'short' }) : '');
@@ -90,7 +90,7 @@ function rowHtml(r, i, flag) {
   </div>`;
 }
 
-export function programDetailPage(ctx, p, { days, conflicts = [], form = null, flash = '', error = '', publicUrl }) {
+export function programDetailPage(ctx, p, { days, conflicts = [], form = null, flash = '', error = '', publicUrl, invoice = null }) {
   const { cfg } = ctx.app;
   const locked = isLocked(p);
   const interests = p.interests ? JSON.parse(p.interests).map((k) => t(`pg.int.${k}`)).join(', ') : '';
@@ -145,6 +145,7 @@ ${anyConflict && p.status !== 'declined' && p.status !== 'closed' ? html`<div cl
       ${p.deposit_status === 'refunded' ? html`<li>Acconto rimborsato (${eur(p.deposit_cents, p.currency)})</li>` : ''}
       ${p.declined_at ? html`<li>Rifiutata · ${when(p.declined_at)}</li>` : ''}
     </ul>
+    ${p.status === 'confirmed' || invoice ? html`<dl class="summary-list">${invoiceRow(invoice)}</dl>` : ''}
     <p><small class="muted">Pagina del cliente (link riservato)</small><br><input class="copy-field" readonly value="${publicUrl}" data-select-all></p>
     <p class="btn-row"><a class="btn btn-outline btn-sm" href="${publicUrl}" target="_blank" rel="noopener">Apri come la vede il cliente</a>${days.length ? html`<a class="btn btn-outline btn-sm" href="/admin/programs/${p.id}/proposal.pdf">PDF della proposta</a>` : ''}</p>
 
