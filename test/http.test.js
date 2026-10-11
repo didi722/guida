@@ -77,7 +77,7 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
         assert.equal(res.status, 200, `/${lang}${p}`);
         const html = await res.text();
         assert.ok(html.includes(`<html lang="${lang}">`), `/${lang}${p} lang`);
-        assert.ok(!html.includes('undefined') && !html.includes('[object'), `/${lang}${p} contiene un valore non renderizzato`);
+        assert.ok(!html.includes('undefined') && !html.includes('[object') && !html.includes('{{'), `/${lang}${p} contiene un valore non renderizzato`);
         assert.ok(!/<[a-z][^>]*\sstyle=/i.test(html) && !/<script(?![^>]*\ssrc=)[^>]*>[^<]/i.test(html.replace(/<script type="application\/ld\+json">[^]*?<\/script>/g, '')), `/${lang}${p}: la CSP vieta stili e script in linea`);
       }
     }
@@ -935,5 +935,46 @@ test('fatture nel pannello: finché mancano i dati fiscali non si emette; senza 
     assert.equal(s.app.db.prepare('SELECT COUNT(*) n FROM invoices').get().n, 0);
   } finally {
     s.close();
+  }
+});
+
+test('condizioni di prenotazione: i metodi di pagamento e i mesi dei buoni seguono la configurazione', async () => {
+  const withCash = await start({ cfgOver: { gift: { validityMonths: 18 } } });
+  const noCash = await start({ noOnSite: true });
+  try {
+    const a = await (await withCash.jar()('/it/terms')).text();
+    assert.match(a, /Puoi pagare online con carta oppure, dove previsto, il giorno del servizio/);
+    assert.match(a, /\*\*|<strong>18 mesi<\/strong>/);
+    const b = await (await noCash.jar()('/it/terms')).text();
+    assert.match(b, /Puoi pagare online con carta\./);
+    assert.ok(!/dove previsto, il giorno del servizio/.test(b));
+    const en = await (await noCash.jar()('/en/terms')).text();
+    assert.match(en, /You can pay online by card\./);
+    assert.match(en, /<strong>24 months<\/strong>/);
+  } finally {
+    withCash.close();
+    noCash.close();
+  }
+});
+
+test('senza pagamento sul posto il sito non lo promette: home, FAQ, checkout offrono solo la carta', async () => {
+  const off = await start({ noOnSite: true });
+  const on = await start();
+  try {
+    const home = await (await off.jar()('/it/')).text();
+    assert.ok(!/il giorno del tour|il giorno del servizio/.test(home), 'nessun invito a pagare il giorno del tour');
+    assert.match(home, /Online con carta, in modo sicuro/);
+    const faq = await (await off.jar()('/it/tours')).text();
+    assert.ok(!/dove previsto\)? il giorno del servizio|oppure \(dove previsto\)/.test(faq));
+    const checkout = await (await off.jar()(`/it/book/checkout?tour=san-marco-rialto&date=${day(20)}&time=09:30&pax=2`)).text();
+    assert.match(checkout, /value="card"/);
+    assert.ok(!/value="onsite"/.test(checkout), 'il checkout non offre il pagamento in loco');
+    const homeOn = await (await on.jar()('/it/')).text();
+    assert.match(homeOn, /Online con carta o il giorno del tour/);
+    const checkoutOn = await (await on.jar()(`/it/book/checkout?tour=san-marco-rialto&date=${day(20)}&time=09:30&pax=2`)).text();
+    assert.match(checkoutOn, /value="onsite"/);
+  } finally {
+    off.close();
+    on.close();
   }
 });

@@ -15,7 +15,9 @@ export function minBookableDate(app, channel = 'b2c', nowMs = Date.now()) {
 function faqItems(ctx, keys) {
   const { t, app } = ctx;
   const b2c = fmtHours(t, app.cfg.policy.b2cFreeCancelHours);
-  return keys.map((k) => html`<details class="faq-item reveal"><summary>${t(`faq.${k}.q`)}</summary><div class="faq-a">${t(`faq.${k}.a`, { cancel: b2c })}</div></details>`);
+  // senza il pagamento sul posto la risposta sui pagamenti parla solo di carta
+  const answer = (k) => (k === 'pay' && !app.cfg.policy.allowPayOnSite ? 'faq.pay.aCard' : `faq.${k}.a`);
+  return keys.map((k) => html`<details class="faq-item reveal"><summary>${t(`faq.${k}.q`)}</summary><div class="faq-a">${t(answer(k), { cancel: b2c })}</div></details>`);
 }
 
 // ───────────────────────── Home ─────────────────────────
@@ -50,7 +52,7 @@ export function homePage(ctx) {
     <p class="reveal">${checkIcon}<span><strong>${t('trust.licensed')}</strong><br>${t('trust.licensedSub')}</span></p>
     <p class="reveal">${checkIcon}<span><strong>${t('trust.small')}</strong><br>${t('trust.smallSub')}</span></p>
     <p class="reveal">${checkIcon}<span><strong>${t('trust.cancel', { when: hours })}</strong><br>${t('trust.cancelSub')}</span></p>
-    <p class="reveal">${checkIcon}<span><strong>${t('trust.pay')}</strong><br>${t('trust.paySub')}</span></p>
+    <p class="reveal">${checkIcon}<span><strong>${t(ctx.app.cfg.policy.allowPayOnSite ? 'trust.pay' : 'trust.payCard')}</strong><br>${t(ctx.app.cfg.policy.allowPayOnSite ? 'trust.paySub' : 'trust.paySubCard')}</span></p>
   </div>
 </section>
 
@@ -75,7 +77,7 @@ export function homePage(ctx) {
   <div class="wrap">
     ${sectionHead(t('how.title'))}
     <ol class="steps">
-      ${[1, 2, 3].map((n) => html`<li class="reveal"><span class="step-n" aria-hidden="true">${n}</span><div><h3>${t(`how.${n}.t`)}</h3><p>${t(`how.${n}.p`)}</p></div></li>`)}
+      ${[1, 2, 3].map((n) => html`<li class="reveal"><span class="step-n" aria-hidden="true">${n}</span><div><h3>${t(`how.${n}.t`)}</h3><p>${t(n === 2 && !ctx.app.cfg.policy.allowPayOnSite ? 'how.2.pCard' : `how.${n}.p`)}</p></div></li>`)}
     </ol>
   </div>
 </section>

@@ -1,6 +1,6 @@
 import express from 'express';
 import { ProgramError, createProgramRequest, dayConflicts, getProgram, programDays, saveProposal, setProgramStatus } from '../programs.js';
-import { notifyGuideProgram, programUrl } from '../emails.js';
+import { programUrl } from '../emails.js';
 import { toMin } from '../time.js';
 import { cleanText, parseEuros } from '../util.js';
 import { invoiceForSource } from '../invoices.js';

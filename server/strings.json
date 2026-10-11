@@ -2402,5 +2402,29 @@
  "inv.mail.kindCredit": [
   "nota di credito",
   "credit note"
+ ],
+ "legal.payBoth": [
+  "online con carta oppure, dove previsto, il giorno del servizio",
+  "online by card or, where offered, on the day of the service"
+ ],
+ "legal.payCard": [
+  "online con carta",
+  "online by card"
+ ],
+ "trust.paySubCard": [
+  "Online con carta, in modo sicuro",
+  "Secure online card payment"
+ ],
+ "how.2.pCard": [
+  "Inserisci i dati e paga online in modo sicuro con carta.",
+  "Enter your details and pay securely online by card."
+ ],
+ "faq.pay.aCard": [
+  "Con carta online, in modo sicuro tramite Stripe. Le agenzie possono pagare a fattura.",
+  "Online by card, securely through Stripe. Agencies can pay by invoice."
+ ],
+ "trust.payCard": [
+  "Pagamento sicuro",
+  "Secure payment"
  ]
 }

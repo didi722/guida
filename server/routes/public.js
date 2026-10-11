@@ -54,6 +54,8 @@ export function publicRouter(app) {
     phone: cfg.site.phone,
     vat: cfg.site.vatNumber || '[P.IVA — da inserire]',
     address: cfg.site.address || '[indirizzo — da inserire]',
+    giftMonths: String(cfg.gift.validityMonths),
+    payMethods: cfg.policy.allowPayOnSite ? ctx.t('legal.payBoth') : ctx.t('legal.payCard'),
     license: cfg.site.guideLicense || (ctx.lang === 'it' ? '[n. abilitazione — da inserire]' : '[licence no. — to be added]'),
     b2cHours: ctx.t(cfg.policy.b2cFreeCancelHours >= 48 && cfg.policy.b2cFreeCancelHours % 24 === 0 ? 'time.days' : 'time.hours', { n: cfg.policy.b2cFreeCancelHours >= 48 && cfg.policy.b2cFreeCancelHours % 24 === 0 ? cfg.policy.b2cFreeCancelHours / 24 : cfg.policy.b2cFreeCancelHours }),
     b2bHours: ctx.t(cfg.policy.b2bFreeCancelHours >= 48 && cfg.policy.b2bFreeCancelHours % 24 === 0 ? 'time.days' : 'time.hours', { n: cfg.policy.b2bFreeCancelHours >= 48 && cfg.policy.b2bFreeCancelHours % 24 === 0 ? cfg.policy.b2bFreeCancelHours / 24 : cfg.policy.b2bFreeCancelHours }),

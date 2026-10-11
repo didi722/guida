@@ -2,7 +2,6 @@ import { html, raw } from '../html.js';
 import { BUDGETS, GROUP_TYPES, INTERESTS, programDays, proposalExpired } from '../programs.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
-import { art } from '../art.js';
 import { page } from './layout.js';
 import { breadcrumbs } from './components.js';
 
