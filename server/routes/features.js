@@ -2,7 +2,8 @@
 import express from 'express';
 import { GiftError, getGiftByRef } from '../gifts.js';
 import { cleanText, safeEqual } from '../util.js';
-import { send, tooMany } from '../http.js';
+import { send, sendPdf, tooMany } from '../http.js';
+import { renderGiftCardPdf, renderProposalPdf } from '../pdf.js';
 import { giftPage, giftStatusPage } from '../views/gift.js';
 import { addDays, nowRome } from '../time.js';
 import { getBookingByRef } from '../bookings.js';
@@ -71,6 +72,11 @@ export function featuresRouter(app) {
     if (req.query.paid && card.status === 'pending') card = (await app.payables.sync(card.ref)) ?? card;
     send(res, giftStatusPage(res.locals.ctx, card));
   });
+  r.get('/gift/:ref/card.pdf', async (req, res, next) => {
+    const card = loadGift(req);
+    if (!card || card.status !== 'active') return next();
+    sendPdf(res, await renderGiftCardPdf(app, card, req.lang), `buono-regalo-${card.ref}.pdf`);
+  });
 
   // ───── programmi di più giorni ─────
   r.get('/programs', (req, res) => send(res, programsPage(res.locals.ctx)));
@@ -122,6 +128,12 @@ export function featuresRouter(app) {
     const flash = flashKey === 'received' ? t('pg.received.text') : ['accepted', 'declined', 'message'].includes(flashKey) ? t(`pg.flash.${flashKey}`) : '';
     const error = ['expired', 'conflict', 'error'].includes(flashKey) ? t(`pg.flash.${flashKey}`) : '';
     send(res, programStatusPage(res.locals.ctx, p, { flash, error }));
+  });
+
+  r.get('/programs/:ref/proposal.pdf', async (req, res, next) => {
+    const p = loadProgram(req);
+    if (!p || !p.proposal_sent_at) return next();
+    sendPdf(res, await renderProposalPdf(app, p, req.lang), `proposta-${p.ref}.pdf`);
   });
 
   r.post('/programs/:ref/accept', form, async (req, res, next) => {

@@ -14,13 +14,14 @@ import { adminRouter } from './routes/admin.js';
 import { page } from './views/layout.js';
 import { html } from './html.js';
 
+/** Versione degli asset (ultima modifica di css e js): serve a far scaricare di nuovo i file cambiati. */
 function assetVersion() {
   let v = 0;
-  for (const f of ['css/style.css', 'js/main.js', 'js/booking.js', 'js/checkout.js', 'js/theme.js']) {
+  for (const dir of ['css', 'js']) {
     try {
-      v = Math.max(v, Math.floor(fs.statSync(path.join(ROOT, 'public', f)).mtimeMs));
+      for (const f of fs.readdirSync(path.join(ROOT, 'public', dir))) v = Math.max(v, Math.floor(fs.statSync(path.join(ROOT, 'public', dir, f)).mtimeMs));
     } catch {
-      /* file opzionale */
+      /* cartella assente */
     }
   }
   return v.toString(36);

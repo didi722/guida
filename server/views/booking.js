@@ -140,7 +140,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
     </div>
   </aside>
 </div></section>`;
-  return page(ctx, { title: t('checkout.title'), path: `/${lang}/book/checkout`, body, noindex: true, activeNav: 'book', scripts: raw(`<script src="/js/checkout.js" defer></script>`) });
+  return page(ctx, { title: t('checkout.title'), path: `/${lang}/book/checkout`, body, noindex: true, activeNav: 'book', scripts: raw(`<script src="/js/checkout.js?v=${ctx.app.assetVersion}" defer></script>`) });
 }
 
 export function slotGonePage(ctx, { tour, date, pax }) {
@@ -210,7 +210,7 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
       <p class="policy-box ${st.free ? 'ok' : 'warn'}">${st.everRefundable ? (st.free ? t('booking.canCancel', { until: fmtInstant(st.until, lang) }) : t('booking.cancelClosed', { until: fmtInstant(st.until, lang) })) : t('checkout.nonRefundable')}</p>
       <p class="btn-row">
         <a class="btn btn-outline" href="${base}/calendar.ics${q}">${t('booking.addCalendar')}</a>
-        <a class="btn btn-outline" href="${base}/voucher${q}" target="_blank">${t('booking.voucher')}</a>
+        <a class="btn btn-outline" href="${base}/voucher.pdf${q}" target="_blank" rel="noopener">${t('booking.voucher')}</a>
       </p>
       ${st.free
         ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
@@ -219,33 +219,6 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
   </div>
 </div></section>`;
   return page(ctx, { title: `${t('s.ref')} ${b.ref}`, path: `/${lang}/booking/${b.ref}`, body, noindex: true });
-}
-
-export function voucherPage(ctx, b) {
-  const { t, lang, app } = ctx;
-  const { cfg } = app;
-  const tour = app.content.tour(b.tour_slug);
-  const ti = tour.i18n[lang];
-  const body = html`
-<section class="section voucher"><div class="wrap narrow">
-  <div class="card pad voucher-card">
-    <p class="eyebrow">${t('voucher.title')}</p>
-    <h1>${ti.title}</h1>
-    <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${b.ref}</strong></p>
-    <dl class="summary-list">
-      <div><dt>${t('s.date')}</dt><dd>${fmtDate(b.date, lang)}</dd></div>
-      <div><dt>${t('s.time')}</dt><dd>${b.start_time}–${b.end_time}</dd></div>
-      <div><dt>${t('s.guests')}</dt><dd>${b.participants}</dd></div>
-      <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}</dd></div>
-      <div><dt>${t('s.name')}</dt><dd>${b.name}${b.client_ref ? ' · ' + b.client_ref : ''}</dd></div>
-      <div><dt>${t('voucher.guide')}</dt><dd>${cfg.site.name}${cfg.site.guideLicense ? ' · ' + cfg.site.guideLicense : ''}<br>${cfg.site.email}${cfg.site.phone ? ' · ' + cfg.site.phone : ''}</dd></div>
-      ${b.payment_method === 'onsite' && b.payment_status !== 'paid' ? html`<div><dt>${t('s.total')}</dt><dd>${formatMoney(b.total_cents, lang, b.currency)} — ${t('booking.onsite')}</dd></div>` : ''}
-    </dl>
-    <p class="muted small">${t('voucher.note')}</p>
-    <p class="no-print"><button class="btn btn-gold" type="button" data-print>${t('voucher.print')}</button></p>
-  </div>
-</div></section>`;
-  return page(ctx, { title: `${t('voucher.title')} ${b.ref}`, path: `/${lang}/booking/${b.ref}/voucher`, body, noindex: true, bodyClass: 'voucher-page' });
 }
 
 export function demoPayPage(ctx, o) {

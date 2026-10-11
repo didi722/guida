@@ -4,7 +4,8 @@ import { normalizePromo, promoUses } from '../pricing.js';
 import { sendGiftToBuyer, sendGiftToRecipient } from '../emails.js';
 import { isDate, nowRome } from '../time.js';
 import { cleanText } from '../util.js';
-import { send } from '../http.js';
+import { send, sendPdf } from '../http.js';
+import { renderGiftCardPdf } from '../pdf.js';
 import { discountsPage, giftDetailPage } from '../views/admin-discounts.js';
 
 const FLASH = {
@@ -106,6 +107,11 @@ export function adminDiscountsRouter(app) {
     send(res, giftDetailPage(ctxOf(req), card, giftLedger(db, card.id), nowRome().date, FLASH[String(req.query.ok ?? '')] ?? '', ERR[String(req.query.err ?? '')] ?? ''));
   });
   const here = (id, k, v) => `/admin/discounts/gifts/${id}?${k}=${v}`;
+  r.get('/discounts/gifts/:id/card.pdf', async (req, res, next) => {
+    const card = getGift(db, Number(req.params.id));
+    if (!card) return next();
+    sendPdf(res, await renderGiftCardPdf(app, card, card.lang === 'en' ? 'en' : 'it'), `buono-regalo-${card.ref}.pdf`);
+  });
   r.post('/discounts/gifts/:id/adjust', form, (req, res, next) => {
     const card = getGift(db, Number(req.params.id));
     if (!card) return next();

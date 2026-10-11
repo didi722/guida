@@ -208,6 +208,6 @@ ${anyConflict && p.status !== 'declined' && p.status !== 'closed' ? html`<div cl
   <label class="field"><textarea name="admin_notes" rows="3" maxlength="2000">${p.admin_notes ?? ''}</textarea></label>
   <button class="btn btn-outline" type="submit">Salva note</button>
 </form>`;
-  return adminLayout(ctx, { title: p.proposal_title || `Programma ${p.ref}`, active: '/admin/programs', body, flash, error, scripts: '<script src="/js/admin-programs.js" defer></script>' });
+  return adminLayout(ctx, { title: p.proposal_title || `Programma ${p.ref}`, active: '/admin/programs', body, flash, error, scripts: `<script src="/js/admin-programs.js?v=${ctx.app.assetVersion}" defer></script>` });
 }
 

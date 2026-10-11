@@ -144,6 +144,17 @@ function textBody(app, b, lang, intro, extra = []) {
   return [tr.hello(b.name), '', intro, '', ...summaryRows(app, b, lang).map(([k, v]) => `${k}: ${v}`), '', ...extra, `${tr.manage}: ${bookingUrl(app, b, lang)}`, '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n');
 }
 
+/** Allega un PDF generato al volo; se la generazione fallisce la mail parte comunque, senza allegato. */
+async function pdfAttachment(filename, render, what) {
+  try {
+    const pdf = await import('./pdf.js');
+    return [{ filename, content: await render(pdf), contentType: 'application/pdf' }];
+  } catch (err) {
+    console.error(`[pdf] ${what} non generato:`, err.message);
+    return [];
+  }
+}
+
 export async function sendBookingConfirmed(app, b, nowMs = Date.now()) {
   const lang = b.lang;
   const tr = T[lang];
@@ -154,7 +165,10 @@ export async function sendBookingConfirmed(app, b, nowMs = Date.now()) {
     subject: tr.confirmedSubject(b.ref, ti.title, fmtDate(b.date, lang, 'short')),
     text: textBody(app, b, lang, tr.confirmedIntro, [pol, tr.addCal, '']),
     html: String(bodyHtml(app, b, lang, tr.confirmedIntro, html`<p style="font-size:14px;color:#444">${pol}</p><p style="font-size:13px;color:#666">${tr.addCal}</p>`)),
-    attachments: [{ filename: `${b.ref}.ics`, content: icsFor(app, b, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }],
+    attachments: [
+      { filename: `${b.ref}.ics`, content: icsFor(app, b, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' },
+      ...(await pdfAttachment(`voucher-${b.ref}.pdf`, (pdf) => pdf.renderVoucherPdf(app, b, { lang, nowMs }), 'voucher')),
+    ],
     replyTo: app.cfg.mail.notifyTo || undefined,
   });
   await notifyGuide(app, b, 'new');
@@ -295,20 +309,12 @@ function giftBlock(app, card, lang) {
   const rows = [
     [tr.amount, formatMoney(card.initial_cents, lang, card.currency)],
     [tr.code, formatGiftCode(card.code)],
-    [tr.valid, fmtDate(card.expires_at, lang)],
+    [tr.valid, fmtDate(card.expires_at, lang, 'date')],
   ];
   return rows;
 }
 
-async function giftAttachments(app, card, lang) {
-  try {
-    const { renderGiftCardPdf } = await import('./pdf.js');
-    return [{ filename: `buono-regalo-${card.ref}.pdf`, content: await renderGiftCardPdf(app, card, lang), contentType: 'application/pdf' }];
-  } catch (err) {
-    if (err.code !== 'ERR_MODULE_NOT_FOUND') console.error('[pdf] buono regalo non generato:', err.message);
-    return [];
-  }
-}
+const giftAttachments = (app, card, lang) => pdfAttachment(`buono-regalo-${card.ref}.pdf`, (pdf) => pdf.renderGiftCardPdf(app, card, lang), 'buono regalo');
 
 function giftHtml(app, lang, intro, card, extra = '') {
   const tr = G[lang];
@@ -512,15 +518,7 @@ export function programIcs(app, p, lang = p.lang) {
   return calendar(`${app.cfg.site.name} — ${p.proposal_title ?? p.ref}`, days.map((d) => eventLines({ uid: `${p.ref}-${d.id}@${host}`, date: d.date, start: d.start_time, end: d.end_time, summary: `${p.proposal_title ?? 'Venezia'}: ${d.title}`, description: d.description ?? '', url: programUrl(app, p, lang) })));
 }
 
-async function proposalAttachments(app, p, lang) {
-  try {
-    const { renderProposalPdf } = await import('./pdf.js');
-    return [{ filename: `proposta-${p.ref}.pdf`, content: await renderProposalPdf(app, p, lang), contentType: 'application/pdf' }];
-  } catch (err) {
-    if (err.code !== 'ERR_MODULE_NOT_FOUND') console.error('[pdf] proposta non generata:', err.message);
-    return [];
-  }
-}
+const proposalAttachments = (app, p, lang) => pdfAttachment(`proposta-${p.ref}.pdf`, (pdf) => pdf.renderProposalPdf(app, p, lang), 'proposta');
 
 function programBody(app, p, lang, intro, { days = false, buttons = [] } = {}) {
   const tr = PG[lang];
@@ -532,7 +530,7 @@ function programBody(app, p, lang, intro, { days = false, buttons = [] } = {}) {
     <table style="border-collapse:collapse;width:100%;font-size:15px">${rows.map(([k, v]) => html`<tr><td style="padding:5px 12px 5px 0;color:#666;vertical-align:top">${k}</td><td style="padding:5px 0"><strong>${v}</strong></td></tr>`)}</table>
     ${dayRows.length
       ? html`<table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:14px">${dayRows.map((d) => html`<tr style="border-top:1px solid #eee"><td style="padding:8px 10px 8px 0;vertical-align:top;white-space:nowrap;color:#666">${d.label}</td><td style="padding:8px 0"><strong>${d.title}</strong>${d.description ? html`<br><span style="color:#555">${d.description}</span>` : ''}</td><td style="padding:8px 0 8px 10px;text-align:right;white-space:nowrap">${d.price_cents ? formatMoney(d.price_cents, lang, p.currency) : ''}</td></tr>`)}</table>
-      <p style="font-size:16px"><strong>${tr.total}: ${formatMoney(p.total_cents, lang, p.currency)}</strong>${p.deposit_cents ? html`<br>${tr.deposit(p.deposit_percent)}: ${formatMoney(p.deposit_cents, lang, p.currency)}` : ''}${p.valid_until ? html`<br><span style="color:#666">${tr.valid} ${fmtDate(p.valid_until, lang)}</span>` : ''}</p>`
+      <p style="font-size:16px"><strong>${tr.total}: ${formatMoney(p.total_cents, lang, p.currency)}</strong>${p.deposit_cents ? html`<br>${tr.deposit(p.deposit_percent)}: ${formatMoney(p.deposit_cents, lang, p.currency)}` : ''}${p.valid_until ? html`<br><span style="color:#666">${tr.valid} ${fmtDate(p.valid_until, lang, 'date')}</span>` : ''}</p>`
       : ''}
     ${buttons.map(([href, label]) => html`<p><a href="${href}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${label}</a></p>`)}
     <p style="color:#666;font-size:13px">${tr.reply}<br>${tr.sign} ${app.cfg.site.name}</p>`;
@@ -546,7 +544,7 @@ function programText(app, p, lang, intro, { days = false, links = [] } = {}) {
     for (const d of programDaysRows(app, p, lang)) lines.push(`${d.label} — ${d.title}${d.price_cents ? ` (${formatMoney(d.price_cents, lang, p.currency)})` : ''}`);
     lines.push('', `${tr.total}: ${formatMoney(p.total_cents, lang, p.currency)}`);
     if (p.deposit_cents) lines.push(`${tr.deposit(p.deposit_percent)}: ${formatMoney(p.deposit_cents, lang, p.currency)}`);
-    if (p.valid_until) lines.push(`${tr.valid} ${fmtDate(p.valid_until, lang)}`);
+    if (p.valid_until) lines.push(`${tr.valid} ${fmtDate(p.valid_until, lang, 'date')}`);
   }
   lines.push('', ...links.map(([url, label]) => `${label}: ${url}`), '', tr.reply, `${tr.sign} ${app.cfg.site.name}`);
   return lines.join('\n');

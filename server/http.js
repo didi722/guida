@@ -3,6 +3,11 @@ import { isLang, makeT } from './i18n.js';
 
 export const send = (res, view, status = 200) => res.status(status).type('html').send(String(view));
 
+/** Risposta con un PDF (aperto nel browser, mai in cache: contiene dati personali). */
+export function sendPdf(res, buffer, filename) {
+  res.status(200).set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="${String(filename).replace(/[^A-Za-z0-9._-]/g, '_')}"`, 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }).send(buffer);
+}
+
 const WEEK = 7 * 24 * 3600;
 
 /** Limitatori di richieste: uno per applicazione (così i test non si influenzano a vicenda). */

@@ -144,6 +144,7 @@ export function bookingDetailPage(ctx, b, account, flash = '') {
         ${!b.review_status ? html`<form method="post" action="/admin/bookings/${b.id}/review" class="inline-form"><button class="btn btn-sm btn-outline" type="submit" name="action" value="send">Invia ora</button> <button class="btn btn-sm btn-outline" type="submit" name="action" value="skip">Non inviare</button></form>` : ''}</dd></div>` : ''}
       ${b.status === 'cancelled' ? html`<div><dt>Annullata</dt><dd>${b.cancelled_by ?? ''}${b.cancel_reason ? ' · ' + b.cancel_reason : ''}</dd></div>` : ''}
     </dl>
+    ${b.status === 'confirmed' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/voucher.pdf" target="_blank" rel="noopener">Voucher PDF</a></p>` : ''}
   </div>
   <div class="card pad">
     <h2>Cliente</h2>

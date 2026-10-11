@@ -103,7 +103,7 @@ export function programStatusPage(ctx, p, { flash = '', error = '' } = {}) {
       ${p.deposit_cents ? html`<div><dt>${t('pg.deposit', { percent: p.deposit_percent })}</dt><dd>${formatMoney(p.deposit_cents, lang, p.currency)}${p.deposit_status === 'paid' ? html` <span class="chip chip-ok">${t('pg.depositPaid')}</span>` : ''}</dd></div><div><dt>${t('pg.balance')}</dt><dd>${formatMoney(balance, lang, p.currency)}</dd></div>` : ''}
     </dl>
     ${p.proposal_notes ? html`<div class="info-box"><h3>${t('pg.notes')}</h3><p class="pre">${p.proposal_notes}</p></div>` : ''}
-    ${p.status === 'quoted' ? html`<p class="${expired ? 'field-error' : 'muted'}">${expired ? t('pg.expired') : t('pg.validUntil', { date: fmtDate(p.valid_until, lang) })}</p>` : ''}
+    ${p.status === 'quoted' ? html`<p class="${expired ? 'field-error' : 'muted'}">${expired ? t('pg.expired') : t('pg.validUntil', { date: fmtDate(p.valid_until, lang, 'date') })}</p>` : ''}
     <p class="btn-row"><a class="btn btn-outline btn-sm" href="${base}/proposal.pdf${q}">${t('pg.download')}</a></p>
 
     ${p.status === 'quoted' && !expired

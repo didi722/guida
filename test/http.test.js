@@ -9,6 +9,7 @@ import { loadContent } from '../server/content.js';
 import { openDb } from '../server/db.js';
 import { createPayments } from '../server/payments.js';
 import { addDays, localToInstant, nowRome } from '../server/time.js';
+import { isPdf } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
 
@@ -144,10 +145,18 @@ test('prenotazione B2C con pagamento demo, voucher, calendario e annullo con rim
     const ics = await f(`${path}/calendar.ics?${qs.split('&')[0]}`);
     assert.match(ics.headers.get('content-type'), /text\/calendar/);
     assert.match(await ics.text(), /BEGIN:VEVENT/);
-    assert.equal((await f(`${path}/voucher?${qs.split('&')[0]}`)).status, 200);
+    const voucher = await f(`${path}/voucher.pdf?${qs.split('&')[0]}`);
+    assert.equal(voucher.status, 200);
+    assert.equal(voucher.headers.get('content-type'), 'application/pdf');
+    assert.match(voucher.headers.get('cache-control'), /no-store/);
+    assert.equal(Buffer.from(await voucher.arrayBuffer()).subarray(0, 5).toString(), '%PDF-');
+    assert.equal((await f(`${path}/voucher.pdf?t=sbagliato`)).status, 404, 'il voucher richiede il token');
+    assert.equal((await f(`${path}/voucher?${qs.split('&')[0]}`)).status, 404, 'la vecchia pagina HTML non c’è più');
     assert.equal((await f(`${path}?t=sbagliato`)).status, 404, 'token errato');
 
-    assert.ok(s.app.mail.sent.some((m) => m.to === 'anna@example.com' && /confermata/i.test(m.subject)));
+    const confirmation = s.app.mail.sent.find((m) => m.to === 'anna@example.com' && /confermata/i.test(m.subject));
+    assert.ok(confirmation);
+    assert.deepEqual(confirmation.attachments.map((a) => a.filename.replace(/VE-\w+/, 'REF')), ['REF.ics', 'voucher-REF.pdf'], 'la conferma allega calendario e voucher');
     assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com'));
 
     const token = qs.split('&')[0].slice(2);
@@ -292,6 +301,11 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     // l'admin vede la prenotazione e può annullarla
     const detail = await (await admin(`/admin/bookings/${b.id}`)).text();
     assert.match(detail, /PRATICA 42/);
+    assert.match(detail, new RegExp(`/admin/bookings/${b.id}/voucher\\.pdf`));
+    const adminVoucher = await admin(`/admin/bookings/${b.id}/voucher.pdf`);
+    assert.equal(adminVoucher.status, 200);
+    assert.ok(isPdf(Buffer.from(await adminVoucher.arrayBuffer())));
+    assert.equal(loc(await partner(`/admin/bookings/${b.id}/voucher.pdf`)), '/admin/login', 'il partner non vede i PDF del pannello');
     assert.equal((await admin(`/admin/bookings/${b.id}/cancel`, form({ refund: 'auto', reason: 'test' }))).status, 303);
     assert.equal(s.app.db.prepare('SELECT status FROM bookings WHERE id = ?').get(b.id).status, 'cancelled');
 
@@ -392,6 +406,22 @@ test('codici sconto e buoni regalo: checkout con "Applica", buono acquistato onl
     assert.ok(mails.some((m) => m.to === 'luca@example.com' && /Buon compleanno!/.test(m.text) && m.text.includes(card.code.slice(0, 4))), 'consegna al destinatario con messaggio e codice');
     assert.ok(card.delivered_at);
     assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /Buono regalo venduto/.test(m.subject)));
+    for (const to of ['anna@example.com', 'luca@example.com']) {
+      const m = mails.find((x) => x.to === to);
+      assert.ok(m.attachments.some((a) => a.contentType === 'application/pdf' && isPdf(a.content)), `${to}: PDF del buono allegato`);
+    }
+
+    // PDF del buono: dalla pagina riservata (token) e dal pannello
+    const cardPdf = await f(`/it/gift/${card.ref}/card.pdf?t=${card.token}`);
+    assert.equal(cardPdf.status, 200);
+    assert.equal(cardPdf.headers.get('content-type'), 'application/pdf');
+    assert.ok(isPdf(Buffer.from(await cardPdf.arrayBuffer())));
+    assert.equal((await f(`/it/gift/${card.ref}/card.pdf?t=sbagliato`)).status, 404);
+    assert.equal((await f(`/it/gift/${card0.ref}/card.pdf?t=${card0.token}`)).status, 200, 'ora è attivo');
+    assert.equal(loc(await f(`/admin/discounts/gifts/${card.id}/card.pdf`)), '/admin/login', 'il PDF dal pannello richiede il login');
+    const adminCard = await admin(`/admin/discounts/gifts/${card.id}/card.pdf`);
+    assert.equal(adminCard.status, 200);
+    assert.equal(adminCard.headers.get('content-type'), 'application/pdf');
     // un secondo webhook/ritorno non attiva due volte né rimanda email
     const before = s.app.mail.sent.length;
     await f(loc(paid) + '&paid=1');
@@ -602,6 +632,7 @@ test('programmi di più giorni: richiesta → proposta dal pannello → accettaz
     assert.equal(s.app.db.prepare('SELECT COUNT(*) n FROM program_days').get().n, 2, 'la riga vuota è ignorata');
     assert.equal(s.app.db.prepare('SELECT status, total_cents, deposit_cents FROM programs').get().total_cents, 45050);
     assert.equal(s.app.db.prepare('SELECT status FROM programs').get().status, 'new', 'bozza: nulla è partito');
+    assert.equal((await f(`/it/programs/${p.ref}/proposal.pdf?t=${p.token}`)).status, 404, 'prima dell’invio non c’è nulla da scaricare');
     assert.equal((await f(url)).status, 200);
     assert.match(await (await f(url)).text(), /Sto preparando la proposta/);
     assert.match(await (await admin(`/admin/programs/${p.id}?ok=saved`)).text(), /Proposta salvata/);
@@ -633,6 +664,14 @@ test('programmi di più giorni: richiesta → proposta dal pannello → accettaz
 
     // ─ il cliente guarda la proposta e accetta
     const proposal = await (await f(url)).text();
+    const proposalPdf = await f(`/it/programs/${p.ref}/proposal.pdf?t=${p.token}`);
+    assert.equal(proposalPdf.status, 200);
+    assert.equal(proposalPdf.headers.get('content-type'), 'application/pdf');
+    assert.ok(isPdf(Buffer.from(await proposalPdf.arrayBuffer())));
+    assert.equal((await f(`/it/programs/${p.ref}/proposal.pdf?t=sbagliato`)).status, 404);
+    assert.equal((await admin(`/admin/programs/${p.id}/proposal.pdf`)).status, 200);
+    assert.equal(loc(await f(`/admin/programs/${p.id}/proposal.pdf`)), '/admin/login');
+    assert.match(proposal, /proposal\.pdf\?t=/, 'link al PDF nella pagina del cliente');
     assert.match(proposal, /Venezia in tre giorni/);
     assert.match(proposal, /Murano e Burano/);
     assert.match(proposal, /Accetta la proposta/);

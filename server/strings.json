@@ -896,8 +896,8 @@
   "Add to calendar"
  ],
  "booking.voucher": [
-  "Voucher stampabile",
-  "Printable voucher"
+  "Scarica il voucher (PDF)",
+  "Download the voucher (PDF)"
  ],
  "booking.cancelBtn": [
   "Annulla la prenotazione",
@@ -923,17 +923,9 @@
   "Voucher di prenotazione",
   "Booking voucher"
  ],
- "voucher.guide": [
-  "Guida",
-  "Guide"
- ],
  "voucher.note": [
   "Mostra questo voucher (anche dal telefono) al punto d’incontro.",
   "Show this voucher (phone is fine) at the meeting point."
- ],
- "voucher.print": [
-  "Stampa o salva in PDF",
-  "Print or save as PDF"
  ],
  "demo.banner": [
   "MODALITÀ DEMO.",
@@ -2154,5 +2146,97 @@
  "pg.b2bLink": [
   "Programmi di più giorni per i tuoi clienti",
   "Multi-day programmes for your clients"
+ ],
+ "pdf.bookingRef": [
+  "Codice prenotazione",
+  "Booking reference"
+ ],
+ "pdf.agency": [
+  "Agenzia",
+  "Agency"
+ ],
+ "pdf.included": [
+  "Incluso",
+  "Included"
+ ],
+ "pdf.excluded": [
+  "Non incluso",
+  "Not included"
+ ],
+ "pdf.goodToKnow": [
+  "Da sapere",
+  "Good to know"
+ ],
+ "pdf.b2bNoPay": [
+  "Nessun pagamento da effettuare sul posto: il servizio è regolato direttamente con l’agenzia.",
+  "No payment is due on site: the service is settled directly with the agency."
+ ],
+ "pdf.manage": [
+  "Gestisci o annulla la prenotazione online:",
+  "Manage or cancel your booking online:"
+ ],
+ "pdf.payment": [
+  "Pagamento",
+  "Payment"
+ ],
+ "pdf.guideContact": [
+  "La tua guida",
+  "Your guide"
+ ],
+ "pdf.page": [
+  "Pagina {n} di {total}",
+  "Page {n} of {total}"
+ ],
+ "pdf.giftTitle": [
+  "Buono regalo",
+  "Gift card"
+ ],
+ "pdf.giftFor": [
+  "Per",
+  "For"
+ ],
+ "pdf.giftFrom": [
+  "Da parte di",
+  "From"
+ ],
+ "pdf.giftWhere": [
+  "Si usa su {url}",
+  "Redeem it at {url}"
+ ],
+ "pdf.proposal": [
+  "Proposta di programma",
+  "Programme proposal"
+ ],
+ "pdf.proposalFor": [
+  "Preparata per",
+  "Prepared for"
+ ],
+ "pdf.proposalAccept": [
+  "Per accettare la proposta e versare l’acconto apri questo indirizzo (link riservato):",
+  "To accept the proposal and pay the deposit open this address (private link):"
+ ],
+ "pdf.proposalTransfer": [
+  "Acconto con bonifico",
+  "Deposit by bank transfer"
+ ],
+ "pdf.colDay": [
+  "Giorno",
+  "Day"
+ ],
+ "pdf.colTime": [
+  "Orario",
+  "Time"
+ ],
+ "pdf.colWhat": [
+  "Programma",
+  "Programme"
+ ],
+ "pdf.colPrice": [
+  "Prezzo",
+  "Price"
+ ],
+ "pdf.generated": [
+  "Documento generato il {date}",
+  "Document generated on {date}"
  ]
 }

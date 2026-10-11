@@ -6,7 +6,8 @@ import { sendPartnerApproved } from '../emails.js';
 import { getSetting, setSetting } from '../db.js';
 import { addDays, isDate, isMonth, isTime, monthDates, nowRome, toMin } from '../time.js';
 import { cleanText, safeEqual } from '../util.js';
-import { loginAdmin, logoutAdmin, send, tooMany } from '../http.js';
+import { loginAdmin, logoutAdmin, send, sendPdf, tooMany } from '../http.js';
+import { renderVoucherPdf } from '../pdf.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
 import { dayConflicts } from '../programs.js';
@@ -139,6 +140,11 @@ export function adminRouter(app) {
     if (!b) return next();
     const account = b.account_id ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
     send(res, bookingDetailPage(ctxOf(req), b, account, flash(req)));
+  });
+  r.get('/bookings/:id/voucher.pdf', async (req, res, next) => {
+    const b = getBooking(db, Number(req.params.id));
+    if (!b) return next();
+    sendPdf(res, await renderVoucherPdf(app, b, { lang: b.lang }), `voucher-${b.ref}.pdf`);
   });
   r.post('/bookings/:id/notes', form, (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));

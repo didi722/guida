@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { localToInstant } from '../server/time.js';
@@ -111,3 +112,14 @@ export function addGift(db, over = {}) {
 
 export const giftBalance = (db, id) => db.prepare('SELECT balance_cents FROM gift_cards WHERE id = ?').get(id).balance_cents;
 export const ledgerSum = (db, id) => db.prepare('SELECT COALESCE(SUM(delta_cents),0) s FROM gift_card_ledger WHERE gift_card_id = ?').get(id).s;
+
+// ───── PDF ─────
+export const isPdf = (buf) => Buffer.from(buf).subarray(0, 5).toString('latin1') === '%PDF-';
+export const pdfPages = (buf) => (Buffer.from(buf).toString('latin1').match(/\/Type \/Page(?!s)/g) ?? []).length;
+/** I contenuti dei PDF sono compressi e con font incorporato: per leggerli serve pdftotext (poppler). Se manca, i test sul testo vengono saltati. */
+export const HAS_PDFTOTEXT = !spawnSync('pdftotext', ['-v'], { encoding: 'utf8' }).error;
+export function pdfText(buf) {
+  const r = spawnSync('pdftotext', ['-layout', '-', '-'], { input: Buffer.from(buf), encoding: 'utf8' });
+  if (r.status !== 0) throw new Error(`pdftotext: ${r.stderr}`);
+  return r.stdout.replace(/[ \t]+/g, ' ');
+}

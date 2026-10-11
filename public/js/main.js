@@ -70,5 +70,4 @@
     f.addEventListener('submit', function (e) { if (!window.confirm(f.getAttribute('data-confirm'))) e.preventDefault(); });
   });
   document.querySelectorAll('[data-select-all]').forEach(function (el) { el.addEventListener('focus', function () { el.select(); }); });
-  document.querySelectorAll('[data-print]').forEach(function (el) { el.addEventListener('click', function () { window.print(); }); });
 })();

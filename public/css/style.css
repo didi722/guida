@@ -405,7 +405,6 @@ textarea { resize: vertical; min-height: 90px; }
 .status-wait .status-dot { background: var(--warn); box-shadow: 0 0 0 6px var(--warn-bg); } .status-err .status-dot { background: var(--err); box-shadow: 0 0 0 6px var(--err-bg); }
 .ref-line { margin-bottom: 8px; } .ref { font-size: 1.4rem; letter-spacing: 0.08em; color: var(--ink); } [data-theme='dark'] .ref { color: var(--gold); }
 .cancel-form { margin-top: 8px; }
-.voucher-card h1 { font-size: 2rem; }
 
 .contact-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: start; }
 .contact-list { display: grid; gap: 10px; } .contact-list a { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; }
@@ -533,14 +532,6 @@ body.admin { --header-h: 64px; }
   .brand-sub { font-size: 0.68rem; }
 }
 @media (max-width: 380px) { .brand-name { font-size: 1.15rem; } .brand-sub { display: none; } }
-
-/* ───────── Stampa (voucher) ───────── */
-@media print {
-  .site-header, .site-footer, .mobile-cta, .no-print, .side-menu, .scrim, .skip { display: none !important; }
-  body { background: #fff; color: #000; } .section.voucher { padding: 0; }
-  .card { box-shadow: none; border: 1px solid #999; } .js .reveal { opacity: 1 !important; transform: none !important; }
-  [data-theme='dark'] { color-scheme: light; }
-}
 
 /* Barra admin: su schermi stretti il menu passa su una seconda riga scorrevole */
 @media (max-width: 1200px) {

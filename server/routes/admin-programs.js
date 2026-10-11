@@ -3,7 +3,8 @@ import { ProgramError, createProgramRequest, dayConflicts, getProgram, programDa
 import { notifyGuideProgram, programUrl } from '../emails.js';
 import { toMin } from '../time.js';
 import { cleanText } from '../util.js';
-import { send } from '../http.js';
+import { send, sendPdf } from '../http.js';
+import { renderProposalPdf } from '../pdf.js';
 import { parseEuros } from './admin-discounts.js';
 import { programDetailPage, programsAdminPage } from '../views/admin-programs.js';
 
@@ -100,6 +101,12 @@ export function adminProgramsRouter(app) {
     const p = getProgram(db, Number(req.params.id));
     if (!p) return next();
     render(req, res, p);
+  });
+
+  r.get('/programs/:id/proposal.pdf', async (req, res, next) => {
+    const p = getProgram(db, Number(req.params.id));
+    if (!p || !programDays(db, p.id).length) return next();
+    sendPdf(res, await renderProposalPdf(app, p, p.lang), `proposta-${p.ref}.pdf`);
   });
 
   r.post('/programs/:id/proposal', form, async (req, res, next) => {

@@ -102,6 +102,7 @@ export function fmtDate(date, lang, style = 'long') {
   const d = new Date(date + 'T12:00:00Z');
   if (style === 'short') return dtf(lang, { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
   if (style === 'weekday') return dtf(lang, { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
+  if (style === 'date') return dtf(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(d); // senza giorno della settimana: "fino al 31 dicembre 2028"
   return dtf(lang, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
 }
 

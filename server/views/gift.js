@@ -66,7 +66,7 @@ export function giftPage(ctx, { values = {}, error = '', unavailable = false } =
     </ol>
   </aside>
 </div></section>`;
-  return page(ctx, { title: t('gift.title'), description: t('gift.lead'), path: `/${lang}/gift`, body, activeNav: 'gift', scripts: raw('<script src="/js/gift.js" defer></script>') });
+  return page(ctx, { title: t('gift.title'), description: t('gift.lead'), path: `/${lang}/gift`, body, activeNav: 'gift', scripts: raw(`<script src="/js/gift.js?v=${ctx.app.assetVersion}" defer></script>`) });
 }
 
 export function giftStatusPage(ctx, card, { flash = '' } = {}) {
@@ -90,7 +90,7 @@ export function giftStatusPage(ctx, card, { flash = '' } = {}) {
       <div><dt>${t('gift.amount')}</dt><dd>${formatMoney(card.initial_cents, lang, card.currency)}</dd></div>
       ${active ? html`<div><dt>${t('gift.code')}</dt><dd><strong class="gift-code">${formatGiftCode(card.code)}</strong></dd></div>
       <div><dt>${t('gift.balance')}</dt><dd>${formatMoney(card.balance_cents, lang, card.currency)}</dd></div>
-      <div><dt>${t('gift.validUntil')}</dt><dd>${fmtDate(card.expires_at, lang)}</dd></div>` : ''}
+      <div><dt>${t('gift.validUntil')}</dt><dd>${fmtDate(card.expires_at, lang, 'date')}</dd></div>` : ''}
       ${card.recipient_email ? html`<div><dt>${lang === 'it' ? 'Destinatario' : 'Recipient'}</dt><dd>${card.recipient_name ? card.recipient_name + ' · ' : ''}${card.recipient_email}${card.delivered_at ? '' : card.deliver_on ? html`<br><small class="muted">${t('gift.scheduled', { name: card.recipient_name || card.recipient_email, date: fmtDate(card.deliver_on, lang, 'short') })}</small>` : ''}</dd></div>` : ''}
     </dl>
     ${active ? html`<p class="muted">${t('gift.useIt')}</p><p class="btn-row"><a class="btn btn-outline" href="/${lang}/gift/${card.ref}/card.pdf${q}">${t('gift.download')}</a> <a class="btn btn-gold" href="/${lang}/tours">${t('nav.tours')}</a></p>` : ''}

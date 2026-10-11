@@ -6,9 +6,10 @@ import { hashPassword, verifyPassword } from '../auth.js';
 import { sendContactMessage, sendPartnerRegistered, icsFor } from '../emails.js';
 import { isDate, isTime } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
-import { loginPartner, logoutPartner, send, tooMany } from '../http.js';
+import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js';
+import { renderVoucherPdf } from '../pdf.js';
 import { accountPage, loginPage, registerPage } from '../views/b2b.js';
-import { bookPage, bookingPage, checkoutPage, slotGonePage, voucherPage } from '../views/booking.js';
+import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
 
 const clampInt = (v, min, max, d) => {
@@ -172,10 +173,10 @@ export function publicRouter(app) {
     if (!b || b.status !== 'confirmed') return next();
     res.type('text/calendar; charset=utf-8').set('Content-Disposition', `attachment; filename="${b.ref}.ics"`).send(icsFor(app, b, req.lang));
   });
-  r.get('/booking/:ref/voucher', (req, res, next) => {
+  r.get('/booking/:ref/voucher.pdf', async (req, res, next) => {
     const b = loadBooking(req);
     if (!b || b.status !== 'confirmed') return next();
-    send(res, voucherPage(res.locals.ctx, b));
+    sendPdf(res, await renderVoucherPdf(app, b, { lang: req.lang }), `voucher-${b.ref}.pdf`);
   });
   r.post('/booking/:ref/cancel', form, async (req, res, next) => {
     const b = loadBooking(req);
