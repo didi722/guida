@@ -82,6 +82,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
 
 <nav class="side-menu" id="side-menu" aria-label="${t('a11y.menu')}" hidden>
   ${NAV.map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
+  <a href="${u('/gift')}" ${activeNav === 'gift' ? raw('aria-current="page"') : ''}>${t('nav.gift')}</a>
   <a href="${u('/contact')}">${t('nav.contact')}</a>
   <a class="side-sub" href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}">${ctx.acct ? t('nav.myAccount') : t('nav.partnerLogin')}</a>
   <a class="side-sub" href="${swapLang(path, lang, other)}" hreflang="${other}">${other === 'en' ? 'English' : 'Italiano'}</a>
@@ -106,6 +107,7 @@ ${body}
         <li><a href="${u('/tours')}">${t('nav.tours')}</a></li>
         <li><a href="${u('/book')}">${t('nav.book')}</a></li>
         <li><a href="${u('/b2b')}">${t('nav.b2b')}</a></li>
+        <li><a href="${u('/gift')}">${t('nav.gift')}</a></li>
         <li><a href="${u('/blog')}">${t('nav.blog')}</a></li>
         <li><a href="${u('/about')}">${t('nav.about')}</a></li>
       </ul>

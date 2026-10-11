@@ -364,6 +364,19 @@ textarea { resize: vertical; min-height: 90px; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; margin: 10px 0; cursor: pointer; } .check input { margin-top: 5px; flex: none; }
 .consent { margin: 18px 0 14px; }
 .invoice-opt { margin: 4px 0 8px; } .invoice-opt summary { cursor: pointer; color: var(--accent-text); font-weight: 700; padding: 6px 0; }
+.gift-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 40px; align-items: start; } .gift-side { position: sticky; top: calc(var(--header-h) + 14px); }
+.gift-art { border-radius: 18px; overflow: hidden; aspect-ratio: 4 / 3; border: 1px solid var(--line); box-shadow: var(--shadow); margin-bottom: 1.4rem; } .gift-art svg { width: 100%; height: 100%; }
+.steps-col { grid-template-columns: 1fr; gap: 14px; } .steps-col p { margin: 0; color: var(--text); }
+.amount-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.amount-option { cursor: pointer; } .amount-option input { position: absolute; opacity: 0; } .amount-option span { display: block; text-align: center; padding: 14px 8px; border: 1.5px solid var(--line); border-radius: 12px; font-weight: 700; background: var(--field); transition: border-color 0.2s, background-color 0.2s; }
+.amount-option input:checked + span { border-color: var(--bronze); background: var(--gold-soft); } .amount-option input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
+.recipient-fields { margin-top: 16px; }
+.gift-code { font-size: 1.3rem; letter-spacing: 0.12em; }
+.band-soft { background: var(--soft); border-block: 1px solid var(--line); }
+.promo-box { margin: 4px 0 8px; } .promo-box summary { cursor: pointer; color: var(--accent-text); font-weight: 700; padding: 6px 0; }
+.promo-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px 14px; align-items: end; margin-top: 6px; } .promo-grid .field { margin: 0; } .promo-grid .btn { height: 46px; margin-bottom: 0; }
+.field-error { color: var(--err); font-weight: 700; margin: 6px 0 0; font-size: 0.93rem; } .field-ok { color: var(--ok); font-weight: 700; margin: 6px 0 0; font-size: 0.93rem; }
+.row-discount dd { color: var(--ok); }
 .pay-options { display: grid; gap: 10px; }
 .pay-option { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; background: var(--field); transition: border-color 0.2s, background-color 0.2s; }
 .pay-option input { margin-top: 5px; }
@@ -394,6 +407,9 @@ textarea { resize: vertical; min-height: 90px; }
 .table { width: 100%; border-collapse: collapse; font-size: 0.97rem; } .table th { text-align: left; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 12px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .table td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; } .table tr:last-child td { border-bottom: 0; } .table .num { text-align: right; white-space: nowrap; }
 .table a { font-weight: 700; }
+.table td.actions { white-space: nowrap; } .table td.actions form { display: inline-block; margin-right: 6px; }
+.check-grid { border: 0; padding: 0; margin: 8px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0 16px; } .check-grid legend { padding: 0; }
+.btn-row form { display: inline; }
 
 /* ───────── Footer ───────── */
 .site-footer { background: #1a1a1a; color: #bdb8a8; padding: 56px 0 28px; margin-top: 0; }
@@ -479,6 +495,8 @@ body.admin { --header-h: 64px; }
   .section-head { flex-direction: column; align-items: flex-start; }
   .footer-grid { grid-template-columns: 1fr; }
   .search-card { grid-template-columns: 1fr; }
+  .gift-grid { grid-template-columns: 1fr; } .gift-side { position: static; order: -1; } .gift-art { aspect-ratio: 16 / 7; }
+  .promo-grid { grid-template-columns: 1fr; } .promo-grid .btn { width: 100%; }
   .article-art { aspect-ratio: 16 / 9; }
   .agenda-item { grid-template-columns: 52px 1fr; } .agenda-state { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; text-align: left; }
   .weekly-row { grid-template-columns: 1fr 1fr 16px 1fr; } .weekly-row .check { grid-column: 1 / -1; }

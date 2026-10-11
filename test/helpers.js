@@ -5,6 +5,8 @@ import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { localToInstant } from '../server/time.js';
 import { createContext } from '../server/context.js';
+import { ledgerAdd } from '../server/pricing.js';
+import { newGiftCode, newRef } from '../server/util.js';
 
 process.env.GUIDA_QUIET = '1';
 
@@ -77,3 +79,35 @@ export const base = (over = {}) => ({
   paymentMethod: 'onsite',
   ...over,
 });
+
+export function addPromo(db, over = {}) {
+  const row = { code: 'ESTATE10', kind: 'percent', value: 10, active: 1, created_at: new Date(NOW).toISOString(), ...over };
+  const cols = Object.keys(row);
+  db.prepare(`INSERT INTO promo_codes(${cols.join(',')}) VALUES(${cols.map(() => '?').join(',')})`).run(...Object.values(row));
+  return db.prepare('SELECT * FROM promo_codes WHERE code = ?').get(row.code);
+}
+
+export function addGift(db, over = {}) {
+  const initial = over.initial_cents ?? 10000;
+  const row = {
+    ref: newRef('GC'),
+    token: 'tok',
+    code: newGiftCode(),
+    status: 'active',
+    initial_cents: initial,
+    balance_cents: 0,
+    created_at: new Date(NOW).toISOString(),
+    activated_at: new Date(NOW).toISOString(),
+    expires_at: '2028-12-31',
+    ...over,
+  };
+  row.balance_cents = 0;
+  const cols = Object.keys(row);
+  db.prepare(`INSERT INTO gift_cards(${cols.join(',')}) VALUES(${cols.map(() => '?').join(',')})`).run(...Object.values(row));
+  const card = db.prepare('SELECT * FROM gift_cards WHERE code = ?').get(row.code);
+  ledgerAdd(db, card.id, initial, 'issue', { nowMs: NOW });
+  return db.prepare('SELECT * FROM gift_cards WHERE id = ?').get(card.id);
+}
+
+export const giftBalance = (db, id) => db.prepare('SELECT balance_cents FROM gift_cards WHERE id = ?').get(id).balance_cents;
+export const ledgerSum = (db, id) => db.prepare('SELECT COALESCE(SUM(delta_cents),0) s FROM gift_card_ledger WHERE gift_card_id = ?').get(id).s;

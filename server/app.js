@@ -8,6 +8,7 @@ import { createContext } from './context.js';
 import { LANGS } from './i18n.js';
 import { langMiddleware, makeCtx, preferredLang, sameOrigin, securityHeaders, send, sessionMiddleware } from './http.js';
 import { publicRouter } from './routes/public.js';
+import { featuresRouter } from './routes/features.js';
 import { apiRouter } from './routes/api.js';
 import { adminRouter } from './routes/admin.js';
 import { page } from './views/layout.js';
@@ -50,7 +51,7 @@ export function createApp(overrides = {}) {
     res.type('text/plain').send(`User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
   );
   server.get('/sitemap.xml', (req, res) => {
-    const paths = ['/', '/tours', '/book', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((x) => `/tours/${x.slug}`), ...content.postsFor('it').map((p) => `/blog/${p.slug}`)];
+    const paths = ['/', '/tours', '/book', '/gift', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((x) => `/tours/${x.slug}`), ...content.postsFor('it').map((p) => `/blog/${p.slug}`)];
     const url = (lang, p) => `${cfg.baseUrl}/${lang}${p === '/' ? '/' : p}`;
     const body = paths
       .flatMap((p) => LANGS.map((l) => `<url><loc>${url(l, p)}</loc>${LANGS.map((a) => `<xhtml:link rel="alternate" hreflang="${a}" href="${url(a, p)}"/>`).join('')}</url>`))
@@ -61,7 +62,8 @@ export function createApp(overrides = {}) {
   server.use(apiRouter(app));
   server.use('/admin', adminRouter(app));
   const pub = publicRouter(app);
-  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub);
+  const features = featuresRouter(app);
+  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, features);
 
   // 404 (nella lingua dell'URL se possibile)
   server.use((req, res) => {
@@ -79,7 +81,7 @@ export function createApp(overrides = {}) {
   });
 
   // libera gli slot dei pagamenti non completati
-  const timer = setInterval(() => app.services.sweep(), 60_000);
+  const timer = setInterval(() => app.runJobs(), 60_000);
   timer.unref();
   app.close = () => clearInterval(timer);
   return { app, server };

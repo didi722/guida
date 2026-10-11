@@ -1,11 +1,12 @@
 import express from 'express';
 import { loadAvailabilityContext, nextAvailableDates, slotsForDay } from '../availability.js';
 import { BookingError, cancellationState, getBookingByRef, slotStillOpen } from '../bookings.js';
+import { previewPricing } from '../pricing.js';
 import { hashPassword, verifyPassword } from '../auth.js';
 import { sendContactMessage, sendPartnerRegistered, icsFor } from '../emails.js';
 import { isDate, isTime } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
-import { limits, loginPartner, logoutPartner, send, tooMany } from '../http.js';
+import { loginPartner, logoutPartner, send, tooMany } from '../http.js';
 import { accountPage, loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage, voucherPage } from '../views/booking.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
@@ -71,7 +72,7 @@ export function publicRouter(app) {
     const { t } = ctx;
     const b = req.body;
     if (b.website) return send(res, contactPage(ctx, { sent: true })); // honeypot: i bot credono di aver inviato
-    if (!limits.contact(ip(req))) return tooMany(res);
+    if (!app.limits.contact(ip(req))) return tooMany(res);
     const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), message: cleanText(b.message, 3000) };
     if (values.name.length < 2 || !isEmail(values.email) || values.message.length < 5) return send(res, contactPage(ctx, { error: t('err.fields'), values }), 400);
     await sendContactMessage(app, { ...values, lang: req.lang });
@@ -113,31 +114,40 @@ export function publicRouter(app) {
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(req.query.tour ?? '')), date: null, pax: 2 }), 400);
     const slot = slotStillOpen(app, p.tour, p.date, p.time, p.pax, channel);
     if (!slot) return send(res, slotGonePage(ctx, p), 409);
-    send(res, checkoutPage(ctx, { ...p, slot, channel }));
+    // link promozionali: /book/checkout?...&promo=CODICE (o &gift=CODICE)
+    const values = { promo: cleanText(req.query.promo, 40), gift: cleanText(req.query.gift, 120) };
+    if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
+    send(res, checkoutPage(ctx, { ...p, slot, channel, values, pricing: pricingFor(req, p, values, channel) }));
   });
+
+  const pricingFor = (req, p, values, channel) =>
+    previewPricing(app, { tour: p.tour, pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, date: p.date, email: values.email ?? '', promoCode: values.promo, giftCodes: values.gift });
 
   r.post('/book/checkout', form, async (req, res) => {
     const ctx = res.locals.ctx;
     const { t } = ctx;
     const b = req.body;
     if (b.website) return res.status(400).end();
-    if (!limits.booking(ip(req))) return tooMany(res);
+    if (!app.limits.booking(ip(req))) return tooMany(res);
     const channel = channelOf(req.acct);
     const p = readSlotParams(b);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(b.tour ?? '')), date: null, pax: 2 }), 400);
-    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: b.lang === 'en' ? 'en' : 'it', notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500) };
+    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: b.lang === 'en' ? 'en' : 'it', notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
+    if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {
       const slot = slotStillOpen(app, p.tour, p.date, p.time, p.pax, channel);
-      return slot ? send(res, checkoutPage(ctx, { ...p, slot, channel, values, error }), status) : send(res, slotGonePage(ctx, p), 409);
+      return slot ? send(res, checkoutPage(ctx, { ...p, slot, channel, values, error, pricing: pricingFor(req, p, values, channel) }), status) : send(res, slotGonePage(ctx, p), 409);
     };
+    if (b.apply) return rerender('', 200); // "Applica": mostra il nuovo totale senza prenotare
     if (!b.consent) return rerender(t('err.consent'));
     try {
       const billing = channel === 'b2b' ? { company: req.acct.company, vat: req.acct.vat, sdi: req.acct.sdi_code, pec: req.acct.pec, address: req.acct.address } : values.invoice ? { text: values.billing } : null;
-      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, ...values, billing }, req.lang);
+      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, ...values, promoCode: values.promo, giftCodes: values.gift, billing }, req.lang);
       res.redirect(303, redirect);
     } catch (e) {
       if (!(e instanceof BookingError)) throw e;
       if (e.code === 'unavailable') return send(res, slotGonePage(ctx, p), 409);
+      if (e.code === 'promo' || e.code === 'gift') return rerender('');
       return rerender(e.code === 'payment' ? t('err.payment') : t('err.fields'));
     }
   });
@@ -182,7 +192,7 @@ export function publicRouter(app) {
   r.post('/b2b/login', form, async (req, res) => {
     const ctx = res.locals.ctx;
     const email = cleanText(req.body.email, 200).toLowerCase();
-    if (!limits.login(`${ip(req)}|${email}`)) return tooMany(res);
+    if (!app.limits.login(`${ip(req)}|${email}`)) return tooMany(res);
     const acct = db.prepare('SELECT * FROM accounts WHERE email = ?').get(email);
     const ok = acct && (await verifyPassword(String(req.body.password ?? ''), acct.password_hash));
     if (!ok) return send(res, loginPage(ctx, { error: ctx.t('b2b.loginError'), email }), 401);
@@ -199,7 +209,7 @@ export function publicRouter(app) {
     const { t } = ctx;
     const b = req.body;
     if (b.website2) return send(res, registerPage(ctx, { done: true }));
-    if (!limits.register(ip(req))) return tooMany(res);
+    if (!app.limits.register(ip(req))) return tooMany(res);
     const v = {
       company: cleanText(b.company, 160), vat: cleanText(b.vat, 40), country: cleanText(b.country, 8) || 'IT', website: cleanText(b.website, 200), sdi_code: cleanText(b.sdi_code, 10).toUpperCase(), pec: cleanText(b.pec, 200),
       address: cleanText(b.address, 250), contact_name: cleanText(b.contact_name, 120), phone: cleanText(b.phone, 40), email: cleanText(b.email, 200).toLowerCase(), message: cleanText(b.message, 1000),

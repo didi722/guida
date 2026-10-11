@@ -3,7 +3,7 @@ import { daySlots, monthAvailability } from '../availability.js';
 import { priceFor } from '../bookings.js';
 import { isDate, isMonth, nowRome } from '../time.js';
 import { safeEqual } from '../util.js';
-import { limits, makeCtx, noStore, send, tooMany } from '../http.js';
+import { makeCtx, noStore, send, tooMany } from '../http.js';
 import { demoPayPage } from '../views/booking.js';
 import { isLang } from '../i18n.js';
 
@@ -23,7 +23,7 @@ export function apiRouter(app) {
   }
 
   r.get('/api/availability', noStore, (req, res) => {
-    if (!limits.api(req.ip)) return tooMany(res);
+    if (!app.limits.api(req.ip)) return tooMany(res);
     const p = parse(req);
     const month = String(req.query.month ?? '');
     if (!p || !isMonth(month)) return res.status(400).json({ error: 'bad request' });
@@ -33,7 +33,7 @@ export function apiRouter(app) {
   });
 
   r.get('/api/slots', noStore, (req, res) => {
-    if (!limits.api(req.ip)) return tooMany(res);
+    if (!app.limits.api(req.ip)) return tooMany(res);
     const p = parse(req);
     const date = String(req.query.date ?? '');
     if (!p || !isDate(date)) return res.status(400).json({ error: 'bad request' });

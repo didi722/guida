@@ -107,6 +107,8 @@ export function createServices(app) {
     },
   };
 
+  app.jobs.push((nowMs) => svc.sweep(nowMs));
+
   // Le prenotazioni si pagano con lo stesso meccanismo (webhook, ripresa, pagina demo) di gift card e acconti.
   app.payables.register('booking', {
     find: (ref) => getBookingByRef(db, ref),

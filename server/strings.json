@@ -1398,5 +1398,301 @@
  "checkout.noPayment": [
   "Al momento non è possibile completare la prenotazione online. Scrivimi e ti confermo la disponibilità.",
   "Online booking is not available right now. Write to me and I will confirm availability."
+ ],
+ "promo.title": [
+  "Hai un codice sconto o un buono regalo?",
+  "Do you have a discount code or a gift card?"
+ ],
+ "promo.code": [
+  "Codice sconto",
+  "Discount code"
+ ],
+ "promo.gift": [
+  "Buono regalo",
+  "Gift card"
+ ],
+ "promo.giftHint": [
+  "Puoi inserire più buoni separati da spazio",
+  "You can enter several cards separated by spaces"
+ ],
+ "promo.apply": [
+  "Applica",
+  "Apply"
+ ],
+ "promo.applied": [
+  "Codice {code} applicato",
+  "Code {code} applied"
+ ],
+ "promo.err.notfound": [
+  "Questo codice sconto non esiste.",
+  "This discount code does not exist."
+ ],
+ "promo.err.inactive": [
+  "Questo codice sconto non è più attivo.",
+  "This discount code is no longer active."
+ ],
+ "promo.err.not_started": [
+  "Questo codice sconto non è ancora valido.",
+  "This discount code is not valid yet."
+ ],
+ "promo.err.expired": [
+  "Questo codice sconto è scaduto.",
+  "This discount code has expired."
+ ],
+ "promo.err.service_window": [
+  "Il codice non vale per la data del servizio scelta.",
+  "The code is not valid for the chosen service date."
+ ],
+ "promo.err.tour": [
+  "Il codice non vale per questo tour.",
+  "The code is not valid for this tour."
+ ],
+ "promo.err.min_total": [
+  "Il codice vale solo per prenotazioni di importo maggiore.",
+  "The code only applies to bookings above a minimum amount."
+ ],
+ "promo.err.exhausted": [
+  "Questo codice ha raggiunto il numero massimo di utilizzi.",
+  "This code has reached its maximum number of uses."
+ ],
+ "promo.err.email_used": [
+  "Hai già usato questo codice con questa email.",
+  "You have already used this code with this email."
+ ],
+ "gift.err.notfound": [
+  "Questo buono regalo non esiste.",
+  "This gift card does not exist."
+ ],
+ "gift.err.inactive": [
+  "Questo buono regalo non è più valido.",
+  "This gift card is no longer valid."
+ ],
+ "gift.err.expired": [
+  "Questo buono regalo è scaduto.",
+  "This gift card has expired."
+ ],
+ "gift.err.empty": [
+  "Questo buono regalo ha già il saldo esaurito.",
+  "This gift card has no balance left."
+ ],
+ "s.list": [
+  "Prezzo di listino",
+  "List price"
+ ],
+ "s.discount": [
+  "Sconto",
+  "Discount"
+ ],
+ "s.giftUsed": [
+  "Buono regalo",
+  "Gift card"
+ ],
+ "s.due": [
+  "Da pagare",
+  "To pay"
+ ],
+ "s.giftLeft": [
+  "Saldo residuo del buono: {amount}",
+  "Remaining gift card balance: {amount}"
+ ],
+ "checkout.nothingToPay": [
+  "Il totale è interamente coperto: non devi pagare nulla.",
+  "The total is fully covered: you have nothing to pay."
+ ],
+ "pay.none.cta": [
+  "Conferma prenotazione",
+  "Confirm booking"
+ ],
+ "booking.giftcard": [
+  "pagato con buono regalo",
+  "paid with gift card"
+ ],
+ "booking.free": [
+  "nessun pagamento dovuto",
+  "nothing to pay"
+ ],
+ "booking.giftUsedLine": [
+  "Buono regalo {amount}",
+  "Gift card {amount}"
+ ],
+ "booking.discountLine": [
+  "Sconto {code}",
+  "Discount {code}"
+ ],
+ "booking.dueOnSite": [
+  "da pagare il giorno del servizio: {amount}",
+  "to pay on the day: {amount}"
+ ],
+ "gift.title": [
+  "Regala Venezia",
+  "Give Venice"
+ ],
+ "gift.lead": [
+  "Un buono regalo per scoprire la città con una guida abilitata: vale per tutti i tour e si può usare anche in più volte.",
+  "A gift card to discover the city with a licensed guide: it works for every tour and can be used in several bookings."
+ ],
+ "gift.how.1": [
+  "Scegli l’importo e a chi regalarlo",
+  "Choose the amount and who it is for"
+ ],
+ "gift.how.2": [
+  "Paghi online in modo sicuro",
+  "Pay securely online"
+ ],
+ "gift.how.3": [
+  "Il buono arriva via email con un PDF da stampare",
+  "The card arrives by email with a printable PDF"
+ ],
+ "gift.amount": [
+  "Importo",
+  "Amount"
+ ],
+ "gift.custom": [
+  "Altro importo",
+  "Other amount"
+ ],
+ "gift.customHint": [
+  "da {min} a {max}",
+  "from {min} to {max}"
+ ],
+ "gift.you": [
+  "I tuoi dati",
+  "Your details"
+ ],
+ "gift.deliveryTitle": [
+  "Come vuoi consegnarlo?",
+  "How would you like to deliver it?"
+ ],
+ "gift.deliveryMe": [
+  "Lo ricevo io (da stampare o inoltrare)",
+  "Send it to me (to print or forward)"
+ ],
+ "gift.deliveryRecipient": [
+  "Invialo direttamente al destinatario",
+  "Send it straight to the recipient"
+ ],
+ "gift.recipientName": [
+  "Nome del destinatario",
+  "Recipient’s name"
+ ],
+ "gift.recipientEmail": [
+  "Email del destinatario",
+  "Recipient’s email"
+ ],
+ "gift.sendOn": [
+  "Data di invio",
+  "Send on"
+ ],
+ "gift.sendOnHint": [
+  "Il buono parte quel giorno alle 9:00. Tu ricevi subito la conferma.",
+  "The card is sent that day at 9:00. You get your confirmation straight away."
+ ],
+ "gift.message": [
+  "Messaggio per il destinatario",
+  "Message for the recipient"
+ ],
+ "gift.messageHint": [
+  "Es. Buon compleanno! Una passeggiata per scoprire Venezia insieme.",
+  "E.g. Happy birthday! A walk to discover Venice together."
+ ],
+ "gift.pay": [
+  "Vai al pagamento",
+  "Go to payment"
+ ],
+ "gift.terms": [
+  "Il buono è valido {months} mesi dall’acquisto, utilizzabile anche in più prenotazioni fino a esaurimento del saldo. Non è rimborsabile né convertibile in denaro.",
+  "The card is valid for {months} months from purchase and can be used in several bookings until the balance runs out. It is non-refundable and cannot be exchanged for cash."
+ ],
+ "gift.unavailable": [
+  "L’acquisto online dei buoni non è ancora attivo. Scrivimi e te ne preparo uno.",
+  "Buying gift cards online is not available yet. Write to me and I will prepare one for you."
+ ],
+ "gift.err.amount": [
+  "L’importo deve essere tra {min} e {max}.",
+  "The amount must be between {min} and {max}."
+ ],
+ "gift.err.buyer": [
+  "Inserisci il tuo nome e un indirizzo email valido.",
+  "Please enter your name and a valid email address."
+ ],
+ "gift.err.recipient": [
+  "Per inviarlo al destinatario serve un indirizzo email valido.",
+  "A valid email address is needed to send it to the recipient."
+ ],
+ "gift.err.date": [
+  "La data di invio non è valida.",
+  "The send date is not valid."
+ ],
+ "gift.err.payment": [
+  "Non siamo riusciti ad avviare il pagamento. Riprova tra poco.",
+  "We could not start the payment. Please try again shortly."
+ ],
+ "gift.statusReady": [
+  "Buono regalo pronto",
+  "Gift card ready"
+ ],
+ "gift.statusReadyText": [
+  "Ti abbiamo inviato il buono a {email}.",
+  "We have sent the gift card to {email}."
+ ],
+ "gift.statusPending": [
+  "In attesa di pagamento",
+  "Waiting for payment"
+ ],
+ "gift.statusPendingText": [
+  "Completa il pagamento per ricevere il buono.",
+  "Complete the payment to receive the gift card."
+ ],
+ "gift.statusVoid": [
+  "Buono non valido",
+  "Gift card not valid"
+ ],
+ "gift.statusVoidText": [
+  "Questo ordine non è più attivo.",
+  "This order is no longer active."
+ ],
+ "gift.code": [
+  "Codice",
+  "Code"
+ ],
+ "gift.balance": [
+  "Saldo",
+  "Balance"
+ ],
+ "gift.validUntil": [
+  "Valido fino al",
+  "Valid until"
+ ],
+ "gift.download": [
+  "Scarica il PDF",
+  "Download the PDF"
+ ],
+ "gift.useIt": [
+  "Come si usa: scegli un tour, vai alla conferma e inserisci il codice nel campo «Buono regalo».",
+  "How to use it: pick a tour, go to the confirmation step and enter the code in the “Gift card” field."
+ ],
+ "gift.scheduled": [
+  "Verrà inviato a {name} il {date} alle 9:00.",
+  "It will be sent to {name} on {date} at 9:00."
+ ],
+ "gift.payNow": [
+  "Completa il pagamento",
+  "Complete payment"
+ ],
+ "gift.cta": [
+  "Acquista un buono regalo",
+  "Buy a gift card"
+ ],
+ "gift.homeTitle": [
+  "Un regalo che si cammina",
+  "A gift you walk through"
+ ],
+ "gift.homeLead": [
+  "Regala una passeggiata tra le calli: il buono arriva via email, anche al destinatario nel giorno che scegli.",
+  "Give a walk through the alleys: the card arrives by email, to the recipient on the day you choose."
+ ],
+ "nav.gift": [
+  "Regala",
+  "Gift cards"
  ]
 }

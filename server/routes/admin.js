@@ -6,7 +6,8 @@ import { sendPartnerApproved } from '../emails.js';
 import { getSetting, setSetting } from '../db.js';
 import { addDays, isDate, isMonth, isTime, monthDates, nowRome, toMin } from '../time.js';
 import { cleanText, safeEqual } from '../util.js';
-import { limits, loginAdmin, logoutAdmin, send, tooMany } from '../http.js';
+import { loginAdmin, logoutAdmin, send, tooMany } from '../http.js';
+import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage, partnerDetailPage, partnersPage } from '../views/admin.js';
 
 const FLASH = {
@@ -60,7 +61,7 @@ export function adminRouter(app) {
   // ───── accesso ─────
   r.get('/login', (req, res) => (req.isAdmin ? res.redirect('/admin') : send(res, adminLoginPage(ctxOf(req)))));
   r.post('/login', form, (req, res) => {
-    if (!limits.login(`admin|${req.ip}`)) return tooMany(res);
+    if (!app.limits.login(`admin|${req.ip}`)) return tooMany(res);
     if (!safeEqual(String(req.body.password ?? ''), cfg.admin.password)) return send(res, adminLoginPage(ctxOf(req), { error: 'Password errata.' }), 401);
     loginAdmin(res, cfg);
     res.redirect(303, '/admin');
@@ -74,6 +75,8 @@ export function adminRouter(app) {
     res.set('Cache-Control', 'no-store');
     next();
   });
+
+  r.use(adminDiscountsRouter(app));
 
   // ───── agenda ─────
   r.get('/', (req, res) => {

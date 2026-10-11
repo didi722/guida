@@ -1,5 +1,5 @@
 import { html, raw } from '../html.js';
-import { cancellationState, freeCancelHours, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
+import { bookingDue, cancellationState, freeCancelHours, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
@@ -52,11 +52,12 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
 }
 
 // ───────────────────────── Checkout ─────────────────────────
-export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, error = '', channel }) {
+export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, error = '', channel, pricing }) {
   const { t, lang, u, app, acct } = ctx;
   const { cfg } = app;
   const ti = tour.i18n[lang];
-  const total = priceFor(tour, pax, channel, acct);
+  pricing ??= { listCents: priceFor(tour, pax, channel, acct), discountCents: 0, totalCents: priceFor(tour, pax, channel, acct), giftCents: 0, dueCents: priceFor(tour, pax, channel, acct), promo: null, gifts: [], errors: {} };
+  const nothingToPay = pricing.dueCents === 0;
   const options = paymentOptions(app, tour, channel, acct);
   const hours = freeCancelHours(cfg, tour, channel, acct);
   const deadline = localToInstant(date, time) - hours * 3600_000;
@@ -90,8 +91,26 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
         <label class="field"><span class="label">${t('f.invoiceData')}</span><textarea name="billing" rows="3" maxlength="500" placeholder="${t('f.invoiceHint')}">${v('billing')}</textarea></label></details>`
       : ''}
 
+    ${!isB2b
+      ? html`<details class="promo-box" ${values.promo || values.gift || pricing.promo || pricing.gifts.length || pricing.errors.promo || pricing.errors.gift ? raw('open') : ''}>
+        <summary>${t('promo.title')}</summary>
+        <div class="promo-grid">
+          <label class="field"><span class="label">${t('promo.code')}</span><input name="promo" maxlength="40" value="${v('promo')}" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+          <label class="field"><span class="label">${t('promo.gift')}</span><input name="gift" maxlength="120" value="${v('gift')}" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+          <button class="btn btn-outline btn-sm" type="submit" name="apply" value="1" formnovalidate>${t('promo.apply')}</button>
+        </div>
+        <p class="small muted">${t('promo.giftHint')}</p>
+        ${pricing.errors.promo ? html`<p class="field-error" role="alert">${t(`promo.err.${pricing.errors.promo}`)}</p>` : ''}
+        ${pricing.promo ? html`<p class="field-ok">${t('promo.applied', { code: pricing.promo.code })}</p>` : ''}
+        ${pricing.errors.gift ? html`<p class="field-error" role="alert">${t(`gift.err.${pricing.errors.gift}`)}</p>` : ''}
+        ${pricing.gifts.map((g) => html`<p class="field-ok">${t('s.giftLeft', { amount: formatMoney(g.card.balance_cents - g.cents, lang) })}</p>`)}
+      </details>`
+      : ''}
+
     <h2>${t('checkout.payment')}</h2>
-    ${options.length
+    ${nothingToPay
+      ? html`<div class="notice notice-ok" role="status">${t('checkout.nothingToPay')}</div><input type="hidden" name="paymentMethod" value="card">`
+      : options.length
       ? html`<div class="pay-options" role="radiogroup">
       ${options.map((o) => html`<label class="pay-option"><input type="radio" name="paymentMethod" value="${o}" ${o === method ? raw('checked') : ''} data-label="${t(`pay.${o}.cta`)}"><span><strong>${t(`pay.${o}.title`)}</strong><small>${t(`pay.${o}.desc`)}</small></span></label>`)}
     </div>`
@@ -99,7 +118,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
 
     <label class="check consent"><input type="checkbox" name="consent" value="1" required> <span>${t('f.consent')} <a href="${u('/terms')}" target="_blank">${t('footer.terms')}</a> · <a href="${u('/privacy')}" target="_blank">${t('footer.privacy')}</a></span></label>
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" ${method ? '' : raw('disabled')}>${method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
+    <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" ${method || nothingToPay ? '' : raw('disabled')}>${nothingToPay ? t('pay.none.cta') : method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
   </form>
 
   <aside class="card summary-card">
@@ -111,7 +130,10 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
         <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${fmtDuration(tour.durationMin)})</span></dd></div>
         <div><dt>${t('s.guests')}</dt><dd>${pax}</dd></div>
         <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}</dd></div>
-        <div class="summary-total"><dt>${t('s.total')}</dt><dd>${formatMoney(total, lang)}${isB2b ? html` <span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}</dd></div>
+        ${pricing.discountCents || pricing.giftCents ? html`<div><dt>${t('s.list')}</dt><dd>${formatMoney(pricing.listCents, lang)}</dd></div>` : ''}
+        ${pricing.discountCents ? html`<div class="row-discount"><dt>${t('s.discount')} · ${pricing.promo.code}</dt><dd>−${formatMoney(pricing.discountCents, lang)}</dd></div>` : ''}
+        ${pricing.giftCents ? html`<div class="row-discount"><dt>${t('s.giftUsed')}</dt><dd>−${formatMoney(pricing.giftCents, lang)}</dd></div>` : ''}
+        <div class="summary-total"><dt>${pricing.discountCents || pricing.giftCents ? t('s.due') : t('s.total')}</dt><dd>${formatMoney(pricing.dueCents, lang)}${isB2b ? html` <span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}</dd></div>
       </dl>
       <p class="policy-box ${refundable ? 'ok' : 'warn'}">${refundable ? t('checkout.refundable', { until: fmtInstant(deadline, lang), when: fmtHours(t, hours) }) : t('checkout.nonRefundable')}</p>
       ${slot.joined ? html`<p class="small muted">${t('checkout.joined')}</p>` : ''}
@@ -147,7 +169,14 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
     expired: ['err', t('booking.expiredTitle'), t('booking.expiredText')],
   };
   const [tone, title, text] = heads[b.status];
-  const payLabel = { card: b.payment_status === 'paid' || b.payment_status === 'refunded' ? t('booking.paidOnline') : t('booking.cardPending'), onsite: t('booking.onsite'), invoice: t('booking.invoice') }[b.payment_method];
+  const due = bookingDue(b);
+  const payLabel = {
+    card: b.payment_status === 'paid' || b.payment_status === 'refunded' ? t('booking.paidOnline') : t('booking.cardPending'),
+    onsite: b.gift_cents ? t('booking.dueOnSite', { amount: formatMoney(due, lang, b.currency) }) : t('booking.onsite'),
+    invoice: t('booking.invoice'),
+    giftcard: t('booking.giftcard'),
+    free: t('booking.free'),
+  }[b.payment_method];
   const paymentNote = b.payment_status === 'refunded' ? html` · <strong>${t('booking.refunded', { amount: formatMoney(b.refund_cents, lang, b.currency) })}</strong>` : b.payment_status === 'refund_failed' ? html` · <strong>${t('booking.refundFailed')}</strong>` : '';
 
   const body = html`
@@ -167,7 +196,9 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
       <div><dt>${t('s.name')}</dt><dd>${b.name} · ${b.email}${b.phone ? ' · ' + b.phone : ''}</dd></div>
       ${b.client_ref ? html`<div><dt>${t('f.clientRef')}</dt><dd>${b.client_ref}</dd></div>` : ''}
       ${b.notes ? html`<div><dt>${t('f.notes')}</dt><dd>${b.notes}</dd></div>` : ''}
-      <div class="summary-total"><dt>${t('s.total')}</dt><dd>${formatMoney(b.total_cents, lang, b.currency)} <span class="muted">· ${payLabel}</span>${paymentNote}</dd></div>
+      ${b.discount_cents ? html`<div class="row-discount"><dt>${t('booking.discountLine', { code: b.promo_code ?? '' })}</dt><dd>−${formatMoney(b.discount_cents, lang, b.currency)}</dd></div>` : ''}
+      ${b.gift_cents ? html`<div class="row-discount"><dt>${t('s.giftUsed')}</dt><dd>−${formatMoney(b.gift_cents, lang, b.currency)}</dd></div>` : ''}
+      <div class="summary-total"><dt>${b.discount_cents || b.gift_cents ? t('s.due') : t('s.total')}</dt><dd>${formatMoney(due, lang, b.currency)} <span class="muted">· ${payLabel}</span>${paymentNote}</dd></div>
     </dl>
 
     ${b.status === 'held'

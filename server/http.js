@@ -5,13 +5,17 @@ export const send = (res, view, status = 200) => res.status(status).type('html')
 
 const WEEK = 7 * 24 * 3600;
 
-export const limits = {
-  booking: rateLimiter({ windowMs: 10 * 60_000, max: 12 }),
-  contact: rateLimiter({ windowMs: 60 * 60_000, max: 6 }),
-  login: rateLimiter({ windowMs: 10 * 60_000, max: 10 }),
-  register: rateLimiter({ windowMs: 60 * 60_000, max: 6 }),
-  api: rateLimiter({ windowMs: 60_000, max: 150 }),
-};
+/** Limitatori di richieste: uno per applicazione (così i test non si influenzano a vicenda). */
+export function createLimits() {
+  return {
+    booking: rateLimiter({ windowMs: 10 * 60_000, max: 12 }),
+    contact: rateLimiter({ windowMs: 60 * 60_000, max: 6 }),
+    login: rateLimiter({ windowMs: 10 * 60_000, max: 10 }),
+    register: rateLimiter({ windowMs: 60 * 60_000, max: 6 }),
+    api: rateLimiter({ windowMs: 60_000, max: 150 }),
+    codes: rateLimiter({ windowMs: 10 * 60_000, max: 30 }), // tentativi con codici sconto / buoni regalo
+  };
+}
 
 export function tooMany(res) {
   return res.status(429).type('text/plain').send('Too many requests / Troppe richieste. Riprova tra poco.');

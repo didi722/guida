@@ -1,9 +1,10 @@
 // Testi delle email transazionali (IT/EN) e invio.
 import { html } from './html.js';
 import { calendar, eventLines } from './ics.js';
-import { cancellationState } from './bookings.js';
+import { bookingDue, cancellationState } from './bookings.js';
 import { fmtDate, fmtInstant } from './time.js';
 import { formatMoney } from './util.js';
+import { formatGiftCode } from './pricing.js';
 
 const T = {
   it: {
@@ -24,7 +25,10 @@ const T = {
     total: 'Totale',
     ref: 'Codice',
     clientRef: 'Rif. pratica',
-    pay: { card: 'pagato online', onsite: 'da pagare il giorno del servizio', invoice: 'a fattura / bonifico come da accordi' },
+    pay: { card: 'pagato online', onsite: 'da pagare il giorno del servizio', invoice: 'a fattura / bonifico come da accordi', giftcard: 'pagato con buono regalo', free: 'nessun pagamento dovuto' },
+    discount: (code) => `Sconto${code ? ' ' + code : ''}`,
+    giftUsed: 'Buono regalo',
+    due: 'Da pagare',
     policyFree: (dt) => `Cancellazione gratuita fino a ${dt}.`,
     policyNone: 'Questa prenotazione non è rimborsabile (effettuata a ridosso del servizio).',
     policyAfter: 'Dopo tale termine non è previsto rimborso.',
@@ -51,7 +55,10 @@ const T = {
     total: 'Total',
     ref: 'Reference',
     clientRef: 'File ref.',
-    pay: { card: 'paid online', onsite: 'to be paid on the day', invoice: 'by invoice / bank transfer as agreed' },
+    pay: { card: 'paid online', onsite: 'to be paid on the day', invoice: 'by invoice / bank transfer as agreed', giftcard: 'paid with gift card', free: 'nothing to pay' },
+    discount: (code) => `Discount${code ? ' ' + code : ''}`,
+    giftUsed: 'Gift card',
+    due: 'To pay',
     policyFree: (dt) => `Free cancellation until ${dt}.`,
     policyNone: 'This booking is non-refundable (made close to the service date).',
     policyAfter: 'After that, no refund applies.',
@@ -77,8 +84,10 @@ function summaryRows(app, b, lang) {
     [tr.time, `${b.start_time}–${b.end_time}`],
     [tr.people, String(b.participants)],
     [tr.meeting, ti.meetingPoint],
-    [tr.total, `${formatMoney(b.total_cents, lang, b.currency)} (${tr.pay[b.payment_method]})`],
   ];
+  if (b.discount_cents) rows.push([tr.discount(b.promo_code), `−${formatMoney(b.discount_cents, lang, b.currency)}`]);
+  if (b.gift_cents) rows.push([tr.giftUsed, `−${formatMoney(b.gift_cents, lang, b.currency)}`]);
+  rows.push([b.discount_cents || b.gift_cents ? tr.due : tr.total, `${formatMoney(bookingDue(b), lang, b.currency)} (${tr.pay[b.payment_method]})`]);
   if (b.client_ref) rows.push([tr.clientRef, b.client_ref]);
   return rows;
 }
@@ -189,7 +198,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
     `${b.name} <${b.email}>${b.phone ? ' · ' + b.phone : ''}`,
     b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
     b.notes ? `Note: ${b.notes}` : null,
-    `Totale: ${formatMoney(b.total_cents, 'it', b.currency)} · pagamento: ${b.payment_method} (${b.payment_status})`,
+    `Totale: ${formatMoney(b.total_cents, 'it', b.currency)}${b.discount_cents ? ` (sconto ${b.promo_code}: −${formatMoney(b.discount_cents, 'it', b.currency)})` : ''}${b.gift_cents ? ` · buono regalo: −${formatMoney(b.gift_cents, 'it', b.currency)}` : ''} · pagamento: ${b.payment_method} (${b.payment_status})`,
     kind === 'cancelled' ? `Rimborso: ${refundCents ? formatMoney(refundCents, 'it', b.currency) : 'nessuno'}${b.cancelled_by ? ` · annullata da: ${b.cancelled_by}` : ''}` : null,
     '',
     `${app.cfg.baseUrl}/admin/bookings/${b.id}`,
@@ -242,4 +251,124 @@ export async function sendPartnerApproved(app, a) {
 export async function sendContactMessage(app, { name, email, message, lang }) {
   const to = app.cfg.mail.notifyTo || app.cfg.site.email;
   await app.mail.send({ to, replyTo: email, subject: `Messaggio dal sito: ${name}`, text: `${name} <${email}> (${lang})\n\n${message}\n` });
+}
+
+// ───────────── Buoni regalo ─────────────
+const G = {
+  it: {
+    buyerSubject: (amount) => `Il tuo buono regalo da ${amount}`,
+    buyerIntro: 'grazie! Il tuo buono regalo è pronto.',
+    buyerScheduled: (name, email, date) => `Lo invieremo a ${name ? name + ' ' : ''}(${email}) il ${date} alle 9:00. Qui sotto trovi comunque il codice.`,
+    buyerSent: (email) => `Lo abbiamo inviato a ${email}.`,
+    buyerSelf: 'Puoi stamparlo o inoltrarlo a chi vuoi regalarlo.',
+    recipientSubject: (from) => (from ? `${from} ti ha regalato un'esperienza a Venezia` : 'Un buono regalo per Venezia, per te'),
+    recipientIntro: (name) => `${name ? `Ciao ${name}, ` : 'Ciao, '}hai ricevuto un buono regalo per scoprire Venezia con una guida abilitata.`,
+    from: (name) => `Da parte di ${name}`,
+    amount: 'Importo',
+    code: 'Codice',
+    valid: 'Valido fino al',
+    how: 'Come si usa: scegli un tour sul sito, vai alla conferma e inserisci il codice nel campo «Buono regalo». Il buono si può usare anche in più volte fino a esaurimento del saldo.',
+    cta: 'Scegli il tuo tour',
+    sign: 'A presto,',
+  },
+  en: {
+    buyerSubject: (amount) => `Your ${amount} gift card`,
+    buyerIntro: 'thank you! Your gift card is ready.',
+    buyerScheduled: (name, email, date) => `We will send it to ${name ? name + ' ' : ''}(${email}) on ${date} at 9:00. You will find the code below as well.`,
+    buyerSent: (email) => `We have sent it to ${email}.`,
+    buyerSelf: 'You can print it or forward it to whoever you want to give it to.',
+    recipientSubject: (from) => (from ? `${from} has given you an experience in Venice` : 'A gift card for Venice, for you'),
+    recipientIntro: (name) => `${name ? `Hi ${name}, ` : 'Hi, '}you have received a gift card to discover Venice with a licensed guide.`,
+    from: (name) => `From ${name}`,
+    amount: 'Amount',
+    code: 'Code',
+    valid: 'Valid until',
+    how: 'How to use it: pick a tour on the website, go to the confirmation step and enter the code in the “Gift card” field. The card can be used in several bookings until the balance runs out.',
+    cta: 'Choose your tour',
+    sign: 'See you soon,',
+  },
+};
+
+function giftBlock(app, card, lang) {
+  const tr = G[lang];
+  const rows = [
+    [tr.amount, formatMoney(card.initial_cents, lang, card.currency)],
+    [tr.code, formatGiftCode(card.code)],
+    [tr.valid, fmtDate(card.expires_at, lang)],
+  ];
+  return rows;
+}
+
+async function giftAttachments(app, card, lang) {
+  try {
+    const { renderGiftCardPdf } = await import('./pdf.js');
+    return [{ filename: `buono-regalo-${card.ref}.pdf`, content: await renderGiftCardPdf(app, card, lang), contentType: 'application/pdf' }];
+  } catch (err) {
+    if (err.code !== 'ERR_MODULE_NOT_FOUND') console.error('[pdf] buono regalo non generato:', err.message);
+    return [];
+  }
+}
+
+function giftHtml(app, lang, intro, card, extra = '') {
+  const tr = G[lang];
+  return String(
+    layout(
+      app,
+      lang,
+      html`<p>${intro}</p>
+      ${card.message ? html`<blockquote style="margin:16px 0;padding:12px 16px;border-left:4px solid #d6bb51;background:#fbf8f1;font-style:italic">${card.message}</blockquote>` : ''}
+      <table style="border-collapse:collapse;width:100%;font-size:16px">
+        ${giftBlock(app, card, lang).map(([k, v]) => html`<tr><td style="padding:6px 12px 6px 0;color:#666">${k}</td><td style="padding:6px 0"><strong style="${k === tr.code ? 'font-size:20px;letter-spacing:2px' : ''}">${v}</strong></td></tr>`)}
+      </table>
+      ${extra}
+      <p style="font-size:14px;color:#444">${tr.how}</p>
+      <p><a href="${app.cfg.baseUrl}/${lang}/tours" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${tr.cta}</a></p>
+      <p style="color:#666;font-size:13px">${tr.sign} ${app.cfg.site.name}</p>`,
+    ),
+  );
+}
+
+export async function sendGiftToBuyer(app, card) {
+  if (!card.buyer_email) return false;
+  const lang = card.lang;
+  const tr = G[lang];
+  const money = formatMoney(card.initial_cents, lang, card.currency);
+  const note = card.recipient_email ? (card.delivered_at ? tr.buyerSent(card.recipient_email) : tr.buyerScheduled(card.recipient_name, card.recipient_email, fmtDate(card.deliver_on, lang, 'short'))) : tr.buyerSelf;
+  const hello = lang === 'it' ? `Ciao ${card.buyer_name},` : `Hi ${card.buyer_name},`;
+  const lines = [hello, '', tr.buyerIntro, note, '', ...giftBlock(app, card, lang).map(([k, v]) => `${k}: ${v}`), '', tr.how, `${app.cfg.baseUrl}/${lang}/tours`, '', `${tr.sign} ${app.cfg.site.name}`];
+  return app.mail.send({
+    to: card.buyer_email,
+    subject: tr.buyerSubject(money),
+    text: lines.join('\n'),
+    html: giftHtml(app, lang, `${hello} ${tr.buyerIntro} ${note}`, { ...card, message: null }),
+    attachments: await giftAttachments(app, card, lang),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+export async function sendGiftToRecipient(app, card) {
+  if (!card.recipient_email) return false;
+  const lang = card.lang;
+  const tr = G[lang];
+  const intro = tr.recipientIntro(card.recipient_name);
+  const from = card.buyer_name ? tr.from(card.buyer_name) : '';
+  const lines = [intro, from, card.message ? `«${card.message}»` : '', '', ...giftBlock(app, card, lang).map(([k, v]) => `${k}: ${v}`), '', tr.how, `${app.cfg.baseUrl}/${lang}/tours`, '', `${tr.sign} ${app.cfg.site.name}`].filter((l, i) => l !== '' || i > 2);
+  return app.mail.send({
+    to: card.recipient_email,
+    subject: tr.recipientSubject(card.buyer_name),
+    text: lines.join('\n'),
+    html: giftHtml(app, lang, `${intro}${from ? ' ' + from + '.' : ''}`, card),
+    attachments: await giftAttachments(app, card, lang),
+    replyTo: card.buyer_email || app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+export async function notifyGuideGift(app, card) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  await app.mail.send({
+    to,
+    subject: `Buono regalo venduto: ${formatMoney(card.initial_cents, 'it', card.currency)} (${card.ref})`,
+    text: [`Buono regalo ${card.ref}`, `Importo: ${formatMoney(card.initial_cents, 'it', card.currency)}`, `Acquirente: ${card.buyer_name ?? '—'} <${card.buyer_email ?? '—'}>`, card.recipient_email ? `Destinatario: ${card.recipient_name ?? ''} <${card.recipient_email}> (consegna: ${card.deliver_on ?? 'subito'})` : null, '', `${app.cfg.baseUrl}/admin/discounts/gifts/${card.id}`].filter((x) => x !== null).join('\n'),
+  });
 }

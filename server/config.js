@@ -99,6 +99,13 @@ export function createConfig(overrides = {}) {
       currency: 'EUR',
     },
 
+    gift: {
+      validityMonths: num(e.GIFT_VALIDITY_MONTHS, 24), // validità dei buoni regalo
+      minCents: num(e.GIFT_MIN_EUR, 20) * 100,
+      maxCents: num(e.GIFT_MAX_EUR, 1000) * 100,
+      presets: [5000, 10000, 15000, 20000],
+    },
+
     // Orari di lavoro predefiniti (modificabili dal pannello admin)
     defaultWeekly: Object.fromEntries(
       [0, 1, 2, 3, 4, 5, 6].map((d) => [d, { open: true, from: '08:30', to: '19:30' }]),

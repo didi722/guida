@@ -92,9 +92,73 @@ CREATE INDEX IF NOT EXISTS bookings_account ON bookings(account_id);
 CREATE INDEX IF NOT EXISTS bookings_session ON bookings(stripe_session_id);
 `;
 
+const V2_PROMO_GIFT = `
+-- Sconti e buoni regalo
+ALTER TABLE bookings ADD COLUMN list_cents INTEGER;                          -- prezzo di listino prima dello sconto
+ALTER TABLE bookings ADD COLUMN discount_cents INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN promo_code_id INTEGER;
+ALTER TABLE bookings ADD COLUMN promo_code TEXT;
+ALTER TABLE bookings ADD COLUMN gift_cents INTEGER NOT NULL DEFAULT 0;       -- quota pagata con buoni regalo
+
+CREATE TABLE promo_codes (
+  id              INTEGER PRIMARY KEY,
+  code            TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  kind            TEXT NOT NULL,        -- percent | fixed
+  value           INTEGER NOT NULL,     -- percentuale (1-100) oppure centesimi
+  valid_from      TEXT, valid_to TEXT,  -- quando il codice si può usare (data della prenotazione)
+  service_from    TEXT, service_to TEXT,-- a quali date di servizio si applica
+  max_uses        INTEGER,
+  one_per_email   INTEGER NOT NULL DEFAULT 0,
+  tours           TEXT,                 -- JSON: elenco di slug, NULL = tutti i tour
+  min_total_cents INTEGER,
+  active          INTEGER NOT NULL DEFAULT 1,
+  note            TEXT,
+  created_at      TEXT NOT NULL
+);
+
+CREATE TABLE gift_cards (
+  id                    INTEGER PRIMARY KEY,
+  ref                   TEXT NOT NULL UNIQUE,   -- GC-XXXXXX (ordine d'acquisto)
+  token                 TEXT NOT NULL,
+  code                  TEXT NOT NULL UNIQUE,   -- da inserire al checkout (12 caratteri)
+  status                TEXT NOT NULL,          -- pending | active | void
+  initial_cents         INTEGER NOT NULL,
+  balance_cents         INTEGER NOT NULL,
+  currency              TEXT NOT NULL DEFAULT 'EUR',
+  source                TEXT NOT NULL DEFAULT 'web',   -- web | admin
+  buyer_name            TEXT, buyer_email TEXT,
+  recipient_name        TEXT, recipient_email TEXT,
+  message               TEXT,
+  lang                  TEXT NOT NULL DEFAULT 'it',
+  deliver_on            TEXT,                   -- data di consegna al destinatario
+  delivered_at          TEXT,
+  stripe_session_id     TEXT, stripe_payment_intent TEXT,
+  billing_json          TEXT,
+  created_at            TEXT NOT NULL,
+  activated_at          TEXT,
+  expires_at            TEXT,                   -- data (YYYY-MM-DD)
+  admin_notes           TEXT
+);
+
+-- Registro dei movimenti: il saldo è sempre la somma dei movimenti
+CREATE TABLE gift_card_ledger (
+  id           INTEGER PRIMARY KEY,
+  gift_card_id INTEGER NOT NULL REFERENCES gift_cards(id),
+  delta_cents  INTEGER NOT NULL,
+  kind         TEXT NOT NULL,                   -- issue | redeem | restore | adjust
+  booking_id   INTEGER,
+  note         TEXT,
+  created_at   TEXT NOT NULL
+);
+CREATE INDEX gift_ledger_card ON gift_card_ledger(gift_card_id);
+CREATE INDEX gift_ledger_booking ON gift_card_ledger(booking_id);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
+  // v2 — codici sconto e buoni regalo
+  V2_PROMO_GIFT,
 ];
 
 export function migrate(db) {

@@ -1,10 +1,15 @@
 import crypto from 'node:crypto';
 
 const REF_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // niente 0/O/1/I/L
-export function newRef() {
-  const b = crypto.randomBytes(6);
-  return 'VE-' + Array.from(b, (x) => REF_ALPHABET[x % REF_ALPHABET.length]).join('');
+const randomChars = (n) => Array.from(crypto.randomBytes(n), (x) => REF_ALPHABET[x % REF_ALPHABET.length]).join('');
+
+/** Riferimento breve e leggibile: VE-… prenotazioni, GC-… gift card, PR-… programmi. */
+export function newRef(prefix = 'VE') {
+  return `${prefix}-${randomChars(6)}`;
 }
+
+/** Codice di una gift card: 12 caratteri senza simboli ambigui (si mostra come XXXX-XXXX-XXXX). */
+export const newGiftCode = () => randomChars(12);
 export const newToken = () => crypto.randomBytes(18).toString('base64url');
 
 export function formatMoney(cents, lang, currency = 'EUR') {

@@ -3,6 +3,7 @@ import { esc, html, raw } from '../html.js';
 import { paymentOptions, unitPriceFor } from '../bookings.js';
 import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
+import { giftBand } from './gift.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, postCard, priceParts, sectionHead, tourCard, tourMedia } from './components.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
@@ -78,6 +79,8 @@ export function homePage(ctx) {
     </ol>
   </div>
 </section>
+
+${giftBand(ctx)}
 
 <section class="band band-dark">
   <div class="wrap band-grid">

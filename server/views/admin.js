@@ -8,17 +8,18 @@ const NAV = [
   ['/admin/bookings', 'Prenotazioni'],
   ['/admin/availability', 'Disponibilità'],
   ['/admin/partners', 'Partner B2B'],
+  ['/admin/discounts', 'Sconti e buoni'],
 ];
 
 const WEEKDAYS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export const STATUS_IT = { confirmed: 'Confermata', held: 'In attesa di pagamento', cancelled: 'Annullata', expired: 'Scaduta' };
-export const PAY_IT = { card: 'Carta', onsite: 'Sul posto', invoice: 'Fattura' };
+export const PAY_IT = { card: 'Carta', onsite: 'Sul posto', invoice: 'Fattura', giftcard: 'Buono regalo', free: 'Gratuita' };
 export const PAYSTATUS_IT = { unpaid: 'Da incassare', paid: 'Pagata', refunded: 'Rimborsata', refund_failed: 'Rimborso fallito' };
 const chipFor = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
 
-function layout(ctx, { title, active, body, flash = '' }) {
+export function adminLayout(ctx, { title, active, body, flash = '', error = '' }) {
   const { app } = ctx;
   return html`<!doctype html>
 <html lang="it"><head>
@@ -34,6 +35,7 @@ function layout(ctx, { title, active, body, flash = '' }) {
 </div></header>
 <main class="wrap admin-main">
   ${flash ? html`<div class="notice notice-ok" role="status">${flash}</div>` : ''}
+  ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
   <h1>${title}</h1>
   ${body}
 </main>
@@ -80,7 +82,7 @@ ${days.filter((d) => d.items.length).length
 <h2 class="h-sub spaced">Calendario sul telefono</h2>
 <div class="card pad"><p>Aggiungi questo indirizzo come <strong>calendario in abbonamento</strong> (Google Calendar, Apple Calendar, Outlook) per vedere le prenotazioni confermate insieme ai tuoi impegni. L'indirizzo è privato: non condividerlo.</p>
 <p><input class="copy-field" readonly value="${feedUrl}" data-select-all></p></div>`;
-  return layout(ctx, { title: 'Agenda', active: '/admin', body, flash });
+  return adminLayout(ctx, { title: 'Agenda', active: '/admin', body, flash });
 }
 
 export function bookingsPage(ctx, { items, filter, q }) {
@@ -97,7 +99,7 @@ ${items.length
       <td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}
   </tbody></table></div>`
   : html`<p class="muted">Nessuna prenotazione.</p>`}`;
-  return layout(ctx, { title: 'Prenotazioni', active: '/admin/bookings', body });
+  return adminLayout(ctx, { title: 'Prenotazioni', active: '/admin/bookings', body });
 }
 
 export function bookingDetailPage(ctx, b, account, flash = '') {
@@ -115,7 +117,9 @@ export function bookingDetailPage(ctx, b, account, flash = '') {
       <div><dt>Data</dt><dd>${fmtDate(b.date, 'it')}</dd></div>
       <div><dt>Orario</dt><dd>${b.start_time}–${b.end_time}</dd></div>
       <div><dt>Persone</dt><dd>${b.participants}</dd></div>
-      <div><dt>Totale</dt><dd>${formatMoney(b.total_cents, 'it', b.currency)} · ${PAY_IT[b.payment_method]} · <strong>${PAYSTATUS_IT[b.payment_status]}</strong>${b.refund_cents ? ` (rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)})` : ''}</dd></div>
+      ${b.discount_cents ? html`<div><dt>Sconto</dt><dd>${b.promo_code} · −${formatMoney(b.discount_cents, 'it', b.currency)} (listino ${formatMoney(b.list_cents, 'it', b.currency)})</dd></div>` : ''}
+      ${b.gift_cents ? html`<div><dt>Buono regalo</dt><dd>−${formatMoney(b.gift_cents, 'it', b.currency)}</dd></div>` : ''}
+      <div><dt>${b.discount_cents || b.gift_cents ? 'Da pagare' : 'Totale'}</dt><dd>${formatMoney(b.total_cents - b.gift_cents, 'it', b.currency)} · ${PAY_IT[b.payment_method]} · <strong>${PAYSTATUS_IT[b.payment_status]}</strong>${b.refund_cents ? ` (rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)})` : ''}</dd></div>
       <div><dt>Cancellazione gratuita fino a</dt><dd>${new Date(b.free_cancel_until).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'medium', timeStyle: 'short' })} ${st.free ? html`<span class="chip chip-ok">ancora valida</span>` : html`<span class="chip chip-warn">scaduta</span>`}</dd></div>
       ${b.status === 'cancelled' ? html`<div><dt>Annullata</dt><dd>${b.cancelled_by ?? ''}${b.cancel_reason ? ' · ' + b.cancel_reason : ''}</dd></div>` : ''}
     </dl>
@@ -154,7 +158,7 @@ export function bookingDetailPage(ctx, b, account, flash = '') {
   </form>`
     : ''}
 </div>`;
-  return layout(ctx, { title: 'Prenotazione', active: '/admin/bookings', body, flash });
+  return adminLayout(ctx, { title: 'Prenotazione', active: '/admin/bookings', body, flash });
 }
 
 export function availabilityPage(ctx, { weekly, month, overrides, blocks, bookingsByDate, today, flash }) {
@@ -212,7 +216,7 @@ export function availabilityPage(ctx, { weekly, month, overrides, blocks, bookin
     ? html`<ul class="plain block-list">${blocks.map((bl) => html`<li><span>${fmtDate(bl.date, 'it', 'weekday')} · ${bl.start_time}–${bl.end_time}${bl.note ? ' · ' + bl.note : ''}</span><form method="post" action="/admin/availability/block/${bl.id}/delete"><input type="hidden" name="m" value="${month}"><button class="btn btn-sm btn-outline" type="submit">Elimina</button></form></li>`)}</ul>`
     : html`<p class="muted">Nessun blocco.</p>`}
 </div>`;
-  return layout(ctx, { title: 'Disponibilità', active: '/admin/availability', body, flash });
+  return adminLayout(ctx, { title: 'Disponibilità', active: '/admin/availability', body, flash });
 }
 
 export function partnersPage(ctx, { items, filter }) {
@@ -225,7 +229,7 @@ ${items.length
       <td><span class="chip ${a.status === 'approved' ? 'chip-ok' : a.status === 'pending' ? 'chip-warn' : 'chip-err'}">${ST[a.status]}</span></td><td class="num">${a.discount_percent ? a.discount_percent + '%' : '—'}</td><td class="num">${a.bookings}</td></tr>`)}
   </tbody></table></div>`
   : html`<p class="muted">Nessun partner.</p>`}`;
-  return layout(ctx, { title: 'Partner B2B', active: '/admin/partners', body });
+  return adminLayout(ctx, { title: 'Partner B2B', active: '/admin/partners', body });
 }
 
 export function partnerDetailPage(ctx, a, bookings, flash = '') {
@@ -257,6 +261,6 @@ export function partnerDetailPage(ctx, a, bookings, flash = '') {
 ${bookings.length
   ? html`<div class="card table-wrap"><table class="table"><tbody>${bookings.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')} ${b.start_time}</a></td><td>${ctx.app.content.tour(b.tour_slug)?.i18n.it.title}</td><td class="num">${b.participants}</td><td><span class="chip ${chipFor(b.status)}">${STATUS_IT[b.status]}</span></td><td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}</tbody></table></div>`
   : html`<p class="muted">Ancora nessuna prenotazione.</p>`}`;
-  return layout(ctx, { title: 'Partner', active: '/admin/partners', body, flash });
+  return adminLayout(ctx, { title: 'Partner', active: '/admin/partners', body, flash });
 }
 

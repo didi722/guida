@@ -68,7 +68,7 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
   try {
     const f = s.jar();
     for (const lang of ['it', 'en']) {
-      for (const p of ['/', '/tours', '/book', '/b2b', '/b2b/login', '/b2b/register', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((t) => `/tours/${t.slug}`), ...content.postsFor(lang).map((x) => `/blog/${x.slug}`)]) {
+      for (const p of ['/', '/tours', '/book', '/gift', '/b2b', '/b2b/login', '/b2b/register', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((t) => `/tours/${t.slug}`), ...content.postsFor(lang).map((x) => `/blog/${x.slug}`)]) {
         const res = await f(`/${lang}${p}`);
         assert.equal(res.status, 200, `/${lang}${p}`);
         const html = await res.text();
@@ -343,6 +343,125 @@ test('admin: chiusura giorni, blocchi orari, orari settimanali e feed calendario
     assert.equal(ics.status, 200);
     assert.match(await ics.text(), /BEGIN:VCALENDAR/);
     assert.equal((await anon('/admin/bookings')).status, 302);
+  } finally {
+    s.close();
+  }
+});
+
+test('codici sconto e buoni regalo: checkout con "Applica", buono acquistato online e usato, ripristino su annullo', async () => {
+  const s = await start();
+  try {
+    const f = s.jar();
+    const admin = s.jar();
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+
+    // l'admin crea un codice sconto dal pannello
+    assert.equal((await admin('/admin/discounts/promos', form({ code: 'estate10', kind: 'percent', value: '10', max_uses: '5' }))).status, 303);
+    assert.equal(loc(await admin('/admin/discounts/promos', form({ code: 'estate10', kind: 'percent', value: '10' }))), '/admin/discounts?tab=promos&err=dup');
+    assert.equal(loc(await admin('/admin/discounts/promos', form({ code: 'xx', kind: 'percent', value: '10' }))), '/admin/discounts?tab=promos&err=code');
+    assert.equal(loc(await admin('/admin/discounts/promos', form({ code: 'tanto', kind: 'percent', value: '150' }))), '/admin/discounts?tab=promos&err=value');
+    assert.match(await (await admin('/admin/discounts')).text(), /ESTATE10/);
+
+    // acquisto di un buono regalo da 50 € con consegna al destinatario oggi
+    const date = day(20);
+    assert.equal((await f('/it/gift')).status, 200);
+    const bad = await f('/it/gift', form({ amount: '5000', buyerName: 'Anna', buyerEmail: 'anna@example.com', delivery: 'recipient', recipientEmail: 'nope', consent: '1' }));
+    assert.equal(bad.status, 400);
+    assert.equal((await f('/it/gift', form({ amount: 'custom', custom: '5', buyerName: 'Anna', buyerEmail: 'anna@example.com', delivery: 'me', consent: '1' }))).status, 400, 'sotto il minimo');
+    const buy = await f('/it/gift', form({ amount: '5000', buyerName: 'Anna', buyerEmail: 'anna@example.com', delivery: 'recipient', recipientName: 'Luca', recipientEmail: 'luca@example.com', deliverOn: day(0), message: 'Buon compleanno!', consent: '1' }));
+    assert.equal(buy.status, 303);
+    const demo = new URL(loc(buy));
+    assert.match(demo.pathname, /^\/pay\/demo\/GC-/);
+    const card0 = s.app.db.prepare('SELECT * FROM gift_cards').get();
+    assert.equal(card0.status, 'pending');
+    assert.equal(card0.balance_cents, 0, 'finché non paga il buono non vale');
+    const pendingUse = await f(`/it/book/checkout?tour=san-marco-rialto&date=${date}&time=09:30&pax=1&gift=${card0.code}`);
+    assert.match(await pendingUse.text(), /non esiste/);
+
+    const paid = await f(demo.pathname + '/complete', form({ t: demo.searchParams.get('t'), lang: 'it' }));
+    assert.equal(paid.status, 303);
+    const status = await (await f(loc(paid))).text();
+    assert.match(status, /Buono regalo pronto/);
+    const card = s.app.db.prepare('SELECT * FROM gift_cards').get();
+    assert.equal(card.status, 'active');
+    assert.equal(card.balance_cents, 5000);
+    assert.ok(card.expires_at > day(700), 'valido 24 mesi');
+    assert.ok(status.includes(card.code.slice(0, 4) + '-' + card.code.slice(4, 8)), 'il codice è mostrato');
+    const mails = s.app.mail.sent.filter((m) => m.subject.match(/buono regalo|regalato/i));
+    assert.ok(mails.some((m) => m.to === 'anna@example.com'), 'conferma all’acquirente');
+    assert.ok(mails.some((m) => m.to === 'luca@example.com' && /Buon compleanno!/.test(m.text) && m.text.includes(card.code.slice(0, 4))), 'consegna al destinatario con messaggio e codice');
+    assert.ok(card.delivered_at);
+    assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /Buono regalo venduto/.test(m.subject)));
+    // un secondo webhook/ritorno non attiva due volte né rimanda email
+    const before = s.app.mail.sent.length;
+    await f(loc(paid) + '&paid=1');
+    assert.equal(s.app.mail.sent.length, before);
+
+    // checkout: "Applica" mostra lo sconto senza prenotare
+    const co = { tour: 'san-marco-rialto', date, time: '09:30', pax: '3', name: 'Luca', email: 'luca@example.com', lang: 'it', paymentMethod: 'card', consent: '1', promo: 'ESTATE10', gift: card.code };
+    const applied = await f('/it/book/checkout', form({ ...co, apply: '1' }));
+    assert.equal(applied.status, 200);
+    const html = await applied.text();
+    assert.match(html, /Codice ESTATE10 applicato/);
+    assert.match(html, /−10,50\s*€/, 'sconto 10% su 105 €');
+    assert.match(html, /−50\s*€/, 'buono da 50 €');
+    assert.match(html, /44,50\s*€/, 'da pagare 44,50 €');
+    assert.equal(s.app.db.prepare('SELECT COUNT(*) n FROM bookings').get().n, 0, 'applicare non crea prenotazioni');
+    const wrong = await (await f('/it/book/checkout', form({ ...co, apply: '1', promo: 'NONESISTE' }))).text();
+    assert.match(wrong, /Questo codice sconto non esiste/);
+
+    // prenotazione vera con carta: paga solo la differenza
+    const book = await f('/it/book/checkout', form(co));
+    assert.equal(book.status, 303);
+    const bk = s.app.db.prepare('SELECT * FROM bookings').get();
+    assert.equal(bk.total_cents, 9450);
+    assert.equal(bk.gift_cents, 5000);
+    assert.equal(bk.discount_cents, 1050);
+    const u = new URL(loc(book));
+    const demoPage = await (await f(u.pathname + u.search)).text();
+    assert.match(demoPage, /44,50\s*€/, 'la pagina di pagamento chiede solo 44,50 €');
+    await f(u.pathname + '/complete', form({ t: u.searchParams.get('t'), lang: 'it' }));
+    assert.equal(s.app.db.prepare('SELECT status FROM bookings').get().status, 'confirmed');
+    const page = await (await f(`/it/booking/${bk.ref}?t=${bk.token}`)).text();
+    assert.match(page, /Sconto ESTATE10/);
+    assert.match(page, /Da pagare/);
+    assert.equal(s.app.db.prepare('SELECT balance_cents FROM gift_cards').get().balance_cents, 0);
+
+    // annullo gratuito: il buono torna sul saldo
+    await f(`/it/booking/${bk.ref}/cancel`, form({ t: bk.token }));
+    assert.equal(s.app.db.prepare('SELECT balance_cents FROM gift_cards').get().balance_cents, 5000);
+    assert.match(await (await admin(`/admin/discounts/gifts/${card.id}`)).text(), /Ripristino/);
+    // l'admin rettifica ed estende
+    assert.equal((await admin(`/admin/discounts/gifts/${card.id}/adjust`, form({ amount: '-60', note: 'x' }))).status, 303);
+    assert.equal(s.app.db.prepare('SELECT balance_cents FROM gift_cards').get().balance_cents, 5000, 'saldo non può diventare negativo');
+    await admin(`/admin/discounts/gifts/${card.id}/adjust`, form({ amount: '-20,50', note: 'omaggio' }));
+    assert.equal(s.app.db.prepare('SELECT balance_cents FROM gift_cards').get().balance_cents, 2950);
+    await admin(`/admin/discounts/gifts/${card.id}/void`, form({ note: 'test' }));
+    assert.equal(s.app.db.prepare('SELECT status, balance_cents FROM gift_cards').get().balance_cents, 0);
+  } finally {
+    s.close();
+  }
+});
+
+test('buono regalo programmato: parte alle 9:00 del giorno scelto, una sola volta', async () => {
+  const s = await start();
+  try {
+    const f = s.jar();
+    const future = day(10);
+    const buy = await f('/en/gift', form({ amount: '10000', buyerName: 'Sam', buyerEmail: 'sam@example.com', delivery: 'recipient', recipientEmail: 'kim@example.com', deliverOn: future, consent: '1' }));
+    const u = new URL(loc(buy));
+    await f(u.pathname + '/complete', form({ t: u.searchParams.get('t'), lang: 'en' }));
+    assert.ok(!s.app.mail.sent.some((m) => m.to === 'kim@example.com'), 'non parte prima della data');
+    const buyerMail = s.app.mail.sent.find((m) => m.to === 'sam@example.com');
+    assert.match(buyerMail.text, /We will send it to/);
+    const at = (d, hhmm) => localToInstant(d, hhmm);
+    assert.equal(await s.app.gifts.deliverDue(at(future, '08:59')), 0);
+    assert.equal(await s.app.gifts.deliverDue(at(future, '09:00')), 1);
+    assert.equal(await s.app.gifts.deliverDue(at(future, '09:05')), 0, 'una sola volta');
+    assert.equal(s.app.mail.sent.filter((m) => m.to === 'kim@example.com').length, 1);
+    // data nel passato o oltre un anno: rifiutata
+    assert.equal((await f('/en/gift', form({ amount: '10000', buyerName: 'Sam', buyerEmail: 'sam@example.com', delivery: 'recipient', recipientEmail: 'kim@example.com', deliverOn: day(-3), consent: '1' }))).status, 400);
+    assert.equal((await f('/en/gift', form({ amount: '10000', buyerName: 'Sam', buyerEmail: 'sam@example.com', delivery: 'recipient', recipientEmail: 'kim@example.com', deliverOn: day(500), consent: '1' }))).status, 400);
   } finally {
     s.close();
   }

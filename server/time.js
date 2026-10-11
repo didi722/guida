@@ -63,6 +63,15 @@ export function addDays(date, n) {
   return d.toISOString().slice(0, 10);
 }
 
+/** Aggiunge n mesi a una data (YYYY-MM-DD), fermandosi all'ultimo giorno se il mese di arrivo è più corto. */
+export function addMonths(date, n) {
+  const [y, m, d] = date.split('-').map(Number);
+  const first = new Date(Date.UTC(y, m - 1 + n, 1));
+  const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  first.setUTCDate(Math.min(d, last));
+  return first.toISOString().slice(0, 10);
+}
+
 export function daysInMonth(month) {
   const [y, m] = month.split('-').map(Number);
   return new Date(Date.UTC(y, m, 0)).getUTCDate();

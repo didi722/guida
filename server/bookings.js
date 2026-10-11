@@ -2,7 +2,10 @@
 import { tx } from './db.js';
 import { daySlots, loadAvailabilityContext, slotsForDay } from './availability.js';
 import { isDate, isTime, localToInstant } from './time.js';
+import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
+
+export { priceFor, unitPriceFor };
 
 export class BookingError extends Error {
   constructor(code, message) {
@@ -12,19 +15,6 @@ export class BookingError extends Error {
 }
 
 const HOUR = 3600_000;
-
-/** Prezzo totale in centesimi. B2B: tariffa B2B del tour, meno lo sconto extra dell'account. */
-export function priceFor(tour, pax, channel, account = null) {
-  let unit = channel === 'b2b' ? tour.b2bPriceCents : tour.priceCents;
-  if (channel === 'b2b' && account?.discount_percent) unit = Math.round(unit * (1 - account.discount_percent / 100));
-  return tour.model === 'person' ? unit * pax : unit;
-}
-
-export function unitPriceFor(tour, channel, account = null) {
-  let unit = channel === 'b2b' ? tour.b2bPriceCents : tour.priceCents;
-  if (channel === 'b2b' && account?.discount_percent) unit = Math.round(unit * (1 - account.discount_percent / 100));
-  return unit;
-}
 
 /** Ore di preavviso entro cui la cancellazione è gratuita. */
 export function freeCancelHours(cfg, tour, channel, account = null) {
@@ -59,9 +49,12 @@ export function getBookingByRef(db, ref) {
 
 /**
  * Crea una prenotazione verificando di nuovo la disponibilità dentro una transazione.
- * - card    → status "held" (slot bloccato `holdMinutes`) fino al pagamento
- * - onsite  → confermata subito, si paga il giorno del tour
- * - invoice → confermata subito, fatturata (solo B2B approvati)
+ * - card     → status "held" (slot bloccato `holdMinutes`) fino al pagamento
+ * - onsite   → confermata subito, si paga il giorno del tour
+ * - invoice  → confermata subito, fatturata (solo B2B approvati)
+ * - giftcard → totale coperto da buoni regalo: confermata subito
+ * - free     → totale azzerato da un codice sconto: confermata subito
+ * Codici sconto e buoni regalo (`promoCode`, `giftCodes`) valgono solo per i clienti privati.
  */
 export function createBooking(app, input, nowMs = Date.now()) {
   const { db, cfg, content } = app;
@@ -80,11 +73,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
   if (name.length < 2) throw new BookingError('invalid', 'name');
   if (!isEmail(email)) throw new BookingError('invalid', 'email');
 
-  const method = input.paymentMethod;
-  if (!paymentOptions(app, tour, channel, account).includes(method)) throw new BookingError('payment', 'payment method not allowed');
-
   const hours = freeCancelHours(cfg, tour, channel, account);
-  const total = priceFor(tour, pax, channel, account);
   const startInstant = localToInstant(input.date, input.time);
 
   return tx(db, () => {
@@ -92,7 +81,16 @@ export function createBooking(app, input, nowMs = Date.now()) {
     const slot = slotsForDay(ctx, cfg, tour, input.date, { pax, channel, nowMs }).find((s) => s.time === input.time);
     if (!slot) throw new BookingError('unavailable', 'slot not available');
 
+    const pricing = previewPricing(app, { tour, pax, channel, account, date: input.date, email, promoCode: input.promoCode, giftCodes: input.giftCodes, nowMs });
+    if (pricing.errors.promo) throw new BookingError('promo', pricing.errors.promo);
+    if (pricing.errors.gift) throw new BookingError('gift', pricing.errors.gift);
+
+    let method = input.paymentMethod;
+    if (pricing.dueCents === 0) method = pricing.giftCents > 0 ? 'giftcard' : 'free';
+    else if (!paymentOptions(app, tour, channel, account).includes(method)) throw new BookingError('payment', 'payment method not allowed');
+
     const status = method === 'card' ? 'held' : 'confirmed';
+    const prepaid = method === 'giftcard' || method === 'free';
     const now = new Date(nowMs).toISOString();
     const row = {
       ref: newRef(),
@@ -112,11 +110,16 @@ export function createBooking(app, input, nowMs = Date.now()) {
       notes: cleanText(input.notes, 1000) || null,
       client_ref: cleanText(input.clientRef, 120) || null,
       billing_json: input.billing ? JSON.stringify(input.billing) : null,
-      total_cents: total,
+      list_cents: pricing.listCents,
+      discount_cents: pricing.discountCents,
+      promo_code_id: pricing.promo?.id ?? null,
+      promo_code: pricing.promo?.code ?? null,
+      gift_cents: pricing.giftCents,
+      total_cents: pricing.totalCents,
       currency: cfg.policy.currency,
       status,
       payment_method: method,
-      payment_status: 'unpaid',
+      payment_status: prepaid ? 'paid' : 'unpaid',
       hold_expires_at: status === 'held' ? new Date(nowMs + cfg.policy.holdMinutes * 60_000).toISOString() : null,
       free_cancel_until: new Date(startInstant - hours * HOUR).toISOString(),
       created_at: now,
@@ -124,20 +127,24 @@ export function createBooking(app, input, nowMs = Date.now()) {
     };
     const cols = Object.keys(row);
     const info = db.prepare(`INSERT INTO bookings(${cols.join(',')}) VALUES(${cols.map(() => '?').join(',')})`).run(...Object.values(row));
-    return getBooking(db, Number(info.lastInsertRowid));
+    const id = Number(info.lastInsertRowid);
+    redeemGifts(db, id, pricing.gifts, nowMs);
+    return getBooking(db, id);
   });
 }
 
 /** Segna come scaduta una prenotazione in attesa di pagamento e libera lo slot. */
-export function expireBooking(db, bookingId) {
-  return db.prepare(`UPDATE bookings SET status = 'expired' WHERE id = ? AND status = 'held'`).run(bookingId).changes;
+export function expireBooking(db, bookingId, nowMs = Date.now()) {
+  const changes = db.prepare(`UPDATE bookings SET status = 'expired' WHERE id = ? AND status = 'held'`).run(bookingId).changes;
+  if (changes) restoreGifts(db, bookingId, nowMs); // il pagamento non è arrivato: i buoni tornano disponibili
+  return changes;
 }
 
 /** Libera gli slot "held" scaduti (pagamento non completato). */
 export function expireHolds(db, nowMs = Date.now()) {
   const ids = db.prepare(`SELECT id FROM bookings WHERE status = 'held' AND hold_expires_at <= ?`).all(new Date(nowMs).toISOString());
   let n = 0;
-  for (const { id } of ids) n += expireBooking(db, id);
+  for (const { id } of ids) n += expireBooking(db, id, nowMs);
   return n;
 }
 
@@ -162,6 +169,7 @@ export function confirmPaid(app, bookingId, paymentIntent = null, nowMs = Date.n
       const ctx = loadAvailabilityContext(db, cfg, b.date, b.date, nowMs);
       const stillFree = slotsForDay(ctx, cfg, tour, b.date, { pax: b.participants, channel: b.channel, nowMs, ignoreId: b.id, skipNotice: true }).some((s) => s.time === b.start_time);
       if (!stillFree) return { outcome: 'conflict', booking: b };
+      if (b.gift_cents > 0 && !reserveGiftsAgain(db, b.id, nowMs)) return { outcome: 'conflict', booking: b };
     }
     db.prepare(`UPDATE bookings SET status = 'confirmed', payment_status = 'paid', stripe_payment_intent = COALESCE(?, stripe_payment_intent),
                 hold_expires_at = NULL, confirmed_at = ? WHERE id = ?`).run(paymentIntent, new Date(nowMs).toISOString(), b.id);
@@ -184,19 +192,20 @@ export function cancellationState(b, nowMs = Date.now()) {
 
 /**
  * Annulla la prenotazione (solo DB). Calcola quanto va rimborsato:
- * refund: 'auto' (se pagata con carta ed entro il termine) | 'full' | 'none'
- * @returns {{booking: object, refundCents: number}}
+ * refund: 'auto' (entro il termine di cancellazione gratuita) | 'full' | 'none'.
+ * Il rimborso riguarda la quota pagata con carta; la quota pagata con buoni regalo torna sul buono.
+ * Una prenotazione ancora in attesa di pagamento non ha incassato nulla: i buoni tornano sempre disponibili.
+ * @returns {{booking: object, refundCents: number, giftRestoredCents: number}}
  */
 export function cancelBooking(app, bookingId, { by, reason = null, refund = 'auto' }, nowMs = Date.now()) {
   const { db } = app;
   return tx(db, () => {
     const b = getBooking(db, bookingId);
     if (!b) throw new BookingError('invalid', 'booking not found');
-    if (b.status === 'cancelled' || b.status === 'expired') return { booking: b, refundCents: 0, already: true };
+    if (b.status === 'cancelled' || b.status === 'expired') return { booking: b, refundCents: 0, giftRestoredCents: 0, already: true };
 
-    const paid = b.payment_status === 'paid';
-    let refundCents = 0;
-    if (paid && (refund === 'full' || (refund === 'auto' && cancellationState(b, nowMs).free))) refundCents = b.total_cents;
+    const refundable = refund === 'full' || (refund === 'auto' && cancellationState(b, nowMs).free);
+    const refundCents = b.payment_status === 'paid' && refundable ? bookingDue(b) : 0;
 
     db.prepare(`UPDATE bookings SET status = 'cancelled', cancelled_at = ?, cancelled_by = ?, cancel_reason = ?, hold_expires_at = NULL WHERE id = ?`).run(
       new Date(nowMs).toISOString(),
@@ -204,7 +213,8 @@ export function cancelBooking(app, bookingId, { by, reason = null, refund = 'aut
       cleanText(reason, 300) || null,
       b.id,
     );
-    return { booking: getBooking(db, b.id), refundCents };
+    const giftRestoredCents = b.status === 'held' || refundable ? restoreGifts(db, b.id, nowMs) : 0;
+    return { booking: getBooking(db, b.id), refundCents, giftRestoredCents };
   });
 }
 
