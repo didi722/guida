@@ -10,6 +10,7 @@ import { loginAdmin, logoutAdmin, send, sendPdf, tooMany } from '../http.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
+import { adminMailRouter } from './admin-mail.js';
 import { adminInvoicesRouter } from './admin-invoices.js';
 import { dayConflicts } from '../programs.js';
 import { feedbackStats } from '../reviews.js';
@@ -51,7 +52,7 @@ export function adminRouter(app) {
   const feedToken = crypto.createHmac('sha256', cfg.sessionSecret).update('ics-feed').digest('base64url').slice(0, 32);
 
   r.use((req, res, next) => {
-    if (!cfg.admin.password) return res.status(404).type('text/plain').send('Pannello admin disattivato: imposta ADMIN_PASSWORD.');
+    if (!cfg.admin.password) return res.status(404).type('text/plain').send('Pannello admin disattivato: manca la variabile ADMIN_PASSWORD (nel pannello dell\'hosting o nel file .env). Impostala e riavvia il sito.');
     next();
   });
 
@@ -80,7 +81,8 @@ export function adminRouter(app) {
   r.get('/login', (req, res) => (req.isAdmin ? res.redirect('/admin') : send(res, adminLoginPage(ctxOf(req)))));
   r.post('/login', form, (req, res) => {
     if (!app.limits.login(`admin|${req.ip}`)) return tooMany(res);
-    if (!safeEqual(String(req.body.password ?? ''), cfg.admin.password)) return send(res, adminLoginPage(ctxOf(req), { error: 'Password errata.' }), 401);
+    // gli spazi attorno si ignorano: la tastiera del telefono ne aggiunge uno dopo l'autocompletamento
+    if (!safeEqual(String(req.body.password ?? '').trim(), cfg.admin.password)) return send(res, adminLoginPage(ctxOf(req), { error: 'Password errata.' }), 401);
     loginAdmin(res, cfg);
     res.redirect(303, '/admin');
   });
@@ -97,6 +99,7 @@ export function adminRouter(app) {
   r.use(adminDiscountsRouter(app));
   r.use(adminProgramsRouter(app));
   r.use(adminInvoicesRouter(app));
+  r.use(adminMailRouter(app));
 
   r.get('/feedback', (req, res) => {
     const items = db.prepare(`SELECT f.*, b.name, b.email, b.tour_slug, b.date FROM feedback f JOIN bookings b ON b.id = f.booking_id ORDER BY f.created_at DESC LIMIT 200`).all();

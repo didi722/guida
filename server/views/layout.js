@@ -28,6 +28,8 @@ const NAV = [
 export function page(ctx, { title, description = '', path, body, bodyClass = '', ld = null, noindex = false, article = false, ogImage = null, activeNav = '', scripts = '' }) {
   const { app, lang, t } = ctx;
   const { cfg } = app;
+  const demo = app.payments.demo; // istanza di prova (pagamenti simulati): non si indicizza e lo si dice a chiare lettere
+  noindex = noindex || demo;
   const others = LANGS.filter((l) => l !== lang);
   const canonical = `${cfg.baseUrl}${path}`;
   const fullTitle = title ? `${title} · ${cfg.site.name}` : `${cfg.site.name} — ${t('site.title')}`;
@@ -84,6 +86,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
     </div>
   </div>
   ${article ? raw('<div class="progress" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div></div>') : ''}
+  ${demo ? html`<div class="demo-note" role="note">${t('demo.siteBanner')}</div>` : ''}
 </header>
 
 <nav class="side-menu" id="side-menu" aria-label="${t('a11y.menu')}" hidden>

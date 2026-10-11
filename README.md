@@ -56,6 +56,10 @@ npm test                 # ~110 test: motore prenotazioni, pagamenti, Stripe, B2
 
 I test sui contenuti dei PDF usano `pdftotext` (poppler) e si saltano da soli se non c'è; l'XML delle fatture è controllato contro lo schema FatturaPA con `xmllint-wasm` (dipendenza di sviluppo).
 
+## Provare tutto senza rischi
+
+`npm run sandbox` avvia un sito di prova con dati d'esempio (partner, prenotazioni, buoni, programma) su `http://localhost:3200`, separato dai dati veri; oppure un secondo servizio online con pagamenti simulati. Registrazione di un'azienda, approvazione, sconti e scadenze di rimborso dedicate, annulli e fatture, passo per passo: [`docs/SIMULAZIONI.md`](docs/SIMULAZIONI.md). Le email che il sito non può spedire (senza SMTP) si leggono in **Admin → Email**.
+
 ## Lingue
 
 Il sito è in **italiano, inglese e spagnolo** (`/it`, `/en`, `/es`); la lingua si sceglie dal menu in alto e, alla prima visita, dalla lingua del browser. La lingua della prenotazione decide anche lingua di email, voucher PDF e buoni regalo; le notifiche per te restano in italiano.
@@ -122,7 +126,15 @@ A differenza del blog (che è statico), qui serve un **server** perché le preno
 ### Pagamenti con Stripe
 1. Crea un account Stripe (modalità test per provare). Imposta `STRIPE_SECRET_KEY`.
 2. In *Developers → Webhooks* aggiungi `https://tuodominio.it/api/stripe/webhook` con gli eventi `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` e copia il segreto in `STRIPE_WEBHOOK_SECRET`.
-3. Prova con le carte di test Stripe; poi passa alle chiavi live. I metodi di pagamento (Apple Pay, Google Pay, ecc.) si attivano dalla dashboard Stripe. Lo stesso meccanismo incassa prenotazioni, buoni regalo e acconti dei programmi.
+3. Prova con le carte di test Stripe; poi passa alle chiavi live. Lo stesso meccanismo incassa prenotazioni, buoni regalo e acconti dei programmi.
+
+#### Apple Pay, Google Pay, PayPal e altri metodi
+Il sito manda il cliente sulla pagina di pagamento **ospitata da Stripe** e non fissa l'elenco dei metodi: **quelli che attivi nella dashboard Stripe compaiono da soli**, senza toccare il codice (il test `metodi di pagamento` in `test/http.test.js` impedisce di aggiungere per sbaglio un elenco fisso).
+- **Apple Pay e Google Pay**: sulla pagina ospitata da Stripe funzionano senza configurazioni aggiuntive; compaiono ai clienti che hanno una carta nel portafoglio del telefono o del browser. Controlla in *Impostazioni → Metodi di pagamento* che siano attivi.
+- **PayPal**: si attiva dalla stessa pagina della dashboard (*Impostazioni → Metodi di pagamento → PayPal*) e va collegato un conto PayPal. È disponibile per le attività con sede in Italia; verifica nella dashboard le condizioni e le commissioni aggiornate.
+- **Altri** (Klarna, Link, bonifici istantanei…): stessa pagina. Scegli metodi **con conferma immediata**: quelli con conferma in giorni (addebito SEPA, bonifici) lasciano lo slot occupato in attesa del pagamento; il sito li gestisce (conferma all'arrivo dei soldi, rimborso se nel frattempo lo slot è andato) ma per i tour conviene evitarli.
+- **Rimborsi**: partono sempre dal sito (annullo del cliente o dal pannello) e tornano sul metodo usato per pagare.
+- Tutti gli importi sono in euro, come richiesto da PayPal e da molti altri metodi.
 
 ### Email
 Imposta `SMTP_*` e `MAIL_FROM` con il tuo provider (Brevo, Mailgun, Posteo, Gmail con password per app…). Usa un mittente del tuo dominio e verifica SPF/DKIM, altrimenti le conferme possono finire nello spam.

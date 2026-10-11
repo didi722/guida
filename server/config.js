@@ -14,6 +14,11 @@ function loadDotEnv() {
   }
 }
 
+/** Segreto da variabile d'ambiente: toglie spazi, a capo e virgolette attorno (capita quando si incolla nel pannello dell'hosting). */
+const secret = (v) => {
+  const s = String(v ?? '').trim();
+  return s.length > 1 && ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) ? s.slice(1, -1).trim() : s;
+};
 const num = (v, d) => (v === undefined || v === '' || Number.isNaN(Number(v)) ? d : Number(v));
 const bool = (v, d) => (v === undefined || v === '' ? d : ['1', 'true', 'yes', 'on'].includes(String(v).toLowerCase()));
 
@@ -67,7 +72,8 @@ export function createConfig(overrides = {}) {
     languages: LANGS,
     defaultLang: 'it',
 
-    admin: { password: overrides.adminPassword ?? e.ADMIN_PASSWORD ?? (isProd ? '' : 'admin') },
+    // vuota in produzione = pannello disattivato; in sviluppo, se manca o è vuota (come dopo `cp .env.example .env`), vale «admin»
+    admin: { password: overrides.adminPassword ?? (secret(e.ADMIN_PASSWORD) || (isProd ? '' : 'admin')) },
 
     stripe: { secretKey: stripeKey, webhookSecret: e.STRIPE_WEBHOOK_SECRET || '' },
     // Pagamento simulato: solo se NON c'è Stripe e non siamo in produzione (o lo si abilita a mano).

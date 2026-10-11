@@ -69,7 +69,7 @@ const loc = (res) => res.headers.get('location');
 after(() => fs.rmSync(tmp, { recursive: true, force: true }));
 
 test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
-  const s = await start();
+  const s = await start({ fakeStripe: true }); // con i pagamenti simulati il sito non si indicizza (vedi il test «istanza di prova»)
   try {
     const f = s.jar();
     for (const lang of ['it', 'en', 'es']) {
@@ -99,6 +99,43 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
     assert.match(es, /hreflang="x-default"/);
     assert.match(await (await f('/robots.txt')).text(), /Disallow: \/admin/);
     assert.equal((await f('/admin/calendar.ics?k=sbagliato')).status, 404);
+  } finally {
+    s.close();
+  }
+});
+
+test('istanza di prova (pagamenti simulati): avviso su ogni pagina, niente indicizzazione, registro delle email nel pannello', async () => {
+  const s = await start(); // demoPayments: true
+  try {
+    const f = s.jar();
+    for (const lang of ['it', 'en', 'es']) {
+      const html = await (await f(`/${lang}/`)).text();
+      assert.ok(html.includes(makeT(lang)('demo.siteBanner')), `avviso di prova in ${lang}`);
+      assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
+      assert.ok(!/hreflang="x-default"/.test(html));
+    }
+    assert.match(await (await f('/robots.txt')).text(), /Disallow: \/\n/);
+
+    // registro delle email nel pannello (richiede il login)
+    assert.equal(loc(await f('/admin/mail')), '/admin/login');
+    await f('/admin/login', form({ password: 'segreto-admin' }));
+    const empty = await (await f('/admin/mail')).text();
+    assert.match(empty, /Ancora nessuna email/);
+    assert.match(empty, /SMTP non configurato/);
+    const date = day(27);
+    await f('/it/book/checkout', form({ tour: 'cannaregio-ghetto', date, time: '10:00', pax: '2', name: 'Anna <b>Verdi</b>', email: 'anna@example.com', lang: 'it', paymentMethod: 'onsite', consent: '1' }));
+    await s.app.mail.send({ to: 'x@example.com', subject: 'Prova allegato', text: `Ecco il link ${s.app.cfg.baseUrl}/it/booking/VE-X e uno esterno https://evil.example/phish`, attachments: [{ filename: 'voucher test.pdf', content: Buffer.from('%PDF-1.4 prova'), contentType: 'application/pdf' }] });
+    const list = await (await f('/admin/mail')).text();
+    assert.match(list, /Prova allegato/);
+    assert.match(list, /anna@example\.com/, 'la conferma della prenotazione è nel registro');
+    assert.ok(list.includes(`<a href="${s.app.cfg.baseUrl}/it/booking/VE-X">`), 'i link del sito sono cliccabili');
+    assert.ok(!list.includes('<a href="https://evil.example'), 'i link esterni no');
+    assert.ok(!list.includes('<b>Verdi'), 'testo dei clienti escapato');
+    const id = s.app.mail.sent.find((m) => m.subject === 'Prova allegato').id;
+    const att = await f(`/admin/mail/${id}/attachment/0`);
+    assert.equal(att.status, 200);
+    assert.match(att.headers.get('content-disposition'), /attachment; filename="voucher_test\.pdf"/);
+    assert.equal((await f(`/admin/mail/${id}/attachment/5`)).status, 404);
   } finally {
     s.close();
   }
@@ -178,6 +215,37 @@ test('prenotazione B2C con pagamento demo, voucher, calendario e annullo con rim
     assert.match(after, /Rimborsati/);
     const again = await (await f(`/api/slots?tour=san-marco-rialto&date=${date}&pax=9`)).json();
     assert.deepEqual(again.slots.map((x) => x.time), ['09:30', '14:30']);
+  } finally {
+    s.close();
+  }
+});
+
+test('metodi di pagamento: la sessione Stripe non fissa l’elenco (decide la Dashboard: carte, Apple Pay, Google Pay, PayPal…); i pagamenti ritardati si confermano solo quando arrivano', async () => {
+  const s = await start({ fakeStripe: true });
+  try {
+    const f = s.jar();
+    const date = day(26);
+    const res = await f('/it/book/checkout', form({ tour: 'cannaregio-ghetto', date, time: '10:00', pax: '2', name: 'Paul Miller', email: 'paul@example.com', lang: 'en', paymentMethod: 'card', consent: '1' }));
+    assert.equal(res.status, 303);
+    const p = new URLSearchParams(s.calls.find((c) => c.url.endsWith('/checkout/sessions')).init.body);
+    assert.ok(![...p.keys()].some((k) => k.startsWith('payment_method_types') || k.startsWith('payment_method_options')), 'nessun elenco fisso di metodi: così Stripe mostra quelli attivi in Dashboard');
+    assert.equal(p.get('locale'), 'en');
+    assert.equal(p.get('line_items[0][price_data][currency]'), 'eur', 'una sola valuta (PayPal e altri metodi la richiedono)');
+    const ref = p.get('client_reference_id');
+    const event = (type, over = {}) => Buffer.from(JSON.stringify({ type, data: { object: { id: 'cs_test_' + ref, client_reference_id: ref, payment_status: 'paid', payment_intent: 'pi_pp', amount_total: 7000, ...over } } }));
+    const sign = (body) => {
+      const t = Math.floor(Date.now() / 1000);
+      return `t=${t},v1=${crypto.createHmac('sha256', 'whsec_test').update(`${t}.`).update(body).digest('hex')}`;
+    };
+    const post = (body) => f('/api/stripe/webhook', { method: 'POST', headers: { 'content-type': 'application/json', 'stripe-signature': sign(body) }, body });
+    const status = () => s.app.db.prepare('SELECT status, payment_status FROM bookings WHERE ref = ?').get(ref);
+
+    // metodo con conferma ritardata (es. addebito SEPA): «completata» ma non ancora pagata → non si conferma
+    await post(event('checkout.session.completed', { payment_status: 'unpaid' }));
+    assert.equal(status().status, 'held');
+    // quando i soldi arrivano
+    await post(event('checkout.session.async_payment_succeeded'));
+    assert.deepEqual({ ...status() }, { status: 'confirmed', payment_status: 'paid' });
   } finally {
     s.close();
   }
@@ -345,6 +413,7 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
 
     // l'admin vede la prenotazione e può annullarla
     const detail = await (await admin(`/admin/bookings/${b.id}`)).text();
+    assert.ok(detail.includes(`href="/${b.lang}/booking/${b.ref}?t=${b.token}"`), 'dal pannello si apre la pagina del cliente (e si prova l’annullo)');
     assert.match(detail, /PRATICA 42/);
     assert.match(detail, new RegExp(`/admin/bookings/${b.id}/voucher\\.pdf`));
     const adminVoucher = await admin(`/admin/bookings/${b.id}/voucher.pdf`);
@@ -1017,5 +1086,41 @@ test('senza pagamento sul posto il sito non lo promette: home, FAQ, checkout off
   } finally {
     off.close();
     on.close();
+  }
+});
+
+test('accesso admin: la password si tollera con spazi attorno; da variabile d’ambiente si ripuliscono spazi e virgolette; vuota in sviluppo vale «admin»', async () => {
+  // dal form (tastiera del telefono: spazio finale)
+  const s = await start();
+  try {
+    const f = s.jar();
+    assert.equal((await f('/admin/login', form({ password: 'segreto-admin ' }))).status, 303, 'spazio finale');
+    assert.equal((await f('/admin/login', form({ password: 'segreto-admin\n' }))).status, 303, 'a capo finale');
+    assert.equal((await s.jar()('/admin/login', form({ password: 'segreto admin' }))).status, 401, 'uno spazio in mezzo non va ignorato');
+    assert.match(await (await s.jar()('/admin/login')).text(), /data-show-password/, 'c’è «Mostra la password»');
+  } finally {
+    s.close();
+  }
+  // dalla configurazione
+  const saved = { ...process.env };
+  try {
+    const cfgWith = (env, over = {}) => {
+      for (const k of Object.keys(process.env)) if (/^(ADMIN_PASSWORD|NODE_ENV|SESSION_SECRET)$/.test(k)) delete process.env[k];
+      Object.assign(process.env, env);
+      return createConfig({ __skipDotEnv: true, dataDir: path.join(ROOT, 'data', 'test-cfg-' + crypto.randomBytes(3).toString('hex')), ...over }).admin.password;
+    };
+    assert.equal(cfgWith({ ADMIN_PASSWORD: '1234567-Ab' }), '1234567-Ab');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: ' 1234567-Ab \n' }), '1234567-Ab', 'spazi e a capo attorno');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: '"1234567-Ab"' }), '1234567-Ab', 'virgolette doppie incollate');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: "'1234567-Ab'" }), '1234567-Ab', 'virgolette singole incollate');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: 'ab"cd' }), 'ab"cd', 'virgolette in mezzo: parte della password');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: '' }), 'admin', 'sviluppo, variabile vuota (cp .env.example .env): vale «admin»');
+    assert.equal(cfgWith({}), 'admin', 'sviluppo, variabile assente');
+    assert.equal(cfgWith({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40), ADMIN_PASSWORD: '' }), '', 'produzione, vuota: pannello disattivato');
+    assert.equal(cfgWith({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40), ADMIN_PASSWORD: '1234567-Ab' }), '1234567-Ab');
+  } finally {
+    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
+    Object.assign(process.env, saved);
+    for (const d of fs.readdirSync(path.join(ROOT, 'data')).filter((x) => x.startsWith('test-cfg-'))) fs.rmSync(path.join(ROOT, 'data', d), { recursive: true, force: true });
   }
 });

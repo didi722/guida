@@ -1174,6 +1174,11 @@
   "No real charge: this page simulates the payment.",
   "No se realiza ningún cargo real: esta página simula el pago."
  ],
+ "demo.siteBanner": [
+  "Sito di prova: i pagamenti sono simulati e nessuna carta viene addebitata.",
+  "Test site: payments are simulated and no card is charged.",
+  "Sitio de prueba: los pagos son simulados y no se cobra ninguna tarjeta."
+ ],
  "demo.title": [
   "Pagamento (simulato)",
   "Payment (simulated)",

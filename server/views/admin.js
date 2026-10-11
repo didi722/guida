@@ -2,7 +2,7 @@ import { html, raw } from '../html.js';
 import { cancellationState } from '../bookings.js';
 import { dayOfWeek, fmtDate, fmtMonth, monthDates } from '../time.js';
 import { formatMoney } from '../util.js';
-import { langName } from '../langs.js';
+import { langName, normLang } from '../langs.js';
 
 const NAV = [
   ['/admin', 'Agenda'],
@@ -13,6 +13,7 @@ const NAV = [
   ['/admin/partners', 'Partner'],
   ['/admin/discounts', 'Sconti'],
   ['/admin/feedback', 'Feedback'],
+  ['/admin/mail', 'Email'],
 ];
 
 const WEEKDAYS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
@@ -62,11 +63,12 @@ export function adminLoginPage(ctx, { error = '' } = {}) {
   <div class="card pad">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
     <form method="post" action="/admin/login" class="form">
-      <label class="field"><span class="label">Password</span><input type="password" name="password" required autofocus autocomplete="current-password"></label>
+      <label class="field"><span class="label">Password</span><input type="password" name="password" required autofocus autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-password></label>
+      <label class="check"><input type="checkbox" data-show-password> Mostra la password</label>
       <button class="btn btn-gold btn-block" type="submit">Entra</button>
     </form>
   </div>
-</main></body></html>`;
+</main><script src="/js/admin-login.js?v=${ctx.app.assetVersion}" defer></script></body></html>`;
 }
 
 function bookingRow(ctx, b) {
@@ -145,6 +147,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       <div><dt>Data</dt><dd>${fmtDate(b.date, 'it')}</dd></div>
       <div><dt>Orario</dt><dd>${b.start_time}–${b.end_time}</dd></div>
       <div><dt>Persone</dt><dd>${b.participants}</dd></div>
+      <div><dt>Pagina del cliente</dt><dd><a href="/${normLang(b.lang)}/booking/${b.ref}?t=${b.token}">Apri come la vede il cliente</a> <small class="muted">(da qui si prova anche l’annullo)</small></dd></div>
       ${b.discount_cents ? html`<div><dt>Sconto</dt><dd>${b.promo_code} · −${formatMoney(b.discount_cents, 'it', b.currency)} (listino ${formatMoney(b.list_cents, 'it', b.currency)})</dd></div>` : ''}
       ${b.gift_cents ? html`<div><dt>Buono regalo</dt><dd>−${formatMoney(b.gift_cents, 'it', b.currency)}</dd></div>` : ''}
       <div><dt>${b.discount_cents || b.gift_cents ? 'Da pagare' : 'Totale'}</dt><dd>${formatMoney(b.total_cents - b.gift_cents, 'it', b.currency)} · ${PAY_IT[b.payment_method]} · <strong>${PAYSTATUS_IT[b.payment_status]}</strong>${b.refund_cents ? ` (rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)})` : ''}</dd></div>
