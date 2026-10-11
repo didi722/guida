@@ -7,6 +7,7 @@ import { createApp } from '../server/app.js';
 import { createConfig, ROOT } from '../server/config.js';
 import { loadContent } from '../server/content.js';
 import { openDb } from '../server/db.js';
+import { makeT } from '../server/i18n.js';
 import { createPayments } from '../server/payments.js';
 import { addDays, localToInstant, nowRome } from '../server/time.js';
 import { base as bookingBase, isPdf } from './helpers.js';
@@ -71,7 +72,7 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
   const s = await start();
   try {
     const f = s.jar();
-    for (const lang of ['it', 'en']) {
+    for (const lang of ['it', 'en', 'es']) {
       for (const p of ['/', '/tours', '/book', '/gift', '/b2b', '/b2b/login', '/b2b/register', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((t) => `/tours/${t.slug}`), ...content.postsFor(lang).map((x) => `/blog/${x.slug}`)]) {
         const res = await f(`/${lang}${p}`);
         assert.equal(res.status, 200, `/${lang}${p}`);
@@ -85,11 +86,17 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
     assert.equal((await f('/it/tours/non-esiste')).status, 404);
     assert.equal(loc(await f('/', { headers: { 'accept-language': 'it-IT,it;q=0.9' } })), '/it/');
     assert.equal(loc(await f('/', { headers: { 'accept-language': 'de-DE,en;q=0.8' } })), '/en/');
+    assert.equal(loc(await f('/', { headers: { 'accept-language': 'es-AR,es;q=0.9,en;q=0.5' } })), '/es/');
     const home = await f('/it/');
     assert.match(home.headers.get('content-security-policy'), /default-src 'self'/);
     assert.equal(home.headers.get('x-frame-options'), 'DENY');
     const sm = await (await f('/sitemap.xml')).text();
     assert.match(sm, /hreflang="en"/);
+    assert.match(sm, /hreflang="es"/);
+    const es = await (await f('/es/')).text();
+    assert.ok(es.includes(makeT('es')('nav.book')), 'interfaccia in spagnolo');
+    assert.equal((es.match(/<a href="\/(it|en|es)\/[^"]*" hreflang="(it|en|es)"/g) ?? []).length, 3, 'il menu delle lingue elenca italiano, inglese e spagnolo');
+    assert.match(es, /hreflang="x-default"/);
     assert.match(await (await f('/robots.txt')).text(), /Disallow: \/admin/);
     assert.equal((await f('/admin/calendar.ics?k=sbagliato')).status, 404);
   } finally {

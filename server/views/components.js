@@ -3,6 +3,10 @@ import { html, raw } from '../html.js';
 import { freeCancelHours, unitPriceFor } from '../bookings.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
+import { LANGS, LANG_META } from '../langs.js';
+
+/** <option> di tutte le lingue del sito, con quella indicata selezionata. */
+export const langOptions = (selected) => html`${LANGS.map((l) => html`<option value="${l}" ${l === selected ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}`;
 
 export function fmtDuration(min) {
   const h = Math.floor(min / 60);

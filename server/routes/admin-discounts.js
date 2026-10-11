@@ -8,6 +8,7 @@ import { invoiceForSource } from '../invoices.js';
 import { send, sendPdf } from '../http.js';
 import { renderGiftCardPdf } from '../pdf.js';
 import { discountsPage, giftDetailPage } from '../views/admin-discounts.js';
+import { normLang } from '../langs.js';
 
 const FLASH = {
   promo: 'Codice sconto creato.',
@@ -105,7 +106,7 @@ export function adminDiscountsRouter(app) {
   r.get('/discounts/gifts/:id/card.pdf', async (req, res, next) => {
     const card = getGift(db, Number(req.params.id));
     if (!card) return next();
-    sendPdf(res, await renderGiftCardPdf(app, card, card.lang === 'en' ? 'en' : 'it'), `buono-regalo-${card.ref}.pdf`);
+    sendPdf(res, await renderGiftCardPdf(app, card, normLang(card.lang)), `buono-regalo-${card.ref}.pdf`);
   });
   r.post('/discounts/gifts/:id/adjust', form, (req, res, next) => {
     const card = getGift(db, Number(req.params.id));

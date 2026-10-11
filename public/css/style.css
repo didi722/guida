@@ -126,6 +126,15 @@ ul.plain, ol.plain { list-style: none; margin: 0; padding: 0; }
 .tool { background: transparent; border: 1.5px solid currentColor; color: var(--header-ink); border-radius: 50px; min-width: 40px; height: 40px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; font: inherit; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.08em; cursor: pointer; text-decoration: none; transition: background-color 0.2s, color 0.2s; }
 .tool:hover { background: var(--header-ink); color: var(--gold); }
 [data-theme='dark'] .tool:hover { color: #1c1c1c; background: var(--gold); }
+.lang-menu { position: relative; }
+.lang-menu summary { list-style: none; user-select: none; }
+.lang-menu summary::-webkit-details-marker { display: none; }
+.lang-list { list-style: none; margin: 0; padding: 6px; position: absolute; right: 0; top: calc(100% + 10px); min-width: 150px; background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 1400; }
+.lang-list a { display: block; padding: 9px 12px; border-radius: 8px; color: var(--text); text-decoration: none; font-size: 0.95rem; white-space: nowrap; }
+.lang-list a:hover { background: var(--gold-soft); }
+.lang-list a[aria-current] { font-weight: 700; color: var(--accent-text); }
+.side-menu .side-langs { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.side-menu .side-langs .side-sub { padding: 6px 0; }
 .theme-toggle svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
 .theme-toggle .i-moon { display: none; } [data-theme='dark'] .theme-toggle .i-sun { display: none; } [data-theme='dark'] .theme-toggle .i-moon { display: inline-flex; }
 .hamburger { display: none; width: 44px; height: 44px; border: 0; background: transparent; padding: 0; cursor: pointer; position: relative; color: var(--header-ink); }

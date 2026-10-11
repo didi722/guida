@@ -4,11 +4,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
 import { marked } from 'marked';
+import { LANGS } from './langs.js';
 
 marked.use({ gfm: true, breaks: false });
 const md = (s) => marked.parse(String(s ?? ''), { async: false });
 
-const LANGS = ['it', 'en'];
+const REQUIRED = ['it', 'en']; // le altre lingue, se mancano, ripiegano sull'inglese
+const FILE_LANG = new RegExp(`^(.+)\\.(${LANGS.join('|')})\\.md$`);
 
 function splitFrontMatter(text) {
   const m = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/.exec(text);
@@ -33,7 +35,7 @@ function loadTours(dir) {
     for (const k of ['duration', 'maxParticipants', 'price']) if (!(Number(d[k]) > 0)) fail(f, `${k} mancante o non valido`);
     const i18n = {};
     for (const l of LANGS) {
-      const x = d[l];
+      const x = d[l] ?? (REQUIRED.includes(l) ? null : d.en);
       if (!x?.title || !x?.summary) fail(f, `manca la traduzione '${l}' (title, summary)`);
       i18n[l] = {
         title: x.title,
@@ -66,7 +68,7 @@ function loadTours(dir) {
       payOnSite: d.payOnSite !== false,
       art: d.art ?? 'dome',
       image: d.image ?? null,
-      languages: list(d.languages).length ? list(d.languages) : ['it', 'en'],
+      languages: list(d.languages).filter((l) => LANGS.includes(l)).length ? list(d.languages).filter((l) => LANGS.includes(l)) : [...LANGS],
       category: d.category ?? (d.model === 'person' ? 'group' : 'private'),
       i18n,
     });
@@ -77,7 +79,7 @@ function loadTours(dir) {
 function loadBlog(dir) {
   const posts = new Map();
   for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.md')).sort()) {
-    const m = /^(.+)\.(it|en)\.md$/.exec(f);
+    const m = FILE_LANG.exec(f);
     if (!m) continue;
     const [, slug, lang] = m;
     const { data, body } = splitFrontMatter(fs.readFileSync(path.join(dir, f), 'utf8'));
@@ -102,7 +104,7 @@ function loadBlog(dir) {
 function loadPages(dir) {
   const pages = {};
   for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.md'))) {
-    const m = /^(.+)\.(it|en)\.md$/.exec(f);
+    const m = FILE_LANG.exec(f);
     if (!m) continue;
     const { data, body } = splitFrontMatter(fs.readFileSync(path.join(dir, f), 'utf8'));
     (pages[m[1]] ??= {})[m[2]] = { title: data.title ?? m[1], description: data.description ?? '', html: md(body) };
@@ -121,8 +123,9 @@ export function loadContent(root) {
   return {
     tours: tours.filter((t) => t.active), // solo i tour attivi (visibili e prenotabili)
     tour: (slug) => bySlug.get(slug), // anche quelli nascosti: servono allo storico delle prenotazioni
+    posts, // tutti gli articoli, con le lingue in cui sono tradotti
     postsFor: (lang) => posts.filter((p) => p.i18n[lang]),
     post: (slug) => posts.find((p) => p.slug === slug),
-    page: (name, lang) => pages[name]?.[lang] ?? pages[name]?.it,
+    page: (name, lang) => pages[name]?.[lang] ?? pages[name]?.en ?? pages[name]?.it,
   };
 }

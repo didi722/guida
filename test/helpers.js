@@ -26,8 +26,8 @@ export const tour = (over = {}) => ({
   cancelHours: null,
   payOnSite: true,
   art: 'dome',
-  languages: ['it', 'en'],
-  i18n: { it: { title: 'Tour di prova', meetingPoint: 'Piazza' }, en: { title: 'Test tour', meetingPoint: 'The square' } },
+  languages: ['it', 'en', 'es'],
+  i18n: { it: { title: 'Tour di prova', meetingPoint: 'Piazza' }, en: { title: 'Test tour', meetingPoint: 'The square' }, es: { title: 'Tour de prueba', meetingPoint: 'La plaza' } },
   ...over,
 });
 

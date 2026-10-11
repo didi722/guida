@@ -4,6 +4,7 @@ import { daySlots, loadAvailabilityContext, slotsForDay } from './availability.j
 import { isDate, isTime, localToInstant } from './time.js';
 import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
+import { normLang } from './langs.js';
 
 export { priceFor, unitPriceFor };
 
@@ -106,7 +107,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
       name,
       email,
       phone: cleanText(input.phone, 40) || null,
-      lang: input.lang === 'en' ? 'en' : 'it',
+      lang: normLang(input.lang),
       notes: cleanText(input.notes, 1000) || null,
       client_ref: cleanText(input.clientRef, 120) || null,
       billing_json: input.billing ? JSON.stringify(input.billing) : null,

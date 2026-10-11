@@ -11,6 +11,13 @@
     });
   });
 
+  // Menu delle lingue: si chiude con un clic fuori o con Esc
+  var langMenu = document.querySelector('.lang-menu');
+  if (langMenu) {
+    document.addEventListener('click', function (e) { if (!langMenu.contains(e.target)) langMenu.open = false; });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') langMenu.open = false; });
+  }
+
   // Menu laterale (mobile)
   var burger = document.querySelector('.hamburger');
   var menu = document.getElementById('side-menu');

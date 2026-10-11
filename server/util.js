@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { localeOf } from './langs.js';
 
 const REF_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // niente 0/O/1/I/L
 const randomChars = (n) => Array.from(crypto.randomBytes(n), (x) => REF_ALPHABET[x % REF_ALPHABET.length]).join('');
@@ -13,7 +14,7 @@ export const newGiftCode = () => randomChars(12);
 export const newToken = () => crypto.randomBytes(18).toString('base64url');
 
 export function formatMoney(cents, lang, currency = 'EUR') {
-  return new Intl.NumberFormat(lang === 'it' ? 'it-IT' : 'en-GB', { style: 'currency', currency, minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
+  return new Intl.NumberFormat(localeOf(lang), { style: 'currency', currency, minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
 }
 
 export const isEmail = (s) => typeof s === 'string' && s.length <= 254 && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(s);

@@ -1,6 +1,6 @@
 # Guida Venezia — sito di prenotazione
 
-Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **servizi privati**, **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano e inglese**, pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
+Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **servizi privati**, **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese e spagnolo**, pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
 
 > ⚠️ **Prima bozza.** Tour, prezzi, testi e illustrazioni sono **segnaposto** da rivedere (vedi la [checklist prima del lancio](#checklist-prima-del-lancio)). Le parti **fiscali e legali** (fatturazione elettronica, buoni regalo, privacy, condizioni) vanno **confermate dal commercialista**.
 
@@ -56,14 +56,22 @@ npm test                 # ~110 test: motore prenotazioni, pagamenti, Stripe, B2
 
 I test sui contenuti dei PDF usano `pdftotext` (poppler) e si saltano da soli se non c'è; l'XML delle fatture è controllato contro lo schema FatturaPA con `xmllint-wasm` (dipendenza di sviluppo).
 
+## Lingue
+
+Il sito è in **italiano, inglese e spagnolo** (`/it`, `/en`, `/es`); la lingua si sceglie dal menu in alto e, alla prima visita, dalla lingua del browser. La lingua della prenotazione decide anche lingua di email, voucher PDF e buoni regalo; le notifiche per te restano in italiano.
+
+- Un tour manca di una traduzione spagnola? Il sito mostra la versione inglese (il test `test/i18n.test.js` ti avvisa).
+- Per **aggiungere una lingua**: una riga in `server/langs.js`, una colonna in `server/strings.json`, il blocco della lingua nei tour, i file `.xx.md` di blog e pagine, le voci nei dizionari di `server/emails.js`; poi `npm test` indica cosa manca.
+- Le **lingue offerte** per ogni tour sono nel campo `languages` di `content/tours/*.yml` (compaiono nella scheda del tour); l'abilitazione per ciascuna lingua va indicata in `GUIDE_LICENSE`.
+
 ## Dove si cambiano le cose
 
 | Cosa | Dove |
 |---|---|
-| **Tour e servizi** (testi, prezzi, durata, orari, capienza, lingue) | `content/tours/*.yml` — un file per tour, IT e EN insieme |
-| **Articoli del blog** | `content/blog/<slug>.it.md` e `<slug>.en.md` |
-| **Chi sono, Privacy, Condizioni, Cookie** | `content/pages/*.md` |
-| **Testi dell'interfaccia** | `server/strings.json` (`"chiave": ["italiano", "inglese"]`) |
+| **Tour e servizi** (testi, prezzi, durata, orari, capienza, lingue) | `content/tours/*.yml` — un file per tour, con i blocchi `it:`, `en:` ed `es:` |
+| **Articoli del blog** | `content/blog/<slug>.it.md`, `<slug>.en.md` e `<slug>.es.md` |
+| **Chi sono, Privacy, Condizioni, Cookie** | `content/pages/<nome>.it.md`, `.en.md`, `.es.md` |
+| **Testi dell'interfaccia** | `server/strings.json` (`"chiave": ["italiano", "inglese", "spagnolo"]`) |
 | **Dati dell'attività** (P.IVA, abilitazione, contatti) | variabili in `.env` (vedi `.env.example`) |
 | **Regole** (cancellazione, preavviso, pausa, validità buoni, acconti…) | variabili in `.env` |
 | **Dati fiscali per le fatture** | variabili `INVOICE_*`, `FISCAL_CODE`, `PEC_*` in `.env` |
@@ -149,7 +157,7 @@ Sicurezza: password B2B con scrypt, cookie `HttpOnly` + `SameSite=Lax`, controll
 ## Checklist prima del lancio
 
 - [ ] **Dati d'impresa**: `VAT_NUMBER`, `GUIDE_LICENSE`, `LEGAL_ADDRESS`, email e telefono veri (compaiono nel footer, nelle pagine legali, nelle email e sui PDF).
-- [ ] **Dati fiscali per le fatture** (`FISCAL_CODE`, `INVOICE_*`) **confermati dal commercialista**; prova a emettere una fattura di prova e caricarla su «Fatture e Corrispettivi».
+- [ ] **Dati fiscali per le fatture** (`FISCAL_CODE`, `INVOICE_*`) **confermati dal commercialista**; non emettere una fattura «di prova» su SdI (consumerebbe il numero 1/2027): chiedi al commercialista come verificare il file prima dell'avvio.
 - [ ] **Prezzi e tour**: i valori in `content/tours/*.yml` sono esempi. Controlla anche lingue, punti d'incontro e durate.
 - [ ] **Testi**: rileggi Chi sono, articoli del blog e FAQ (sono bozze da rivedere e firmare, soprattutto i dettagli storici).
 - [ ] **Pagine legali** (privacy, condizioni, cookie): sono bozze, **fallo rivedere da commercialista/consulente**. In particolare buoni regalo (validità, recesso), acconti dei programmi, recensioni, conservazione delle fatture.
