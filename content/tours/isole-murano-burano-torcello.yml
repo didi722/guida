@@ -1,0 +1,62 @@
+order: 4
+featured: false
+model: group
+flexible: true
+duration: 330            # 5h30
+maxParticipants: 12
+price: 320
+b2bPrice: 260
+art: islands
+languages: [it, en]
+
+it:
+  title: Murano, Burano e Torcello
+  subtitle: Mezza giornata nella laguna
+  summary: "Il vetro, il merletto e la cattedrale dei primi veneziani: tre isole, tre storie."
+  meetingPoint: Concordato con te (di solito alla fermata Fondamente Nove o in zona San Marco)
+  meetingUrl: ''
+  description: |
+    La laguna non è solo il «contorno» di Venezia: è il luogo da cui tutto è cominciato. Con una guida si capisce meglio il filo che lega le isole.
+
+    A Murano seguiamo la storia del vetro e entriamo in una fornace; a Burano passeggiamo tra le case colorate e il merletto; a Torcello arriviamo alla cattedrale di Santa Maria Assunta, con i suoi mosaici bizantini, in uno dei primi insediamenti della laguna.
+
+    Gli spostamenti avvengono in vaporetto (o in barca privata, su richiesta): si tratta di un ritmo lento, adatto a chi vuole vedere meno cose ma capirle di più.
+  highlights:
+    - "Murano: la storia del vetro e una dimostrazione in fornace"
+    - "Burano: case colorate, merletti e vita di isola"
+    - "Torcello: la cattedrale e i mosaici bizantini"
+    - La laguna vista dall'acqua
+  includes:
+    - Guida abilitata per tutta la durata
+    - Itinerario e orari adattati al vostro gruppo
+  excludes:
+    - Biglietti del vaporetto o noleggio barca privata
+    - Ingresso alla cattedrale di Torcello
+    - Pranzo, mance e consumazioni
+  notes: Prezzo per l'intero gruppo, fino a 12 persone. In caso di maltempo severo concordiamo insieme un'alternativa o la data.
+
+en:
+  title: Murano, Burano and Torcello
+  subtitle: A half day in the lagoon
+  summary: "Glass, lace and the cathedral of the first Venetians: three islands, three stories."
+  meetingPoint: Agreed with you (usually at the Fondamente Nove stop or around St Mark's)
+  meetingUrl: ''
+  description: |
+    The lagoon is not just the "backdrop" of Venice: it is where everything began. A guide makes the thread connecting the islands much clearer.
+
+    In Murano we follow the story of glass and step into a furnace; in Burano we stroll among coloured houses and lace; in Torcello we reach the cathedral of Santa Maria Assunta, with its Byzantine mosaics, in one of the lagoon's earliest settlements.
+
+    We travel by water bus (or private boat, on request): a slow pace for those who prefer to see less but understand more.
+  highlights:
+    - "Murano: the story of glass and a furnace demonstration"
+    - "Burano: coloured houses, lace and island life"
+    - "Torcello: the cathedral and its Byzantine mosaics"
+    - The lagoon seen from the water
+  includes:
+    - Licensed guide for the whole duration
+    - Itinerary and timing adapted to your group
+  excludes:
+    - Water bus tickets or private boat hire
+    - Entry to Torcello cathedral
+    - Lunch, tips and drinks
+  notes: Price for the whole group, up to 12 guests. In case of severe weather we agree on an alternative or another date together.

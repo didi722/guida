@@ -1,0 +1,51 @@
+order: 7
+model: group
+flexible: true
+duration: 480
+maxParticipants: 25
+price: 400
+b2bPrice: 320
+art: walk
+languages: [it, en]
+
+it:
+  title: Servizio guida giornata intera
+  subtitle: 8 ore di servizio per gruppi e agenzie
+  summary: Una giornata intera con la stessa guida abilitata, pausa pranzo inclusa nell'orario.
+  meetingPoint: Concordato con te (hotel, molo, terminal)
+  meetingUrl: ''
+  description: |
+    Servizio di guida abilitata per una giornata intera (8 ore, con pausa pranzo), pensato per programmi articolati: Venezia e la laguna, tour tematici, gruppi incentive.
+
+    Programma, ritmo e soste vengono definiti insieme in anticipo, per rendere la giornata fluida per il gruppo e semplice da gestire per chi organizza.
+  highlights:
+    - Guida abilitata per 8 ore
+    - Pausa pranzo inclusa nell'orario di servizio
+    - Programma costruito con te
+  includes:
+    - Guida abilitata
+    - Coordinamento preventivo con referente / capogruppo
+  excludes:
+    - Ingressi, trasporti, pranzo, mance
+  notes: Prezzo per l'intero gruppo, fino a 25 persone. Tariffa agevolata riservata ai partner.
+
+en:
+  title: Full-day guide service
+  subtitle: 8 hours of service for groups and agencies
+  summary: A whole day with the same licensed guide, lunch break included in the service time.
+  meetingPoint: Agreed with you (hotel, pier, terminal)
+  meetingUrl: ''
+  description: |
+    A licensed guide service for a full day (8 hours, with a lunch break), designed for richer programmes: Venice and the lagoon, themed tours, incentive groups.
+
+    Programme, pace and stops are defined together in advance to keep the day smooth for the group and easy for the organiser.
+  highlights:
+    - Licensed guide for 8 hours
+    - Lunch break included in the service time
+    - Programme built with you
+  includes:
+    - Licensed guide
+    - Advance coordination with your contact person / group leader
+  excludes:
+    - Entry tickets, transport, lunch, tips
+  notes: Price for the whole group, up to 25 guests. Discounted rate reserved for partners.

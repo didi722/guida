@@ -130,3 +130,17 @@ export function daySlots(db, cfg, tour, date, opts) {
   const ctx = loadAvailabilityContext(db, cfg, date, date, opts.nowMs);
   return slotsForDay(ctx, cfg, tour, date, opts);
 }
+
+/** Prossime date (dopo `from`, escluso) con almeno un orario prenotabile per uno qualsiasi dei tour dati. */
+export function nextAvailableDates(db, cfg, tours, from, { pax = 1, channel = 'b2c', nowMs, limit = 5, monthsAhead = 4 } = {}) {
+  const found = new Set();
+  let month = from.slice(0, 7);
+  for (let i = 0; i < monthsAhead && found.size < limit * 3; i++) {
+    for (const tour of tours) {
+      for (const d of Object.keys(monthAvailability(db, cfg, tour, month, { pax, channel, nowMs }))) if (d > from) found.add(d);
+    }
+    const [y, m] = month.split('-').map(Number);
+    month = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+  }
+  return [...found].sort().slice(0, limit);
+}

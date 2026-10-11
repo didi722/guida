@@ -52,6 +52,7 @@ function loadTours(dir) {
     tours.push({
       slug,
       order: Number(d.order ?? 100),
+      active: d.active !== false,
       featured: !!d.featured,
       model: d.model,
       flexible: !!d.flexible,
@@ -118,8 +119,8 @@ export function loadContent(root) {
   for (const p of posts) for (const s of p.tours) if (!bySlug.has(s)) throw new Error(`Articolo ${p.slug}: tour inesistente '${s}'`);
 
   return {
-    tours,
-    tour: (slug) => bySlug.get(slug),
+    tours: tours.filter((t) => t.active), // solo i tour attivi (visibili e prenotabili)
+    tour: (slug) => bySlug.get(slug), // anche quelli nascosti: servono allo storico delle prenotazioni
     postsFor: (lang) => posts.filter((p) => p.i18n[lang]),
     post: (slug) => posts.find((p) => p.slug === slug),
     page: (name, lang) => pages[name]?.[lang] ?? pages[name]?.it,

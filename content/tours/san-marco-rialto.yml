@@ -1,0 +1,66 @@
+# Tour a piccolo gruppo (prezzo a persona, partenze fisse).
+# I PREZZI SONO SEGNAPOSTO: sostituiscili con le tue tariffe.
+order: 1
+featured: true
+# active: false     # nasconde il tour dal sito e blocca nuove prenotazioni (lo storico resta)
+model: person            # person = a persona, partenze condivise | group = privato, prezzo a gruppo
+times: ["09:30", "14:30"]
+weekdays: [0, 1, 2, 3, 4, 5, 6]
+duration: 150            # minuti
+maxParticipants: 10
+price: 35                # € a persona (pubblico)
+b2bPrice: 28             # € a persona (tariffa agevolata per agenzie/DMC)
+art: dome
+languages: [it, en]
+
+it:
+  title: San Marco e Rialto
+  subtitle: Il cuore di Venezia in due ore e mezza
+  summary: Dalla piazza al ponte più famoso, leggendo facciate, mosaici e calli come pagine di storia.
+  meetingPoint: Piazza San Marco, davanti alla Basilica (il punto esatto è nell'email di conferma)
+  meetingUrl: https://www.google.com/maps/search/?api=1&query=Piazza+San+Marco+Venezia
+  description: |
+    Piazza San Marco è il salotto di Venezia, ma anche un grande libro di pietra: ogni facciata, ogni mosaico, ogni colonna racconta come una repubblica di mercanti abbia costruito la propria immagine, il proprio potere e la propria fede.
+
+    Partiamo dalla Basilica e dal Palazzo Ducale per capire *perché* Venezia è fatta così, poi ci lasciamo la folla alle spalle e attraversiamo le calli verso Rialto, il centro economico della città, tra botteghe, mercato e curiosità che non trovi sulle guide.
+
+    Gruppi piccoli, ritmo rilassato, tante storie e pochi nomi da imparare a memoria.
+  highlights:
+    - La piazza e la facciata della Basilica, tra mosaici e simboli del potere veneziano
+    - La Torre dell'Orologio e il Palazzo Ducale visti dall'esterno
+    - Le calli meno battute fra San Marco e Rialto
+    - Il Ponte di Rialto e il mercato storico
+  includes:
+    - Guida abilitata, in italiano o inglese
+    - Gruppo di massimo 10 persone
+    - Consigli personalizzati su dove mangiare e cosa vedere dopo il tour
+  excludes:
+    - Ingressi a Basilica e Palazzo Ducale (ti aiuto a prenotarli, se vuoi)
+    - Mance e consumazioni
+  notes: Percorso a piedi di circa 3 km, con ponti e gradini. Consigliate scarpe comode.
+
+en:
+  title: St Mark's and Rialto
+  subtitle: The heart of Venice in two and a half hours
+  summary: From the square to the most famous bridge, reading façades, mosaics and alleys like pages of history.
+  meetingPoint: St Mark's Square, in front of the Basilica (exact spot in your confirmation email)
+  meetingUrl: https://www.google.com/maps/search/?api=1&query=Piazza+San+Marco+Venezia
+  description: |
+    St Mark's Square is Venice's drawing room, but also a great stone book: every façade, mosaic and column tells how a republic of merchants built its image, its power and its faith.
+
+    We start from the Basilica and the Doge's Palace to understand *why* Venice looks the way it does, then leave the crowds behind and cross the alleys towards Rialto, the city's commercial heart, among workshops, market stalls and stories you will not find in the guidebooks.
+
+    Small groups, relaxed pace, plenty of stories and few names to memorise.
+  highlights:
+    - The square and the Basilica façade, between mosaics and symbols of Venetian power
+    - The Clock Tower and the Doge's Palace seen from the outside
+    - The quieter alleys between St Mark's and Rialto
+    - The Rialto Bridge and the historic market
+  includes:
+    - Licensed guide, in Italian or English
+    - Group of 10 guests at most
+    - Personal tips on where to eat and what to see next
+  excludes:
+    - Tickets for the Basilica and the Doge's Palace (happy to help you book them)
+    - Tips and drinks
+  notes: About 3 km on foot, with bridges and steps. Comfortable shoes recommended.

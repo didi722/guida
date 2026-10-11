@@ -1,0 +1,1398 @@
+{
+ "nav.home": [
+  "Home",
+  "Home"
+ ],
+ "nav.tours": [
+  "Tour",
+  "Tours"
+ ],
+ "nav.book": [
+  "Prenota",
+  "Book"
+ ],
+ "nav.b2b": [
+  "Per agenzie",
+  "For agencies"
+ ],
+ "nav.blog": [
+  "Blog",
+  "Blog"
+ ],
+ "nav.about": [
+  "Chi sono",
+  "About me"
+ ],
+ "nav.contact": [
+  "Contatti",
+  "Contact"
+ ],
+ "nav.myAccount": [
+  "Il mio account",
+  "My account"
+ ],
+ "nav.partnerLogin": [
+  "Area partner",
+  "Partner login"
+ ],
+ "a11y.skip": [
+  "Vai al contenuto",
+  "Skip to content"
+ ],
+ "a11y.mainNav": [
+  "Navigazione principale",
+  "Main navigation"
+ ],
+ "a11y.menu": [
+  "Apri il menu",
+  "Open menu"
+ ],
+ "a11y.theme": [
+  "Cambia tema chiaro/scuro",
+  "Switch light/dark theme"
+ ],
+ "a11y.breadcrumbs": [
+  "Percorso",
+  "Breadcrumbs"
+ ],
+ "footer.license": [
+  "Abilitazione",
+  "Licence"
+ ],
+ "footer.vat": [
+  "P.IVA",
+  "VAT"
+ ],
+ "footer.explore": [
+  "Esplora",
+  "Explore"
+ ],
+ "footer.contact": [
+  "Contatti",
+  "Contact"
+ ],
+ "footer.privacy": [
+  "Privacy",
+  "Privacy"
+ ],
+ "footer.terms": [
+  "Condizioni",
+  "Terms"
+ ],
+ "footer.cookies": [
+  "Cookie",
+  "Cookies"
+ ],
+ "site.title": [
+  "Guida turistica a Venezia",
+  "Tour guide in Venice"
+ ],
+ "site.description": [
+  "Tour a piccoli gruppi e visite private a Venezia con una guida abilitata e storico delle religioni. Prenotazione online, anche per agenzie e DMC.",
+  "Small-group tours and private visits in Venice with a licensed guide and historian of religions. Book online, also for agencies and DMCs."
+ ],
+ "lang.it": [
+  "Italiano",
+  "Italian"
+ ],
+ "lang.en": [
+  "Inglese",
+  "English"
+ ],
+ "time.days": [
+  "{n} giorni",
+  "{n} days"
+ ],
+ "time.hours": [
+  "{n} ore",
+  "{n} hours"
+ ],
+ "home.eyebrow": [
+  "Guida turistica abilitata · Storico delle religioni",
+  "Licensed tour guide · Historian of religions"
+ ],
+ "home.h1": [
+  "Venezia, oltre la cartolina.",
+  "Venice, beyond the postcard."
+ ],
+ "home.lead": [
+  "Tour a piccoli gruppi e visite private con una guida che ama le storie dietro i monumenti. Prenota online in due minuti.",
+  "Small-group tours and private visits with a guide who loves the stories behind the monuments. Book online in two minutes."
+ ],
+ "home.allTours": [
+  "Tutti i tour",
+  "All tours"
+ ],
+ "home.forAgencies": [
+  "Sei un’agenzia o una DMC?",
+  "Are you an agency or a DMC?"
+ ],
+ "home.artAlt": [
+  "Illustrazione di San Marco con il campanile e le cupole",
+  "Illustration of St Mark’s with the bell tower and domes"
+ ],
+ "home.toursTitle": [
+  "Tour e servizi",
+  "Tours and services"
+ ],
+ "home.toursLead": [
+  "Dai tour a piccoli gruppi alle visite private su misura.",
+  "From small-group tours to tailor-made private visits."
+ ],
+ "home.b2bTitle": [
+  "Lavori nel turismo?",
+  "Do you work in travel?"
+ ],
+ "home.b2bLead": [
+  "Tariffe riservate, slot in tempo reale e cancellazione gratuita estesa per DMC, tour operator e agenzie.",
+  "Reserved rates, real-time slots and extended free cancellation for DMCs, tour operators and agencies."
+ ],
+ "home.b2bMore": [
+  "Scopri l’area partner",
+  "Discover the partner area"
+ ],
+ "home.b2b.1": [
+  "Tariffe agevolate riservate ai partner",
+  "Discounted rates reserved for partners"
+ ],
+ "home.b2b.2": [
+  "Prenoti in autonomia, in tempo reale, 24 ore su 24",
+  "Book on your own, in real time, 24/7"
+ ],
+ "home.b2b.3": [
+  "Cancellazione gratuita fino a {when} prima",
+  "Free cancellation up to {when} before"
+ ],
+ "home.b2b.4": [
+  "Fattura elettronica e voucher pronti",
+  "E-invoice and vouchers ready"
+ ],
+ "home.blogTitle": [
+  "Dal blog",
+  "From the blog"
+ ],
+ "home.blogLead": [
+  "Curiosità, storie e consigli pratici su Venezia.",
+  "Curiosities, stories and practical tips about Venice."
+ ],
+ "home.allPosts": [
+  "Tutti gli articoli",
+  "All articles"
+ ],
+ "quick.date": [
+  "Data",
+  "Date"
+ ],
+ "quick.guests": [
+  "Persone",
+  "Guests"
+ ],
+ "quick.go": [
+  "Vedi disponibilità",
+  "Check availability"
+ ],
+ "trust.licensed": [
+  "Guida abilitata",
+  "Licensed guide"
+ ],
+ "trust.licensedSub": [
+  "Professionista abilitato a Venezia",
+  "Qualified professional in Venice"
+ ],
+ "trust.small": [
+  "Gruppi piccoli",
+  "Small groups"
+ ],
+ "trust.smallSub": [
+  "Per camminare e ascoltare meglio",
+  "Easier to walk, easier to listen"
+ ],
+ "trust.cancel": [
+  "Cancellazione gratuita fino a {when}",
+  "Free cancellation up to {when}"
+ ],
+ "trust.cancelSub": [
+  "Se cambi programma, nessun problema",
+  "If your plans change, no problem"
+ ],
+ "trust.pay": [
+  "Paghi come preferisci",
+  "Pay your way"
+ ],
+ "trust.paySub": [
+  "Online con carta o il giorno del tour",
+  "Online by card or on the day"
+ ],
+ "why.title": [
+  "Un altro modo di guardare Venezia",
+  "Another way to see Venice"
+ ],
+ "why.lead": [
+  "Non un elenco di date, ma il filo che lega i luoghi alle persone che li hanno vissuti.",
+  "Not a list of dates, but the thread linking places to the people who lived them."
+ ],
+ "why.1.t": [
+  "Sguardo da storico",
+  "A historian’s eye"
+ ],
+ "why.1.p": [
+  "Formazione e ricerca in storia delle religioni: spiego il perché delle cose, non solo il cosa.",
+  "Training and research in the history of religions: I explain the why of things, not just the what."
+ ],
+ "why.2.t": [
+  "Gruppi piccoli",
+  "Small groups"
+ ],
+ "why.2.p": [
+  "Poche persone per volta: si cammina meglio, si ascolta meglio e si possono fare domande.",
+  "Few people at a time: easier to walk, to listen and to ask questions."
+ ],
+ "why.3.t": [
+  "Su misura",
+  "Tailor-made"
+ ],
+ "why.3.p": [
+  "Poco tempo, bambini o interessi particolari? Costruisco il percorso con te, anche in privato.",
+  "Short on time, travelling with children or with special interests? I build the route with you, privately if you like."
+ ],
+ "why.cta": [
+  "Scopri chi sono",
+  "Meet your guide"
+ ],
+ "how.title": [
+  "Come funziona",
+  "How it works"
+ ],
+ "how.1.t": [
+  "Scegli data e tour",
+  "Pick a date and a tour"
+ ],
+ "how.1.p": [
+  "Vedi subito orari disponibili e prezzo, senza registrarti.",
+  "See available times and prices right away, no sign-up."
+ ],
+ "how.2.t": [
+  "Prenota in due minuti",
+  "Book in two minutes"
+ ],
+ "how.2.p": [
+  "Inserisci i dati e scegli se pagare online o il giorno del tour.",
+  "Enter your details and choose to pay online or on the day."
+ ],
+ "how.3.t": [
+  "Incontriamoci a Venezia",
+  "Meet in Venice"
+ ],
+ "how.3.p": [
+  "Ricevi conferma, punto d’incontro e calendario via email. Il resto lo faccio io.",
+  "You get confirmation, meeting point and calendar file by email. I take care of the rest."
+ ],
+ "faq.title": [
+  "Domande frequenti",
+  "Frequently asked questions"
+ ],
+ "faq.how.q": [
+  "Come funziona la prenotazione?",
+  "How does booking work?"
+ ],
+ "faq.how.a": [
+  "Scegli tour, data e orario: vedi disponibilità e prezzo in tempo reale. Inserisci i tuoi dati e ricevi subito la conferma via email, con punto d’incontro e file per il calendario.",
+  "Choose tour, date and time: you see availability and price in real time. Enter your details and receive an instant email confirmation with the meeting point and a calendar file."
+ ],
+ "faq.cancel.q": [
+  "Posso cancellare?",
+  "Can I cancel?"
+ ],
+ "faq.cancel.a": [
+  "Sì: la cancellazione è gratuita fino a {cancel} prima dell’inizio, con rimborso integrale se hai già pagato. Dopo tale termine non è previsto rimborso.",
+  "Yes: cancellation is free up to {cancel} before the start, with a full refund if you have already paid. After that, no refund applies."
+ ],
+ "faq.pay.q": [
+  "Come si paga?",
+  "How do I pay?"
+ ],
+ "faq.pay.a": [
+  "Con carta online, in modo sicuro tramite Stripe, oppure (dove previsto) il giorno del servizio. Le agenzie possono pagare a fattura.",
+  "By card online, securely through Stripe, or (where offered) on the day. Agencies can pay by invoice."
+ ],
+ "faq.meet.q": [
+  "Dove ci incontriamo?",
+  "Where do we meet?"
+ ],
+ "faq.meet.a": [
+  "Il punto d’incontro è indicato nella scheda del tour e nell’email di conferma. Arriva con 10 minuti di anticipo: la guida attende al massimo 15 minuti.",
+  "The meeting point is on the tour page and in your confirmation email. Arrive 10 minutes early: the guide waits 15 minutes at most."
+ ],
+ "faq.rain.q": [
+  "Cosa succede se piove?",
+  "What if it rains?"
+ ],
+ "faq.rain.a": [
+  "Il tour si svolge anche con la pioggia (porta un ombrello!). In caso di condizioni davvero avverse concordiamo insieme un’altra data o un rimborso integrale.",
+  "Tours run in the rain (bring an umbrella!). In truly adverse conditions we agree on another date or a full refund."
+ ],
+ "faq.access.q": [
+  "Il tour è adatto a bambini e a chi ha difficoltà motorie?",
+  "Is the tour suitable for children and for people with reduced mobility?"
+ ],
+ "faq.access.a": [
+  "Venezia ha molti ponti con gradini. I bambini sono i benvenuti; per passeggini, sedie a rotelle o difficoltà motorie scrivimi: posso proporre percorsi adatti.",
+  "Venice has many bridges with steps. Children are welcome; for strollers, wheelchairs or reduced mobility please write to me: I can suggest suitable routes."
+ ],
+ "cta.title": [
+  "Pronto a scoprire Venezia?",
+  "Ready to discover Venice?"
+ ],
+ "cta.lead": [
+  "Scegli la data e prenota in pochi minuti, oppure scrivimi per un percorso su misura.",
+  "Pick a date and book in minutes, or write to me for a tailor-made route."
+ ],
+ "cta.book": [
+  "Prenota ora",
+  "Book now"
+ ],
+ "cta.contact": [
+  "Scrivimi",
+  "Get in touch"
+ ],
+ "tours.title": [
+  "Tour e servizi",
+  "Tours and services"
+ ],
+ "tours.lead": [
+  "Visite a piccoli gruppi con partenze fisse e servizi privati su misura, in italiano e inglese.",
+  "Small-group visits with fixed departures and tailor-made private services, in Italian and English."
+ ],
+ "tours.groupTitle": [
+  "Tour a piccoli gruppi",
+  "Small-group tours"
+ ],
+ "tours.groupLead": [
+  "Partenze fisse, prezzo a persona: ti unisci a un gruppo ristretto.",
+  "Fixed departures, price per person: you join a small group."
+ ],
+ "tours.privateTitle": [
+  "Visite e servizi privati",
+  "Private visits and services"
+ ],
+ "tours.privateLead": [
+  "Giorno e orario a tua scelta, prezzo per l’intero gruppo.",
+  "Day and time of your choice, price for the whole group."
+ ],
+ "tour.kindGroup": [
+  "Piccolo gruppo",
+  "Small group"
+ ],
+ "tour.kindPrivate": [
+  "Privato",
+  "Private"
+ ],
+ "tour.maxPeople": [
+  "max {n} persone",
+  "max {n} guests"
+ ],
+ "tour.upTo": [
+  "fino a {n} persone",
+  "up to {n} guests"
+ ],
+ "tour.duration": [
+  "Durata",
+  "Duration"
+ ],
+ "tour.group": [
+  "Gruppo",
+  "Group"
+ ],
+ "tour.languages": [
+  "Lingue",
+  "Languages"
+ ],
+ "tour.start": [
+  "Partenza",
+  "Start"
+ ],
+ "tour.startFlexible": [
+  "Orario a scelta",
+  "Time of your choice"
+ ],
+ "tour.highlights": [
+  "Cosa vedremo",
+  "What we will see"
+ ],
+ "tour.includes": [
+  "Incluso",
+  "Included"
+ ],
+ "tour.excludes": [
+  "Non incluso",
+  "Not included"
+ ],
+ "tour.meeting": [
+  "Punto d’incontro",
+  "Meeting point"
+ ],
+ "tour.openMap": [
+  "apri la mappa",
+  "open map"
+ ],
+ "tour.goodToKnow": [
+  "Da sapere",
+  "Good to know"
+ ],
+ "tour.cancellation": [
+  "Cancellazione",
+  "Cancellation"
+ ],
+ "tour.readMore": [
+  "Per approfondire",
+  "Read more"
+ ],
+ "price.perPerson": [
+  "persona",
+  "person"
+ ],
+ "price.perGroup": [
+  "gruppo",
+  "group"
+ ],
+ "policy.free": [
+  "Cancellazione gratuita fino a {when} prima dell’inizio.",
+  "Free cancellation up to {when} before the start."
+ ],
+ "policy.after": [
+  "Dopo tale termine non è previsto rimborso.",
+  "After that, no refund applies."
+ ],
+ "policy.terms": [
+  "Condizioni complete",
+  "Full terms"
+ ],
+ "w.title": [
+  "Prenota questo tour",
+  "Book this tour"
+ ],
+ "w.persons": [
+  "Persone",
+  "Guests"
+ ],
+ "w.person1": [
+  "1 persona",
+  "1 guest"
+ ],
+ "w.personN": [
+  "{n} persone",
+  "{n} guests"
+ ],
+ "w.pickDate": [
+  "Scegli la data",
+  "Pick a date"
+ ],
+ "w.pickTime": [
+  "Scegli l’orario",
+  "Pick a time"
+ ],
+ "w.noSlots": [
+  "Nessun orario disponibile per questa data.",
+  "No times available on this date."
+ ],
+ "w.noMonth": [
+  "Nessuna disponibilità in questo mese: prova con il mese successivo.",
+  "No availability this month: try the next one."
+ ],
+ "w.total": [
+  "Totale",
+  "Total"
+ ],
+ "w.continue": [
+  "Continua",
+  "Continue"
+ ],
+ "w.left": [
+  "Ne restano {n}",
+  "{n} left"
+ ],
+ "w.joined": [
+  "Partenza confermata",
+  "Departure confirmed"
+ ],
+ "w.prev": [
+  "Mese precedente",
+  "Previous month"
+ ],
+ "w.next": [
+  "Mese successivo",
+  "Next month"
+ ],
+ "w.loading": [
+  "Caricamento…",
+  "Loading…"
+ ],
+ "w.error": [
+  "Impossibile caricare le disponibilità. Riprova.",
+  "Could not load availability. Please try again."
+ ],
+ "w.legend": [
+  "Date con disponibilità",
+  "Dates with availability"
+ ],
+ "w.selected": [
+  "selezionato",
+  "selected"
+ ],
+ "w.min": [
+  "Minimo 1 persona",
+  "At least 1 guest"
+ ],
+ "w.max": [
+  "Massimo {n} persone",
+  "At most {n} guests"
+ ],
+ "w.payOnSite": [
+  "puoi anche pagare il giorno del tour",
+  "you can also pay on the day"
+ ],
+ "book.title": [
+  "Prenota il tuo tour",
+  "Book your tour"
+ ],
+ "book.lead": [
+  "Scegli la data e vedi subito cosa è disponibile. Conferma immediata.",
+  "Pick a date and see what is available right away. Instant confirmation."
+ ],
+ "book.tour": [
+  "Tour",
+  "Tour"
+ ],
+ "book.allTours": [
+  "Tutti i tour",
+  "All tours"
+ ],
+ "book.resultsFor": [
+  "Disponibilità per {date}",
+  "Availability for {date}"
+ ],
+ "book.forPax": [
+  "per {n} persone",
+  "for {n} guests"
+ ],
+ "book.forGroup": [
+  "per tutto il gruppo",
+  "for the whole group"
+ ],
+ "book.confirmedDeparture": [
+  "Partenza confermata",
+  "Departure confirmed"
+ ],
+ "book.newDeparture": [
+  "Nuova partenza",
+  "New departure"
+ ],
+ "book.private": [
+  "Privato",
+  "Private"
+ ],
+ "book.none": [
+  "Nessuna disponibilità per questa data.",
+  "No availability on this date."
+ ],
+ "book.nextDates": [
+  "Prossime date disponibili:",
+  "Next available dates:"
+ ],
+ "book.askUs": [
+  "Hai esigenze particolari? Scrivimi:",
+  "Special requests? Write to me:"
+ ],
+ "book.pickPrompt": [
+  "Scegli una data per vedere gli orari disponibili.",
+  "Pick a date to see the available times."
+ ],
+ "book.partnerNote": [
+  "Tariffe riservate attive.",
+  "Reserved rates active."
+ ],
+ "checkout.title": [
+  "Conferma la prenotazione",
+  "Confirm your booking"
+ ],
+ "checkout.contact": [
+  "I tuoi dati",
+  "Your details"
+ ],
+ "checkout.contactB2b": [
+  "Referente per questo servizio",
+  "Contact person for this service"
+ ],
+ "checkout.payment": [
+  "Pagamento",
+  "Payment"
+ ],
+ "checkout.refundable": [
+  "Cancellazione gratuita fino a {until} ({when} prima).",
+  "Free cancellation until {until} ({when} before)."
+ ],
+ "checkout.nonRefundable": [
+  "Prenotazione a ridosso del servizio: non rimborsabile.",
+  "Booking close to the service date: non-refundable."
+ ],
+ "checkout.joined": [
+  "Ti unirai a una partenza già confermata.",
+  "You will join an already confirmed departure."
+ ],
+ "checkout.goneTitle": [
+  "Questo orario non è più disponibile",
+  "This time is no longer available"
+ ],
+ "checkout.goneText": [
+  "Qualcuno è stato più veloce di te, oppure la fascia è stata chiusa. Scegli un altro orario: ci vuole un attimo.",
+  "Someone was faster, or the slot has been closed. Pick another time: it only takes a moment."
+ ],
+ "checkout.pickAnother": [
+  "Scegli un altro orario",
+  "Pick another time"
+ ],
+ "f.name": [
+  "Nome e cognome",
+  "Full name"
+ ],
+ "f.email": [
+  "Email",
+  "Email"
+ ],
+ "f.phone": [
+  "Telefono / WhatsApp",
+  "Phone / WhatsApp"
+ ],
+ "f.phoneB2b": [
+  "consigliato",
+  "recommended"
+ ],
+ "f.optional": [
+  "facoltativo",
+  "optional"
+ ],
+ "f.lang": [
+  "Lingua della conferma",
+  "Confirmation language"
+ ],
+ "f.notes": [
+  "Note",
+  "Notes"
+ ],
+ "f.notesHint": [
+  "Es. esigenze particolari, età dei bambini, interessi…",
+  "E.g. special needs, children’s ages, interests…"
+ ],
+ "f.notesHintB2b": [
+  "Hotel, molo, orario di arrivo del gruppo, lingua, esigenze…",
+  "Hotel, pier, group arrival time, language, requirements…"
+ ],
+ "f.clientRef": [
+  "Riferimento pratica / gruppo",
+  "File / group reference"
+ ],
+ "f.clientRefHint": [
+  "es. nome del gruppo o n. pratica",
+  "e.g. group name or file no."
+ ],
+ "f.invoiceAsk": [
+  "Ti serve la fattura?",
+  "Do you need an invoice?"
+ ],
+ "f.invoiceCheck": [
+  "Richiedo fattura",
+  "I need an invoice"
+ ],
+ "f.invoiceData": [
+  "Dati di fatturazione",
+  "Billing details"
+ ],
+ "f.invoiceHint": [
+  "Intestazione, indirizzo, codice fiscale / P.IVA, codice SDI o PEC",
+  "Name, address, tax / VAT number, SDI code or PEC"
+ ],
+ "f.consent": [
+  "Ho letto e accetto le",
+  "I have read and accept the"
+ ],
+ "f.password": [
+  "Password",
+  "Password"
+ ],
+ "pay.card.title": [
+  "Paga ora con carta",
+  "Pay now by card"
+ ],
+ "pay.card.desc": [
+  "Pagamento sicuro con Stripe. Rimborso automatico se annulli nei termini.",
+  "Secure payment with Stripe. Automatic refund if you cancel in time."
+ ],
+ "pay.card.cta": [
+  "Vai al pagamento",
+  "Go to payment"
+ ],
+ "pay.onsite.title": [
+  "Paga il giorno del servizio",
+  "Pay on the day"
+ ],
+ "pay.onsite.desc": [
+  "Prenoti ora e paghi di persona (contanti o carta) al punto d’incontro.",
+  "Book now and pay in person (cash or card) at the meeting point."
+ ],
+ "pay.onsite.cta": [
+  "Conferma prenotazione",
+  "Confirm booking"
+ ],
+ "pay.invoice.title": [
+  "Fattura / bonifico",
+  "Invoice / bank transfer"
+ ],
+ "pay.invoice.desc": [
+  "Il servizio viene fatturato secondo gli accordi (SDI).",
+  "The service is invoiced as agreed (e-invoice)."
+ ],
+ "pay.invoice.cta": [
+  "Conferma prenotazione",
+  "Confirm booking"
+ ],
+ "s.date": [
+  "Data",
+  "Date"
+ ],
+ "s.time": [
+  "Orario",
+  "Time"
+ ],
+ "s.guests": [
+  "Persone",
+  "Guests"
+ ],
+ "s.meeting": [
+  "Punto d’incontro",
+  "Meeting point"
+ ],
+ "s.total": [
+  "Totale",
+  "Total"
+ ],
+ "s.name": [
+  "Prenotato da",
+  "Booked by"
+ ],
+ "s.ref": [
+  "Codice",
+  "Reference"
+ ],
+ "s.service": [
+  "Servizio",
+  "Service"
+ ],
+ "err.fields": [
+  "Controlla i dati inseriti: mancano delle informazioni o non sono valide.",
+  "Please check your details: some information is missing or invalid."
+ ],
+ "err.email": [
+  "Indirizzo email non valido.",
+  "Invalid email address."
+ ],
+ "err.password": [
+  "La password deve avere almeno 10 caratteri.",
+  "The password must be at least 10 characters."
+ ],
+ "err.sdi": [
+  "Per le aziende italiane serve il codice SDI (7 caratteri) oppure una PEC.",
+  "Italian companies need an SDI code (7 characters) or a PEC address."
+ ],
+ "err.consent": [
+  "Devi accettare le condizioni e l’informativa privacy.",
+  "You must accept the terms and the privacy policy."
+ ],
+ "err.exists": [
+  "Esiste già un account con questa email.",
+  "An account with this email already exists."
+ ],
+ "err.payment": [
+  "Non siamo riusciti ad avviare il pagamento. Riprova o scegli un altro metodo.",
+  "We could not start the payment. Please try again or choose another method."
+ ],
+ "err.404.title": [
+  "Pagina non trovata",
+  "Page not found"
+ ],
+ "err.404.text": [
+  "Forse il link è cambiato: riparti dalla home.",
+  "The link may have changed: start again from the home page."
+ ],
+ "booking.confirmedTitle": [
+  "Prenotazione confermata",
+  "Booking confirmed"
+ ],
+ "booking.confirmedText": [
+  "Ti abbiamo inviato i dettagli a {email}.",
+  "We have sent the details to {email}."
+ ],
+ "booking.heldTitle": [
+  "In attesa di pagamento",
+  "Waiting for payment"
+ ],
+ "booking.heldText": [
+  "Lo slot è riservato per te ancora {n} minuti. Completa il pagamento per confermare.",
+  "Your slot is held for another {n} minutes. Complete the payment to confirm."
+ ],
+ "booking.cancelledTitle": [
+  "Prenotazione annullata",
+  "Booking cancelled"
+ ],
+ "booking.cancelledText": [
+  "Questa prenotazione non è più attiva.",
+  "This booking is no longer active."
+ ],
+ "booking.expiredTitle": [
+  "Prenotazione scaduta",
+  "Booking expired"
+ ],
+ "booking.expiredText": [
+  "Il pagamento non è stato completato e lo slot è stato liberato. Puoi prenotare di nuovo.",
+  "The payment was not completed and the slot has been released. You can book again."
+ ],
+ "booking.paidOnline": [
+  "pagato online",
+  "paid online"
+ ],
+ "booking.cardPending": [
+  "pagamento con carta",
+  "card payment"
+ ],
+ "booking.onsite": [
+  "da pagare il giorno del servizio",
+  "to be paid on the day"
+ ],
+ "booking.invoice": [
+  "a fattura / bonifico",
+  "by invoice / bank transfer"
+ ],
+ "booking.refunded": [
+  "Rimborsati {amount}",
+  "{amount} refunded"
+ ],
+ "booking.refundFailed": [
+  "Rimborso da completare: ti contatteremo",
+  "Refund pending: we will contact you"
+ ],
+ "booking.payNow": [
+  "Completa il pagamento",
+  "Complete payment"
+ ],
+ "booking.canCancel": [
+  "Puoi annullare gratuitamente fino a {until}.",
+  "You can cancel for free until {until}."
+ ],
+ "booking.cancelClosed": [
+  "Il termine per la cancellazione gratuita è scaduto ({until}).",
+  "The free cancellation deadline has passed ({until})."
+ ],
+ "booking.addCalendar": [
+  "Aggiungi al calendario",
+  "Add to calendar"
+ ],
+ "booking.voucher": [
+  "Voucher stampabile",
+  "Printable voucher"
+ ],
+ "booking.cancelBtn": [
+  "Annulla la prenotazione",
+  "Cancel this booking"
+ ],
+ "booking.confirmCancel": [
+  "Vuoi davvero annullare la prenotazione?",
+  "Do you really want to cancel this booking?"
+ ],
+ "booking.contactForChanges": [
+  "Per modifiche o annullamenti scrivimi:",
+  "For changes or cancellations write to me:"
+ ],
+ "booking.flash.cancelled": [
+  "Prenotazione annullata.",
+  "Booking cancelled."
+ ],
+ "booking.flash.cancel-error": [
+  "Non è possibile annullare online: scrivimi.",
+  "This cannot be cancelled online: please write to me."
+ ],
+ "voucher.title": [
+  "Voucher di prenotazione",
+  "Booking voucher"
+ ],
+ "voucher.guide": [
+  "Guida",
+  "Guide"
+ ],
+ "voucher.note": [
+  "Mostra questo voucher (anche dal telefono) al punto d’incontro.",
+  "Show this voucher (phone is fine) at the meeting point."
+ ],
+ "voucher.print": [
+  "Stampa o salva in PDF",
+  "Print or save as PDF"
+ ],
+ "demo.banner": [
+  "MODALITÀ DEMO.",
+  "DEMO MODE."
+ ],
+ "demo.text": [
+  "Nessun addebito reale: questa pagina simula il pagamento.",
+  "No real charge: this page simulates the payment."
+ ],
+ "demo.title": [
+  "Pagamento (simulato)",
+  "Payment (simulated)"
+ ],
+ "demo.pay": [
+  "Simula pagamento riuscito",
+  "Simulate successful payment"
+ ],
+ "demo.cancel": [
+  "Annulla",
+  "Cancel"
+ ],
+ "blog.title": [
+  "Blog",
+  "Blog"
+ ],
+ "blog.lead": [
+  "Curiosità, storie e consigli pratici su Venezia.",
+  "Curiosities, stories and practical tips about Venice."
+ ],
+ "blog.minutes": [
+  "{n} min di lettura",
+  "{n} min read"
+ ],
+ "blog.tourCta": [
+  "Vuoi vederlo dal vivo?",
+  "Want to see it in person?"
+ ],
+ "contact.title": [
+  "Contatti",
+  "Contact"
+ ],
+ "contact.lead": [
+  "Domande, richieste su misura o preventivi: scrivimi, rispondo di solito entro un giorno.",
+  "Questions, tailor-made requests or quotes: write to me, I usually reply within a day."
+ ],
+ "contact.message": [
+  "Messaggio",
+  "Message"
+ ],
+ "contact.privacy": [
+  "Inviando accetti che usi i tuoi dati per risponderti. Vedi l’informativa:",
+  "By sending you agree that I use your details to reply. See the policy:"
+ ],
+ "contact.send": [
+  "Invia messaggio",
+  "Send message"
+ ],
+ "contact.sent": [
+  "Grazie! Messaggio inviato, ti rispondo presto.",
+  "Thank you! Message sent, I will reply soon."
+ ],
+ "contact.direct": [
+  "Scrivimi direttamente",
+  "Reach me directly"
+ ],
+ "contact.reply": [
+  "Rispondo di solito entro 24 ore.",
+  "I usually reply within 24 hours."
+ ],
+ "about.cta": [
+  "Vedi i tour",
+  "See the tours"
+ ],
+ "b2b.eyebrow": [
+  "Per DMC, tour operator e agenzie",
+  "For DMCs, tour operators and agencies"
+ ],
+ "b2b.title": [
+  "Per agenzie e DMC",
+  "For agencies and DMCs"
+ ],
+ "b2b.h1": [
+  "Una guida abilitata a Venezia per i tuoi clienti, a tariffe riservate.",
+  "A licensed guide in Venice for your clients, at reserved rates."
+ ],
+ "b2b.lead": [
+  "Prenota in autonomia slot e servizi guida per i tuoi gruppi, 24 ore su 24. Tariffe agevolate, cancellazione gratuita estesa, fattura elettronica.",
+  "Book guide slots and services for your groups on your own, 24/7. Discounted rates, extended free cancellation, e-invoicing."
+ ],
+ "b2b.requestAccess": [
+  "Richiedi accesso partner",
+  "Request partner access"
+ ],
+ "b2b.login": [
+  "Accedi",
+  "Sign in"
+ ],
+ "b2b.loginTitle": [
+  "Accesso area partner",
+  "Partner sign-in"
+ ],
+ "b2b.loginError": [
+  "Email o password non corretti.",
+  "Wrong email or password."
+ ],
+ "b2b.noAccount": [
+  "Non hai ancora un account?",
+  "No account yet?"
+ ],
+ "b2b.logout": [
+  "Esci",
+  "Sign out"
+ ],
+ "b2b.partnerRate": [
+  "Tariffa partner",
+  "Partner rate"
+ ],
+ "b2b.benefitsTitle": [
+  "Cosa ottieni",
+  "What you get"
+ ],
+ "b2b.b1.t": [
+  "Tariffe riservate",
+  "Reserved rates"
+ ],
+ "b2b.b1.p": [
+  "Listino agevolato per DMC, tour operator e agenzie, visibile dopo l’approvazione. Per volumi o accordi annuali possiamo concordare condizioni dedicate.",
+  "A discounted rate card for DMCs, tour operators and agencies, visible after approval. For volumes or annual agreements we can set dedicated terms."
+ ],
+ "b2b.b2.t": [
+  "Disponibilità in tempo reale",
+  "Real-time availability"
+ ],
+ "b2b.b2.p": [
+  "Vedi gli slot liberi e prenoti in autonomia, anche fuori orario. Preavviso minimo: {notice}.",
+  "See free slots and book on your own, even out of hours. Minimum notice: {notice}."
+ ],
+ "b2b.b3.t": [
+  "Cancellazione gratuita estesa",
+  "Extended free cancellation"
+ ],
+ "b2b.b3.p": [
+  "Se il programma cambia puoi annullare senza costi fino a {when} prima del servizio, direttamente dal tuo account.",
+  "If the programme changes you can cancel at no cost up to {when} before the service, straight from your account."
+ ],
+ "b2b.b4.t": [
+  "Fattura elettronica",
+  "E-invoicing"
+ ],
+ "b2b.b4.p": [
+  "Pagamento a fattura con bonifico, secondo gli accordi, oppure con carta. I tuoi dati SDI/PEC restano in anagrafica.",
+  "Pay by invoice and bank transfer as agreed, or by card. Your SDI/PEC details stay on file."
+ ],
+ "b2b.b5.t": [
+  "Voucher pronto",
+  "Voucher ready"
+ ],
+ "b2b.b5.p": [
+  "Per ogni prenotazione trovi conferma, voucher stampabile e file per il calendario con punto d’incontro e riferimenti.",
+  "For every booking you get a confirmation, a printable voucher and a calendar file with meeting point and contacts."
+ ],
+ "b2b.b6.t": [
+  "Una guida con una marcia in più",
+  "A guide with an edge"
+ ],
+ "b2b.b6.p": [
+  "Guida abilitata e storico delle religioni: contenuti solidi, ritmo adatto a gruppi diversi e programmi tematici su richiesta.",
+  "Licensed guide and historian of religions: solid content, a pace that suits different groups and themed programmes on request."
+ ],
+ "b2b.howTitle": [
+  "Come funziona",
+  "How it works"
+ ],
+ "b2b.s1.t": [
+  "Richiedi l’accesso",
+  "Request access"
+ ],
+ "b2b.s1.p": [
+  "Compili il modulo con i dati della tua azienda: bastano due minuti.",
+  "Fill in the form with your company details: it takes two minutes."
+ ],
+ "b2b.s2.t": [
+  "Approvazione",
+  "Approval"
+ ],
+ "b2b.s2.p": [
+  "Verifico la richiesta e attivo il tuo account, di norma entro uno o due giorni lavorativi.",
+  "I review the request and activate your account, usually within one or two business days."
+ ],
+ "b2b.s3.t": [
+  "Prenota gli slot",
+  "Book slots"
+ ],
+ "b2b.s3.p": [
+  "Scegli servizio, data e orario: vedi subito la tua tariffa e la politica di cancellazione.",
+  "Pick service, date and time: you see your rate and the cancellation policy straight away."
+ ],
+ "b2b.s4.t": [
+  "Fattura e voucher",
+  "Invoice and voucher"
+ ],
+ "b2b.s4.p": [
+  "Ricevi conferma e voucher per il cliente; a servizio concluso emetto la fattura elettronica.",
+  "You get a confirmation and a voucher for your client; after the service I issue the e-invoice."
+ ],
+ "b2b.policyTitle": [
+  "Condizioni in breve",
+  "Terms at a glance"
+ ],
+ "b2b.policy.1": [
+  "Cancellazione gratuita fino a {when} prima dell’inizio del servizio. Dopo tale termine il servizio è dovuto.",
+  "Free cancellation up to {when} before the service starts. After that the service is due."
+ ],
+ "b2b.policy.2": [
+  "Prenotazioni possibili con preavviso minimo di {notice}.",
+  "Bookings possible with a minimum notice of {notice}."
+ ],
+ "b2b.policy.3": [
+  "Gruppi fino a 25 persone, nel rispetto dei limiti stabiliti dal Comune di Venezia.",
+  "Groups of up to 25, in line with the limits set by the City of Venice."
+ ],
+ "b2b.policy.4": [
+  "Pagamento a fattura (bonifico) o con carta. Le tariffe sono visibili nell’area riservata.",
+  "Pay by invoice (bank transfer) or card. Rates are visible in the partner area."
+ ],
+ "b2b.policy.note": [
+  "Le condizioni possono essere personalizzate per ogni partner (ad esempio finestre di cancellazione diverse o tariffe a volume).",
+  "Terms can be customised for each partner (for example different cancellation windows or volume rates)."
+ ],
+ "b2b.servicesLead": [
+  "Servizi pensati per il trade:",
+  "Services made for the trade:"
+ ],
+ "b2b.faq1.q": [
+  "Quanto ci vuole per essere approvati?",
+  "How long does approval take?"
+ ],
+ "b2b.faq1.a": [
+  "Di norma uno o due giorni lavorativi. Se hai un servizio urgente scrivimi direttamente.",
+  "Usually one or two business days. If you have an urgent service, write to me directly."
+ ],
+ "b2b.faq2.q": [
+  "Posso prenotare per gruppi numerosi?",
+  "Can I book for large groups?"
+ ],
+ "b2b.faq2.a": [
+  "Sì, fino a 25 persone per servizio, nel rispetto dei limiti del Comune. Per gruppi più grandi organizziamo più guide: scrivimi.",
+  "Yes, up to 25 guests per service, within the City’s limits. For larger groups we arrange several guides: write to me."
+ ],
+ "b2b.faq3.q": [
+  "E se non trovo la data che mi serve?",
+  "What if I cannot find the date I need?"
+ ],
+ "b2b.faq3.a": [
+  "Scrivimi: spesso riesco a riorganizzare gli impegni. Per programmi articolati o viaggi studio preparo un preventivo dedicato.",
+  "Write to me: I can often rearrange my commitments. For complex programmes or study trips I prepare a dedicated quote."
+ ],
+ "b2b.faq4.q": [
+  "Come funzionano i pagamenti?",
+  "How do payments work?"
+ ],
+ "b2b.faq4.a": [
+  "Per i partner approvati è disponibile il pagamento a fattura elettronica con bonifico; in alternativa puoi pagare con carta alla prenotazione.",
+  "Approved partners can pay by e-invoice and bank transfer; alternatively you can pay by card when booking."
+ ],
+ "b2b.ctaTitle": [
+  "Lavoriamo insieme?",
+  "Shall we work together?"
+ ],
+ "b2b.ctaLead": [
+  "Richiedi l’accesso o scrivimi per un preventivo su programmi e volumi.",
+  "Request access or write to me for a quote on programmes and volumes."
+ ],
+ "b2b.ask": [
+  "Chiedi un preventivo",
+  "Ask for a quote"
+ ],
+ "b2b.reg.title": [
+  "Richiedi l’accesso partner",
+  "Request partner access"
+ ],
+ "b2b.reg.lead": [
+  "Compila i dati della tua azienda. Dopo l’approvazione potrai vedere le tariffe riservate e prenotare.",
+  "Fill in your company details. After approval you will see the reserved rates and be able to book."
+ ],
+ "b2b.reg.company": [
+  "Azienda",
+  "Company"
+ ],
+ "b2b.reg.companyName": [
+  "Ragione sociale",
+  "Company name"
+ ],
+ "b2b.reg.vat": [
+  "P.IVA / VAT",
+  "VAT number"
+ ],
+ "b2b.reg.country": [
+  "Paese",
+  "Country"
+ ],
+ "b2b.reg.other": [
+  "Altro",
+  "Other"
+ ],
+ "b2b.reg.website": [
+  "Sito web",
+  "Website"
+ ],
+ "b2b.reg.sdi": [
+  "Codice SDI",
+  "SDI code"
+ ],
+ "b2b.reg.sdiHint": [
+  "(Italia: obbligatorio, in alternativa PEC)",
+  "(Italy: required, or PEC instead)"
+ ],
+ "b2b.reg.pec": [
+  "PEC",
+  "PEC"
+ ],
+ "b2b.reg.address": [
+  "Indirizzo",
+  "Address"
+ ],
+ "b2b.reg.contact": [
+  "Referente",
+  "Contact person"
+ ],
+ "b2b.reg.message": [
+  "Come lavori?",
+  "How do you work?"
+ ],
+ "b2b.reg.messageHint": [
+  "Tipologia di clientela, volumi indicativi, periodi…",
+  "Type of clients, approximate volumes, seasons…"
+ ],
+ "b2b.reg.pwHint": [
+  "(min. 10 caratteri)",
+  "(min. 10 characters)"
+ ],
+ "b2b.reg.submit": [
+  "Invia la richiesta",
+  "Send request"
+ ],
+ "b2b.reg.doneTitle": [
+  "Richiesta inviata",
+  "Request sent"
+ ],
+ "b2b.reg.doneText": [
+  "Grazie! Ti ho inviato una email di conferma. Appena approvo il tuo account potrai prenotare con le tariffe riservate.",
+  "Thank you! I have sent you a confirmation email. As soon as I approve your account you can book at the reserved rates."
+ ],
+ "b2b.status": [
+  "Stato dell’account",
+  "Account status"
+ ],
+ "b2b.st.pending": [
+  "In attesa di approvazione",
+  "Awaiting approval"
+ ],
+ "b2b.st.pending.text": [
+  "Sto verificando la tua richiesta. Riceverai un’email appena l’account è attivo.",
+  "I am reviewing your request. You will get an email as soon as the account is active."
+ ],
+ "b2b.st.approved": [
+  "Attivo",
+  "Active"
+ ],
+ "b2b.st.approved.text": [
+  "Puoi prenotare con le tariffe riservate.",
+  "You can book at the reserved rates."
+ ],
+ "b2b.st.rejected": [
+  "Non approvato",
+  "Not approved"
+ ],
+ "b2b.st.rejected.text": [
+  "La richiesta non è stata approvata. Scrivimi per maggiori informazioni.",
+  "The request was not approved. Write to me for more information."
+ ],
+ "b2b.st.suspended": [
+  "Sospeso",
+  "Suspended"
+ ],
+ "b2b.st.suspended.text": [
+  "L’account è temporaneamente sospeso. Scrivimi per chiarimenti.",
+  "The account is temporarily suspended. Write to me for details."
+ ],
+ "b2b.cancelPolicy": [
+  "Cancellazione gratuita fino a",
+  "Free cancellation up to"
+ ],
+ "b2b.discount": [
+  "Sconto sulla tariffa partner",
+  "Discount on partner rate"
+ ],
+ "b2b.baseRate": [
+  "tariffa base",
+  "base rate"
+ ],
+ "b2b.payments": [
+  "Pagamenti",
+  "Payments"
+ ],
+ "b2b.payInvoiceCard": [
+  "Fattura/bonifico o carta",
+  "Invoice/transfer or card"
+ ],
+ "b2b.payCardOnly": [
+  "Carta",
+  "Card"
+ ],
+ "b2b.rates": [
+  "Le tue tariffe",
+  "Your rates"
+ ],
+ "b2b.public": [
+  "Pubblico",
+  "Public"
+ ],
+ "b2b.yours": [
+  "Tua tariffa",
+  "Your rate"
+ ],
+ "b2b.myBookings": [
+  "Le tue prenotazioni",
+  "Your bookings"
+ ],
+ "b2b.noBookings": [
+  "Non hai ancora prenotazioni.",
+  "You have no bookings yet."
+ ],
+ "b2b.newBooking": [
+  "Nuova prenotazione",
+  "New booking"
+ ],
+ "b2b.state": [
+  "Stato",
+  "Status"
+ ],
+ "b2b.bst.confirmed": [
+  "Confermata",
+  "Confirmed"
+ ],
+ "b2b.bst.held": [
+  "In pagamento",
+  "Payment pending"
+ ],
+ "b2b.bst.cancelled": [
+  "Annullata",
+  "Cancelled"
+ ],
+ "b2b.bst.expired": [
+  "Scaduta",
+  "Expired"
+ ],
+ "b2b.flash.welcome": [
+  "Benvenuto!",
+  "Welcome!"
+ ]
+}

@@ -62,7 +62,7 @@ export function getBookingByRef(db, ref) {
 export function createBooking(app, input, nowMs = Date.now()) {
   const { db, cfg, content } = app;
   const tour = content.tour(input.tourSlug);
-  if (!tour) throw new BookingError('invalid', 'tour');
+  if (!tour?.active) throw new BookingError('invalid', 'tour');
   const channel = input.channel === 'b2b' ? 'b2b' : 'b2c';
   const account = input.account ?? null;
   if (channel === 'b2b' && account?.status !== 'approved') throw new BookingError('account', 'account not approved');

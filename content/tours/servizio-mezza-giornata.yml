@@ -1,0 +1,52 @@
+# Servizio guida a ore pensato anche per agenzie, DMC e tour operator.
+order: 6
+model: group
+flexible: true
+duration: 240
+maxParticipants: 25
+price: 240
+b2bPrice: 190
+art: walk
+languages: [it, en]
+
+it:
+  title: Servizio guida mezza giornata
+  subtitle: 4 ore di servizio per gruppi e agenzie
+  summary: "La formula classica per gruppi, DMC e tour operator: una guida abilitata per mezza giornata."
+  meetingPoint: Concordato con te (hotel, molo, terminal)
+  meetingUrl: ''
+  description: |
+    Servizio di guida abilitata della durata di 4 ore, con inizio a vostra scelta. Pensato per gruppi organizzati, agenzie e DMC che hanno bisogno di un professionista affidabile, puntuale e preparato su Venezia.
+
+    L'itinerario viene concordato in anticipo in base al programma del gruppo, al tempo disponibile e alle esigenze logistiche (arrivo da hotel, nave da crociera, molo, terminal).
+  highlights:
+    - Guida abilitata per 4 ore consecutive
+    - Itinerario concordato in anticipo
+    - Gruppi fino a 25 persone, nel rispetto dei limiti previsti dal Comune
+  includes:
+    - Guida abilitata
+    - Coordinamento preventivo con referente / capogruppo
+  excludes:
+    - Ingressi, trasporti, radioguide, mance
+  notes: Prezzo per l'intero gruppo. Tariffa agevolata riservata a DMC, tour operator e agenzie con account partner.
+
+en:
+  title: Half-day guide service
+  subtitle: 4 hours of service for groups and agencies
+  summary: "The classic format for groups, DMCs and tour operators: a licensed guide for half a day."
+  meetingPoint: Agreed with you (hotel, pier, terminal)
+  meetingUrl: ''
+  description: |
+    A 4-hour licensed guide service, starting at the time you choose. Designed for organised groups, agencies and DMCs who need a reliable, punctual professional who knows Venice inside out.
+
+    The itinerary is agreed in advance based on the group's programme, available time and logistics (hotel pick-up, cruise ship, pier, terminal).
+  highlights:
+    - Licensed guide for 4 consecutive hours
+    - Itinerary agreed in advance
+    - Groups of up to 25 guests, in line with the City's limits
+  includes:
+    - Licensed guide
+    - Advance coordination with your contact person / group leader
+  excludes:
+    - Entry tickets, transport, audio guides, tips
+  notes: Price for the whole group. Discounted rate reserved for DMCs, tour operators and agencies with a partner account.

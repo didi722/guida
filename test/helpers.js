@@ -4,9 +4,15 @@ import crypto from 'node:crypto';
 import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { localToInstant } from '../server/time.js';
+import { createMailer } from '../server/mail.js';
+import { createPayments } from '../server/payments.js';
+import { createServices } from '../server/services.js';
+
+process.env.GUIDA_QUIET = '1';
 
 export const tour = (over = {}) => ({
   slug: 'shared',
+  active: true,
   order: 1,
   model: 'person',
   flexible: false,
@@ -20,7 +26,7 @@ export const tour = (over = {}) => ({
   payOnSite: true,
   art: 'dome',
   languages: ['it', 'en'],
-  i18n: {},
+  i18n: { it: { title: 'Tour di prova', meetingPoint: 'Piazza' }, en: { title: 'Test tour', meetingPoint: 'The square' } },
   ...over,
 });
 
@@ -39,7 +45,11 @@ export function makeApp(overrides = {}) {
   const db = openDb(':memory:');
   const tours = FIXTURE_TOURS;
   const content = { tours, tour: (s) => tours.find((t) => t.slug === s), postsFor: () => [], post: () => null, page: () => null };
-  return { cfg, db, content, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
+  const app = { cfg, db, content, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
+  app.mail = createMailer(cfg);
+  app.payments = createPayments(cfg);
+  app.services = createServices(app);
+  return app;
 }
 
 export function addAccount(db, over = {}) {

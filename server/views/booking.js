@@ -1,0 +1,232 @@
+import { html, raw } from '../html.js';
+import { cancellationState, freeCancelHours, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
+import { fmtDate, fmtInstant, localToInstant } from '../time.js';
+import { formatMoney } from '../util.js';
+import { page } from './layout.js';
+import { breadcrumbs, fmtDuration, fmtHours, tourMedia } from './components.js';
+
+const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
+
+// ───────────────────────── Pagina "Prenota" (prima la data) ─────────────────────────
+export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, channel }) {
+  const { t, lang, u, app } = ctx;
+  const tours = app.content.tours;
+  const body = html`
+<section class="page-head"><div class="wrap">
+  ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.book')]])}
+  <h1>${t('book.title')}</h1><p class="lead">${t('book.lead')}</p>
+  ${channel === 'b2b' ? html`<p><span class="chip chip-accent">${t('b2b.partnerRate')}</span> ${t('book.partnerNote')}</p>` : ''}
+</div></section>
+
+<section class="section tight"><div class="wrap">
+  <form class="card pad search-card" method="get" action="${u('/book')}">
+    <label class="field"><span class="label">${t('quick.date')}</span><input type="date" name="date" min="${minDate}" value="${date ?? ''}" required></label>
+    <label class="field"><span class="label">${t('quick.guests')}</span><input type="number" name="pax" min="1" max="25" value="${pax}" inputmode="numeric" required></label>
+    <label class="field"><span class="label">${t('book.tour')}</span>
+      <select name="tour"><option value="">${t('book.allTours')}</option>${tours.map((x) => html`<option value="${x.slug}" ${x.slug === tourSlug ? raw('selected') : ''}>${x.i18n[lang].title}</option>`)}</select>
+    </label>
+    <button class="btn btn-gold" type="submit">${t('quick.go')}</button>
+  </form>
+
+  ${date
+    ? html`<h2 class="h-sub spaced">${t('book.resultsFor', { date: fmtDate(date, lang) })}</h2>
+      ${results.length
+        ? html`<div class="results">${results.map(({ tour, slots }) => {
+            const ti = tour.i18n[lang];
+            const unit = unitPriceFor(tour, channel, ctx.acct);
+            return html`<article class="card result reveal">
+              <div class="result-media">${tourMedia(ctx, tour, '')}</div>
+              <div class="result-body">
+                <h3><a href="${u('/tours/' + tour.slug)}">${ti.title}</a></h3>
+                <p class="muted small">${fmtDuration(tour.durationMin)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>
+                <div class="slot-list">${slots.map((s) => html`<a class="slot" href="${slotUrl(u, tour.slug, date, s.time, pax)}"><strong>${s.time}</strong>${tour.model === 'person' ? html`<small>${s.joined ? t('book.confirmedDeparture') : t('book.newDeparture')}${s.left <= 4 ? html` · ${t('w.left', { n: s.left })}` : ''}</small>` : ''}</a>`)}</div>
+              </div>
+            </article>`;
+          })}</div>`
+        : html`<div class="card pad empty"><p>${t('book.none')}</p>
+            ${suggestions.length ? html`<p>${t('book.nextDates')}</p><p class="date-chips">${suggestions.map((d) => html`<a class="chip chip-link" href="${u('/book')}?date=${d}&pax=${pax}${tourSlug ? '&tour=' + tourSlug : ''}">${fmtDate(d, lang, 'weekday')}</a>`)}</p>` : ''}
+            <p class="small muted">${t('book.askUs')} <a href="${u('/contact')}">${t('nav.contact')}</a></p></div>`}`
+    : html`<p class="muted spaced">${t('book.pickPrompt')}</p>`}
+</div></section>`;
+  return page(ctx, { title: t('nav.book'), description: t('book.lead'), path: `/${lang}/book`, body, activeNav: 'book' });
+}
+
+// ───────────────────────── Checkout ─────────────────────────
+export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, error = '', channel }) {
+  const { t, lang, u, app, acct } = ctx;
+  const { cfg } = app;
+  const ti = tour.i18n[lang];
+  const total = priceFor(tour, pax, channel, acct);
+  const options = paymentOptions(app, tour, channel, acct);
+  const hours = freeCancelHours(cfg, tour, channel, acct);
+  const deadline = localToInstant(date, time) - hours * 3600_000;
+  const refundable = Date.now() <= deadline;
+  const method = values.paymentMethod && options.includes(values.paymentMethod) ? values.paymentMethod : options[0];
+  const isB2b = channel === 'b2b';
+  const v = (k, d = '') => values[k] ?? d;
+
+  const body = html`
+<section class="page-head"><div class="wrap">
+  ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.book'), u('/book')], [t('checkout.title')]])}
+  <h1>${t('checkout.title')}</h1>
+</div></section>
+<section class="section tight"><div class="wrap checkout-grid">
+  <form class="card pad form" method="post" action="${u('/book/checkout')}" id="checkout-form">
+    ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
+    <input type="hidden" name="tour" value="${tour.slug}"><input type="hidden" name="date" value="${date}"><input type="hidden" name="time" value="${time}"><input type="hidden" name="pax" value="${pax}">
+    <h2>${isB2b ? t('checkout.contactB2b') : t('checkout.contact')}</h2>
+    <div class="form-grid">
+      <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? acct.contact_name : '')}"></label>
+      <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? acct.email : '')}"></label>
+      <label class="field"><span class="label">${t('f.phone')} <em>${isB2b ? t('f.phoneB2b') : t('f.optional')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', isB2b ? (acct.phone ?? '') : '')}"></label>
+      <label class="field"><span class="label">${t('f.lang')}</span><select name="lang"><option value="it" ${v('lang', lang) === 'it' ? raw('selected') : ''}>Italiano</option><option value="en" ${v('lang', lang) === 'en' ? raw('selected') : ''}>English</option></select></label>
+    </div>
+    ${isB2b ? html`<label class="field"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${v('clientRef')}" placeholder="${t('f.clientRefHint')}"></label>` : ''}
+    <label class="field"><span class="label">${t('f.notes')} <em>${t('f.optional')}</em></span><textarea name="notes" rows="3" maxlength="1000" placeholder="${isB2b ? t('f.notesHintB2b') : t('f.notesHint')}">${v('notes')}</textarea></label>
+
+    ${!isB2b
+      ? html`<details class="invoice-opt" ${values.invoice ? raw('open') : ''}><summary>${t('f.invoiceAsk')}</summary>
+        <label class="check"><input type="checkbox" name="invoice" value="1" ${values.invoice ? raw('checked') : ''}> ${t('f.invoiceCheck')}</label>
+        <label class="field"><span class="label">${t('f.invoiceData')}</span><textarea name="billing" rows="3" maxlength="500" placeholder="${t('f.invoiceHint')}">${v('billing')}</textarea></label></details>`
+      : ''}
+
+    <h2>${t('checkout.payment')}</h2>
+    <div class="pay-options" role="radiogroup">
+      ${options.map((o) => html`<label class="pay-option"><input type="radio" name="paymentMethod" value="${o}" ${o === method ? raw('checked') : ''} data-label="${t(`pay.${o}.cta`)}"><span><strong>${t(`pay.${o}.title`)}</strong><small>${t(`pay.${o}.desc`)}</small></span></label>`)}
+    </div>
+
+    <label class="check consent"><input type="checkbox" name="consent" value="1" required> <span>${t('f.consent')} <a href="${u('/terms')}" target="_blank">${t('footer.terms')}</a> · <a href="${u('/privacy')}" target="_blank">${t('footer.privacy')}</a></span></label>
+    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit">${t(`pay.${method}.cta`)}</button>
+  </form>
+
+  <aside class="card summary-card">
+    <div class="summary-media">${tourMedia(ctx, tour, '')}</div>
+    <div class="pad">
+      <h2>${ti.title}</h2>
+      <dl class="summary-list">
+        <div><dt>${t('s.date')}</dt><dd>${fmtDate(date, lang)}</dd></div>
+        <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${fmtDuration(tour.durationMin)})</span></dd></div>
+        <div><dt>${t('s.guests')}</dt><dd>${pax}</dd></div>
+        <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}</dd></div>
+        <div class="summary-total"><dt>${t('s.total')}</dt><dd>${formatMoney(total, lang)}${isB2b ? html` <span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}</dd></div>
+      </dl>
+      <p class="policy-box ${refundable ? 'ok' : 'warn'}">${refundable ? t('checkout.refundable', { until: fmtInstant(deadline, lang), when: fmtHours(t, hours) }) : t('checkout.nonRefundable')}</p>
+      ${slot.joined ? html`<p class="small muted">${t('checkout.joined')}</p>` : ''}
+    </div>
+  </aside>
+</div></section>`;
+  return page(ctx, { title: t('checkout.title'), path: `/${lang}/book/checkout`, body, noindex: true, activeNav: 'book', scripts: raw(`<script src="/js/checkout.js" defer></script>`) });
+}
+
+export function slotGonePage(ctx, { tour, date, pax }) {
+  const { t, lang, u } = ctx;
+  const body = html`<section class="page-head"><div class="wrap narrow center">
+    <h1>${t('checkout.goneTitle')}</h1><p class="lead">${t('checkout.goneText')}</p>
+    <p class="btn-row center"><a class="btn btn-gold" href="${u('/book')}?${tour ? 'tour=' + tour.slug + '&' : ''}${date ? 'date=' + date + '&' : ''}pax=${pax}">${t('checkout.pickAnother')}</a></p></div></section>`;
+  return page(ctx, { title: t('checkout.goneTitle'), path: `/${lang}/book/checkout`, body, noindex: true });
+}
+
+// ───────────────────────── Stato prenotazione ─────────────────────────
+export function bookingPage(ctx, b, { flash = '' } = {}) {
+  const { t, lang, u, app } = ctx;
+  const { cfg } = app;
+  const tour = app.content.tour(b.tour_slug);
+  const ti = tour.i18n[lang];
+  const st = cancellationState(b);
+  const q = `?t=${b.token}`;
+  const base = `/${lang}/booking/${b.ref}`;
+  const holdLeft = b.status === 'held' ? Math.max(0, Math.ceil((Date.parse(b.hold_expires_at) - Date.now()) / 60000)) : 0;
+
+  const heads = {
+    confirmed: ['ok', t('booking.confirmedTitle'), t('booking.confirmedText', { email: b.email })],
+    held: ['wait', t('booking.heldTitle'), t('booking.heldText', { n: holdLeft })],
+    cancelled: ['err', t('booking.cancelledTitle'), t('booking.cancelledText')],
+    expired: ['err', t('booking.expiredTitle'), t('booking.expiredText')],
+  };
+  const [tone, title, text] = heads[b.status];
+  const payLabel = { card: b.payment_status === 'paid' || b.payment_status === 'refunded' ? t('booking.paidOnline') : t('booking.cardPending'), onsite: t('booking.onsite'), invoice: t('booking.invoice') }[b.payment_method];
+  const paymentNote = b.payment_status === 'refunded' ? html` · <strong>${t('booking.refunded', { amount: formatMoney(b.refund_cents, lang, b.currency) })}</strong>` : b.payment_status === 'refund_failed' ? html` · <strong>${t('booking.refundFailed')}</strong>` : '';
+
+  const body = html`
+<section class="page-head"><div class="wrap narrow">
+  ${flash ? html`<div class="notice notice-${flash === 'cancel-error' ? 'err' : 'ok'}" role="status">${t(`booking.flash.${flash}`)}</div>` : ''}
+  <div class="status status-${tone}"><span class="status-dot" aria-hidden="true"></span><div><h1>${title}</h1><p class="lead">${text}</p></div></div>
+</div></section>
+<section class="section tight"><div class="wrap narrow">
+  <div class="card pad">
+    <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${b.ref}</strong></p>
+    <dl class="summary-list">
+      <div><dt>${t('s.service')}</dt><dd>${ti.title}</dd></div>
+      <div><dt>${t('s.date')}</dt><dd>${fmtDate(b.date, lang)}</dd></div>
+      <div><dt>${t('s.time')}</dt><dd>${b.start_time}–${b.end_time}</dd></div>
+      <div><dt>${t('s.guests')}</dt><dd>${b.participants}</dd></div>
+      <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}${ti.meetingUrl ? html` · <a href="${ti.meetingUrl}" target="_blank" rel="noopener">${t('tour.openMap')}</a>` : ''}</dd></div>
+      <div><dt>${t('s.name')}</dt><dd>${b.name} · ${b.email}${b.phone ? ' · ' + b.phone : ''}</dd></div>
+      ${b.client_ref ? html`<div><dt>${t('f.clientRef')}</dt><dd>${b.client_ref}</dd></div>` : ''}
+      ${b.notes ? html`<div><dt>${t('f.notes')}</dt><dd>${b.notes}</dd></div>` : ''}
+      <div class="summary-total"><dt>${t('s.total')}</dt><dd>${formatMoney(b.total_cents, lang, b.currency)} <span class="muted">· ${payLabel}</span>${paymentNote}</dd></div>
+    </dl>
+
+    ${b.status === 'held'
+      ? html`<p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${b.ref}${q}&lang=${lang}">${t('booking.payNow')}</a></p>`
+      : ''}
+
+    ${b.status === 'confirmed'
+      ? html`
+      <p class="policy-box ${st.free ? 'ok' : 'warn'}">${st.everRefundable ? (st.free ? t('booking.canCancel', { until: fmtInstant(st.until, lang) }) : t('booking.cancelClosed', { until: fmtInstant(st.until, lang) })) : t('checkout.nonRefundable')}</p>
+      <p class="btn-row">
+        <a class="btn btn-outline" href="${base}/calendar.ics${q}">${t('booking.addCalendar')}</a>
+        <a class="btn btn-outline" href="${base}/voucher${q}" target="_blank">${t('booking.voucher')}</a>
+      </p>
+      ${st.free
+        ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
+        : st.started ? '' : html`<p class="small muted">${t('booking.contactForChanges')} <a href="mailto:${cfg.site.email}">${cfg.site.email}</a>${cfg.site.whatsapp ? html` · <a href="https://wa.me/${cfg.site.whatsapp}">WhatsApp</a>` : ''}</p>`}`
+      : ''}
+  </div>
+</div></section>`;
+  return page(ctx, { title: `${t('s.ref')} ${b.ref}`, path: `/${lang}/booking/${b.ref}`, body, noindex: true });
+}
+
+export function voucherPage(ctx, b) {
+  const { t, lang, app } = ctx;
+  const { cfg } = app;
+  const tour = app.content.tour(b.tour_slug);
+  const ti = tour.i18n[lang];
+  const body = html`
+<section class="section voucher"><div class="wrap narrow">
+  <div class="card pad voucher-card">
+    <p class="eyebrow">${t('voucher.title')}</p>
+    <h1>${ti.title}</h1>
+    <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${b.ref}</strong></p>
+    <dl class="summary-list">
+      <div><dt>${t('s.date')}</dt><dd>${fmtDate(b.date, lang)}</dd></div>
+      <div><dt>${t('s.time')}</dt><dd>${b.start_time}–${b.end_time}</dd></div>
+      <div><dt>${t('s.guests')}</dt><dd>${b.participants}</dd></div>
+      <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}</dd></div>
+      <div><dt>${t('s.name')}</dt><dd>${b.name}${b.client_ref ? ' · ' + b.client_ref : ''}</dd></div>
+      <div><dt>${t('voucher.guide')}</dt><dd>${cfg.site.name}${cfg.site.guideLicense ? ' · ' + cfg.site.guideLicense : ''}<br>${cfg.site.email}${cfg.site.phone ? ' · ' + cfg.site.phone : ''}</dd></div>
+      ${b.payment_method === 'onsite' && b.payment_status !== 'paid' ? html`<div><dt>${t('s.total')}</dt><dd>${formatMoney(b.total_cents, lang, b.currency)} — ${t('booking.onsite')}</dd></div>` : ''}
+    </dl>
+    <p class="muted small">${t('voucher.note')}</p>
+    <p class="no-print"><button class="btn btn-gold" type="button" data-print>${t('voucher.print')}</button></p>
+  </div>
+</div></section>`;
+  return page(ctx, { title: `${t('voucher.title')} ${b.ref}`, path: `/${lang}/booking/${b.ref}/voucher`, body, noindex: true, bodyClass: 'voucher-page' });
+}
+
+export function demoPayPage(ctx, b) {
+  const { t, lang } = ctx;
+  const body = html`
+<section class="page-head"><div class="wrap narrow">
+  <div class="notice notice-err" role="note"><strong>${t('demo.banner')}</strong> ${t('demo.text')}</div>
+  <h1>${t('demo.title')}</h1>
+  <p class="lead">${formatMoney(b.total_cents, lang, b.currency)} · ${b.ref}</p>
+  <form method="post" action="/pay/demo/${b.ref}/complete" class="btn-row">
+    <input type="hidden" name="t" value="${b.token}"><input type="hidden" name="lang" value="${lang}">
+    <button class="btn btn-gold" type="submit">${t('demo.pay')}</button>
+    <a class="btn btn-outline" href="/${lang}/booking/${b.ref}?t=${b.token}&canceled=1">${t('demo.cancel')}</a>
+  </form>
+</div></section>`;
+  return page(ctx, { title: t('demo.title'), path: `/pay/demo/${b.ref}`, body, noindex: true });
+}

@@ -1,0 +1,64 @@
+order: 3
+featured: true
+model: group             # privato: prezzo a gruppo, orario a scelta
+flexible: true
+duration: 180
+maxParticipants: 15
+price: 190               # € a gruppo
+b2bPrice: 150
+art: eastwest
+languages: [it, en]
+
+it:
+  title: Venezia tra Oriente e Occidente
+  subtitle: Visita privata a tema, a cura di uno storico delle religioni
+  summary: "Bisanzio, Islam, comunità greche e armene, perfino il Giappone: la città-ponte raccontata dalle sue religioni."
+  meetingPoint: Concordato con te in base alla zona dell'hotel (di solito nei pressi di San Marco)
+  meetingUrl: ''
+  description: |
+    Venezia è sempre stata una porta: verso Costantinopoli, verso il mondo islamico, verso l'Asia. Per questo la città è piena di tracce che non ti aspetti: mosaici bizantini, archi che guardano a Oriente, magazzini di mercanti ottomani, chiese delle comunità greca e armena.
+
+    In questa visita privata seguiamo il filo delle religioni e degli scambi culturali, dalla Basilica alle calli dei mercanti, fino a una storia poco nota: nel 1585 una delegazione di giovani giapponesi cristiani, educati dai gesuiti, fu ricevuta con grandi onori dalla Repubblica.
+
+    Si può adattare a interessi, età e tempo a disposizione: ideale per coppie, famiglie con ragazzi, gruppi di amici o ospiti che hanno già visto «i classici».
+  highlights:
+    - La Basilica di San Marco come ponte con Bisanzio
+    - Tracce islamiche e orientali nell'architettura veneziana
+    - Il Fondaco dei Turchi e le comunità di mercanti stranieri
+    - San Giorgio dei Greci e il mondo ortodosso a Venezia
+    - "Il Giappone a Venezia: l'ambasceria Tenshō del 1585"
+  includes:
+    - Guida abilitata e storico delle religioni, in italiano o inglese
+    - Itinerario costruito sui vostri interessi
+    - Orario a vostra scelta
+  excludes:
+    - Ingressi a monumenti e musei
+    - Mance e consumazioni
+  notes: Prezzo per l'intero gruppo, fino a 15 persone.
+
+en:
+  title: Venice between East and West
+  subtitle: A private themed visit, led by a historian of religions
+  summary: "Byzantium, Islam, Greek and Armenian communities, even Japan: the bridge-city told through its religions."
+  meetingPoint: Agreed with you according to your hotel area (usually near St Mark's)
+  meetingUrl: ''
+  description: |
+    Venice has always been a gateway: to Constantinople, to the Islamic world, to Asia. That is why the city is full of unexpected traces: Byzantine mosaics, arches looking east, Ottoman merchants' warehouses, churches of the Greek and Armenian communities.
+
+    On this private visit we follow the thread of religions and cultural exchange, from the Basilica to the merchants' alleys, up to a little-known story: in 1585 a delegation of young Japanese Christians, educated by the Jesuits, was received with great honours by the Republic.
+
+    It adapts to your interests, ages and available time: ideal for couples, families with teenagers, groups of friends or guests who have already seen "the classics".
+  highlights:
+    - St Mark's Basilica as a bridge to Byzantium
+    - Islamic and eastern traces in Venetian architecture
+    - The Fondaco dei Turchi and the communities of foreign merchants
+    - San Giorgio dei Greci and the Orthodox world in Venice
+    - "Japan in Venice: the 1585 Tenshō embassy"
+  includes:
+    - Licensed guide and historian of religions, in Italian or English
+    - Itinerary built around your interests
+    - Start time of your choice
+  excludes:
+    - Entry tickets to monuments and museums
+    - Tips and drinks
+  notes: Price for the whole group, up to 15 guests.

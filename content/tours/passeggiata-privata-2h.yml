@@ -1,0 +1,49 @@
+order: 5
+model: group
+flexible: true
+duration: 120
+maxParticipants: 12
+price: 150
+b2bPrice: 120
+art: bridge
+languages: [it, en]
+
+it:
+  title: Passeggiata privata (2 ore)
+  subtitle: Una guida tutta per voi, tema a scelta
+  summary: "Due ore su misura: storia, arte, cucina, fotografia o semplicemente la Venezia che non conosci."
+  meetingPoint: Concordato con te al momento della prenotazione
+  meetingUrl: ''
+  description: |
+    La formula più semplice e flessibile: scegli giorno e orario, scegli un tema e ci pensiamo insieme. Dai ponti e dai campielli nascosti ai luoghi del cibo e delle tradizioni, dal Rinascimento alle storie di famiglia.
+
+    Perfetta per chi ha poco tempo, per chi viaggia con bambini o per chi vuole un primo orientamento prima di esplorare da solo.
+  highlights:
+    - Itinerario costruito su di voi
+    - Orario di inizio a scelta
+    - "Tema a scelta: storia, arte, religioni, cucina veneziana, fotografia"
+  includes:
+    - Guida abilitata, in italiano o inglese
+  excludes:
+    - Ingressi, trasporti, mance
+  notes: Prezzo per l'intero gruppo, fino a 12 persone.
+
+en:
+  title: Private walk (2 hours)
+  subtitle: A guide just for you, theme of your choice
+  summary: "Two tailor-made hours: history, art, food, photography or simply the Venice you do not know yet."
+  meetingPoint: Agreed with you when booking
+  meetingUrl: ''
+  description: |
+    The simplest and most flexible option: choose the day and time, choose a theme and we shape it together. From hidden bridges and squares to places of food and tradition, from the Renaissance to family stories.
+
+    Perfect if you are short on time, travelling with children or want a first orientation before exploring on your own.
+  highlights:
+    - Itinerary built around you
+    - Start time of your choice
+    - "Theme of your choice: history, art, religions, Venetian food, photography"
+  includes:
+    - Licensed guide, in Italian or English
+  excludes:
+    - Entry tickets, transport, tips
+  notes: Price for the whole group, up to 12 guests.

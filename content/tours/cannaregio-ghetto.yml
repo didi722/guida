@@ -1,0 +1,63 @@
+order: 2
+featured: true
+model: person
+times: ["10:00", "15:00"]
+weekdays: [0, 1, 2, 3, 4, 5, 6]
+duration: 150
+maxParticipants: 10
+price: 35
+b2bPrice: 28
+art: ghetto
+languages: [it, en]
+
+it:
+  title: Cannaregio e il Ghetto
+  subtitle: La Venezia delle comunità e delle minoranze
+  summary: Il quartiere più autentico, il primo Ghetto della storia e le chiese dove riposa Tintoretto.
+  meetingPoint: Ponte delle Guglie, Cannaregio (il punto esatto è nell'email di conferma)
+  meetingUrl: https://www.google.com/maps/search/?api=1&query=Ponte+delle+Guglie+Venezia
+  description: |
+    Cannaregio è il sestiere dove Venezia torna a essere una città in cui si vive. Qui, nel 1516, la Repubblica stabilì il Ghetto: un luogo di segregazione, ma anche uno straordinario laboratorio di cultura, commercio e fede, da cui nasce la parola stessa «ghetto».
+
+    Camminiamo tra campi, fondamenta e botteghe di quartiere, entriamo nella storia delle diverse comunità che hanno abitato la città (ebrea, ma anche greca, armena, tedesca) e arriviamo alla Madonna dell'Orto, la chiesa di Tintoretto.
+
+    Un percorso per chi vuole capire Venezia anche attraverso le religioni e le convivenze che l'hanno fatta.
+  highlights:
+    - "Il Ghetto Nuovo e il Ghetto Vecchio: storia, architettura e vita quotidiana"
+    - Le sinagoghe, viste dall'esterno (visita al museo opzionale)
+    - La Madonna dell'Orto, parrocchia e sepolcro di Tintoretto
+    - Fondamenta, botteghe e angoli lontani dal turismo di massa
+  includes:
+    - Guida abilitata, in italiano o inglese
+    - Gruppo di massimo 10 persone
+    - Indicazioni per bacari e osterie di quartiere
+  excludes:
+    - Ingresso al Museo Ebraico e alle sinagoghe
+    - Mance e consumazioni
+  notes: Il Ghetto è un luogo vivo e sacro per la comunità ebraica. Chiediamo un abbigliamento e un comportamento rispettosi.
+
+en:
+  title: Cannaregio and the Ghetto
+  subtitle: The Venice of communities and minorities
+  summary: The most authentic district, the world's first Ghetto and the church where Tintoretto rests.
+  meetingPoint: Ponte delle Guglie, Cannaregio (exact spot in your confirmation email)
+  meetingUrl: https://www.google.com/maps/search/?api=1&query=Ponte+delle+Guglie+Venezia
+  description: |
+    Cannaregio is the district where Venice becomes a city to live in again. Here, in 1516, the Republic established the Ghetto: a place of segregation, but also an extraordinary laboratory of culture, trade and faith, and the origin of the very word "ghetto".
+
+    We walk through squares, quaysides and neighbourhood workshops, step into the history of the communities that have lived in the city (Jewish, but also Greek, Armenian and German) and end at Madonna dell'Orto, Tintoretto's parish church.
+
+    A route for those who want to understand Venice through the religions and coexistences that shaped it.
+  highlights:
+    - "The Ghetto Nuovo and Ghetto Vecchio: history, architecture and daily life"
+    - The synagogues, seen from the outside (optional museum visit)
+    - Madonna dell'Orto, Tintoretto's parish church and burial place
+    - Quaysides, workshops and corners far from mass tourism
+  includes:
+    - Licensed guide, in Italian or English
+    - Group of 10 guests at most
+    - Tips for neighbourhood bacari and taverns
+  excludes:
+    - Entry to the Jewish Museum and the synagogues
+    - Tips and drinks
+  notes: The Ghetto is a living, sacred place for the Jewish community. We ask for respectful dress and behaviour.
