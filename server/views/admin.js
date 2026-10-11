@@ -6,6 +6,7 @@ import { formatMoney } from '../util.js';
 const NAV = [
   ['/admin', 'Agenda'],
   ['/admin/bookings', 'Prenotazioni'],
+  ['/admin/programs', 'Programmi'],
   ['/admin/availability', 'Disponibilità'],
   ['/admin/partners', 'Partner B2B'],
   ['/admin/discounts', 'Sconti e buoni'],
@@ -20,7 +21,7 @@ export const PAY_IT = { card: 'Carta', onsite: 'Sul posto', invoice: 'Fattura', 
 export const PAYSTATUS_IT = { unpaid: 'Da incassare', paid: 'Pagata', refunded: 'Rimborsata', refund_failed: 'Rimborso fallito' };
 const chipFor = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
 
-export function adminLayout(ctx, { title, active, body, flash = '', error = '' }) {
+export function adminLayout(ctx, { title, active, body, flash = '', error = '', scripts = '' }) {
   const { app } = ctx;
   return html`<!doctype html>
 <html lang="it"><head>
@@ -41,6 +42,7 @@ export function adminLayout(ctx, { title, active, body, flash = '', error = '' }
   ${body}
 </main>
 <script src="/js/main.js?v=${app.assetVersion}" defer></script>
+${raw(scripts)}
 </body></html>`;
 }
 
@@ -69,23 +71,32 @@ function bookingRow(ctx, b) {
   </a>`;
 }
 
+function programRow(d) {
+  return html`<a class="agenda-item agenda-program" href="/admin/programs/${d.pid}">
+    <span class="agenda-time"><strong>${d.start_time}</strong><small>${d.end_time}</small></span>
+    <span class="agenda-main"><strong>${d.title}</strong><small>Programma ${d.ref} · ${d.name} · ${d.participants} pers.</small></span>
+    <span class="agenda-state"><span class="chip ${d.status === 'confirmed' ? 'chip-ok' : 'chip-warn'}">${d.status === 'confirmed' ? 'Programma' : 'Manca l’acconto'}</span>${d.conflicts.length ? html`<small class="field-error">⚠ si sovrappone a un altro impegno</small>` : ''}</span>
+  </a>`;
+}
+
 function calendarWarning(problems) {
   return problems?.length
     ? html`<div class="notice notice-err" role="alert"><strong>Calendario non aggiornato.</strong> ${problems.map((p) => `«${p.name}»`).join(', ')}: l’ultima lettura riuscita è troppo vecchia, quindi le disponibilità potrebbero non tenere conto dei tuoi impegni. <a href="/admin/availability">Controlla</a></div>`
     : '';
 }
 
-export function dashboardPage(ctx, { today, days, pendingPartners, held, feedUrl, flash, problems }) {
+export function dashboardPage(ctx, { today, days, pendingPartners, held, programs, feedUrl, flash, problems }) {
   const body = html`
 ${calendarWarning(problems)}
-<div class="grid grid-3 kpis">
+<div class="grid grid-4 kpis">
   <div class="card pad kpi"><span class="muted">Oggi</span><strong>${days.find((d) => d.date === today)?.items.length ?? 0}</strong><small>servizi</small></div>
+  <div class="card pad kpi"><span class="muted">Programmi da preparare</span><strong>${programs.todo}</strong><small>${programs.waiting} in attesa del cliente</small><a href="/admin/programs">Apri</a></div>
   <div class="card pad kpi"><span class="muted">Partner da approvare</span><strong>${pendingPartners}</strong><a href="/admin/partners">Apri</a></div>
   <div class="card pad kpi"><span class="muted">Pagamenti in corso</span><strong>${held}</strong><small>slot trattenuti</small></div>
 </div>
 <h2 class="h-sub spaced">Prossimi 14 giorni</h2>
 ${days.filter((d) => d.items.length).length
-  ? days.filter((d) => d.items.length).map((d) => html`<section class="agenda-day"><h3>${fmtDate(d.date, 'it')}${d.date === today ? html` <span class="chip chip-accent">Oggi</span>` : ''}</h3><div class="card">${d.items.map((b) => bookingRow(ctx, b))}</div></section>`)
+  ? days.filter((d) => d.items.length).map((d) => html`<section class="agenda-day"><h3>${fmtDate(d.date, 'it')}${d.date === today ? html` <span class="chip chip-accent">Oggi</span>` : ''}</h3><div class="card">${d.items.map((b) => (b.kind === 'program' ? programRow(b) : bookingRow(ctx, b)))}</div></section>`)
   : html`<p class="muted">Nessuna prenotazione nei prossimi 14 giorni.</p>`}
 <h2 class="h-sub spaced">Calendario sul telefono</h2>
 <div class="card pad"><p>Aggiungi questo indirizzo come <strong>calendario in abbonamento</strong> (Google Calendar, Apple Calendar, Outlook) per vedere le prenotazioni confermate insieme ai tuoi impegni. L'indirizzo è privato: non condividerlo.</p>

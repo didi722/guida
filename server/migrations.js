@@ -195,6 +195,60 @@ CREATE TABLE external_busy (
 CREATE INDEX external_busy_date ON external_busy(date);
 `;
 
+const V5_PROGRAMS = `
+-- Programmi di più giorni: richiesta del cliente → proposta → accettazione (con acconto)
+CREATE TABLE programs (
+  id                    INTEGER PRIMARY KEY,
+  ref                   TEXT NOT NULL UNIQUE,              -- PR-XXXXXX
+  token                 TEXT NOT NULL,
+  status                TEXT NOT NULL DEFAULT 'new',       -- new | quoted | accepted | confirmed | declined | closed
+  channel               TEXT NOT NULL DEFAULT 'b2c',       -- b2c | b2b
+  account_id            INTEGER REFERENCES accounts(id),
+  client_ref            TEXT,
+  lang                  TEXT NOT NULL DEFAULT 'it',
+  name                  TEXT NOT NULL,
+  email                 TEXT NOT NULL,
+  phone                 TEXT,
+  company               TEXT,
+  date_from             TEXT, date_to TEXT,
+  flexible_dates        INTEGER NOT NULL DEFAULT 0,
+  participants          INTEGER NOT NULL,
+  group_type            TEXT,
+  interests             TEXT,                              -- JSON: elenco di temi
+  accommodation         TEXT, mobility TEXT, budget TEXT, languages TEXT,
+  message               TEXT,
+  -- proposta
+  proposal_title        TEXT, proposal_intro TEXT, proposal_notes TEXT,
+  total_cents           INTEGER,
+  currency              TEXT NOT NULL DEFAULT 'EUR',
+  deposit_percent       INTEGER NOT NULL DEFAULT 0,
+  deposit_cents         INTEGER NOT NULL DEFAULT 0,
+  valid_until           TEXT,
+  hold_dates            INTEGER NOT NULL DEFAULT 0,        -- le date restano bloccate finché la proposta è valida
+  proposal_sent_at      TEXT,
+  -- esito
+  accepted_at           TEXT, declined_at TEXT,
+  deposit_status        TEXT NOT NULL DEFAULT 'none',      -- none | pending | paid | refunded
+  stripe_session_id     TEXT, stripe_payment_intent TEXT, deposit_paid_at TEXT,
+  admin_notes           TEXT,
+  created_at            TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+
+CREATE TABLE program_days (
+  id          INTEGER PRIMARY KEY,
+  program_id  INTEGER NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
+  position    INTEGER NOT NULL,
+  date        TEXT NOT NULL,
+  start_time  TEXT NOT NULL,
+  end_time    TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  description TEXT,
+  price_cents INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX program_days_date ON program_days(date);
+CREATE INDEX program_days_program ON program_days(program_id);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -204,6 +258,8 @@ export const MIGRATIONS = [
   V3_REVIEWS,
   // v4 — calendari esterni
   V4_CALENDARS,
+  // v5 — programmi di più giorni
+  V5_PROGRAMS,
 ];
 
 export function migrate(db) {

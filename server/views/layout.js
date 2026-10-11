@@ -17,6 +17,7 @@ function swapLang(path, from, to) {
 
 const NAV = [
   ['tours', 'nav.tours'],
+  ['programs', 'nav.programs'],
   ['book', 'nav.book'],
   ['b2b', 'nav.b2b'],
   ['blog', 'nav.blog'],
@@ -105,6 +106,7 @@ ${body}
       <p class="footer-title">${t('footer.explore')}</p>
       <ul class="plain">
         <li><a href="${u('/tours')}">${t('nav.tours')}</a></li>
+        <li><a href="${u('/programs')}">${t('nav.programs')}</a></li>
         <li><a href="${u('/book')}">${t('nav.book')}</a></li>
         <li><a href="${u('/b2b')}">${t('nav.b2b')}</a></li>
         <li><a href="${u('/gift')}">${t('nav.gift')}</a></li>

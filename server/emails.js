@@ -5,6 +5,7 @@ import { bookingDue, cancellationState } from './bookings.js';
 import { fmtDate, fmtInstant } from './time.js';
 import { formatMoney } from './util.js';
 import { formatGiftCode } from './pricing.js';
+import { makeT } from './i18n.js';
 
 const T = {
   it: {
@@ -441,4 +442,187 @@ export async function notifyGuideFeedback(app, b, fb) {
     subject: `Feedback ${'★'.repeat(fb.rating)}${'☆'.repeat(5 - fb.rating)} da ${b.name} (${b.ref})`,
     text: [`${app.content.tour(b.tour_slug).i18n.it.title} · ${fmtDate(b.date, 'it')}`, `${b.name} <${b.email}>`, `Valutazione: ${fb.rating}/5`, fb.comment ? `Commento: ${fb.comment}` : null, fb.may_publish ? 'Può essere citato sul sito.' : null, '', `${app.cfg.baseUrl}/admin/feedback`].filter((x) => x !== null).join('\n'),
   });
+}
+
+// ───────────── Programmi di più giorni ─────────────
+const PG = {
+  it: {
+    receivedSubject: (ref) => `Richiesta ricevuta ${ref}: programma a Venezia`,
+    receivedIntro: 'ho ricevuto la tua richiesta per un programma di più giorni. Ti rispondo con una proposta, di norma entro due giorni lavorativi.',
+    proposalSubject: (ref) => `La tua proposta di programma a Venezia (${ref})`,
+    proposalIntro: 'ecco la proposta di programma che ho preparato per te.',
+    acceptedSubject: (ref) => `Proposta accettata ${ref}: manca solo l’acconto`,
+    acceptedIntro: (amount) => `grazie per aver accettato la proposta! Per confermare il programma serve l’acconto di ${amount}.`,
+    acceptedNoOnline: 'Ti scrivo a breve con le indicazioni per versarlo.',
+    confirmedSubject: (ref) => `Programma confermato ${ref}`,
+    confirmedIntro: 'il tuo programma è confermato: le date sono riservate per voi. In allegato trovi il calendario delle giornate.',
+    cta: 'Vedi e accetta la proposta',
+    pay: 'Paga l’acconto',
+    view: 'Apri la pagina del programma',
+    total: 'Totale',
+    deposit: (p) => `Acconto (${p}%)`,
+    valid: 'Valida fino al',
+    participants: 'Persone',
+    dates: 'Date',
+    flexible: 'flessibili',
+    tbd: 'da definire',
+    sign: 'A presto,',
+    reply: 'Per qualsiasi cosa rispondi a questa email.',
+  },
+  en: {
+    receivedSubject: (ref) => `Request received ${ref}: Venice programme`,
+    receivedIntro: 'I have received your request for a multi-day programme. I will reply with a proposal, usually within two business days.',
+    proposalSubject: (ref) => `Your Venice programme proposal (${ref})`,
+    proposalIntro: 'here is the programme proposal I have prepared for you.',
+    acceptedSubject: (ref) => `Proposal accepted ${ref}: only the deposit is missing`,
+    acceptedIntro: (amount) => `thank you for accepting the proposal! To confirm the programme a deposit of ${amount} is needed.`,
+    acceptedNoOnline: 'I will write shortly with the instructions to pay it.',
+    confirmedSubject: (ref) => `Programme confirmed ${ref}`,
+    confirmedIntro: 'your programme is confirmed: the dates are reserved for you. The attached file adds the days to your calendar.',
+    cta: 'View and accept the proposal',
+    pay: 'Pay the deposit',
+    view: 'Open the programme page',
+    total: 'Total',
+    deposit: (p) => `Deposit (${p}%)`,
+    valid: 'Valid until',
+    participants: 'Guests',
+    dates: 'Dates',
+    flexible: 'flexible',
+    tbd: 'to be defined',
+    sign: 'See you soon,',
+    reply: 'Just reply to this email for anything.',
+  },
+};
+
+export const programUrl = (app, p, lang = p.lang) => `${app.cfg.baseUrl}/${lang}/programs/${p.ref}?t=${p.token}`;
+
+function datesLabel(p, lang) {
+  const tr = PG[lang];
+  if (p.date_from) return `${fmtDate(p.date_from, lang, 'short')}${p.date_to ? ' → ' + fmtDate(p.date_to, lang, 'short') : ''}${p.flexible_dates ? ` (${tr.flexible})` : ''}`;
+  return p.flexible_dates ? tr.flexible : tr.tbd;
+}
+
+function programDaysRows(app, p, lang) {
+  return app.db.prepare('SELECT * FROM program_days WHERE program_id = ? ORDER BY date, start_time, position').all(p.id).map((d) => ({ ...d, label: `${fmtDate(d.date, lang, 'weekday')} · ${d.start_time}–${d.end_time}` }));
+}
+
+export function programIcs(app, p, lang = p.lang) {
+  const days = programDaysRows(app, p, lang);
+  const host = new URL(app.cfg.baseUrl).hostname;
+  return calendar(`${app.cfg.site.name} — ${p.proposal_title ?? p.ref}`, days.map((d) => eventLines({ uid: `${p.ref}-${d.id}@${host}`, date: d.date, start: d.start_time, end: d.end_time, summary: `${p.proposal_title ?? 'Venezia'}: ${d.title}`, description: d.description ?? '', url: programUrl(app, p, lang) })));
+}
+
+async function proposalAttachments(app, p, lang) {
+  try {
+    const { renderProposalPdf } = await import('./pdf.js');
+    return [{ filename: `proposta-${p.ref}.pdf`, content: await renderProposalPdf(app, p, lang), contentType: 'application/pdf' }];
+  } catch (err) {
+    if (err.code !== 'ERR_MODULE_NOT_FOUND') console.error('[pdf] proposta non generata:', err.message);
+    return [];
+  }
+}
+
+function programBody(app, p, lang, intro, { days = false, buttons = [] } = {}) {
+  const tr = PG[lang];
+  const t = makeT(lang);
+  const interests = p.interests ? JSON.parse(p.interests).map((k) => t(`pg.int.${k}`)).join(', ') : '';
+  const rows = [[tr.dates, datesLabel(p, lang)], [tr.participants, String(p.participants)], interests ? [t('pg.f.interests'), interests] : null].filter(Boolean);
+  const dayRows = days ? programDaysRows(app, p, lang) : [];
+  return html`<p>${lang === 'it' ? `Ciao ${p.name},` : `Hi ${p.name},`}</p><p>${intro}</p>
+    <table style="border-collapse:collapse;width:100%;font-size:15px">${rows.map(([k, v]) => html`<tr><td style="padding:5px 12px 5px 0;color:#666;vertical-align:top">${k}</td><td style="padding:5px 0"><strong>${v}</strong></td></tr>`)}</table>
+    ${dayRows.length
+      ? html`<table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:14px">${dayRows.map((d) => html`<tr style="border-top:1px solid #eee"><td style="padding:8px 10px 8px 0;vertical-align:top;white-space:nowrap;color:#666">${d.label}</td><td style="padding:8px 0"><strong>${d.title}</strong>${d.description ? html`<br><span style="color:#555">${d.description}</span>` : ''}</td><td style="padding:8px 0 8px 10px;text-align:right;white-space:nowrap">${d.price_cents ? formatMoney(d.price_cents, lang, p.currency) : ''}</td></tr>`)}</table>
+      <p style="font-size:16px"><strong>${tr.total}: ${formatMoney(p.total_cents, lang, p.currency)}</strong>${p.deposit_cents ? html`<br>${tr.deposit(p.deposit_percent)}: ${formatMoney(p.deposit_cents, lang, p.currency)}` : ''}${p.valid_until ? html`<br><span style="color:#666">${tr.valid} ${fmtDate(p.valid_until, lang)}</span>` : ''}</p>`
+      : ''}
+    ${buttons.map(([href, label]) => html`<p><a href="${href}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${label}</a></p>`)}
+    <p style="color:#666;font-size:13px">${tr.reply}<br>${tr.sign} ${app.cfg.site.name}</p>`;
+}
+
+function programText(app, p, lang, intro, { days = false, links = [] } = {}) {
+  const tr = PG[lang];
+  const lines = [lang === 'it' ? `Ciao ${p.name},` : `Hi ${p.name},`, '', intro, '', `${tr.dates}: ${datesLabel(p, lang)}`, `${tr.participants}: ${p.participants}`];
+  if (days) {
+    lines.push('');
+    for (const d of programDaysRows(app, p, lang)) lines.push(`${d.label} — ${d.title}${d.price_cents ? ` (${formatMoney(d.price_cents, lang, p.currency)})` : ''}`);
+    lines.push('', `${tr.total}: ${formatMoney(p.total_cents, lang, p.currency)}`);
+    if (p.deposit_cents) lines.push(`${tr.deposit(p.deposit_percent)}: ${formatMoney(p.deposit_cents, lang, p.currency)}`);
+    if (p.valid_until) lines.push(`${tr.valid} ${fmtDate(p.valid_until, lang)}`);
+  }
+  lines.push('', ...links.map(([url, label]) => `${label}: ${url}`), '', tr.reply, `${tr.sign} ${app.cfg.site.name}`);
+  return lines.join('\n');
+}
+
+export async function sendProgramReceived(app, p) {
+  const lang = p.lang;
+  const tr = PG[lang];
+  await app.mail.send({
+    to: p.email,
+    subject: tr.receivedSubject(p.ref),
+    text: programText(app, p, lang, tr.receivedIntro, { links: [[programUrl(app, p), tr.view]] }),
+    html: String(layout(app, lang, programBody(app, p, lang, tr.receivedIntro, { buttons: [[programUrl(app, p), tr.view]] }))),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+export async function sendProposalEmail(app, p) {
+  const lang = p.lang;
+  const tr = PG[lang];
+  return app.mail.send({
+    to: p.email,
+    subject: tr.proposalSubject(p.ref),
+    text: programText(app, p, lang, tr.proposalIntro, { days: true, links: [[programUrl(app, p), tr.cta]] }),
+    html: String(layout(app, lang, programBody(app, p, lang, tr.proposalIntro, { days: true, buttons: [[programUrl(app, p), tr.cta]] }))),
+    attachments: await proposalAttachments(app, p, lang),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+export async function sendProgramAccepted(app, p) {
+  const lang = p.lang;
+  const tr = PG[lang];
+  const online = app.payments.live || app.payments.demo;
+  const intro = `${tr.acceptedIntro(formatMoney(p.deposit_cents, lang, p.currency))}${online ? '' : ' ' + tr.acceptedNoOnline}`;
+  const link = online ? `${app.cfg.baseUrl}/pay/resume/${p.ref}?t=${p.token}&lang=${lang}` : programUrl(app, p);
+  await app.mail.send({
+    to: p.email,
+    subject: tr.acceptedSubject(p.ref),
+    text: programText(app, p, lang, intro, { links: [[link, online ? tr.pay : tr.view]] }),
+    html: String(layout(app, lang, programBody(app, p, lang, intro, { buttons: [[link, online ? tr.pay : tr.view]] }))),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+export async function sendProgramConfirmed(app, p) {
+  const lang = p.lang;
+  const tr = PG[lang];
+  await app.mail.send({
+    to: p.email,
+    subject: tr.confirmedSubject(p.ref),
+    text: programText(app, p, lang, tr.confirmedIntro, { days: true, links: [[programUrl(app, p), tr.view]] }),
+    html: String(layout(app, lang, programBody(app, p, lang, tr.confirmedIntro, { days: true, buttons: [[programUrl(app, p), tr.view]] }))),
+    attachments: [{ filename: `${p.ref}.ics`, content: programIcs(app, p, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }],
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/** Avvisi alla guida (in italiano). kind: new | accepted | confirmed | deposit | message | declined */
+export async function notifyGuideProgram(app, p, kind, text = '') {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const label = { new: 'Nuova richiesta di programma', accepted: 'Proposta accettata (manca l’acconto)', confirmed: 'Programma confermato', deposit: 'Acconto incassato: programma confermato', message: 'Messaggio del cliente sul programma', declined: 'Proposta rifiutata' }[kind];
+  const t = makeT('it');
+  const interests = p.interests ? JSON.parse(p.interests).map((k) => t(`pg.int.${k}`)).join(', ') : '';
+  const lines = [
+    `${label} ${p.ref}${p.channel === 'b2b' ? ' (B2B)' : ''}`,
+    `${p.name} <${p.email}>${p.phone ? ' · ' + p.phone : ''}${p.company ? ' · ' + p.company : ''}`,
+    `Date: ${datesLabel(p, 'it')} · ${p.participants} persone${p.group_type ? ' · ' + t(`pg.group.${p.group_type}`) : ''}`,
+    interests ? `Interessi: ${interests}` : null,
+    p.budget ? `Budget: ${t(`pg.budget.${p.budget}`)}` : null,
+    p.total_cents ? `Totale proposta: ${formatMoney(p.total_cents, 'it', p.currency)}${p.deposit_cents ? ` · acconto ${formatMoney(p.deposit_cents, 'it', p.currency)}` : ''}` : null,
+    kind === 'new' && p.message ? `Messaggio: ${p.message}` : null,
+    text ? `Messaggio: ${text}` : null,
+    '',
+    `${app.cfg.baseUrl}/admin/programs/${p.id}`,
+  ].filter((x) => x !== null);
+  await app.mail.send({ to, subject: `${label}: ${p.name} (${p.ref})`, text: lines.join('\n'), replyTo: kind === 'message' || kind === 'new' ? p.email : undefined });
 }

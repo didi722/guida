@@ -147,6 +147,7 @@ export function toursPage(ctx) {
   <div class="grid grid-3">${groups.map((x) => tourCard(ctx, x))}</div>
   <h2 class="h-sub spaced">${t('tours.privateTitle')}</h2><p class="muted sub-lead">${t('tours.privateLead')}</p>
   <div class="grid grid-3">${priv.map((x) => tourCard(ctx, x))}</div>
+  <p class="center spaced reveal"><a class="btn btn-outline" href="${ctx.u('/programs')}">${t('pg.toursLink')}</a></p>
 </div></section>`;
   return page(ctx, { title: t('nav.tours'), description: t('tours.lead'), path: `/${lang}/tours`, body, activeNav: 'tours' });
 }
@@ -375,6 +376,7 @@ export function b2bLandingPage(ctx) {
       </ul>
       <p class="muted small">${t('b2b.policy.note')}</p>
     </div>
+    <p class="center reveal"><a href="${u('/programs')}">${t('pg.b2bLink')} →</a></p>
     ${services.length ? html`<p class="center reveal">${t('b2b.servicesLead')} ${services.map((s, i) => html`${i ? ' · ' : ''}<a href="${u('/tours/' + s.slug)}">${s.i18n[lang].title}</a>`)}</p>` : ''}
   </div>
 </section>

@@ -8,6 +8,8 @@ import { addDays, isDate, isMonth, isTime, monthDates, nowRome, toMin } from '..
 import { cleanText, safeEqual } from '../util.js';
 import { loginAdmin, logoutAdmin, send, tooMany } from '../http.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
+import { adminProgramsRouter } from './admin-programs.js';
+import { dayConflicts } from '../programs.js';
 import { feedbackStats } from '../reviews.js';
 import { maskUrl } from '../calendars.js';
 import { feedbackAdminPage } from '../views/admin-feedback.js';
@@ -90,6 +92,7 @@ export function adminRouter(app) {
   });
 
   r.use(adminDiscountsRouter(app));
+  r.use(adminProgramsRouter(app));
 
   r.get('/feedback', (req, res) => {
     const items = db.prepare(`SELECT f.*, b.name, b.email, b.tour_slug, b.date FROM feedback f JOIN bookings b ON b.id = f.booking_id ORDER BY f.created_at DESC LIMIT 200`).all();
@@ -102,13 +105,20 @@ export function adminRouter(app) {
     const today = nowRome().date;
     const end = addDays(today, 13);
     const rows = db.prepare(`SELECT * FROM bookings WHERE date BETWEEN ? AND ? AND (status = 'confirmed' OR (status = 'held' AND hold_expires_at > ?)) ORDER BY date, start_time`).all(today, end, new Date().toISOString());
+    // giornate dei programmi di più giorni (accettati o confermati), con l'avviso se si sovrappongono a qualcosa
+    const programRows = db
+      .prepare(`SELECT d.*, p.id AS pid, p.ref, p.name, p.status, p.participants, p.proposal_title FROM program_days d JOIN programs p ON p.id = d.program_id WHERE d.date BETWEEN ? AND ? AND p.status IN ('accepted', 'confirmed') ORDER BY d.date, d.start_time`)
+      .all(today, end)
+      .map((d) => ({ ...d, kind: 'program', conflicts: dayConflicts(app, d, { ignoreProgramId: d.pid }) }));
     const days = Array.from({ length: 14 }, (_, i) => {
       const date = addDays(today, i);
-      return { date, items: rows.filter((b) => b.date === date) };
+      const items = [...rows.filter((b) => b.date === date).map((b) => ({ ...b, kind: 'booking' })), ...programRows.filter((x) => x.date === date)];
+      return { date, items: items.sort((a, b) => toMin(a.start_time) - toMin(b.start_time)) };
     });
+    const programs = db.prepare(`SELECT COALESCE(SUM(status = 'new'), 0) AS todo, COALESCE(SUM(status IN ('quoted', 'accepted')), 0) AS waiting FROM programs`).get();
     const pendingPartners = db.prepare(`SELECT COUNT(*) n FROM accounts WHERE status = 'pending'`).get().n;
     const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(new Date().toISOString()).n;
-    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), today, days, pendingPartners, held, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
+    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), today, days, pendingPartners, held, programs, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
   });
 
   // ───── prenotazioni ─────

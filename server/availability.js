@@ -20,8 +20,13 @@ function groupBy(rows, key) {
   return m;
 }
 
-/** Carica in una volta sola tutto ciò che serve per calcolare le disponibilità in un intervallo di date. */
-export function loadAvailabilityContext(db, cfg, fromDate, toDate, nowMs) {
+/**
+ * Carica in una volta sola tutto ciò che serve per calcolare le disponibilità in un intervallo di date.
+ * `ignoreProgramId` esclude le giornate di un programma (per controllare i conflitti del programma stesso);
+ * `holdsSentBefore` limita le proposte "trattenute" a quelle inviate prima di quell'istante ('' = nessuna):
+ * chi ha inviato per primo ha la precedenza, e un programma già accettato non confligge con proposte arrivate dopo.
+ */
+export function loadAvailabilityContext(db, cfg, fromDate, toDate, nowMs, { ignoreProgramId = null, holdsSentBefore = null } = {}) {
   const weekly = getSetting(db, 'weekly', cfg.defaultWeekly);
   const overrides = new Map(db.prepare('SELECT * FROM day_overrides WHERE date BETWEEN ? AND ?').all(fromDate, toDate).map((r) => [r.date, r]));
   const blocks = groupBy(
@@ -31,6 +36,15 @@ export function loadAvailabilityContext(db, cfg, fromDate, toDate, nowMs) {
       ...db
         .prepare(`SELECT e.date, e.start_time, e.end_time FROM external_busy e JOIN calendar_sources s ON s.id = e.source_id WHERE s.enabled = 1 AND e.date BETWEEN ? AND ?`)
         .all(fromDate, toDate),
+      // giornate dei programmi di più giorni: accettate/confermate, oppure proposte con date trattenute ancora valide
+      ...db
+        .prepare(
+          `SELECT d.date, d.start_time, d.end_time FROM program_days d JOIN programs p ON p.id = d.program_id
+           WHERE d.date BETWEEN ? AND ? AND p.id != ?
+             AND (p.status IN ('accepted', 'confirmed')
+                  OR (p.status = 'quoted' AND p.hold_dates = 1 AND (p.valid_until IS NULL OR p.valid_until >= ?) AND (? IS NULL OR p.proposal_sent_at < ?)))`,
+        )
+        .all(fromDate, toDate, ignoreProgramId ?? -1, nowRome(nowMs).date, holdsSentBefore, holdsSentBefore),
     ],
     'date',
   );

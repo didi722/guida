@@ -51,7 +51,7 @@ export function createApp(overrides = {}) {
     res.type('text/plain').send(`User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
   );
   server.get('/sitemap.xml', (req, res) => {
-    const paths = ['/', '/tours', '/book', '/gift', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((x) => `/tours/${x.slug}`), ...content.postsFor('it').map((p) => `/blog/${p.slug}`)];
+    const paths = ['/', '/tours', '/book', '/gift', '/programs', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((x) => `/tours/${x.slug}`), ...content.postsFor('it').map((p) => `/blog/${p.slug}`)];
     const url = (lang, p) => `${cfg.baseUrl}/${lang}${p === '/' ? '/' : p}`;
     const body = paths
       .flatMap((p) => LANGS.map((l) => `<url><loc>${url(l, p)}</loc>${LANGS.map((a) => `<xhtml:link rel="alternate" hreflang="${a}" href="${url(a, p)}"/>`).join('')}</url>`))

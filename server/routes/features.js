@@ -9,6 +9,9 @@ import { getBookingByRef } from '../bookings.js';
 import { getFeedback, saveFeedback } from '../reviews.js';
 import { notifyGuideFeedback } from '../emails.js';
 import { feedbackPage } from '../views/feedback.js';
+import { ProgramError, declineProgram, getProgramByRef, validateProgramInput } from '../programs.js';
+import { notifyGuideProgram } from '../emails.js';
+import { programStatusPage, programsPage } from '../views/programs.js';
 
 export function featuresRouter(app) {
   const r = express.Router();
@@ -67,6 +70,81 @@ export function featuresRouter(app) {
     if (!card) return next();
     if (req.query.paid && card.status === 'pending') card = (await app.payables.sync(card.ref)) ?? card;
     send(res, giftStatusPage(res.locals.ctx, card));
+  });
+
+  // ───── programmi di più giorni ─────
+  r.get('/programs', (req, res) => send(res, programsPage(res.locals.ctx)));
+
+  r.post('/programs', form, async (req, res) => {
+    const ctx = res.locals.ctx;
+    const { t } = ctx;
+    const b = req.body;
+    if (b.website) return res.status(400).end();
+    const isB2b = req.acct?.status === 'approved';
+    const values = {
+      name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), company: cleanText(b.company, 160), clientRef: cleanText(b.clientRef, 120),
+      dateFrom: cleanText(b.dateFrom, 10), dateTo: cleanText(b.dateTo, 10), flexibleDates: b.flexibleDates ? '1' : '', participants: cleanText(b.participants, 3),
+      groupType: cleanText(b.groupType, 20), interests: [].concat(b.interests ?? []).map((x) => cleanText(x, 20)), accommodation: cleanText(b.accommodation, 200), mobility: cleanText(b.mobility, 300),
+      budget: cleanText(b.budget, 20), languages: cleanText(b.languages, 120), message: cleanText(b.message, 3000),
+    };
+    const fail = (error) => send(res, programsPage(ctx, { values, error }), 400);
+    const problem = (e) => (e.code === 'dates' ? t('pg.err.dates') : t('pg.err.fields'));
+    if (!b.consent) return fail(t('err.consent'));
+    try {
+      validateProgramInput(values); // gli errori di compilazione non contano nel limite di richieste
+    } catch (e) {
+      if (!(e instanceof ProgramError)) throw e;
+      return fail(problem(e));
+    }
+    if (!app.limits.contact(ip(req))) return tooMany(res);
+    try {
+      const p = await app.programs.submit({ ...values, lang: req.lang, channel: isB2b ? 'b2b' : 'b2c', account: isB2b ? req.acct : null, flexibleDates: !!values.flexibleDates });
+      res.redirect(303, `/${req.lang}/programs/${p.ref}?t=${p.token}&flash=received`);
+    } catch (e) {
+      if (!(e instanceof ProgramError)) throw e;
+      return fail(problem(e));
+    }
+  });
+
+  function loadProgram(req) {
+    const p = getProgramByRef(db, req.params.ref);
+    const token = String(req.query.t ?? req.body?.t ?? '');
+    return p && token && safeEqual(token, p.token) ? p : null;
+  }
+  const pgBack = (req, p, flash) => `/${req.lang}/programs/${p.ref}?t=${p.token}&flash=${flash}`;
+
+  r.get('/programs/:ref', async (req, res, next) => {
+    let p = loadProgram(req);
+    if (!p) return next();
+    if (req.query.paid && p.deposit_status === 'pending') p = (await app.payables.sync(p.ref)) ?? p;
+    const { t } = res.locals.ctx;
+    const flashKey = String(req.query.flash ?? '');
+    const flash = flashKey === 'received' ? t('pg.received.text') : ['accepted', 'declined', 'message'].includes(flashKey) ? t(`pg.flash.${flashKey}`) : '';
+    const error = ['expired', 'conflict', 'error'].includes(flashKey) ? t(`pg.flash.${flashKey}`) : '';
+    send(res, programStatusPage(res.locals.ctx, p, { flash, error }));
+  });
+
+  r.post('/programs/:ref/accept', form, async (req, res, next) => {
+    const p = loadProgram(req);
+    if (!p) return next();
+    const result = await app.programs.accept(p.id, req.lang);
+    if (result.redirect) return res.redirect(303, result.redirect);
+    const flash = { accepted: 'accepted', confirmed: 'accepted', expired: 'expired', conflict: 'conflict', state: 'error' }[result.outcome];
+    res.redirect(303, pgBack(req, p, flash));
+  });
+  r.post('/programs/:ref/decline', form, async (req, res, next) => {
+    const p = loadProgram(req);
+    if (!p) return next();
+    if (declineProgram(db, p.id, null)) await notifyGuideProgram(app, getProgramByRef(db, p.ref), 'declined');
+    res.redirect(303, pgBack(req, p, 'declined'));
+  });
+  r.post('/programs/:ref/message', form, async (req, res, next) => {
+    const p = loadProgram(req);
+    if (!p) return next();
+    if (!app.limits.contact(ip(req))) return tooMany(res);
+    const text = cleanText(req.body.message, 2000);
+    if (text) await notifyGuideProgram(app, p, 'message', text);
+    res.redirect(303, pgBack(req, p, text ? 'message' : 'error'));
   });
 
   // ───── feedback dopo il tour ─────

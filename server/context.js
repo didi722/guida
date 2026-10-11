@@ -3,6 +3,7 @@ import { createCalendars } from './calendars.js';
 import { createGiftServices } from './giftServices.js';
 import { createLimits } from './http.js';
 import { createMailer } from './mail.js';
+import { createProgramServices } from './programs.js';
 import { createReviewServices } from './reviews.js';
 import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
@@ -27,5 +28,6 @@ export function createContext({ cfg, db, content, mail, payments, fetchImpl, ass
   app.gifts = createGiftServices(app);
   app.reviews = createReviewServices(app);
   app.calendars = createCalendars(app, fetchImpl);
+  app.programs = createProgramServices(app);
   return app;
 }

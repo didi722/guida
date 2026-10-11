@@ -542,3 +542,182 @@ test('admin: collegare un calendario, vedere gli impegni, checkout con riallinea
     s.close();
   }
 });
+
+const formList = (entries) => ({ method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(entries).toString() });
+
+test('programmi di più giorni: richiesta → proposta dal pannello → accettazione e acconto → date bloccate → annullo', async () => {
+  const s = await start();
+  try {
+    const f = s.jar();
+    const admin = s.jar();
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+    const from = day(5);
+    const to = day(7);
+
+    // ─ richiesta pubblica
+    const page = await (await f('/it/programs')).text();
+    assert.match(page, /name="interests"/);
+    assert.match(page, /href="\/it\/programs"/, 'voce di menu');
+    const req = { name: 'Giulia Bianchi', email: 'giulia@example.com', dateFrom: from, dateTo: to, participants: '4', groupType: 'family', message: 'Ciao <b>Venezia</b>', consent: '1' };
+    const body = (extra = {}) => new URLSearchParams({ ...req, ...extra }).toString() + '&interests=art&interests=food';
+    const post = (extra) => f('/it/programs', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: body(extra) });
+    assert.equal((await post({ consent: '' })).status, 400);
+    assert.equal((await post({ website: 'http://spam' })).status, 400, 'honeypot');
+    assert.equal((await post({ participants: '0' })).status, 400);
+    assert.equal((await post({ dateFrom: '2020-01-01' })).status, 400);
+    assert.match(await (await post({ dateTo: day(200) })).text(), /date non sono valide/i);
+    const sub = await post({});
+    assert.equal(sub.status, 303);
+    const p = s.app.db.prepare('SELECT * FROM programs').get();
+    assert.deepEqual(JSON.parse(p.interests), ['art', 'food']);
+    assert.equal(loc(sub), `/it/programs/${p.ref}?t=${p.token}&flash=received`);
+    const url = `/it/programs/${p.ref}?t=${p.token}`;
+    const status = await (await f(loc(sub))).text();
+    assert.match(status, /Richiesta ricevuta/);
+    assert.match(status, /Sto preparando la proposta/);
+    assert.ok(!status.includes('<b>Venezia</b>'), 'testo del cliente con escaping');
+    assert.equal((await f(`/it/programs/${p.ref}?t=sbagliato`)).status, 404);
+    assert.equal((await f(`/it/programs/${p.ref}`)).status, 404);
+    assert.ok(s.app.mail.sent.some((m) => m.to === 'giulia@example.com' && /Richiesta ricevuta/.test(m.subject)));
+    assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /Nuova richiesta di programma/.test(m.subject)));
+    // il cliente non può accettare una proposta che non esiste
+    await f(`/it/programs/${p.ref}/accept`, form({ t: p.token }));
+    assert.equal(s.app.db.prepare('SELECT status FROM programs').get().status, 'new');
+
+    // ─ pannello admin
+    assert.equal(loc(await f('/admin/programs')), '/admin/login');
+    const list = await (await admin('/admin/programs')).text();
+    assert.match(list, /Giulia Bianchi/);
+    const detail = await (await admin(`/admin/programs/${p.id}`)).text();
+    assert.match(detail, new RegExp(p.ref));
+    assert.equal((detail.match(/name="d_title"/g) ?? []).length, 3, 'una riga per ogni giorno richiesto');
+    assert.match(detail, new RegExp(`name="d_date" value="${from}"`));
+    assert.ok(!detail.includes('<b>Venezia</b>'));
+
+    const rows = (list2) => list2.flatMap((r) => [['d_date', r[0]], ['d_start', r[1]], ['d_end', r[2]], ['d_title', r[3]], ['d_desc', r[4] ?? ''], ['d_price', r[5] ?? '']]);
+    const head = [['title', 'Venezia in tre giorni'], ['intro', 'Ecco la proposta'], ['notes', 'Incluso: guida'], ['deposit_percent', '30'], ['valid_until', day(20)], ['hold_dates', '1'], ['total', '']];
+    const good = [[from, '09:30', '13:00', 'San Marco e Rialto', '', '150'], [day(6), '10:00', '16:00', 'Isole', 'Murano e Burano', '300,50'], [to, '', '', '', '', '']];
+    const draft = await admin(`/admin/programs/${p.id}/proposal`, formList([...head, ...rows(good), ['action', 'save']]));
+    assert.equal(loc(draft), `/admin/programs/${p.id}?ok=saved`);
+    assert.equal(s.app.db.prepare('SELECT COUNT(*) n FROM program_days').get().n, 2, 'la riga vuota è ignorata');
+    assert.equal(s.app.db.prepare('SELECT status, total_cents, deposit_cents FROM programs').get().total_cents, 45050);
+    assert.equal(s.app.db.prepare('SELECT status FROM programs').get().status, 'new', 'bozza: nulla è partito');
+    assert.equal((await f(url)).status, 200);
+    assert.match(await (await f(url)).text(), /Sto preparando la proposta/);
+    assert.match(await (await admin(`/admin/programs/${p.id}?ok=saved`)).text(), /Proposta salvata/);
+
+    // riga non valida: non si perde quello che si è scritto, errore con il numero di riga
+    const badRows = [...good.slice(0, 1), [day(6), '16:00', '10:00', 'Isole', '', '300']];
+    const bad = await admin(`/admin/programs/${p.id}/proposal`, formList([...head, ...rows(badRows), ['action', 'send']]));
+    assert.equal(bad.status, 400);
+    const badHtml = await bad.text();
+    assert.match(badHtml, /Controlla la riga 2/);
+    assert.match(badHtml, /value="Isole"/, 'quanto digitato resta nel modulo');
+    assert.equal(s.app.db.prepare('SELECT status FROM programs').get().status, 'new');
+    const noDate = await admin(`/admin/programs/${p.id}/proposal`, formList([...head.filter(([k]) => k !== 'valid_until'), ['valid_until', ''], ...rows(good), ['action', 'send']]));
+    assert.equal(noDate.status, 400);
+    assert.match(await noDate.text(), /fino a quando è valida/);
+
+    // invio vero
+    const sent = await admin(`/admin/programs/${p.id}/proposal`, formList([...head, ...rows(good), ['action', 'send']]));
+    assert.equal(loc(sent), `/admin/programs/${p.id}?ok=sent`);
+    assert.equal(s.app.db.prepare('SELECT status FROM programs').get().status, 'quoted');
+    const mail = s.app.mail.sent.filter((m) => m.to === 'giulia@example.com' && /La tua proposta/.test(m.subject)).at(-1);
+    assert.match(mail.text, /Isole/);
+    assert.match(mail.text, /450,50\s*€/);
+
+    // le date sono trattenute: lo slot delle 9:30 del primo giorno non è più prenotabile, quello delle 14:30 sì
+    const slots = await (await f(`/api/slots?tour=san-marco-rialto&date=${from}&pax=1`)).json();
+    assert.deepEqual(slots.slots.map((x) => x.time), ['14:30']);
+    assert.deepEqual((await (await f(`/api/slots?tour=san-marco-rialto&date=${day(6)}&pax=1`)).json()).slots, [], 'giornata intera');
+
+    // ─ il cliente guarda la proposta e accetta
+    const proposal = await (await f(url)).text();
+    assert.match(proposal, /Venezia in tre giorni/);
+    assert.match(proposal, /Murano e Burano/);
+    assert.match(proposal, /Accetta la proposta/);
+    assert.match(proposal, /Acconto per confermare \(30%\)/);
+    assert.match(proposal, /135,15\s*€/, '30% di 450,50 arrotondato');
+    await f(`/it/programs/${p.ref}/message`, form({ t: p.token, message: 'Possiamo spostare il secondo giorno?' }));
+    assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /Messaggio del cliente/.test(m.subject) && /spostare il secondo giorno/.test(m.text)));
+
+    assert.equal((await f(`/it/programs/${p.ref}/accept`, form({ t: 'no' }))).status, 404);
+    const acc = await f(`/it/programs/${p.ref}/accept`, form({ t: p.token }));
+    assert.equal(acc.status, 303);
+    assert.match(loc(acc), new RegExp(`/pay/demo/${p.ref}`));
+    assert.equal(s.app.db.prepare('SELECT status, deposit_status FROM programs').get().status, 'accepted');
+    const demo = new URL(loc(acc));
+    assert.match(await (await f(demo.pathname + demo.search)).text(), /135,15\s*€/);
+    // chi torna indietro senza pagare ritrova il pulsante per pagare
+    assert.match(await (await f(url)).text(), /Paga l’acconto/);
+    assert.ok(!(await admin(`/admin/programs/${p.id}/proposal`, formList([...head, ...rows(good), ['action', 'save']]))).headers.get('location')?.includes('saved'), 'proposta accettata: non modificabile');
+
+    const paid = await f(demo.pathname + '/complete', form({ t: demo.searchParams.get('t'), lang: 'it' }));
+    assert.equal(loc(paid), `${url}&paid=1`);
+    const confirmed = await (await f(loc(paid))).text();
+    assert.match(confirmed, /Programma confermato/);
+    assert.match(confirmed, /Acconto ricevuto/);
+    assert.equal(s.app.db.prepare('SELECT status, deposit_status FROM programs').get().deposit_status, 'paid');
+    assert.ok(s.app.mail.sent.some((m) => m.to === 'giulia@example.com' && /Programma confermato/.test(m.subject)));
+
+    // ─ agenda dell'admin: le giornate compaiono accanto alle prenotazioni
+    const agenda = await (await admin('/admin')).text();
+    assert.match(agenda, /San Marco e Rialto/);
+    assert.match(agenda, /Programmi da preparare/);
+    assert.match(await (await admin('/admin/programs?tab=confirmed')).text(), /Giulia Bianchi/);
+
+    // ─ annullo con rimborso: le date tornano libere
+    const cancel = await admin(`/admin/programs/${p.id}/cancel`, form({ refund: '1' }));
+    assert.equal(loc(cancel), `/admin/programs/${p.id}?ok=cancelled`);
+    assert.equal(s.app.db.prepare('SELECT status, deposit_status FROM programs').get().deposit_status, 'refunded');
+    assert.deepEqual((await (await f(`/api/slots?tour=san-marco-rialto&date=${from}&pax=1`)).json()).slots.map((x) => x.time), ['09:30', '14:30']);
+    assert.match(await (await f(url)).text(), /Richiesta chiusa/);
+    // riaperto come bozza
+    await admin(`/admin/programs/${p.id}/status`, form({ status: 'new' }));
+    assert.equal(s.app.db.prepare('SELECT status FROM programs').get().status, 'new');
+
+    // ─ un secondo cliente rifiuta la proposta
+    const sub2 = await f('/it/programs', form({ name: 'Marco', email: 'marco@example.com', participants: '2', consent: '1' }));
+    const p2 = s.app.db.prepare('SELECT * FROM programs WHERE email = ?').get('marco@example.com');
+    assert.equal(p2.date_from, null);
+    await admin(`/admin/programs/${p2.id}/proposal`, formList([...head, ...rows([[from, '09:30', '12:30', 'Giornata', '', '200']]), ['action', 'send']]));
+    const dec = await f(`/it/programs/${p2.ref}/decline`, form({ t: p2.token }));
+    assert.match(loc(dec), /flash=declined/);
+    assert.match(await (await f(`/it/programs/${p2.ref}?t=${p2.token}`)).text(), /Proposta rifiutata/);
+    assert.match(loc(sub2), new RegExp(p2.ref));
+  } finally {
+    s.close();
+  }
+});
+
+test('programmi: il partner B2B ha il modulo precompilato e il programma resta collegato al suo account', async () => {
+  const s = await start();
+  try {
+    const partner = s.jar();
+    const admin = s.jar();
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+    await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT123', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
+    const id = s.app.db.prepare('SELECT id FROM accounts').get().id;
+    await admin(`/admin/partners/${id}`, form({ status: 'approved', discount_percent: '0', allow_invoice: '1' }));
+    await partner('/it/b2b/login', form({ email: 'dmc@example.com', password: 'password-lunga-1' }));
+
+    const page = await (await partner('/it/programs')).text();
+    assert.match(page, /value="Venice DMC"/);
+    assert.match(page, /value="dmc@example\.com"/);
+    assert.match(page, /name="clientRef"/);
+    const sub = await partner('/it/programs', form({ name: 'Giulia', email: 'dmc@example.com', company: 'Venice DMC', clientRef: 'PRATICA-77', participants: '12', groupType: 'agency', consent: '1' }));
+    assert.equal(sub.status, 303);
+    const p = s.app.db.prepare('SELECT * FROM programs').get();
+    assert.equal(p.channel, 'b2b');
+    assert.equal(p.account_id, id);
+    assert.equal(p.client_ref, 'PRATICA-77');
+    assert.match(await (await admin(`/admin/programs/${p.id}`)).text(), /PRATICA-77/);
+    assert.match(await (await admin('/admin/programs')).text(), /B2B/);
+    // un visitatore anonimo non ottiene il canale B2B anche se lo chiede
+    const anon = await s.jar()('/it/programs', form({ name: 'Anna', email: 'anna@example.com', participants: '2', channel: 'b2b', clientRef: 'X', consent: '1' }));
+    assert.equal(anon.status, 303);
+    assert.equal(s.app.db.prepare('SELECT channel FROM programs WHERE email = ?').get('anna@example.com').channel, 'b2c');
+  } finally {
+    s.close();
+  }
+});

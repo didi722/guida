@@ -1770,5 +1770,389 @@
  "fb.already": [
   "Hai già lasciato un feedback: puoi aggiornarlo qui sotto.",
   "You have already left feedback: you can update it below."
+ ],
+ "nav.programs": [
+  "Programmi",
+  "Programmes"
+ ],
+ "pg.title": [
+  "Programmi di più giorni",
+  "Multi-day programmes"
+ ],
+ "pg.lead": [
+  "Un soggiorno a Venezia da costruire insieme: itinerari su misura per più giorni, con una guida che conosce la città e un ritmo adatto a voi.",
+  "A stay in Venice to build together: tailor-made multi-day itineraries with a guide who knows the city, at a pace that suits you."
+ ],
+ "pg.ideas.title": [
+  "Qualche idea di partenza",
+  "A few starting ideas"
+ ],
+ "pg.idea.1.t": [
+  "Venezia in tre giorni",
+  "Venice in three days"
+ ],
+ "pg.idea.1.p": [
+  "Il centro storico, i sestieri meno battuti e la laguna, con tempo per respirare tra una visita e l’altra.",
+  "The historic centre, the quieter districts and the lagoon, with time to breathe between visits."
+ ],
+ "pg.idea.2.t": [
+  "Un tema, più giorni",
+  "One theme, several days"
+ ],
+ "pg.idea.2.p": [
+  "Religioni e culture, arte e architettura, cucina e tradizioni: un filo conduttore per leggere la città a strati.",
+  "Religions and cultures, art and architecture, food and traditions: a common thread to read the city in layers."
+ ],
+ "pg.idea.3.t": [
+  "Gruppi di studio e scuole",
+  "Study groups and schools"
+ ],
+ "pg.idea.3.p": [
+  "Percorsi didattici per classi e gruppi universitari, concordati con i docenti.",
+  "Educational routes for classes and university groups, agreed with teachers."
+ ],
+ "pg.idea.4.t": [
+  "Incentive e gruppi aziendali",
+  "Incentives and corporate groups"
+ ],
+ "pg.idea.4.p": [
+  "Giornate di esperienza per team e ospiti, con logistica curata insieme a voi.",
+  "Experience days for teams and guests, with logistics worked out together."
+ ],
+ "pg.form.title": [
+  "Raccontami cosa immagini",
+  "Tell me what you have in mind"
+ ],
+ "pg.form.lead": [
+  "Più sono precise le informazioni, più la proposta sarà adatta. Ti rispondo di norma entro due giorni lavorativi, senza impegno.",
+  "The more precise the details, the better the proposal. I usually reply within two business days, with no commitment."
+ ],
+ "pg.f.when": [
+  "Quando",
+  "When"
+ ],
+ "pg.f.from": [
+  "Dal",
+  "From"
+ ],
+ "pg.f.to": [
+  "Al",
+  "To"
+ ],
+ "pg.f.flexible": [
+  "Le date sono flessibili",
+  "Dates are flexible"
+ ],
+ "pg.f.participants": [
+  "Quante persone",
+  "How many people"
+ ],
+ "pg.f.group": [
+  "Che tipo di gruppo",
+  "What kind of group"
+ ],
+ "pg.f.interests": [
+  "Cosa vi interessa",
+  "What are you interested in"
+ ],
+ "pg.f.accommodation": [
+  "Dove alloggiate (zona o hotel)",
+  "Where you are staying (area or hotel)"
+ ],
+ "pg.f.mobility": [
+  "Esigenze di mobilità o accessibilità",
+  "Mobility or accessibility needs"
+ ],
+ "pg.f.budget": [
+  "Budget indicativo",
+  "Indicative budget"
+ ],
+ "pg.f.languages": [
+  "Lingua del servizio",
+  "Service language"
+ ],
+ "pg.f.message": [
+  "Altro che vuoi dirmi",
+  "Anything else you would like to tell me"
+ ],
+ "pg.f.company": [
+  "Agenzia / azienda",
+  "Agency / company"
+ ],
+ "pg.f.messageHint": [
+  "Occasione del viaggio, età dei partecipanti, cose che avete già visto, desideri particolari…",
+  "Occasion for the trip, ages, things you have already seen, special wishes…"
+ ],
+ "pg.send": [
+  "Invia la richiesta",
+  "Send request"
+ ],
+ "pg.group.family": [
+  "Famiglia",
+  "Family"
+ ],
+ "pg.group.friends": [
+  "Amici",
+  "Friends"
+ ],
+ "pg.group.school": [
+  "Scuola / università",
+  "School / university"
+ ],
+ "pg.group.corporate": [
+  "Azienda / incentive",
+  "Company / incentive"
+ ],
+ "pg.group.agency": [
+  "Agenzia / DMC",
+  "Agency / DMC"
+ ],
+ "pg.group.other": [
+  "Altro",
+  "Other"
+ ],
+ "pg.int.art": [
+  "Arte e musei",
+  "Art and museums"
+ ],
+ "pg.int.history": [
+  "Storia",
+  "History"
+ ],
+ "pg.int.religions": [
+  "Religioni e culture",
+  "Religions and cultures"
+ ],
+ "pg.int.food": [
+  "Cucina e vino",
+  "Food and wine"
+ ],
+ "pg.int.lagoon": [
+  "Laguna e isole",
+  "Lagoon and islands"
+ ],
+ "pg.int.photography": [
+  "Fotografia",
+  "Photography"
+ ],
+ "pg.int.architecture": [
+  "Architettura",
+  "Architecture"
+ ],
+ "pg.int.family": [
+  "Con bambini",
+  "With children"
+ ],
+ "pg.budget.lt1000": [
+  "Meno di 1.000 €",
+  "Under €1,000"
+ ],
+ "pg.budget.1000_2500": [
+  "1.000 – 2.500 €",
+  "€1,000 – 2,500"
+ ],
+ "pg.budget.2500_5000": [
+  "2.500 – 5.000 €",
+  "€2,500 – 5,000"
+ ],
+ "pg.budget.gt5000": [
+  "Oltre 5.000 €",
+  "Over €5,000"
+ ],
+ "pg.budget.tbd": [
+  "Da definire",
+  "To be defined"
+ ],
+ "pg.err.fields": [
+  "Controlla nome, email e numero di persone.",
+  "Please check your name, email and number of people."
+ ],
+ "pg.err.dates": [
+  "Le date non sono valide: la data di inizio non può essere nel passato e la fine deve seguire l’inizio (massimo 60 giorni).",
+  "The dates are not valid: the start cannot be in the past and the end must follow the start (60 days at most)."
+ ],
+ "pg.received.title": [
+  "Richiesta ricevuta",
+  "Request received"
+ ],
+ "pg.received.text": [
+  "Grazie! Ti ho inviato una email di conferma. Ti rispondo con una proposta di norma entro due giorni lavorativi.",
+  "Thank you! I have sent you a confirmation email. I will reply with a proposal, usually within two business days."
+ ],
+ "pg.status.new": [
+  "Richiesta ricevuta",
+  "Request received"
+ ],
+ "pg.status.new.text": [
+  "Sto preparando la proposta: ti scrivo appena è pronta.",
+  "I am preparing the proposal: I will write as soon as it is ready."
+ ],
+ "pg.status.quoted": [
+  "Proposta pronta",
+  "Proposal ready"
+ ],
+ "pg.status.quoted.text": [
+  "Guarda il programma qui sotto: puoi accettarlo, chiedere modifiche o declinare.",
+  "Have a look at the programme below: you can accept it, ask for changes or decline."
+ ],
+ "pg.status.accepted": [
+  "Proposta accettata",
+  "Proposal accepted"
+ ],
+ "pg.status.accepted.text": [
+  "Per confermare il programma serve l’acconto indicato qui sotto.",
+  "To confirm the programme the deposit shown below is needed."
+ ],
+ "pg.status.confirmed": [
+  "Programma confermato",
+  "Programme confirmed"
+ ],
+ "pg.status.confirmed.text": [
+  "Le date sono riservate per voi. Ti scrivo per i dettagli pratici.",
+  "The dates are reserved for you. I will write with the practical details."
+ ],
+ "pg.status.declined": [
+  "Proposta rifiutata",
+  "Proposal declined"
+ ],
+ "pg.status.declined.text": [
+  "Grazie comunque. Se cambi idea scrivimi.",
+  "Thank you anyway. If you change your mind, write to me."
+ ],
+ "pg.status.closed": [
+  "Richiesta chiusa",
+  "Request closed"
+ ],
+ "pg.status.closed.text": [
+  "Questa richiesta non è più attiva. Se serve scrivimi.",
+  "This request is no longer active. Write to me if needed."
+ ],
+ "pg.request": [
+  "La tua richiesta",
+  "Your request"
+ ],
+ "pg.proposal": [
+  "La proposta",
+  "The proposal"
+ ],
+ "pg.days": [
+  "Programma",
+  "Itinerary"
+ ],
+ "pg.total": [
+  "Totale",
+  "Total"
+ ],
+ "pg.deposit": [
+  "Acconto per confermare ({percent}%)",
+  "Deposit to confirm ({percent}%)"
+ ],
+ "pg.balance": [
+  "Saldo",
+  "Balance"
+ ],
+ "pg.validUntil": [
+  "Proposta valida fino al {date}",
+  "Proposal valid until {date}"
+ ],
+ "pg.expired": [
+  "Questa proposta è scaduta: scrivimi e la riattivo volentieri.",
+  "This proposal has expired: write to me and I will gladly reactivate it."
+ ],
+ "pg.notes": [
+  "Condizioni e note",
+  "Terms and notes"
+ ],
+ "pg.accept": [
+  "Accetta la proposta",
+  "Accept the proposal"
+ ],
+ "pg.acceptConfirm": [
+  "Confermi di accettare la proposta?",
+  "Do you confirm you accept the proposal?"
+ ],
+ "pg.decline": [
+  "Non fa per me",
+  "Not for me"
+ ],
+ "pg.declineConfirm": [
+  "Vuoi rifiutare la proposta?",
+  "Do you want to decline the proposal?"
+ ],
+ "pg.changes": [
+  "Vuoi modifiche?",
+  "Want changes?"
+ ],
+ "pg.changesHint": [
+  "Scrivimi cosa cambieresti: ti rispondo con una versione aggiornata.",
+  "Tell me what you would change: I will reply with an updated version."
+ ],
+ "pg.sendMessage": [
+  "Invia",
+  "Send"
+ ],
+ "pg.payDeposit": [
+  "Paga l’acconto",
+  "Pay the deposit"
+ ],
+ "pg.depositPaid": [
+  "Acconto ricevuto",
+  "Deposit received"
+ ],
+ "pg.depositManual": [
+  "Ti scrivo io le indicazioni per versare l’acconto.",
+  "I will send you the instructions to pay the deposit."
+ ],
+ "pg.download": [
+  "Scarica la proposta (PDF)",
+  "Download the proposal (PDF)"
+ ],
+ "pg.flash.accepted": [
+  "Proposta accettata, grazie!",
+  "Proposal accepted, thank you!"
+ ],
+ "pg.flash.declined": [
+  "Ho registrato il tuo rifiuto.",
+  "I have recorded your decision."
+ ],
+ "pg.flash.message": [
+  "Messaggio inviato: ti rispondo presto.",
+  "Message sent: I will reply soon."
+ ],
+ "pg.flash.expired": [
+  "La proposta è scaduta: scrivimi per riattivarla.",
+  "The proposal has expired: write to me to reactivate it."
+ ],
+ "pg.flash.conflict": [
+  "Alcune date non sono più disponibili: scrivimi e troviamo un’alternativa.",
+  "Some dates are no longer available: write to me and we will find an alternative."
+ ],
+ "pg.flash.error": [
+  "Non è stato possibile completare l’operazione.",
+  "The operation could not be completed."
+ ],
+ "pg.ref": [
+  "Codice richiesta",
+  "Request reference"
+ ],
+ "pg.dates": [
+  "Date",
+  "Dates"
+ ],
+ "pg.datesFlexible": [
+  "flessibili",
+  "flexible"
+ ],
+ "pg.datesTbd": [
+  "da definire",
+  "to be defined"
+ ],
+ "pg.toursLink": [
+  "Servono più giorni? Costruiamo un programma su misura.",
+  "Need more days? Let us build a tailor-made programme."
+ ],
+ "pg.b2bLink": [
+  "Programmi di più giorni per i tuoi clienti",
+  "Multi-day programmes for your clients"
  ]
 }

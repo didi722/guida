@@ -113,6 +113,11 @@ export function createConfig(overrides = {}) {
       catchUpDays: 7, // dopo un'interruzione non si inviano richieste più vecchie di così
     },
 
+    program: {
+      depositPercent: num(e.PROGRAM_DEPOSIT_PERCENT, 30), // acconto proposto nei preventivi dei programmi di più giorni
+      validityDays: num(e.PROGRAM_VALIDITY_DAYS, 7), // validità predefinita di una proposta
+    },
+
     gift: {
       validityMonths: num(e.GIFT_VALIDITY_MONTHS, 24), // validità dei buoni regalo
       minCents: num(e.GIFT_MIN_EUR, 20) * 100,
