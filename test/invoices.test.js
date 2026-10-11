@@ -484,3 +484,125 @@ test('invio a SdI via PEC: XML allegato col nome corretto, stato «inviata»; se
   assert.equal(plain.invoices.pecConfigured, false);
   await assert.rejects(() => plain.invoices.sendToSdi(i3.id, LATER), (e) => e.code === 'pec' && /PEC non è configurata/.test(e.message));
 });
+
+// ───────────── regressioni dalla revisione indipendente ─────────────
+const issueManual = (app, date = '2027-01-20', cents = 10000, over = {}) => {
+  const d = createManualDraft(app, LATER);
+  saveDraft(app, d.id, { buyer: person(), lines: [{ description: 'Servizio', amountCents: cents }], issueDate: date, options: { bolloCharged: true, ...over } }, LATER);
+  return issueInvoice(app, d.id, LATER);
+};
+
+test('storno totale con bollo addebitato: chiude la fattura e non si può stornare più del dovuto', () => {
+  const app = appFor();
+  const inv = issueManual(app); // 100 € + 2 € di bollo addebitato
+  assert.equal(inv.total_cents, 10200);
+  const cn = createCreditNote(app, inv.id, LATER);
+  assert.equal(cn.total_cents, 10000, 'il bollo non si storna');
+  const done = issueInvoice(app, cn.id, LATER);
+  assert.equal(getInvoice(app.db, inv.id).credited, 1, 'stornata per intero anche col bollo');
+  assert.equal(done.total_cents, 10000);
+
+  const other = issueManual(app);
+  const big = createCreditNote(app, other.id, LATER);
+  saveDraft(app, big.id, { buyer: person(), lines: [{ description: 'Storno', amountCents: 500000 }], issueDate: '2027-01-20', options: {} }, LATER);
+  assert.throws(() => issueInvoice(app, big.id, LATER), { code: 'amount' }, 'oltre l’importo della fattura');
+});
+
+test('storno parziale: la proposta successiva è solo il residuo', () => {
+  const app = appFor();
+  const inv = issueManual(app);
+  const first = createCreditNote(app, inv.id, LATER);
+  saveDraft(app, first.id, { buyer: person(), lines: [{ description: 'Storno parziale', amountCents: 4000 }], issueDate: '2027-01-20', options: {} }, LATER);
+  issueInvoice(app, first.id, LATER);
+  const next = createCreditNote(app, inv.id, LATER);
+  assert.equal(next.total_cents, 6000);
+  issueInvoice(app, next.id, LATER);
+  assert.equal(getInvoice(app.db, inv.id).credited, 1);
+});
+
+test('annullare o scartare una nota di credito totale non lascia la fattura “stornata” né fa fatturare due volte', () => {
+  const app = appFor();
+  const b = paidCard(app, { date: '2027-01-12', time: '09:30' });
+  const [d] = createDrafts(app, [`booking:${b.id}`], LATER);
+  fill(app, d.id);
+  const inv = issueInvoice(app, d.id, LATER);
+  const cn = issueInvoice(app, createCreditNote(app, inv.id, LATER).id, LATER);
+  assert.equal(getInvoice(app.db, inv.id).credited, 1);
+  assert.ok(keys(invoiceQueue(app, LATER)).includes(`booking:${b.id}`));
+  assert.throws(() => discardIssued(app, inv.id), { code: 'state' }, 'ha una nota di credito collegata');
+  setSdiStatus(app, cn.id, 'rejected', 'scarto', LATER);
+  assert.equal(getInvoice(app.db, inv.id).credited, 0, 'la nota è scartata: la fattura è di nuovo valida');
+  assert.ok(!keys(invoiceQueue(app, LATER)).includes(`booking:${b.id}`), 'e la prenotazione non si fattura una seconda volta');
+  assert.throws(() => createDrafts(app, [`booking:${b.id}`], LATER), { code: 'source' });
+});
+
+test('mancata consegna: si può ancora stornare; consegnata è definitiva; da “inviata” non si torna indietro', () => {
+  const app = appFor();
+  const inv = issueManual(app);
+  setSdiStatus(app, inv.id, 'sent', '', LATER);
+  setSdiStatus(app, inv.id, 'undelivered', '', LATER);
+  assert.ok(createCreditNote(app, inv.id, LATER), 'mancata consegna: si storna');
+  setSdiStatus(app, inv.id, 'delivered', '', LATER);
+  assert.throws(() => setSdiStatus(app, inv.id, 'rejected', '', LATER), { code: 'state' }, 'consegnata è definitiva');
+  const b = issueManual(app);
+  setSdiStatus(app, b.id, 'sent', '', LATER);
+  assert.throws(() => setSdiStatus(app, b.id, 'issued', '', LATER), { code: 'state' });
+});
+
+test('non si fatturano prenotazioni annullate dopo la creazione della bozza', () => {
+  const app = appFor();
+  const b = paidCard(app, { date: '2027-01-12', time: '09:30' });
+  const [d] = createDrafts(app, [`booking:${b.id}`], LATER);
+  fill(app, d.id);
+  app.db.prepare(`UPDATE bookings SET status = 'cancelled' WHERE id = ?`).run(b.id);
+  assert.throws(() => issueInvoice(app, d.id, LATER), { code: 'source' });
+  const c = createBooking(app, base({ date: '2027-01-13', time: '09:30', email: 'x@example.com' }), NOW);
+  app.db.prepare(`UPDATE bookings SET status = 'cancelled' WHERE id = ?`).run(c.id);
+  assert.throws(() => createDrafts(app, [`booking:${c.id}`], LATER), { code: 'source' });
+});
+
+test('acconto già pagato con ritenuta: la parte pagata con carta resta intera nei pagamenti', () => {
+  const app = appFor({ vatBp: 2200, nature: '', seller: { regime: 'RF01', fiscalCode: SELLER_CF, firstName: 'Mario', lastName: 'Rossi', address: { street: 'v', zip: '30100', city: 'V', province: 'VE' } } });
+  const inv = createManualDraft(app, LATER);
+  saveDraft(app, inv.id, { buyer: { ...person(), kind: 'company', name: 'Azienda Srl', vat: '01234567897', taxCode: '', sdiCode: 'ABC1234' }, lines: [{ description: 'Servizio', amountCents: 50000 }], issueDate: '2027-01-20', options: { withholdingPercent: 20 } }, LATER);
+  const detail = invoiceDetail(app, inv.id);
+  const row = app.db.prepare('SELECT * FROM invoice_lines WHERE invoice_id = ?').get(inv.id);
+  app.db.prepare('UPDATE invoice_lines SET source_payments = ? WHERE id = ?').run(JSON.stringify([{ method: 'MP08', cents: 15000, paid: true }, { method: 'MP05', cents: 35000, paid: false }]), row.id);
+  const saved = saveDraft(app, inv.id, { buyer: detail.buyer, lines: [{ description: 'Servizio', amountCents: 50000 }], issueDate: '2027-01-20', options: { withholdingPercent: 20 } }, LATER);
+  const pays = JSON.parse(saved.payments_json);
+  assert.equal(pays.reduce((a, p) => a + p.cents, 0), saved.payable_cents);
+  assert.equal(pays.find((p) => p.method === 'MP08')?.cents ?? 0, 0, 'righe manuali: nessun pagamento carta registrato');
+});
+
+test('progressivo del file: unico anche dopo un annullamento; INVOICE_START_DATE; intestatario uguale al cedente', () => {
+  const app = appFor({ startDate: '2027-01-16' });
+  const a = issueManual(app, '2027-01-20');
+  const back = discardIssued(app, a.id);
+  const again = issueInvoice(app, back.id, LATER);
+  assert.notEqual(again.file_name, a.file_name, 'mai lo stesso nome file');
+  const d = createManualDraft(app, LATER);
+  saveDraft(app, d.id, { buyer: person(), lines: [{ description: 'Servizio', amountCents: 1000 }], issueDate: '2027-01-10', options: {} }, LATER);
+  assert.throws(() => issueInvoice(app, d.id, LATER), { code: 'date' }, 'prima della data di avvio');
+  const self = createManualDraft(app, LATER);
+  saveDraft(app, self.id, { buyer: person({ taxCode: SELLER_CF }), lines: [{ description: 'Servizio', amountCents: 1000 }], issueDate: '2027-01-20', options: {} }, LATER);
+  assert.throws(() => issueInvoice(app, self.id, LATER), { code: 'buyer' }, 'fattura a sé stessi');
+  const old = paidCard(app, { date: '2027-01-13', time: '09:30' });
+  assert.ok(!keys(invoiceQueue(app, LATER)).includes(`booking:${old.id}`), 'prima dell’avvio: fuori dalla coda');
+});
+
+test('registro CSV: formule neutralizzate, note di credito in negativo', () => {
+  const app = appFor();
+  const d = createManualDraft(app, LATER);
+  saveDraft(app, d.id, { buyer: person({ firstName: '=HYPERLINK("x")', lastName: 'Test' }), lines: [{ description: 'Servizio', amountCents: 10000 }], issueDate: '2027-01-20', options: {} }, LATER);
+  const inv = issueInvoice(app, d.id, LATER);
+  issueInvoice(app, createCreditNote(app, inv.id, LATER).id, LATER);
+  const csv = invoicesCsv(app, 2027);
+  assert.ok(csv.includes(`'=HYPERLINK`), 'apice davanti alla formula');
+  assert.match(csv, /Nota di credito;.*;-100,00;/);
+});
+
+test('validazione più severa: IBAN, PEC, codice fiscale estero, Regno Unito, natura obsoleta', () => {
+  assert.match(configProblems(appFor({ iban: 'IT00' }).cfg).join(' '), /IBAN/);
+  assert.deepEqual(configProblems(appFor({ iban: 'IT60X0542811101000000123456' }).cfg), []);
+  assert.match(configProblems(appFor({ nature: 'N4.7' }).cfg).join(' '), /natura/);
+});

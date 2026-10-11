@@ -1,5 +1,5 @@
 import { html, raw } from '../html.js';
-import { STATUS_LABEL } from '../invoices.js';
+import { STATUS_LABEL, sdiNext } from '../invoices.js';
 import { fmtDate } from '../time.js';
 import { adminLayout } from './admin.js';
 
@@ -244,16 +244,20 @@ ${inv.status === 'draft' ? html`<form method="post" action="/admin/invoices/${in
 <div class="grid grid-2 admin-detail">
   <div class="card pad">
     <h2>Invio</h2>
-    ${pecConfigured
-      ? html`<form method="post" action="/admin/invoices/${inv.id}/sdi" class="form" data-confirm="Trasmettere ora la fattura a SdI dalla tua PEC?"><button class="btn btn-gold btn-sm" type="submit">${inv.sent_at ? 'Ritrasmetti a SdI via PEC' : 'Invia a SdI via PEC'}</button></form>`
-      : html`<p class="muted">Per inviarla da qui imposta la PEC (vedi <a href="/admin/invoices?tab=settings">Impostazioni</a>). Altrimenti scarica l’XML e caricalo su <strong>Fatture e Corrispettivi</strong> dell’Agenzia delle Entrate, poi segna la fattura come inviata.</p>`}
-    <form method="post" action="/admin/invoices/${inv.id}/status" class="form">
+    ${['issued', 'undelivered'].includes(inv.status)
+      ? pecConfigured
+        ? html`<form method="post" action="/admin/invoices/${inv.id}/sdi" class="form" data-confirm="Trasmettere ora la fattura a SdI dalla tua PEC?"><button class="btn btn-gold btn-sm" type="submit">${inv.sent_at ? 'Ritrasmetti a SdI via PEC (mancata consegna)' : 'Invia a SdI via PEC'}</button></form>`
+        : html`<p class="muted">Per inviarla da qui imposta la PEC (vedi <a href="/admin/invoices?tab=settings">Impostazioni</a>). Altrimenti scarica l’XML e caricalo su <strong>Fatture e Corrispettivi</strong> dell’Agenzia delle Entrate, poi segna la fattura come inviata.</p>`
+      : ''}
+    ${sdiNext(inv.status).length
+      ? html`<form method="post" action="/admin/invoices/${inv.id}/status" class="form">
       <div class="form-grid">
-        <label class="field"><span class="label">Esito comunicato da SdI</span><select name="status">${[['sent', 'Inviata'], ['delivered', 'Consegnata'], ['rejected', 'Scartata'], ['undelivered', 'Mancata consegna']].map(([v, l]) => html`<option value="${v}" ${inv.status === v ? raw('selected') : ''}>${l}</option>`)}</select></label>
+        <label class="field"><span class="label">Esito comunicato da SdI</span><select name="status">${[inv.status, ...sdiNext(inv.status)].map((v) => html`<option value="${v}" ${inv.status === v ? raw('selected') : ''}>${STATUS_LABEL[v]}</option>`)}</select></label>
         <label class="field"><span class="label">Nota <em>(es. codice dell’errore)</em></span><input name="note" maxlength="500" value="${inv.sdi_note ?? ''}"></label>
       </div>
       <button class="btn btn-outline btn-sm" type="submit">Registra l’esito</button>
-    </form>
+    </form>`
+      : html`<p class="muted">Esito definitivo: ${STATUS_LABEL[inv.status]}. Per correggere la fattura serve una nota di credito.</p>`}
   </div>
   <div class="card pad">
     <h2>Copia al cliente</h2>
@@ -262,7 +266,7 @@ ${inv.status === 'draft' ? html`<form method="post" action="/admin/invoices/${in
       <label class="check"><input type="checkbox" name="xml" value="1"> Allega anche il file XML</label>
       <button class="btn btn-outline btn-sm" type="submit">Invia la copia di cortesia</button>
     </form>
-    ${inv.doc_type === 'TD01' && ['issued', 'sent', 'delivered'].includes(inv.status) && !inv.credited
+    ${inv.doc_type === 'TD01' && ['issued', 'sent', 'delivered', 'undelivered'].includes(inv.status) && !inv.credited
       ? html`<form method="post" action="/admin/invoices/${inv.id}/credit-note" class="form" data-confirm="Preparare una nota di credito per questa fattura?"><h3>Errori o storni</h3><p class="muted small">Una fattura emessa non si modifica: la si storna con una nota di credito (anche parziale) e, se serve, si rifà la fattura giusta.</p><button class="btn btn-outline btn-sm" type="submit">Prepara una nota di credito</button></form>`
       : ''}
     ${canDiscard ? html`<form method="post" action="/admin/invoices/${inv.id}/discard" class="form" data-confirm="Annullare l’emissione e riportare la fattura in bozza? Il numero torna disponibile."><h3>Emessa per errore?</h3><p class="muted small">È l’ultima dell’anno e non è mai partita: puoi riportarla in bozza e il numero si libera, senza lasciare buchi.</p><button class="btn btn-outline btn-sm" type="submit">Riporta in bozza</button></form>` : ''}

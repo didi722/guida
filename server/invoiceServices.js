@@ -31,7 +31,7 @@ export function createInvoiceServices(app) {
     /** Trasmette l'XML a SdI dalla casella PEC. Resta «inviata» finché non registri l'esito. */
     async sendToSdi(id, nowMs = Date.now()) {
       const inv = need(id);
-      if (!['issued', 'sent', 'undelivered'].includes(inv.status)) throw new InvoiceError('state', 'si trasmette solo una fattura emessa');
+      if (!['issued', 'undelivered'].includes(inv.status)) throw new InvoiceError('state', 'si trasmette solo una fattura emessa e non ancora inviata (se è già «inviata» aspetta l’esito di SdI)');
       if (!app.pec.live) throw new InvoiceError('pec', 'la PEC non è configurata (PEC_SMTP_HOST, PEC_SMTP_USER, PEC_SMTP_PASS)');
       try {
         await app.pec.send({ to: cfg.invoice.sdiAddress, subject: inv.file_name, text: `Fattura ${inv.number}`, attachments: [{ filename: inv.file_name, content: inv.xml, contentType: 'application/xml' }] });
@@ -40,7 +40,9 @@ export function createInvoiceServices(app) {
         throw new InvoiceError('pec', `invio PEC non riuscito: ${err.message}`);
       }
       const now = new Date(nowMs).toISOString();
-      db.prepare(`UPDATE invoices SET status = 'sent', sent_at = COALESCE(sent_at, ?), status_at = ?, updated_at = ? WHERE id = ?`).run(now, now, now, id);
+      // nel frattempo la fattura potrebbe essere stata annullata o aggiornata da un'altra scheda: si aggiorna solo se è ancora allo stato di partenza
+      const changed = db.prepare(`UPDATE invoices SET status = 'sent', sent_at = COALESCE(sent_at, ?), status_at = ?, updated_at = ? WHERE id = ? AND status = ?`).run(now, now, now, id, inv.status).changes;
+      if (!changed) console.error(`[fatture] la fattura ${id} è cambiata durante l'invio PEC: controlla lo stato e l'esito su SdI`);
       return getInvoice(db, id);
     },
 

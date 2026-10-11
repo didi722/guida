@@ -97,6 +97,7 @@ La trasmissione può essere:
 - regime (`INVOICE_REGIME`), natura IVA, bollo, rivalsa INPS e ritenuta d'acconto;
 - se per i **clienti privati** (in particolare i turisti stranieri) basta il documento commerciale o serve sempre la fattura, e come comportarsi con i clienti esteri senza codice fiscale (il sito usa `0000000` e il codice destinatario `XXXXXXX`);
 - il trattamento dei **buoni regalo**: monouso (fattura alla vendita, default `INVOICE_GIFT_AT=sale`) o multiuso (all'utilizzo, `redemption`);
+- la data di avvio `INVOICE_START_DATE` (es. `2027-01-01`): senza, ogni prenotazione passata finisce in «Da fatturare»; con la data impostata si fattura solo da lì in poi;
 - i prezzi del sito comprendono l'IVA? (`INVOICE_PRICES_INCLUDE_VAT_*`, conta solo se applichi l'IVA).
 
 I limiti di questa versione: non legge in automatico le ricevute di SdI, non conserva a norma (conservazione sostitutiva: la offre gratuitamente l'Agenzia delle Entrate o il tuo intermediario) e non è stata provata su un account reale di SdI: l'XML è controllato contro lo schema ufficiale, ma i controlli di merito li fa solo SdI.

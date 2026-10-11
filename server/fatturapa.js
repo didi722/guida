@@ -150,6 +150,7 @@ export function buyerProblems(b) {
   } else if (!latin1(b.name)) out.push('Indica la denominazione.');
   const country = String(b.country ?? '').toUpperCase();
   if (!/^[A-Z]{2}$/.test(country)) out.push('Il paese deve essere un codice di due lettere (es. IT, DE, US).');
+  else if (country === 'UK') out.push('Per il Regno Unito il codice è GB, non UK.');
   const vat = String(b.vat ?? '').replace(/\s+/g, '').toUpperCase();
   const tax = String(b.taxCode ?? '').replace(/\s+/g, '').toUpperCase();
   if (country === 'IT') {
@@ -159,7 +160,7 @@ export function buyerProblems(b) {
     if (!person && !vat) out.push('Per un’azienda italiana serve la partita IVA.');
   } else {
     if (vat && !/^[A-Z0-9]{1,28}$/.test(vat)) out.push('L’identificativo fiscale estero può avere solo lettere e cifre (max 28).');
-    if (tax && !/^[A-Z0-9]{1,16}$/.test(tax)) out.push('Il codice fiscale/identificativo può avere solo lettere e cifre (max 16).');
+    if (tax && !/^[A-Z0-9]{11,16}$/.test(tax)) out.push('Il codice fiscale/identificativo estero ha da 11 a 16 caratteri (lettere e cifre): se non c’è, lascia il campo vuoto.');
   }
   if (!latin1(b.address)) out.push('Indica l’indirizzo.');
   if (!latin1(b.city)) out.push('Indica il comune/città.');
@@ -169,7 +170,7 @@ export function buyerProblems(b) {
     const sdi = String(b.sdiCode ?? '').trim().toUpperCase();
     if (sdi && !/^[A-Z0-9]{7}$/.test(sdi)) out.push('Il codice destinatario SdI ha 7 caratteri (lettere e cifre).');
     const pec = String(b.pec ?? '').trim();
-    if (pec && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(pec)) out.push('L’indirizzo PEC non è valido.');
+    if (pec && (pec.length < 7 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(pec))) out.push('L’indirizzo PEC non è valido.');
   }
   return out;
 }
@@ -180,14 +181,14 @@ export function sellerProblems(s) {
   if (!validItalianVat(String(s.vatNumber ?? '').replace(/^IT/i, ''))) out.push('Partita IVA mancante o non valida (VAT_NUMBER).');
   if (!(validPersonTaxCode(s.fiscalCode ?? '') || validCompanyTaxCode(s.fiscalCode ?? ''))) out.push('Codice fiscale mancante o non valido (FISCAL_CODE).');
   if (!latin1(s.name) && !(latin1(s.firstName) && latin1(s.lastName))) out.push('Nome e cognome (INVOICE_FIRST_NAME, INVOICE_LAST_NAME) o denominazione (INVOICE_NAME) mancanti.');
-  if (!/^RF\d{2}$/.test(String(s.regime ?? ''))) out.push('Regime fiscale mancante (INVOICE_REGIME, es. RF19 forfettario o RF01 ordinario).');
+  if (!/^RF(0[1-2]|0[4-9]|1\d|20)$/.test(String(s.regime ?? ''))) out.push('Regime fiscale mancante (INVOICE_REGIME, es. RF19 forfettario o RF01 ordinario).');
   const a = s.address ?? {};
   if (!latin1(a.street)) out.push('Indirizzo mancante (INVOICE_ADDRESS).');
   if (!/^\d{5}$/.test(String(a.zip ?? ''))) out.push('CAP mancante o non valido (INVOICE_ZIP).');
   if (!latin1(a.city)) out.push('Comune mancante (INVOICE_CITY).');
   if (!/^[A-Za-z]{2}$/.test(String(a.province ?? ''))) out.push('Provincia mancante (INVOICE_PROVINCE, es. VE).');
   if (s.vatBp > 0 && s.nature) out.push('Con aliquota IVA maggiore di zero non va indicata la natura.');
-  if (s.vatBp === 0 && !/^N[1-7](\.[1-9])?$/.test(String(s.nature ?? ''))) out.push('Con IVA a zero serve la natura dell’operazione (INVOICE_NATURE, es. N2.2).');
+  if (s.vatBp === 0 && !/^(N1|N2\.[12]|N3\.[1-6]|N4|N5|N6\.[1-9]|N7)$/.test(String(s.nature ?? ''))) out.push('Con IVA a zero serve la natura dell’operazione (INVOICE_NATURE, es. N2.2).');
   return out;
 }
 

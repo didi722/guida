@@ -302,6 +302,12 @@ CREATE INDEX invoice_lines_invoice ON invoice_lines(invoice_id);
 ALTER TABLE accounts ADD COLUMN billing_json TEXT;     -- dati di fatturazione strutturati del partner, per precompilare le prossime fatture
 `;
 
+const V7_INVOICE_FILES = `
+-- Progressivo univoco del file inviato a SdI: non si riusa mai, nemmeno dopo un annullamento
+ALTER TABLE invoices ADD COLUMN file_seq INTEGER;
+CREATE UNIQUE INDEX invoices_file_seq ON invoices(file_seq) WHERE file_seq IS NOT NULL;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -315,6 +321,8 @@ export const MIGRATIONS = [
   V5_PROGRAMS,
   // v6 — fatture elettroniche
   V6_INVOICES,
+  // v7 — progressivo univoco dei file di fattura
+  V7_INVOICE_FILES,
 ];
 
 export function migrate(db) {

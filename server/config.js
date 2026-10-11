@@ -141,6 +141,7 @@ export function createConfig(overrides = {}) {
       bank: e.INVOICE_BANK || '',
       b2bDueDays: num(e.INVOICE_B2B_DUE_DAYS, 30), // scadenza di pagamento delle fatture ai partner
       giftInvoiceAt: e.INVOICE_GIFT_AT === 'redemption' ? 'redemption' : 'sale', // buono monouso: fattura alla vendita; multiuso: all'utilizzo
+      startDate: /^\d{4}-\d{2}-\d{2}$/.test(e.INVOICE_START_DATE || '') ? e.INVOICE_START_DATE : '', // prima data fatturabile (es. 2027-01-01, apertura P.IVA): prima di questa non si fattura nulla
       sdiAddress: e.SDI_PEC_ADDRESS || 'sdi01@pec.fatturapa.it',
       pec: { host: e.PEC_SMTP_HOST || '', port: num(e.PEC_SMTP_PORT, 465), user: e.PEC_SMTP_USER || '', pass: e.PEC_SMTP_PASS || '', secure: bool(e.PEC_SMTP_SECURE, true), from: e.PEC_FROM || e.PEC_SMTP_USER || '' },
     },

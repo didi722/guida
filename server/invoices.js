@@ -17,6 +17,12 @@ export class InvoiceError extends Error {
 
 export const STATUS_LABEL = { draft: 'Bozza', issued: 'Emessa', sent: 'Inviata a SdI', delivered: 'Consegnata', rejected: 'Scartata da SdI', undelivered: 'Mancata consegna' };
 const EDITABLE = ['draft', 'rejected'];
+/** Stati in cui il documento esiste fiscalmente (ha un numero e non è stato scartato). */
+const LIVE = ['issued', 'sent', 'delivered', 'undelivered'];
+/** Esiti di SdI ammessi a partire da ciascuno stato: «consegnata» è definitiva, uno scarto si corregge riemettendo. */
+const SDI_NEXT = { issued: ['sent', 'delivered', 'rejected', 'undelivered'], sent: ['delivered', 'rejected', 'undelivered'], undelivered: ['sent', 'delivered', 'rejected'], delivered: [], rejected: [] };
+export const sdiNext = (status) => SDI_NEXT[status] ?? [];
+export const CREDITABLE_STATUS = LIVE;
 
 // ───────────── impostazioni ─────────────
 /** Impostazioni fiscali con i dati del cedente (te) presi dal profilo del sito. */
@@ -29,6 +35,7 @@ export function settingsOf(cfg) {
 export function configProblems(cfg) {
   const s = settingsOf(cfg);
   const out = sellerProblems({ ...s.seller, vatBp: s.vatBp, nature: s.nature });
+  if (s.iban && !/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s.iban)) out.push('L’IBAN (INVOICE_IBAN) non ha un formato valido.');
   if (s.seller.regime === 'RF19' && s.vatBp > 0) out.push('Il regime forfettario (RF19) non prevede IVA: imposta INVOICE_VAT_RATE=0.');
   return out;
 }
@@ -181,17 +188,25 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
 export const invoiceForSource = (db, type, id) =>
   db.prepare(`SELECT i.id, i.number, i.status, i.doc_type FROM invoice_lines l JOIN invoices i ON i.id = l.invoice_id WHERE l.source_type = ? AND l.source_id = ? AND l.released = 0`).get(type, id) ?? null;
 
+/** Una voce è fatturabile solo finché è valida: una prenotazione annullata o rimborsata, un buono annullato o un programma chiuso non si fatturano. */
+function isBillable(db, type, id) {
+  const table = { booking: 'bookings', gift: 'gift_cards', program: 'programs' }[type];
+  const ok = { booking: 'confirmed', gift: 'active', program: 'confirmed' }[type];
+  return db.prepare(`SELECT status FROM ${table} WHERE id = ?`).get(id)?.status === ok;
+}
+
 const isReserved = (db, type, id) => !!db.prepare('SELECT 1 FROM invoice_lines WHERE source_type = ? AND source_id = ? AND released = 0').get(type, id);
 
 /** Voci ancora da fatturare: prenotazioni confermate (pagate o già svolte), buoni venduti, programmi conclusi. */
 export function invoiceQueue(app, nowMs = Date.now()) {
   const { db, cfg } = app;
   const today = nowRome(nowMs).date;
+  const start = settingsOf(cfg).startDate;
   const items = [];
   const push = (type, id) => {
     if (isReserved(db, type, id)) return;
     const item = describeSource(app, type, id, nowMs);
-    if (item && item.amountCents > 0) items.push({ ...item, overdue: item.dueBy < today });
+    if (item && item.amountCents > 0 && (!start || (item.date ?? '') >= start)) items.push({ ...item, overdue: item.dueBy < today });
   };
   for (const { id } of db.prepare(`SELECT id FROM bookings WHERE status = 'confirmed' AND (payment_status = 'paid' OR date <= ?) ORDER BY date, start_time`).all(today)) push('booking', id);
   if (settingsOf(cfg).giftInvoiceAt === 'sale') for (const { id } of db.prepare(`SELECT id FROM gift_cards WHERE status = 'active' ORDER BY id`).all()) push('gift', id);
@@ -237,7 +252,7 @@ function reconcilePayments(lines, calc, s, dueDate, isCredit) {
     if (open) open.cents += diff;
     else items.push({ method: 'MP05', paid: false, cents: diff });
   } else if (diff < 0) {
-    for (const item of [...items].sort((a, b) => Number(a.paid) - Number(b.paid)).reverse()) {
+    for (const item of [...items].sort((a, b) => Number(a.paid) - Number(b.paid))) {
       const cut = Math.min(item.cents, -diff);
       item.cents -= cut;
       diff += cut;
@@ -341,6 +356,7 @@ export function createDrafts(app, keys, nowMs = Date.now()) {
       const item = describeSource(app, type, id, nowMs);
       if (!item) throw new InvoiceError('source', 'voce non trovata');
       if (isReserved(db, type, id)) throw new InvoiceError('source', `${item.ref} è già in una fattura`);
+      if (!isBillable(db, type, id)) throw new InvoiceError('source', `${item.ref}: annullata o non valida, non si fattura`);
       if (item.amountCents <= 0) throw new InvoiceError('source', `${item.ref}: nulla da fatturare`);
       return item;
     });
@@ -435,9 +451,8 @@ export function deleteDraft(app, id) {
 }
 
 // ───────────── emissione ─────────────
-const base36 = (n) => n.toString(36).toUpperCase();
-/** Progressivo di invio del file (max 5 caratteri alfanumerici): cambia a ogni nuovo tentativo dopo uno scarto. */
-export const progressiveFor = (id, attempt = 0) => base36(id * 10 + attempt).padStart(5, '0').slice(-5);
+/** Progressivo del file (max 5 caratteri alfanumerici): contatore globale, nuovo a ogni emissione o riemissione, mai riusato. */
+export const progressiveFor = (fileSeq) => Number(fileSeq).toString(36).toUpperCase().padStart(5, '0');
 
 function causaliFor(app, inv, s, opts) {
   const out = String(s.notes ?? '').split('|').map((x) => x.trim()).filter(Boolean);
@@ -447,6 +462,25 @@ function causaliFor(app, inv, s, opts) {
   }
   if (opts.notes) out.push(opts.notes);
   return out;
+}
+
+const eur = (c) => `${(c / 100).toFixed(2).replace('.', ',')} €`;
+/** Quanto si può stornare in tutto: il totale della fattura meno il bollo addebitato (che sulla nota di credito non si riporta). */
+const creditableCents = (rel) => rel.total_cents - (rel.bollo_charged ? rel.bollo_cents : 0);
+/** Totale delle note di credito valide (emesse e non scartate) di una fattura, escluse quelle indicate. */
+const creditedCents = (db, relatedId, exceptId = 0) =>
+  db.prepare(`SELECT COALESCE(SUM(total_cents), 0) AS s FROM invoices WHERE related_id = ? AND doc_type = 'TD04' AND status IN ('issued','sent','delivered','undelivered') AND id != ?`).get(relatedId, exceptId).s;
+/** «Stornata» e «voci di nuovo fatturabili» derivano sempre dalle note di credito valide: se una viene annullata o scartata si torna indietro. */
+function refreshCredited(db, relatedId) {
+  const rel = getInvoice(db, relatedId);
+  if (!rel) return;
+  const full = creditableCents(rel) - creditedCents(db, relatedId) <= 2;
+  db.prepare('UPDATE invoices SET credited = ? WHERE id = ?').run(full ? 1 : 0, relatedId);
+  if (full) db.prepare('UPDATE invoice_lines SET released = 1 WHERE invoice_id = ? AND source_type IS NOT NULL').run(relatedId);
+  else {
+    // la nota di credito è stata annullata o scartata: le voci tornano in questa fattura, a meno che nel frattempo siano finite in un'altra
+    db.prepare(`UPDATE invoice_lines SET released = 0 WHERE invoice_id = ? AND released = 1 AND source_type IS NOT NULL AND NOT EXISTS (SELECT 1 FROM invoice_lines o WHERE o.source_type = invoice_lines.source_type AND o.source_id = invoice_lines.source_id AND o.released = 0)`).run(relatedId);
+  }
 }
 
 /**
@@ -472,6 +506,17 @@ export function issueInvoice(app, id, nowMs = Date.now()) {
     const date = inv.issue_date;
     if (!isDate(date)) throw new InvoiceError('date', 'la data della fattura non è valida');
     if (!reissue && date > today) throw new InvoiceError('date', 'la data della fattura non può essere futura');
+    if (!reissue && s.startDate && date < s.startDate) throw new InvoiceError('date', `prima del ${fmtDate(s.startDate, 'it', 'date')} non si emettono fatture (INVOICE_START_DATE)`);
+    if (buyer.country?.toUpperCase() === 'IT' && ((buyer.vat && buyer.vat === s.seller.vatNumber.replace(/^IT/i, '')) || (buyer.taxCode && buyer.taxCode === s.seller.fiscalCode))) {
+      throw new InvoiceError('buyer', 'l’intestatario coincide con te (cedente): SdI scarta le fatture a sé stessi', ['Partita IVA o codice fiscale uguali ai tuoi.']);
+    }
+    if (inv.doc_type === 'TD01' && !reissue) {
+      for (const l of lines) {
+        if (l.source_type && !isBillable(db, l.source_type, l.source_id)) throw new InvoiceError('source', `${describeSource(app, l.source_type, l.source_id, nowMs)?.ref ?? 'una voce'} è stata annullata o non è più valida: toglila dalla fattura`);
+      }
+    }
+    const relatedDoc = inv.related_id ? getInvoice(db, inv.related_id) : null;
+    if (inv.doc_type === 'TD04' && !(relatedDoc?.number && LIVE.includes(relatedDoc.status))) throw new InvoiceError('state', 'la fattura da stornare non è valida: una nota di credito si emette solo su una fattura emessa');
 
     let { year, seq, number } = inv;
     const attempt = reissue ? (optionsOf(inv).attempt ?? 0) + 1 : 0;
@@ -487,8 +532,13 @@ export function issueInvoice(app, id, nowMs = Date.now()) {
 
     const fresh = { ...inv, number, issue_date: date, options_json: JSON.stringify({ ...optionsOf(inv), attempt }) };
     const { calc, payments, options } = calcInvoice(app, fresh, lines);
-    const progressive = progressiveFor(id, attempt);
-    const related = inv.related_id ? getInvoice(db, inv.related_id) : null;
+    if (relatedDoc) {
+      const room = creditableCents(relatedDoc) - creditedCents(db, relatedDoc.id, id);
+      if (calc.totalCents > room + 2) throw new InvoiceError('amount', `la nota di credito (${eur(calc.totalCents)}) supera quanto resta da stornare (${eur(Math.max(room, 0))})`);
+    }
+    const fileSeq = (db.prepare('SELECT MAX(file_seq) AS m FROM invoices').get().m ?? 0) + 1;
+    const progressive = progressiveFor(fileSeq);
+    const related = relatedDoc;
     const xml = buildInvoiceXml({
       progressive,
       seller: s.seller,
@@ -505,8 +555,8 @@ export function issueInvoice(app, id, nowMs = Date.now()) {
     });
     const snapshot = { regime: s.seller.regime, vatBp: s.vatBp, nature: s.nature, vatIncluded: options.vatIncluded, notes: s.notes, legalReference: s.legalReference, seller: s.seller };
     db.prepare(
-      `UPDATE invoices SET status = 'issued', year = ?, seq = ?, number = ?, options_json = ?, config_json = ?, file_name = ?, xml = ?, sdi_note = NULL, status_at = ?, updated_at = ? WHERE id = ?`,
-    ).run(year, seq, number, JSON.stringify({ ...options, attempt }), JSON.stringify(snapshot), invoiceFileName(s.seller.vatNumber, progressive), xml, new Date(nowMs).toISOString(), new Date(nowMs).toISOString(), id);
+      `UPDATE invoices SET status = 'issued', year = ?, seq = ?, number = ?, options_json = ?, config_json = ?, file_seq = ?, file_name = ?, xml = ?, sdi_note = NULL, status_at = ?, updated_at = ? WHERE id = ?`,
+    ).run(year, seq, number, JSON.stringify({ ...options, attempt }), JSON.stringify(snapshot), fileSeq, invoiceFileName(s.seller.vatNumber, progressive), xml, new Date(nowMs).toISOString(), new Date(nowMs).toISOString(), id);
     persistCalc(db, id, calc, payments, nowMs);
     writeLines(db, id, lines, calc);
 
@@ -516,13 +566,7 @@ export function issueInvoice(app, id, nowMs = Date.now()) {
       db.prepare('UPDATE accounts SET billing_json = ? WHERE id = ?').run(JSON.stringify(saved), inv.account_id);
     }
     // nota di credito: se storna per intero la fattura, le sue voci tornano fatturabili
-    if (inv.doc_type === 'TD04' && related) {
-      const credited = db.prepare(`SELECT COALESCE(SUM(total_cents), 0) AS s FROM invoices WHERE related_id = ? AND doc_type = 'TD04' AND status != 'draft'`).get(related.id).s;
-      if (credited >= related.total_cents && !related.credited) {
-        db.prepare('UPDATE invoices SET credited = 1 WHERE id = ?').run(related.id);
-        db.prepare('UPDATE invoice_lines SET released = 1 WHERE invoice_id = ? AND source_type IS NOT NULL').run(related.id);
-      }
-    }
+    if (inv.doc_type === 'TD04' && related) refreshCredited(db, related.id);
     return getInvoice(db, id);
   });
 }
@@ -533,17 +577,25 @@ export function createCreditNote(app, relatedId, nowMs = Date.now()) {
   return tx(db, () => {
     const rel = getInvoice(db, relatedId);
     if (!rel) throw new InvoiceError('notfound', 'fattura non trovata');
-    if (rel.doc_type !== 'TD01' || !['issued', 'sent', 'delivered'].includes(rel.status)) throw new InvoiceError('state', 'si può stornare solo una fattura emessa');
+    if (rel.doc_type !== 'TD01' || !LIVE.includes(rel.status)) throw new InvoiceError('state', 'si può stornare solo una fattura emessa');
     if (rel.credited) throw new InvoiceError('state', 'la fattura è già stata stornata per intero');
     if (db.prepare(`SELECT 1 FROM invoices WHERE related_id = ? AND doc_type = 'TD04' AND status = 'draft'`).get(relatedId)) throw new InvoiceError('state', 'c’è già una nota di credito in bozza per questa fattura');
     const now = new Date(nowMs).toISOString();
-    const opts = { ...optionsOf(rel), bolloCharged: false, contributionPercent: 0, withholdingPercent: 0, notes: '', dueDate: null, attempt: 0 };
+    const done = creditedCents(db, rel.id);
+    const room = creditableCents(rel) - done;
+    const relOpts = optionsOf(rel);
+    // la nota di credito riprende rivalsa e ritenuta della fattura; dopo uno storno parziale propone solo ciò che resta
+    const opts = { ...relOpts, bolloCharged: false, contributionPercent: done ? 0 : relOpts.contributionPercent ?? 0, withholdingPercent: done ? 0 : relOpts.withholdingPercent ?? 0, notes: '', dueDate: null, attempt: 0 };
     const id = Number(
       db.prepare(`INSERT INTO invoices(status, doc_type, issue_date, related_id, account_id, buyer_json, options_json, currency, created_at, updated_at) VALUES('draft', 'TD04', ?, ?, ?, ?, ?, 'EUR', ?, ?)`).run(nowRome(nowMs).date, rel.id, rel.account_id, rel.buyer_json, JSON.stringify(opts), now, now).lastInsertRowid,
     );
-    const lines = invoiceLines(db, rel.id)
-      .filter((l) => !/^Imposta di bollo/.test(l.description))
-      .map((l) => ({ description: `Storno: ${l.description}`.slice(0, 400), amount_cents: l.amount_cents, source_type: null, source_id: null, source_payments: null }));
+    const s = settingsOf(app.cfg);
+    const gross = s.vatBp > 0 && !!relOpts.vatIncluded;
+    const lines = done
+      ? [{ description: `Storno parziale della fattura n. ${rel.number}`, amount_cents: Math.max(1, gross ? room : Math.round((room * 10000) / (10000 + s.vatBp))), source_type: null, source_id: null, source_payments: null }]
+      : invoiceLines(db, rel.id)
+          .filter((l) => !/^Imposta di bollo/.test(l.description))
+          .map((l) => ({ description: `Storno: ${l.description}`.slice(0, 400), amount_cents: l.amount_cents, source_type: null, source_id: null, source_payments: null }));
     const inv = getInvoice(db, id);
     const { calc, payments } = calcInvoice(app, inv, lines);
     writeLines(db, id, lines, calc);
@@ -558,10 +610,12 @@ export function discardIssued(app, id, nowMs = Date.now()) {
   return tx(db, () => {
     const inv = getInvoice(db, id);
     if (!inv) throw new InvoiceError('notfound', 'fattura non trovata');
+    if (db.prepare(`SELECT 1 FROM invoices WHERE related_id = ?`).get(id)) throw new InvoiceError('state', 'ci sono note di credito collegate a questa fattura: eliminale prima');
     if (inv.status !== 'issued' || inv.sent_at || inv.emailed_at) throw new InvoiceError('state', 'si può annullare solo una fattura emessa che non è stata inviata né mandata al cliente');
     const last = db.prepare('SELECT MAX(seq) AS seq FROM invoices WHERE year = ?').get(inv.year).seq;
     if (inv.seq !== last) throw new InvoiceError('state', 'si può annullare solo l’ultima fattura dell’anno (altrimenti la numerazione avrebbe un buco): emetti una nota di credito');
     db.prepare(`UPDATE invoices SET status = 'draft', year = NULL, seq = NULL, number = NULL, file_name = NULL, xml = NULL, config_json = NULL, updated_at = ? WHERE id = ?`).run(new Date(nowMs).toISOString(), id);
+    if (inv.doc_type === 'TD04' && inv.related_id) refreshCredited(db, inv.related_id);
     return getInvoice(db, id);
   });
 }
@@ -573,8 +627,12 @@ export function setSdiStatus(app, id, status, note = '', nowMs = Date.now()) {
   const inv = getInvoice(db, id);
   if (!inv) throw new InvoiceError('notfound', 'fattura non trovata');
   if (inv.status === 'draft') throw new InvoiceError('state', 'la bozza non è stata emessa');
+  if (status !== inv.status && !sdiNext(inv.status).includes(status)) {
+    throw new InvoiceError('state', inv.status === 'delivered' ? 'una fattura consegnata è definitiva: per correggerla serve una nota di credito' : inv.status === 'rejected' ? 'una fattura scartata si corregge e si riemette' : `da «${STATUS_LABEL[inv.status]}» non si passa a «${STATUS_LABEL[status]}»`);
+  }
   const now = new Date(nowMs).toISOString();
   db.prepare('UPDATE invoices SET status = ?, status_at = ?, sdi_note = ?, sent_at = CASE WHEN ? = \'sent\' AND sent_at IS NULL THEN ? ELSE sent_at END, updated_at = ? WHERE id = ?').run(status, now, cleanText(note, 500) || null, status, now, now, id);
+  if (inv.doc_type === 'TD04' && inv.related_id) refreshCredited(db, inv.related_id);
   return getInvoice(db, id);
 }
 
@@ -582,17 +640,21 @@ export function setSdiStatus(app, id, status, note = '', nowMs = Date.now()) {
 const money = (c) => (c / 100).toFixed(2).replace('.', ',');
 const cell = (v) => {
   const s = String(v ?? '');
-  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  return /[";\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
+/** Testo libero (nomi inseriti da chiunque): un apice davanti impedisce che Excel o Sheets lo eseguano come formula. */
+const text = (v) => (/^[=+\-@\t\r]/.test(String(v ?? '')) ? `'${v}` : v);
 
 /** Registro delle fatture emesse in un anno, in CSV (separatore «;», decimali con la virgola) per il commercialista. */
 export function invoicesCsv(app, year) {
   const rows = app.db.prepare(`SELECT * FROM invoices WHERE year = ? AND status != 'draft' ORDER BY seq`).all(year);
-  const head = ['Numero', 'Data', 'Tipo', 'Cliente', 'Paese', 'P.IVA / ID fiscale', 'Codice fiscale', 'Imponibile', 'IVA', 'Bollo', 'Contributo', 'Ritenuta', 'Totale', 'Da pagare', 'Stato', 'Fattura collegata', 'File XML'];
+  const head = ['Numero', 'Data', 'Tipo', 'Cliente', 'Paese', 'P.IVA / ID fiscale', 'Codice fiscale', 'Imponibile (compresi contributo e bollo addebitato)', 'IVA', 'Bollo', 'Contributo', 'Ritenuta', 'Totale', 'Da pagare', 'Stato', 'Fattura collegata', 'File XML'];
   const lines = rows.map((r) => {
     const b = buyerOf(r);
     const related = r.related_id ? getInvoice(app.db, r.related_id)?.number : '';
-    return [r.number, r.issue_date, r.doc_type === 'TD04' ? 'Nota di credito' : 'Fattura', b.kind === 'person' ? `${b.firstName} ${b.lastName}` : b.name, b.country, b.vat, b.taxCode, money(r.taxable_cents), money(r.vat_cents), money(r.bollo_cents), money(r.contribution_cents), money(r.withholding_cents), money(r.total_cents), money(r.payable_cents), STATUS_LABEL[r.status], related, r.file_name].map(cell).join(';');
+    const sign = r.doc_type === 'TD04' ? -1 : 1; // le note di credito si sottraggono
+    const m = (c) => money(sign * c);
+    return [r.number, r.issue_date, r.doc_type === 'TD04' ? 'Nota di credito' : 'Fattura', text(b.kind === 'person' ? `${b.firstName} ${b.lastName}` : b.name), b.country, text(b.vat), text(b.taxCode), m(r.taxable_cents), m(r.vat_cents), m(r.bollo_cents), m(r.contribution_cents), m(r.withholding_cents), m(r.total_cents), m(r.payable_cents), STATUS_LABEL[r.status], related, r.file_name].map(cell).join(';');
   });
   return String.fromCharCode(0xfeff) + [head.join(';'), ...lines].join('\r\n') + '\r\n';
 }
