@@ -33,7 +33,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - **Statistiche**: venduto, scontrino medio, incassato e da incassare, annulli, andamento, per tour/partner/canale/pagamento/lingua/giorno, portafoglio futuro, con confronto sul periodo precedente ed esportazione CSV.
 - **Fatture**: voci da fatturare, bozze, **fattura elettronica XML (FatturaPA)** con numerazione progressiva, copia PDF, invio al cliente, trasmissione a SdI via PEC, note di credito, registro CSV.
 - **Sconti e buoni**: codici sconto (percentuale o fisso, validità, tour, minimo, usi) e buoni regalo (saldo, movimenti, rettifiche, scadenza).
-- **Feedback** ricevuti, **feed calendario (.ics)**, **backup** scaricabile (database, foto, contenuti), **guida** e registro delle **email**.
+- **Feedback** ricevuti, **feed calendario (.ics)**, **backup** scaricabile (database, foto, contenuti) e **ripristino dal pannello** (anteprima di ciò che cambia, solo contenuti oppure tutto, copia di sicurezza automatica con «torna indietro»), **guida** e registro delle **email**.
 - Email di avviso a ogni prenotazione, annullamento, richiesta partner o programma.
 
 **Logica pensata per una guida sola**
@@ -134,7 +134,7 @@ A differenza del blog (che è statico), qui serve un **server** perché le preno
 1. Configura le variabili d'ambiente (vedi `.env.example`). In produzione sono **obbligatorie** `NODE_ENV=production`, `BASE_URL` (https), `SESSION_SECRET` e `ADMIN_PASSWORD`.
 2. Metti il sito dietro **HTTPS** (Caddy, nginx o il proxy della piattaforma).
 3. Avvio con Node (`npm ci --omit=dev && npm start`) oppure con Docker (`Dockerfile` incluso, volume su `/data`).
-4. **Disco persistente e backup**: la cartella dei dati (`DATA_DIR`, nel Docker `/data`) contiene il database (prenotazioni, clienti, partner, fatture, **tour, articoli, pagine, testi, impostazioni**) e le **foto** (`media/`): deve sopravvivere ai riavvii e agli aggiornamenti. Dal pannello, **Aiuto › Backup** scarica uno zip con tutto, pronto da conservare e da ripristinare (istruzioni nello zip e nella guida).
+4. **Disco persistente e backup**: la cartella dei dati (`DATA_DIR`, nel Docker `/data`) contiene il database (prenotazioni, clienti, partner, fatture, **tour, articoli, pagine, testi, impostazioni**) e le **foto** (`media/`): deve sopravvivere ai riavvii e agli aggiornamenti. Dal pannello, **Aiuto › Backup** scarica uno zip con tutto e lo **ripristina** (con anteprima, conferma e copia di sicurezza automatica); a mano, le istruzioni sono nello zip e nella guida. Se davanti al sito c'è un proxy (nginx, Cloudflare…) controlla che accetti caricamenti grandi come lo zip, altrimenti il ripristino dal pannello non sale e resta quello a mano.
 
 ### Pagamenti con Stripe
 1. Crea un account Stripe (modalità test per provare). Imposta `STRIPE_SECRET_KEY`.
@@ -176,6 +176,8 @@ server/
   settings.js       impostazioni del pannello (sovrascrivono la configurazione)
   stats.js          statistiche e KPI (funzioni pure, testate)
   backup.js         copia di sicurezza (zip)
+  restore.js        ripristino da una copia (controllo, anteprima, sostituzione dei dati in una transazione, copie di sicurezza)
+  zipread.js        lettura sicura di uno zip caricato
   invoices.js       coda, bozze, emissione e note di credito
   fatturapa.js      importi e XML FatturaPA (puro)
   pdf.js            voucher, buoni regalo, proposte (e pdf-invoice.js)

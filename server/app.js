@@ -15,6 +15,9 @@ import { adminRouter } from './routes/admin.js';
 import { page } from './views/layout.js';
 import { html } from './html.js';
 
+/** Quanto può durare l'invio di una richiesta: serve al caricamento di una copia di sicurezza da una linea lenta (il limite predefinito di Node è 5 minuti). */
+export const REQUEST_TIMEOUT_MS = 30 * 60_000;
+
 /** Versione degli asset (ultima modifica di css e js): serve a far scaricare di nuovo i file cambiati. */
 function assetVersion() {
   let v = 0;

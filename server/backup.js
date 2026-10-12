@@ -57,33 +57,45 @@ Contenuto
 
 ATTENZIONE: contiene dati personali dei clienti. Conservala al sicuro e non inviarla per email.
 
-Come si ripristina (sul server, con il sito spento)
+Come si ripristina
+  Dal pannello (il modo più semplice): Aiuto › Backup › «Ripristina da una copia». Scegli questo file .zip: il sito lo
+  controlla, ti mostra cosa cambierebbe e, solo dopo la tua conferma, salva una copia di sicurezza automatica e rimette i dati.
+
+  A mano, sul server (con il sito spento), se il pannello non è raggiungibile:
   1. sostituisci il file guida.sqlite nella cartella dei dati (DATA_DIR, di solito «data/»)
      e cancella eventuali file guida.sqlite-wal e guida.sqlite-shm accanto
   2. copia la cartella media/ dentro la cartella dei dati
   3. riavvia il sito
 `;
 
-/** Gli elementi della copia: database, immagini, contenuti leggibili e istruzioni. */
-export async function* backupEntries(app, nowMs = Date.now()) {
+/**
+ * Gli elementi della copia: database, immagini, contenuti leggibili e istruzioni.
+ * Con `snapshot` (una copia di sicurezza automatica fatta prima di un ripristino) il database e i contenuti sono quelli di allora.
+ */
+export async function* backupEntries(app, nowMs = Date.now(), snapshot = null) {
   const { cfg, db } = app;
   yield { name: 'LEGGIMI.txt', data: Buffer.from(README(`${nowRome(nowMs).date} ${nowRome(nowMs).time}`), 'utf8') };
-  const tmp = path.join(cfg.dataDir, `.backup-${crypto.randomBytes(4).toString('hex')}.sqlite`);
-  try {
-    db.prepare('VACUUM INTO ?').run(tmp); // fotografia coerente anche mentre il sito lavora
-    yield { name: 'guida.sqlite', data: fs.readFileSync(tmp) };
-  } finally {
-    fs.rmSync(tmp, { force: true });
+  if (snapshot) {
+    yield { name: 'guida.sqlite', data: fs.readFileSync(snapshot.dbFile) };
+    if (snapshot.contentFile) yield { name: 'contenuti.json', data: fs.readFileSync(snapshot.contentFile) };
+  } else {
+    const tmp = path.join(cfg.dataDir, `.backup-${crypto.randomBytes(4).toString('hex')}.sqlite`);
+    try {
+      db.prepare('VACUUM INTO ?').run(tmp); // fotografia coerente anche mentre il sito lavora
+      yield { name: 'guida.sqlite', data: fs.readFileSync(tmp) };
+    } finally {
+      fs.rmSync(tmp, { force: true });
+    }
+    const exported = app.content.export?.();
+    if (exported) yield { name: 'contenuti.json', data: Buffer.from(JSON.stringify(exported, null, 2), 'utf8') };
   }
-  const exported = app.content.export?.();
-  if (exported) yield { name: 'contenuti.json', data: Buffer.from(JSON.stringify(exported, null, 2), 'utf8') };
   const mediaDir = path.join(cfg.dataDir, 'media');
   if (fs.existsSync(mediaDir)) {
     for (const f of fs.readdirSync(mediaDir).sort()) if (MEDIA_NAME.test(f)) yield { name: `media/${f}`, data: fs.readFileSync(path.join(mediaDir, f)) };
   }
 }
 
-export const backupFileName = (nowMs = Date.now()) => `guida-backup-${nowRome(nowMs).date}.zip`;
+export const backupFileName = (nowMs = Date.now(), prefix = 'guida-backup') => `${prefix}-${nowRome(nowMs).date}.zip`;
 
 const SETTING = 'last_backup_at';
 export const lastBackup = (db) => getSetting(db, SETTING, null);

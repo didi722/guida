@@ -31,7 +31,7 @@ Object.assign(process.env, {
   GUIDE_LICENSE: 'n. 0000 (prova)', LEGAL_ADDRESS: 'Calle del Test 1, Venezia',
 });
 
-const { createApp } = await import('../server/app.js');
+const { REQUEST_TIMEOUT_MS, createApp } = await import('../server/app.js');
 const { hashPassword } = await import('../server/auth.js');
 const { cancelBooking, confirmPaid, createBooking, getBooking, markRefund } = await import('../server/bookings.js');
 const { saveFeedback, setFeatured } = await import('../server/reviews.js');
@@ -201,7 +201,7 @@ async function seed() {
 
 const giftCode = fresh ? await seed() : null;
 
-server.listen(Number(PORT), () => {
+const http = server.listen(Number(PORT), () => {
   console.log(`
 ═══════════════ SITO DI PROVA ═══════════════
 Sito         http://localhost:${PORT}
@@ -216,4 +216,5 @@ Dati         ${path.relative(ROOT, DIR) || DIR}/   (npm run sandbox -- --reset p
 Ctrl+C per fermare.
 `);
 });
+http.requestTimeout = REQUEST_TIMEOUT_MS;
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => process.exit(0));

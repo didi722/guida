@@ -82,6 +82,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 | **Emettere una fattura** | **Conti › Fatture** |
 | Vedere **quanto ho incassato**, quale tour rende di più, lo scontrino medio | **Conti › Statistiche** |
 | Scaricare una **copia di sicurezza** | **Aiuto › Backup** |
+| **Rimettere il sito com'era** in una copia scaricata (o tornare indietro dopo un errore) | **Aiuto › Backup › Ripristina da una copia** |
 | Leggere le **email** mandate dal sito | **Aiuto › Email** |
 
 ## 4. Ogni giorno: cinque minuti
@@ -360,7 +361,24 @@ Prenotazioni, clienti, fatture, tour, articoli, pagine, testi, impostazioni e fo
 
 **Quando.** Dopo ogni grande modifica (nuovi tour, tante foto, cambio prezzi) e **almeno una volta al mese**. La pagina ti ricorda quando hai scaricato l'ultima. Conserva il file **al sicuro**: contiene **dati personali dei clienti** (non mandarlo per email, non lasciarlo su computer condivisi). Molti hosting fanno anche copie automatiche del disco: chiedi al tuo se sono attive, ma la tua copia resta l'assicurazione in più.
 
-**Ripristinare** (con il sito **spento**, sul server): 1) sostituisci `guida.sqlite` nella cartella dei dati e cancella gli eventuali `guida.sqlite-wal` e `guida.sqlite-shm` accanto; 2) copia la cartella `media/` nella cartella dei dati; 3) riavvia il sito. Se non sei pratico, falla fare a un programmatore con questo zip alla mano.
+### Ripristinare una copia
+
+**Aiuto › Backup › Ripristina da una copia**: scegli lo zip che avevi scaricato e premi **Carica e controlla**. Il sito controlla il file e ti mostra **cosa cambierebbe**: quanti tour, articoli, prenotazioni, fatture… ci sono adesso e quanti nella copia. **Finché non confermi, non cambia nulla.** Poi scegli che cosa ripristinare:
+
+- **Solo i contenuti** (la scelta consigliata): tour e prezzi, articoli, pagine, testi del sito e foto tornano come nella copia. **Non tocca** prenotazioni, clienti, partner, buoni regalo, fatture, feedback, orari e impostazioni. È quella giusta per rimediare a una modifica sbagliata. Un tour che ha già delle prenotazioni non sparisce mai, anche se la copia non lo conosce; le foto che hai già restano in libreria.
+- **Tutto**: sostituisce ogni dato con quello della copia. Serve per rimettere in piedi il sito dopo un guasto o su un server nuovo. **Quello che è successo dopo la data della copia sparisce dal pannello** (prenotazioni, buoni regalo, partner, fatture emesse…): la pagina ti dice quante cose sono, per esempio *«2 prenotazioni, 1 fattura emessa»*. I pagamenti restano comunque su Stripe e le fatture già mandate a SdI restano valide, ma il sito non le conoscerebbe più: dovresti rimetterle a mano e **non emettere nuove fatture finché non hai ricontrollato la numerazione** con il commercialista. Qualche cliente potrebbe anche ricevere di nuovo un'email automatica (promemoria, richiesta di recensione).
+
+Per confermare scrivi **RIPRISTINA** nella casella e premi **Ripristina**. Il pulsante **Annulla, non cambiare niente** butta via il file caricato.
+
+**Se hai ripristinato la copia sbagliata.** Prima di ogni ripristino il sito salva da solo com'era: le ultime tre copie compaiono in **Copie di sicurezza automatiche**. **Torna a questa versione** ti riporta com'era prima (con la stessa anteprima e la stessa conferma); **Scarica (.zip)** te la dà come file, uguale a una copia normale.
+
+Qualche accortezza:
+- Fallo **quando nessuno sta prenotando** (per esempio la sera): durante il ripristino, che dura pochi secondi, una prenotazione in corso potrebbe sbagliare.
+- Il file caricato resta sul server **al massimo un'ora** e si cancella appena confermi o annulli. Il limite è 1 GB.
+- Carica solo copie scaricate da **questo** sito. Il sito rifiuta file che non sono copie sue, danneggiati o fatti da una versione più recente (in quel caso aggiorna prima il sito). Le copie fatte da una versione più vecchia si aggiornano da sole.
+- Se l'hosting limita la dimensione dei caricamenti e lo zip non sale, usa il ripristino a mano.
+
+**Ripristino a mano** (con il sito **spento**, sul server; serve se il pannello non è raggiungibile): 1) sostituisci `guida.sqlite` nella cartella dei dati e cancella gli eventuali `guida.sqlite-wal` e `guida.sqlite-shm` accanto; 2) copia la cartella `media/` nella cartella dei dati; 3) riavvia il sito. Se non sei pratico, falla fare a un programmatore con questo zip alla mano.
 
 ## 18. Online, aggiornamenti e cosa non si cambia dal pannello
 
@@ -416,7 +434,7 @@ Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, 
 
 **Il calendario collegato non si aggiorna**: **Disponibilità › Calendari collegati › Sincronizza ora**. Se non va, ricopia l'indirizzo segreto iCal da Google Calendar.
 
-**Ho cancellato per errore un tour, un articolo o una pagina**: non c'è un cestino. Rimedi: il **backup** più recente (`contenuti.json` dentro lo zip contiene il testo; per un ripristino completo vedi [sezione 17](#17-backup-e-ripristino)). Per i tour con prenotazioni il sito non permette l'eliminazione: si nascondono.
+**Ho cancellato per errore un tour, un articolo o una pagina**: non c'è un cestino. Rimedio: la **copia di sicurezza** più recente. Con **Aiuto › Backup › Ripristina da una copia › Solo i contenuti** rimetti tour, articoli, pagine, testi e foto com'erano, senza toccare le prenotazioni (vedi [sezione 17](#17-backup-e-ripristino)); `contenuti.json` dentro lo zip contiene gli stessi testi in forma leggibile, se ti serve solo ricopiare qualcosa. Per i tour con prenotazioni il sito non permette l'eliminazione: si nascondono.
 
 **Il sito è lento o non risponde**: è un problema del server o dell'hosting; guarda i *log* nel pannello dell'hosting e chiedi aiuto con le ultime righe di errore.
 

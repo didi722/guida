@@ -699,3 +699,20 @@ body.admin { --header-h: 64px; }
 .quote blockquote { margin: 0; padding: 0; border: 0; background: none; font-size: 1.02rem; line-height: 1.6; white-space: pre-line; } .quote blockquote p { margin: 0; }
 .quote figcaption { margin-top: auto; padding-top: 6px; color: var(--muted); font-size: 0.9rem; }
 .quotes-note { margin: 16px 0 0; color: var(--muted); font-size: 0.88rem; } .quotes-note strong { color: var(--text); }
+
+/* Admin: ripristino da una copia */
+.restore-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 12px 0 6px; } .restore-pick input[type='file'] { max-width: 100%; padding: 8px 10px; }
+.restore-pick input[type='file']::file-selector-button { font: inherit; font-size: 0.85rem; font-weight: 700; padding: 8px 16px; margin-right: 12px; border: 1px solid var(--bronze); border-radius: 50px; background: transparent; color: var(--accent-text); cursor: pointer; }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 0.97rem; margin-top: 8px; table-layout: fixed; } .compare-table th:first-child { width: 44%; }
+.compare-table th, .compare-table td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.compare-table thead th { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.compare-table th:not(:first-child), .compare-table td { text-align: right; }
+.compare-table tbody th[scope='row'] { font-weight: 400; } .compare-table td small { display: block; font-weight: 400; line-height: 1.3; }
+.compare-table .compare-group th { text-align: left; background: var(--soft); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.compare-table .compare-group small { text-transform: none; letter-spacing: 0; }
+.compare-table .diff th, .compare-table .diff td { font-weight: 700; color: var(--accent-text); }
+.restore-form h2 { margin-top: 0; }
+.mode-option { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; margin: 12px 0; cursor: pointer; }
+.mode-option:has(input:checked) { border-color: var(--bronze); background: var(--soft); }
+.mode-option > input { align-self: start; margin-top: 4px; } .mode-body > * { margin: 0 0 8px; } .mode-body > :last-child { margin-bottom: 0; } .mode-body label { cursor: pointer; }
+.mode-body .info-list li { margin-bottom: 6px; } .mode-body .info-list .warn { color: var(--warn); }

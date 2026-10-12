@@ -11,6 +11,7 @@ import { createSettings } from './settings.js';
 import { createSiteImages } from './siteImages.js';
 import { createProgramServices } from './programs.js';
 import { createReminderServices } from './reminders.js';
+import { createRestoreServices } from './restore.js';
 import { createReviewServices } from './reviews.js';
 import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
@@ -42,5 +43,6 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.programs = createProgramServices(app);
   app.pec = pec ?? createPecMailer(cfg);
   app.invoices = createInvoiceServices(app);
+  app.restore = createRestoreServices(app);
   return app;
 }

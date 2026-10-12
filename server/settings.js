@@ -262,6 +262,11 @@ export function createSettings({ cfg, db }) {
 
   return {
     sections: SECTIONS,
+    /** Rilegge dal database le scelte salvate (dopo un ripristino) e le applica alla configurazione. */
+    reload() {
+      load();
+      apply();
+    },
     /** Le sezioni con i valori in uso, pronti per il modulo. `posted` sono i valori scritti a mano in un salvataggio non riuscito. */
     describe({ posted = {}, errors = {} } = {}) {
       return SECTIONS.map((s) => ({
