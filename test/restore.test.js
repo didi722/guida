@@ -544,3 +544,37 @@ test('ripristino: un caricamento lento non viene ripulito a metà e un secondo c
     s.close();
   }
 });
+
+test('ripristino su un server nuovo: una copia fatta altrove rimette in piedi tutto, foto comprese', async () => {
+  const a = await start(); // il sito «vecchio»
+  const b = await start(); // il server «nuovo»: vuoto, con il solo contenuto iniziale
+  try {
+    const photo = a.app.media.save({ large: dataUrl(JPEG), small: dataUrl(JPEG), width: 1600, height: 900 });
+    a.app.siteImages.set('home', photo.name);
+    a.app.content.saveTour('cannaregio-ghetto', NEW_TOUR(a.app, 'Titolo del vecchio sito'));
+    addBooking(a.app.db, 'VE-VECCHIO');
+    await setName(a, 'Sito vecchio');
+    const zip = await backupOf(a.app);
+
+    assert.deepEqual(refs(b.app.db), []);
+    assert.equal(fs.existsSync(b.app.media.file(photo.name)), false);
+    const up = await (await upload(b, zip)).json();
+    assert.ok(up.ok, up.error);
+    assert.equal(loc(await b.admin(up.url, post({ mode: 'all', confirm: 'RIPRISTINA' }))), '/admin/backup?ok=restored');
+
+    assert.deepEqual(refs(b.app.db), ['VE-VECCHIO']);
+    assert.equal(b.app.content.tour('cannaregio-ghetto').i18n.it.title, 'Titolo del vecchio sito');
+    assert.equal(b.app.cfg.site.name, 'Sito vecchio');
+    assert.equal(b.app.siteImages.get('home'), photo.name);
+    const served = await fetch(`${b.base}/media/${photo.name}`);
+    assert.equal(served.status, 200, 'il server nuovo serve la foto');
+    assert.ok(Buffer.from(await served.arrayBuffer()).equals(JPEG));
+    assert.match(await (await fetch(`${b.base}/it/tours/cannaregio-ghetto`)).text(), /Titolo del vecchio sito/);
+    assert.equal((await b.admin('/admin/bookings')).status, 200, 'il pannello funziona, e l’accesso resta valido');
+    // e il vecchio sito non è stato toccato
+    assert.deepEqual(refs(a.app.db), ['VE-VECCHIO']);
+  } finally {
+    a.close();
+    b.close();
+  }
+});
