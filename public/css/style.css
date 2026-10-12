@@ -687,3 +687,7 @@ body.admin { --header-h: 64px; }
 .guide input[type='checkbox'] { margin-right: 8px; }
 .guide li > ul, .guide li > ol { margin-top: 0.4em; }
 .guide-top { position: fixed; right: 16px; bottom: 16px; z-index: 50; padding: 9px 16px; border-radius: 50px; background: var(--ink); color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.06em; text-decoration: none; box-shadow: var(--shadow-lg); }
+
+/* Domande frequenti di un tour */
+.tour-faq { margin-bottom: 2rem; } .tour-faq .faq-a p:last-child { margin-bottom: 0; } .tour-faq .faq-a { color: var(--text); }
+.guide pre { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow-x: auto; font-size: 0.9rem; } .guide pre code { background: none; border: 0; padding: 0; }

@@ -57,7 +57,7 @@ export function bodyToDef(body, existing = {}) {
     const block = {};
     for (const f of TEXT_FIELDS) {
       const raw = body[`${f}_${l}`];
-      block[f] = LIST_FIELDS.includes(f) ? lines(raw).map((x) => x.slice(0, 300)) : text(raw, f === 'description' ? 20000 : 600);
+      block[f] = LIST_FIELDS.includes(f) ? lines(raw).map((x) => x.slice(0, 300)) : text(raw, f === 'description' ? 20000 : f === 'faq' ? 20000 : 600);
     }
     const filled = TEXT_FIELDS.some((f) => (LIST_FIELDS.includes(f) ? block[f].length : block[f]));
     if (!filled && l !== 'it') continue; // lingua non compilata: il sito ripiega su un'altra

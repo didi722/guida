@@ -2,11 +2,12 @@ import { html, raw } from '../html.js';
 import { ART_KEYS } from '../art.js';
 import { LANGS, LANG_META } from '../langs.js';
 import { formatMoney } from '../util.js';
+import { faqToText } from '../content.js';
 import { adminLayout } from './admin.js';
 import { uploadControl } from './admin-media.js';
 import { mdEditor } from './md-editor.js';
 
-export const TEXT_FIELDS = ['title', 'subtitle', 'summary', 'meetingPoint', 'meetingUrl', 'description', 'highlights', 'includes', 'excludes', 'notes'];
+export const TEXT_FIELDS = ['title', 'subtitle', 'summary', 'meetingPoint', 'meetingUrl', 'description', 'highlights', 'includes', 'excludes', 'notes', 'faq'];
 export const LIST_FIELDS = ['highlights', 'includes', 'excludes'];
 const ART_LABEL = { dome: 'Cupole e campanile', bridge: 'Ponte', ghetto: 'Case del Ghetto', arsenal: 'Arsenale', eastwest: 'Oriente e Occidente', islands: 'Isole della laguna', walk: 'Passeggiata', piles: 'Pali e fondamenta', bacaro: 'Bacaro' };
 const DAYS = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Gio'], [5, 'Ven'], [6, 'Sab'], [0, 'Dom']];
@@ -35,7 +36,7 @@ export function defToValues(def = {}, slug = '') {
     art: def.art ?? 'dome',
     image: def.image ?? '',
   };
-  for (const l of LANGS) for (const f of TEXT_FIELDS) v[`${f}_${l}`] = LIST_FIELDS.includes(f) ? (def[l]?.[f] ?? []).join('\n') : (def[l]?.[f] ?? '');
+  for (const l of LANGS) for (const f of TEXT_FIELDS) v[`${f}_${l}`] = LIST_FIELDS.includes(f) ? (def[l]?.[f] ?? []).join('\n') : f === 'faq' ? faqToText(def[l]?.faq) : (def[l]?.[f] ?? '');
   return v;
 }
 
@@ -132,6 +133,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
     ${field('Incluso', `includes_${l}`, v[`includes_${l}`], { hint: 'uno per riga', rows: 4 })}
     ${field('Non incluso', `excludes_${l}`, v[`excludes_${l}`], { hint: 'uno per riga', rows: 3 })}
     ${field('Note utili', `notes_${l}`, v[`notes_${l}`], { rows: 3 })}
+    ${field('Domande frequenti', `faq_${l}`, v[`faq_${l}`], { rows: 8, hint: 'una domanda per blocco: prima riga = domanda, righe sotto = risposta; separa le domande con una riga vuota', placeholder: 'Si entra in Basilica?\nIl tour la vede dall’esterno: l’ingresso non è incluso, ti aiuto a prenotarlo.\n\nQuanto si cammina?\nCirca 3 km, a ritmo rilassato.' })}
   </details>`)}
 
   <div class="btn-row sticky-actions"><button class="btn btn-gold" type="submit">${isNew ? 'Crea il tour' : 'Salva le modifiche'}</button> <a class="btn btn-outline" href="/admin/tours">Annulla</a></div>

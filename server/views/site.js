@@ -233,6 +233,8 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
       <p>${cancellationLine(ctx, tour, channel)} ${t('policy.after')} <a href="${u('/terms')}">${t('policy.terms')}</a></p>
     </div>
 
+    ${ti.faq?.length ? html`<h2 class="h-sub">${t('faq.title')}</h2><div class="faq tour-faq">${ti.faq.map((f) => html`<details class="faq-item"><summary>${f.q}</summary><div class="faq-a prose">${raw(f.html)}</div></details>`)}</div>` : ''}
+
     ${related.length ? html`<h2 class="h-sub">${t('tour.readMore')}</h2><div class="grid grid-2">${related.map((x) => postCard(ctx, x))}</div>` : ''}
   </article>
   <div class="tour-side">${widget}</div>

@@ -124,6 +124,17 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
    - **Titolo**, **Sottotitolo**, **Riassunto** (una o due frasi: compare negli elenchi e su Google), **Punto d'incontro**, **Link alla mappa** (indirizzo Google Maps).
    - **Descrizione**: testo lungo; puoi formattarlo con i pulsanti *Grassetto, Corsivo, Titolo, Elenco, Link, Foto* ([appendice](#21-appendice-formattare-un-testo)) e controllare il risultato con **Anteprima**.
    - **Punti salienti**, **Incluso**, **Non incluso**: **uno per riga**. **Note utili**: testo libero.
+   - **Domande frequenti** (facoltative): compaiono sulla pagina del tour come domande a tendina. Scrivi **una domanda per blocco**: la prima riga è la domanda, le righe sotto sono la risposta (puoi usare il grassetto e i link), e **lascia una riga vuota** tra una domanda e la successiva. Esempio:
+
+     ```
+     Si entra nella Basilica?
+     Il tour la vede dall'esterno: l'ingresso non è incluso, ti aiuto a prenotarlo.
+
+     Quanto si cammina?
+     Circa 3 km, a ritmo rilassato.
+     ```
+
+     Se per una lingua non scrivi nulla, il sito mostra quelle dell'inglese (per lo spagnolo) o dell'italiano. Idee: cosa si visita dentro e fuori, quanto si cammina, accessibilità, cosa portare, cosa succede se piove, se si può prenotare per una persona sola.
    - L'**italiano** è obbligatorio. Se una traduzione manca, il sito mostra al suo posto l'inglese (per lo spagnolo) oppure l'italiano: nell'elenco dei tour vedi un avviso *manca EN* o *manca ES*.
 6. Tocca **Crea il tour**. Apri **Vedi sul sito** per controllare come appare.
 

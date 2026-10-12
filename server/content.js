@@ -36,6 +36,42 @@ function splitFrontMatter(text) {
   return { data: YAML.parse(m[1]) ?? {}, body: m[2] };
 }
 
+// ───────────── domande frequenti di un tour ─────────────
+export const MAX_FAQ = 20;
+
+/**
+ * Le domande frequenti si scrivono a blocchi separati da una riga vuota: la prima riga è la domanda, le righe seguenti la risposta
+ * (che può usare il markdown). Nei file di contenuto iniziale si può anche scrivere una lista di coppie { q, a }.
+ * @returns {{q: string, a: string}[]}
+ */
+export function parseFaq(src, fail = (msg) => { throw new ContentError(msg); }) {
+  let items;
+  if (Array.isArray(src)) items = src.map((x) => ({ q: String(x?.q ?? '').trim(), a: String(x?.a ?? '').trim() }));
+  else {
+    items = String(src ?? '')
+      .replace(/\r\n?/g, '\n')
+      .split(/\n[ \t]*\n+/)
+      .map((block) => block.trim())
+      .filter(Boolean)
+      .map((block) => {
+        const [first, ...rest] = block.split('\n');
+        return { q: first.trim(), a: rest.join('\n').trim() };
+      });
+  }
+  items = items.filter((x) => x.q || x.a);
+  if (items.length > MAX_FAQ) fail(`troppe domande frequenti (al massimo ${MAX_FAQ})`);
+  for (const x of items) {
+    if (!x.q) fail('una risposta delle domande frequenti non ha la domanda');
+    if (!x.a) fail(`la domanda «${x.q.slice(0, 60)}» non ha la risposta (scrivila nelle righe sotto la domanda)`);
+    if (x.q.length > 200) fail(`una domanda frequente è troppo lunga (al massimo 200 caratteri): «${x.q.slice(0, 40)}…»`);
+    if (x.a.length > 3000) fail(`la risposta alla domanda «${x.q.slice(0, 40)}» è troppo lunga (al massimo 3000 caratteri)`);
+  }
+  return items;
+}
+
+/** Le domande frequenti come testo da modificare (l'inverso di parseFaq). */
+export const faqToText = (src) => (Array.isArray(src) ? src.map((x) => `${x.q}\n${x.a}`).join('\n\n') : String(src ?? ''));
+
 // ───────────── tour ─────────────
 /** Blocco di una lingua: la sua traduzione se c'è, altrimenti l'inglese, poi l'italiano (il sito non resta mai senza testo). */
 const tourBlock = (d, lang) => {
@@ -61,6 +97,14 @@ export function normalizeTour(slug, d, where = slug) {
   if (d.cancelHours != null && d.cancelHours !== '' && !(Number(d.cancelHours) >= 0)) fail(where, 'le ore di cancellazione non sono valide');
   if (!d.it?.title || !d.it?.summary) fail(where, 'servono almeno titolo e riassunto in italiano');
   const i18n = {};
+  // le domande frequenti ripiegano come i testi: spagnolo → inglese → italiano
+  const faqOf = (l) => {
+    for (const k of new Set([l, ...(l === 'it' ? [] : ['en', 'it'])])) {
+      const items = parseFaq(d[k]?.faq, (msg) => fail(where, `domande frequenti (${k}): ${msg}`));
+      if (items.length) return items;
+    }
+    return [];
+  };
   for (const l of LANGS) {
     const { x, fallback } = tourBlock(d, l);
     i18n[l] = {
@@ -75,6 +119,7 @@ export function normalizeTour(slug, d, where = slug) {
       excludes: list(x.excludes),
       notes: x.notes ?? '',
       languagesLabel: x.languagesLabel ?? '',
+      faq: faqOf(l).map((f) => ({ q: f.q, html: md(f.a) })),
       fallback, // senza traduzione propria
     };
   }

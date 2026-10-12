@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createApp } from '../server/app.js';
 import { createConfig, ROOT } from '../server/config.js';
-import { ContentError, loadContent } from '../server/content.js';
+import { ContentError, faqToText, loadContent, normalizeTour, parseFaq } from '../server/content.js';
 import { createContentStore, seedContent } from '../server/contentStore.js';
 import { openDb } from '../server/db.js';
 import { setTextOverrides } from '../server/i18n.js';
@@ -155,6 +155,66 @@ test('tour dal pannello: creare, modificare, nascondere, duplicare, eliminare; i
     // senza login non si entra
     assert.equal(loc(await anon('/admin/tours')), '/admin/login');
     assert.equal(loc(await anon('/admin/tours', form(TOUR))), '/admin/login');
+  } finally {
+    s.close();
+  }
+});
+
+test('domande frequenti del tour: formato a blocchi, markdown, ripiego fra le lingue, errori chiari', async () => {
+  // formato: blocchi separati da una riga vuota; prima riga = domanda, il resto = risposta
+  assert.deepEqual(parseFaq('Si entra?\nNo, solo dall’esterno.\n\n\nQuanto dura?\nDue ore.\nEmezza.'), [{ q: 'Si entra?', a: 'No, solo dall’esterno.' }, { q: 'Quanto dura?', a: 'Due ore.\nEmezza.' }]);
+  assert.deepEqual(parseFaq('  \n\n'), []);
+  assert.deepEqual(parseFaq([{ q: 'A?', a: 'B' }]), [{ q: 'A?', a: 'B' }], 'anche come lista, nei file iniziali');
+  assert.equal(faqToText([{ q: 'A?', a: 'B' }, { q: 'C?', a: 'D' }]), 'A?\nB\n\nC?\nD', 'e di nuovo in testo per il modulo');
+  assert.throws(() => parseFaq('Solo la domanda?'), /non ha la risposta/);
+  assert.throws(() => parseFaq('D?\nR\n\nSenza risposta'), /«Senza risposta» non ha la risposta/);
+  assert.throws(() => parseFaq(Array.from({ length: 21 }, (_, i) => `D${i}?\nR`).join('\n\n')), /al massimo 20/);
+  assert.throws(() => parseFaq(`${'x'.repeat(201)}\nR`), /troppo lunga/);
+
+  const def = (extra = {}) => ({ model: 'group', flexible: true, duration: 120, maxParticipants: 5, price: 100, it: { title: 'Tour', summary: 'Riassunto', ...extra.it }, ...(extra.en ? { en: { title: 'Tour', summary: 'Summary', ...extra.en } } : {}), ...(extra.es ? { es: { title: 'Tour', summary: 'Resumen', ...extra.es } } : {}) });
+  // solo italiano: inglese e spagnolo ripiegano sull'italiano; l'inglese proprio vince sullo spagnolo che manca
+  let t = normalizeTour('prova', def({ it: { faq: 'Domanda IT?\nRisposta con **grassetto**.' }, en: {} }));
+  assert.deepEqual(['it', 'en', 'es'].map((l) => t.i18n[l].faq.length), [1, 1, 1]);
+  assert.match(t.i18n.it.faq[0].html, /<strong>grassetto<\/strong>/);
+  t = normalizeTour('prova', def({ it: { faq: 'Domanda IT?\nRisposta IT.' }, en: { faq: 'Question EN?\nAnswer EN.' } }));
+  assert.deepEqual([t.i18n.it.faq[0].q, t.i18n.en.faq[0].q, t.i18n.es.faq[0].q], ['Domanda IT?', 'Question EN?', 'Question EN?'], 'spagnolo → inglese');
+  t = normalizeTour('prova', def({ it: { faq: 'Domanda IT?\nRisposta IT.' }, en: { faq: 'Question EN?\nAnswer EN.' }, es: { faq: '¿Pregunta ES?\nRespuesta ES.' } }));
+  assert.equal(t.i18n.es.faq[0].q, '¿Pregunta ES?');
+  assert.deepEqual(normalizeTour('prova', def()).i18n.it.faq, [], 'nessuna domanda: nessuna sezione');
+  // l'errore dice in che lingua e con che parole
+  assert.throws(() => normalizeTour('prova', def({ it: { faq: 'Ok?\nSì.' }, en: { faq: 'Senza risposta' } })), (e) => e instanceof ContentError && /domande frequenti \(en\): .*non ha la risposta/.test(e.message));
+
+  // dal pannello: si scrive, si ritrova nel modulo e compare sulla pagina (con ripiego), un errore non perde il testo
+  const s = await start();
+  try {
+    const { admin } = s;
+    const anon = s.jar();
+    const slug = 'cannaregio-ghetto';
+    const base = tourFormFromDef(s.app.content.rawTour(slug));
+    assert.match(base.faq_it, /^Si entra nelle sinagoghe/, 'le domande dei contenuti iniziali ci sono');
+    const ghetto = await (await anon(`/it/tours/${slug}`)).text();
+    assert.match(ghetto, /<h2 class="h-sub">Domande frequenti<\/h2><div class="faq tour-faq"><details class="faq-item"><summary>Si entra nelle sinagoghe e nel Museo Ebraico\?<\/summary>/);
+    assert.equal((ghetto.match(/<details class="faq-item"/g) ?? []).length >= 3, true);
+
+    const mine = 'Posso portare il cane?\nSì, al guinzaglio.\n\nC’è il bagno?\nNei bar lungo il percorso, **consumando qualcosa**.';
+    const saved = await admin(`/admin/tours/${slug}`, form({ ...base, faq_it: mine, faq_es: '' }));
+    assert.equal(saved.headers.get('location'), `/admin/tours/${slug}?ok=saved`);
+    const it = await (await anon(`/it/tours/${slug}`)).text();
+    assert.match(it, /<summary>Posso portare il cane\?<\/summary><div class="faq-a prose"><p>Sì, al guinzaglio\.<\/p>/);
+    assert.match(it, /<strong>consumando qualcosa<\/strong>/);
+    assert.doesNotMatch(it, /Si entra nelle sinagoghe/, 'sostituite, non sommate');
+    // nessuna domanda in inglese né in spagnolo propria? l'inglese ha le sue (iniziali), lo spagnolo ripiega sull'inglese
+    assert.match(await (await anon(`/es/tours/${slug}`)).text(), /<summary>Do we go inside the synagogues/);
+    // il modulo restituisce il testo com'era
+    assert.match(await (await admin(`/admin/tours/${slug}`)).text(), /Posso portare il cane\?\nSì, al guinzaglio\./);
+    // errore: domanda senza risposta → il modulo si riapre con il messaggio e il testo scritto
+    const bad = await admin(`/admin/tours/${slug}`, form({ ...base, faq_it: 'Domanda senza risposta' }));
+    assert.equal(bad.status, 400);
+    const badHtml = await bad.text();
+    assert.match(badHtml, /domande frequenti \(it\): la domanda «Domanda senza risposta» non ha la risposta/);
+    assert.match(badHtml, /Domanda senza risposta<\/textarea>/);
+    // le domande non finiscono in un tour senza (la home non le mostra)
+    assert.doesNotMatch(await (await anon('/it/')).text(), /tour-faq/);
   } finally {
     s.close();
   }
