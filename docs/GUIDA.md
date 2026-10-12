@@ -254,6 +254,15 @@ Aggiungi un motivo (facoltativo) e **Annulla e avvisa il cliente**: il cliente r
 
 Il **cliente privato** può annullare da solo con il link nell'email **finché c'è un rimborso**; oltre il termine il sito non glielo offre.
 
+### Feedback dei clienti e commenti sul sito
+Il giorno dopo il tour i clienti privati ricevono **una sola email**: i link per recensire su Google e Tripadvisor (uguali per tutti, mai solo per chi è soddisfatto) e un link per lasciare **un voto e un commento privati**. Quelli privati li leggi in **Clienti › Feedback** (con voto medio, numero di feedback e richieste inviate).
+
+**Mostrare un commento sul sito.** Un cliente può spuntare «Puoi citare le mie parole sul sito, con il mio nome di battesimo (senza cognome)». Solo per quei commenti, in **Clienti › Feedback**, trovi il pulsante **Mostra sul sito** (e **Togli**). Il commento compare **così com'è scritto**, con il solo nome di battesimo, il tour e il mese:
+- in **home**, nella sezione *Cosa dicono i clienti* (gli ultimi tre scelti);
+- nella **pagina del tour** a cui si riferisce (*Dicono di questo tour*).
+
+Se non scegli nulla, la sezione non compare. Se hai almeno **5 feedback**, sotto i commenti compare anche la **media di tutti i voti** ricevuti (non solo di quelli mostrati): è una scelta di correttezza, tienila così. Non scegliere solo i commenti da cinque stelle: sono commenti veri di clienti veri, anche quelli sinceri e misurati. Se vuoi rimandare alle recensioni pubbliche, metti l'indirizzo del tuo profilo Google o Tripadvisor in **Sito › Impostazioni › Buoni regalo, programmi e recensioni › Pagina con tutte le recensioni**: compare come *Leggi tutte le recensioni*. In Europa chi mostra recensioni deve poter dire che vengono da clienti reali: il sito lo dichiara (*commenti di clienti che hanno fatto il tour, pubblicati con il loro permesso*); per il resto chiedi al tuo consulente.
+
 ### Programmi di più giorni
 **Agenda › Programmi**: richieste di clienti e partner per soggiorni lunghi.
 1. Apri la richiesta e tocca **Crea e prepara la proposta**.
@@ -329,7 +338,7 @@ In fondo alla pagina, **Come sono calcolati i numeri** spiega ogni definizione.
 
 - **Attività e contatti**: nome del sito, nome per i documenti, email di contatto, **email che riceve le notifiche**, telefono, **WhatsApp** (solo cifre con prefisso, es. `393331234567`; vuoto = nascosto), Instagram, **Partita IVA**, abilitazione di guida turistica, indirizzo. Compaiono nel piè di pagina, nelle email, nei voucher e nei PDF.
 - **Regole di prenotazione**: cancellazione gratuita per privati e partner (ore), preavviso minimo, anticipo massimo (giorni), pausa tra due servizi, passo degli orari liberi, blocco dell'orario durante il pagamento, **promemoria al cliente la sera prima** (sì/no e a che ora), **pagamento il giorno del servizio** (sì/no).
-- **Buoni regalo, programmi e recensioni**: validità e importi dei buoni, acconto e validità dei preventivi dei programmi, richiesta di recensione dopo il tour (sì/no, link Google e Tripadvisor, ora d'invio).
+- **Buoni regalo, programmi e recensioni**: validità e importi dei buoni, acconto e validità dei preventivi dei programmi, richiesta di recensione dopo il tour (sì/no, link per recensire su Google e Tripadvisor, ora d'invio) e **Pagina con tutte le recensioni** (il link che compare accanto ai commenti sul sito).
 - **Fatturazione elettronica**: dati del cedente (nome o denominazione, codice fiscale, indirizzo), regime, IVA, natura, bollo, rivalsa INPS, ritenuta, diciture, IBAN, scadenze, buoni regalo, prima data fatturabile.
 
 Come funziona:

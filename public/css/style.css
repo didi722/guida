@@ -691,3 +691,11 @@ body.admin { --header-h: 64px; }
 /* Domande frequenti di un tour */
 .tour-faq { margin-bottom: 2rem; } .tour-faq .faq-a p:last-child { margin-bottom: 0; } .tour-faq .faq-a { color: var(--text); }
 .guide pre { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow-x: auto; font-size: 0.9rem; } .guide pre code { background: none; border: 0; padding: 0; }
+
+/* Cosa dicono i clienti */
+.quotes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.quote { margin: 0; padding: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; }
+.quote-stars { color: var(--bronze); letter-spacing: 3px; font-size: 1.05rem; }
+.quote blockquote { margin: 0; padding: 0; border: 0; background: none; font-size: 1.02rem; line-height: 1.6; white-space: pre-line; } .quote blockquote p { margin: 0; }
+.quote figcaption { margin-top: auto; padding-top: 6px; color: var(--muted); font-size: 0.9rem; }
+.quotes-note { margin: 16px 0 0; color: var(--muted); font-size: 0.88rem; } .quotes-note strong { color: var(--text); }

@@ -186,6 +186,7 @@ export const SECTIONS = [
       { key: 'reviews.enabled', type: 'bool', label: 'Chiedi una recensione dopo il tour', hint: 'email automatica il giorno dopo' },
       { key: 'reviews.googleUrl', type: 'url', label: 'Link per recensire su Google' },
       { key: 'reviews.tripadvisorUrl', type: 'url', label: 'Link per recensire su Tripadvisor' },
+      { key: 'reviews.readUrl', type: 'url', label: 'Pagina con tutte le recensioni', hint: 'il tuo profilo Google o Tripadvisor: compare come «Leggi tutte le recensioni» accanto ai commenti sul sito' },
       { key: 'reviews.sendHour', type: 'int', min: 0, max: 23, unit: 'h', label: 'Ora di invio della richiesta', hint: 'ora di Venezia, il giorno dopo il tour' },
     ],
     check(v, errors) {

@@ -21,7 +21,7 @@ import { adminBackupRouter } from './admin-backup.js';
 import { adminGuideRouter } from './admin-guide.js';
 import { adminInvoicesRouter } from './admin-invoices.js';
 import { dayConflicts } from '../programs.js';
-import { feedbackStats } from '../reviews.js';
+import { feedbackStats, setFeatured } from '../reviews.js';
 import { maskUrl } from '../calendars.js';
 import { feedbackAdminPage } from '../views/admin-feedback.js';
 import { invoiceForSource } from '../invoices.js';
@@ -37,6 +37,7 @@ const FLASH = {
   notes: 'Note salvate.',
   paid: 'Prenotazione segnata come incassata.',
   review: 'Richiesta di recensione aggiornata.',
+  featured: 'Fatto: la modifica è già visibile sul sito.',
   reminder: 'Promemoria aggiornato.',
   calendar: 'Calendario collegato e sincronizzato.',
   calsynced: 'Calendario sincronizzato.',
@@ -121,6 +122,12 @@ export function adminRouter(app) {
     const items = db.prepare(`SELECT f.*, b.name, b.email, b.tour_slug, b.date FROM feedback f JOIN bookings b ON b.id = f.booking_id ORDER BY f.created_at DESC LIMIT 200`).all();
     const requested = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE review_status = 'sent'`).get().n;
     send(res, feedbackAdminPage(ctxOf(req), { items, stats: { ...feedbackStats(db), requested }, flash: flash(req) }));
+  });
+
+  r.post('/feedback/:id/featured', form, (req, res, next) => {
+    if (!db.prepare('SELECT 1 FROM feedback WHERE id = ?').get(Number(req.params.id))) return next();
+    setFeatured(db, Number(req.params.id), req.body.on === '1');
+    res.redirect(303, '/admin/feedback?ok=featured');
   });
 
   // ───── agenda ─────

@@ -33,7 +33,8 @@ Object.assign(process.env, {
 
 const { createApp } = await import('../server/app.js');
 const { hashPassword } = await import('../server/auth.js');
-const { cancelBooking, confirmPaid, createBooking, markRefund } = await import('../server/bookings.js');
+const { cancelBooking, confirmPaid, createBooking, getBooking, markRefund } = await import('../server/bookings.js');
+const { saveFeedback, setFeatured } = await import('../server/reviews.js');
 const { createAdminGift } = await import('../server/gifts.js');
 const { createProgramRequest, saveProposal } = await import('../server/programs.js');
 const { addDays, localToInstant, nowRome } = await import('../server/time.js');
@@ -64,6 +65,7 @@ function seedHistory({ lagoon, bluesail, d, now }) {
   const LANGS = [{ w: 5, v: 'it' }, { w: 4, v: 'en' }, { w: 2, v: 'es' }].map((x) => ({ ...x }));
   let created = 0;
   let cancelled = 0;
+  const done = []; // prenotazioni private svolte e non annullate: a molte, il cliente ha lasciato un feedback
   for (let i = 0; i < 70; i++) {
     const tour = pickWeighted(TOURS);
     const date = d(-between(8, 150));
@@ -84,6 +86,7 @@ function seedHistory({ lagoon, bluesail, d, now }) {
       continue; // orario già occupato: pazienza, ne bastano molte altre
     }
     created += 1;
+    if (!partner) done.push({ id: b.id, lang, date });
     if (input.paymentMethod === 'card') confirmPaid(app, b.id, `pi_storico_${b.ref}`, at);
     else if (rnd() < 0.6) db.prepare("UPDATE bookings SET payment_status = 'paid' WHERE id = ?").run(b.id); // a fattura: una parte già incassata
     if (rnd() < 0.12) {
@@ -95,7 +98,26 @@ function seedHistory({ lagoon, bluesail, d, now }) {
       }
     }
   }
-  return { created, cancelled };
+  // feedback d'esempio (testi inventati, solo per la prova): alcuni citabili, tre già mostrati sul sito
+  const COMMENTS = {
+    it: ['Davide racconta Venezia come nessun altro: storie, non elenchi. Consigliatissimo!', 'Gruppo piccolo, ritmo giusto e tante curiosità. Ci siamo sentiti ospiti, non turisti.', 'Una passeggiata che ci ha fatto vedere la città con occhi nuovi.', 'Preparato e disponibile, ha adattato il percorso ai bambini.'],
+    en: ['A wonderful, thoughtful tour. We learned so much about the history behind the buildings.', 'Small group, relaxed pace and fascinating stories. Highly recommended.', 'Our guide made Venice come alive. The best part of our trip.'],
+    es: ['Una visita fantástica: historias, no listas de fechas. Muy recomendable.', 'Grupo pequeño y un ritmo muy agradable. Aprendimos muchísimo.'],
+  };
+  let featured = 0;
+  const alive = done.filter((x) => db.prepare("SELECT status FROM bookings WHERE id = ?").get(x.id)?.status === 'confirmed').sort((a, b) => b.date.localeCompare(a.date));
+  for (const x of alive.slice(0, 22)) {
+    const rating = rnd() < 0.62 ? 5 : rnd() < 0.7 ? 4 : rnd() < 0.6 ? 3 : 2;
+    const pool = COMMENTS[x.lang] ?? COMMENTS.it;
+    const comment = rnd() < 0.8 ? pool[between(0, pool.length - 1)] : '';
+    const mayPublish = rnd() < 0.6;
+    const r = saveFeedback(db, getBooking(db, x.id), { rating, comment, mayPublish }, now);
+    if (r.ok && featured < 3 && rating >= 4 && comment && mayPublish) {
+      setFeatured(db, db.prepare('SELECT id FROM feedback WHERE booking_id = ?').get(x.id).id, true);
+      featured += 1;
+    }
+  }
+  return { created, cancelled, feedback: alive.slice(0, 22).length, featured };
 }
 
 async function seed() {
@@ -171,7 +193,7 @@ async function seed() {
 
   // storico dei mesi scorsi: serve a dare qualcosa da guardare alle statistiche (andamento, prodotti, partner, annulli)
   const history = seedHistory({ lagoon, bluesail, d, now });
-  tries.push(`✓ Storico: ${history.created} prenotazioni dei mesi scorsi (${history.cancelled} annullate), per le statistiche`);
+  tries.push(`✓ Storico: ${history.created} prenotazioni dei mesi scorsi (${history.cancelled} annullate), ${history.feedback} feedback (${history.featured} già sul sito), per le statistiche`);
 
   console.log('\nDati d\'esempio creati:\n  ' + tries.join('\n  '));
   return giftCode;

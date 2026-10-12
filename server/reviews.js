@@ -31,6 +31,32 @@ export function saveFeedback(db, booking, { rating, comment, mayPublish }, nowMs
   return { ok: true };
 }
 
+/** Il nome di battesimo: sul sito un commento compare solo con quello (il cliente accetta «senza cognome»). */
+export const firstNameOf = (name) => String(name ?? '').trim().split(/\s+/)[0].slice(0, 30);
+
+/**
+ * Commenti che il cliente ha permesso di citare e che hai scelto di mostrare sul sito, dal più recente.
+ * @param {{tourSlug?: string|null, limit?: number}} [opts] con `tourSlug` solo quelli di quel tour
+ */
+export function featuredQuotes(db, { tourSlug = null, limit = 3 } = {}) {
+  return db
+    .prepare(
+      `SELECT f.id, f.rating, f.comment, b.name, b.tour_slug, b.date, b.lang
+       FROM feedback f JOIN bookings b ON b.id = f.booking_id
+       WHERE f.featured = 1 AND f.may_publish = 1 AND TRIM(COALESCE(f.comment, '')) <> '' AND b.status = 'confirmed' AND b.channel = 'b2c'
+         ${tourSlug ? 'AND b.tour_slug = ?' : ''}
+       ORDER BY b.date DESC, f.id DESC LIMIT ?`,
+    )
+    .all(...(tourSlug ? [tourSlug, limit] : [limit]))
+    .map((r) => ({ id: r.id, rating: r.rating, comment: r.comment.trim(), firstName: firstNameOf(r.name), tourSlug: r.tour_slug, date: r.date, lang: r.lang }));
+}
+
+/** Mostra (o toglie) un commento sul sito. Solo se il cliente ha dato il permesso e ha scritto qualcosa. @returns {boolean} */
+export function setFeatured(db, feedbackId, on) {
+  const ok = `may_publish = 1 AND TRIM(COALESCE(comment, '')) <> ''`;
+  return db.prepare(`UPDATE feedback SET featured = ? WHERE id = ? AND ${on ? ok : '1 = 1'}`).run(on ? 1 : 0, feedbackId).changes === 1;
+}
+
 export function feedbackStats(db) {
   const row = db.prepare('SELECT COUNT(*) n, AVG(rating) avg FROM feedback').get();
   return { count: row.n, average: row.n ? Math.round(row.avg * 10) / 10 : null };

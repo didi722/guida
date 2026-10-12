@@ -121,6 +121,7 @@ export function createConfig(overrides = {}) {
       enabled: bool(e.REVIEWS_ENABLED, true),
       googleUrl: e.REVIEW_URL || '', // link «scrivi una recensione» del profilo Google Business
       tripadvisorUrl: e.REVIEW_URL_TRIPADVISOR || '',
+      readUrl: e.REVIEWS_PAGE_URL || '', // pagina con tutte le recensioni (profilo Google o Tripadvisor): link accanto ai commenti sul sito
       sendHour: num(e.REVIEW_SEND_HOUR, 10), // la richiesta parte il giorno dopo il tour a quest'ora (ora di Venezia)
       catchUpDays: 7, // dopo un'interruzione non si inviano richieste più vecchie di così
     },

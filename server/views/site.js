@@ -4,7 +4,7 @@ import { paymentOptions, unitPriceFor } from '../bookings.js';
 import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
-import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, tourCard, tourMedia } from './components.js';
+import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, pick } from '../langs.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
@@ -22,7 +22,7 @@ function faqItems(ctx, keys) {
 }
 
 // ───────────────────────── Home ─────────────────────────
-export function homePage(ctx, { departures = [] } = {}) {
+export function homePage(ctx, { departures = [], quotes = [], reviewStats = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { content, cfg } = app;
   const featured = content.tours.filter((x) => x.featured);
@@ -81,6 +81,13 @@ ${departures.length ? html`<section class="section tight departures">
     <p class="center reveal"><a class="btn btn-outline" href="${u('/about')}">${t('why.cta')}</a></p>
   </div>
 </section>
+
+${quotes.length ? html`<section class="section">
+  <div class="wrap">
+    ${sectionHead(t('reviews.title'))}
+    ${testimonials(ctx, quotes, { stats: reviewStats, readUrl: cfg.reviews.readUrl })}
+  </div>
+</section>` : ''}
 
 <section class="section">
   <div class="wrap">
@@ -164,7 +171,7 @@ export function toursPage(ctx) {
   return page(ctx, { title: t('nav.tours'), description: t('tours.lead'), path: `/${lang}/tours`, body, activeNav: 'tours' });
 }
 
-export function tourPage(ctx, tour) {
+export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { cfg } = app;
   const ti = tour.i18n[lang];
@@ -234,6 +241,8 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     </div>
 
     ${ti.faq?.length ? html`<h2 class="h-sub">${t('faq.title')}</h2><div class="faq tour-faq">${ti.faq.map((f) => html`<details class="faq-item"><summary>${f.q}</summary><div class="faq-a prose">${raw(f.html)}</div></details>`)}</div>` : ''}
+
+    ${quotes.length ? html`<h2 class="h-sub">${t('reviews.tourTitle')}</h2>${testimonials(ctx, quotes, { stats: reviewStats, readUrl: cfg.reviews.readUrl })}` : ''}
 
     ${related.length ? html`<h2 class="h-sub">${t('tour.readMore')}</h2><div class="grid grid-2">${related.map((x) => postCard(ctx, x))}</div>` : ''}
   </article>

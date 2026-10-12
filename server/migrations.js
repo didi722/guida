@@ -342,6 +342,11 @@ ALTER TABLE bookings ADD COLUMN reminder_sent_at TEXT;
 ALTER TABLE bookings ADD COLUMN reminder_attempt_at TEXT;
 `;
 
+const V11_FEATURED_FEEDBACK = `
+-- Commenti dei clienti scelti per essere mostrati sul sito (solo se il cliente ha dato il permesso)
+ALTER TABLE feedback ADD COLUMN featured INTEGER NOT NULL DEFAULT 0;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -363,6 +368,8 @@ export const MIGRATIONS = [
   V9_CONTENT,
   // v10 — promemoria il giorno prima
   V10_REMINDERS,
+  // v11 — commenti dei clienti mostrati sul sito
+  V11_FEATURED_FEEDBACK,
 ];
 
 export function migrate(db) {

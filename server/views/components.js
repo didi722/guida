@@ -1,9 +1,9 @@
 import { art } from '../art.js';
 import { html, raw } from '../html.js';
 import { freeCancelHours, unitPriceFor } from '../bookings.js';
-import { fmtDate } from '../time.js';
+import { fmtDate, fmtMonth } from '../time.js';
 import { formatMoney } from '../util.js';
-import { LANGS, LANG_META } from '../langs.js';
+import { LANGS, LANG_META, localeOf } from '../langs.js';
 import { MEDIA_NAME, smallName } from '../media.js';
 
 /** <option> di tutte le lingue del sito, con quella indicata selezionata. */
@@ -45,6 +45,24 @@ export function priceParts(ctx, tour) {
   const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
   const unit = unitPriceFor(tour, channel, ctx.acct);
   return { channel, unit, money: formatMoney(unit, ctx.lang), per: tour.model === 'person' ? ctx.t('price.perPerson') : ctx.t('price.perGroup') };
+}
+
+/**
+ * «Cosa dicono i clienti»: i commenti scelti dal pannello (con il permesso del cliente), solo con il nome di battesimo.
+ * `stats` ({count, average}) mostra anche la media di TUTTI i voti ricevuti, ma solo da 5 voti in su; `readUrl` il collegamento alle recensioni pubbliche.
+ */
+export function testimonials(ctx, quotes, { stats = null, readUrl = '' } = {}) {
+  if (!quotes.length) return '';
+  const { t, lang, app } = ctx;
+  const avg = stats && stats.count >= 5 && stats.average != null ? new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 1 }).format(stats.average) : null;
+  return html`<div class="quotes">
+    <div class="quotes-grid">${quotes.map((q) => html`<figure class="quote">
+      <div class="quote-stars" role="img" aria-label="${t('fb.star', { n: q.rating })}">${'★'.repeat(q.rating)}${'☆'.repeat(5 - q.rating)}</div>
+      <blockquote lang="${q.lang}"><p>${q.comment}</p></blockquote>
+      <figcaption>${q.firstName ? html`<strong>${q.firstName}</strong> · ` : ''}${app.content.tour(q.tourSlug)?.i18n[lang].title ?? ''}, ${fmtMonth(q.date.slice(0, 7), lang)}</figcaption>
+    </figure>`)}</div>
+    <p class="quotes-note">${avg ? html`<strong>★ ${t('reviews.avg', { avg, n: stats.count })}</strong><br>` : ''}${t('reviews.note')}${readUrl ? html` <a href="${readUrl}" target="_blank" rel="noopener">${t('reviews.readAll')}</a>` : ''}</p>
+  </div>`;
 }
 
 /** «Prossime partenze»: i primi orari prenotabili dei tour a partenza fissa; un tocco porta al pagamento. */

@@ -43,7 +43,7 @@ test('guida: i nomi di pulsanti e schede citati nella guida esistono nel pannell
     'Segna come rifiutata', 'Riapri come bozza', 'Sincronizza ora', 'Collega un calendario', 'Disattiva', 'Scollega', 'Orario speciale per un giorno', 'Prossime eccezioni', 'Calendari collegati', 'Impegni esterni',
     'Listino dedicato', 'Politica di annullo', 'Stato e pagamento', 'Salva il listino', 'Salva la politica', 'Nuovo codice sconto', 'Nuovo buono regalo', 'Rettifica il saldo', 'Reinvia all’acquirente', 'Annulla buono',
     'Esporta CSV', 'Come sono calcolati i numeri', 'Salva i testi di questa pagina', 'Carica nuove foto', 'Salva la pagina', 'Prenotazioni aperte fino a', 'Prima data fatturabile', 'Calendario sul telefono', 'Pagamenti in corso',
-    'Programmi da preparare', 'Partner da approvare', 'Promemoria al cliente', 'Domande frequenti', 'Prossimi 14 giorni', 'Elimina la bozza', 'Apri come la vede il cliente', 'PDF della proposta', 'Nascondi', 'Foto', 'Grassetto', 'Anteprima',
+    'Programmi da preparare', 'Partner da approvare', 'Promemoria al cliente', 'Domande frequenti', 'Mostra sul sito', 'Pagina con tutte le recensioni', 'Cosa dicono i clienti', 'Prossimi 14 giorni', 'Elimina la bozza', 'Apri come la vede il cliente', 'PDF della proposta', 'Nascondi', 'Foto', 'Grassetto', 'Anteprima',
   ];
   const missing = LABELS.filter((l) => !sources.includes(l) && !sources.replace(/ /g, ' ').includes(l));
   assert.deepEqual(missing, [], 'etichette non trovate nel codice: la guida o il pannello sono cambiati');

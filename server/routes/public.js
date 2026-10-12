@@ -12,6 +12,7 @@ import { accountPage, loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
 import { normLang, pick } from '../langs.js';
+import { featuredQuotes, feedbackStats } from '../reviews.js';
 
 const clampInt = (v, min, max, d) => {
   const n = Number.parseInt(v, 10);
@@ -35,13 +36,13 @@ export function publicRouter(app) {
   r.get('/', (req, res) => {
     const nowMs = Date.now();
     const departures = nextDepartures(db, cfg, content.tours, nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 4 });
-    send(res, homePage(res.locals.ctx, { departures }));
+    send(res, homePage(res.locals.ctx, { departures, quotes: featuredQuotes(db, { limit: 3 }), reviewStats: feedbackStats(db) }));
   });
   r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx)));
   r.get('/tours/:slug', (req, res, next) => {
     const tour = content.tour(req.params.slug);
     if (!tour?.active) return next();
-    send(res, tourPage(res.locals.ctx, tour));
+    send(res, tourPage(res.locals.ctx, tour, { quotes: featuredQuotes(db, { tourSlug: tour.slug, limit: 3 }), reviewStats: feedbackStats(db) }));
   });
   r.get('/blog', (req, res) => send(res, blogPage(res.locals.ctx)));
   r.get('/blog/:slug', (req, res, next) => {
