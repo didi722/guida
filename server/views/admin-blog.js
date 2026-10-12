@@ -4,6 +4,7 @@ import { LANGS, LANG_META } from '../langs.js';
 import { fmtDate } from '../time.js';
 import { adminLayout } from './admin.js';
 import { uploadControl } from './admin-media.js';
+import { mdEditor } from './md-editor.js';
 
 const ART_LABEL = { dome: 'Cupole e campanile', bridge: 'Ponte', ghetto: 'Case del Ghetto', arsenal: 'Arsenale', eastwest: 'Oriente e Occidente', islands: 'Isole della laguna', walk: 'Passeggiata', piles: 'Pali e fondamenta', bacaro: 'Bacaro' };
 const PAGE_INFO = {
@@ -46,8 +47,7 @@ const field = (label, name, value, { type = 'text', hint = '', rows = 0, attrs =
   ? html`<textarea name="${name}" rows="${rows}" ${raw(attrs)}>${value ?? ''}</textarea>`
   : html`<input type="${type}" name="${name}" value="${value ?? ''}" ${raw(attrs)}>`}</label>`;
 
-const mdBlock = (name, value, rows = 16) => html`<div data-md><label class="field"><span class="label">Testo <em>(**grassetto**, *corsivo*, «## Titolo», elenchi con «- », [testo](indirizzo))</em></span><textarea name="${name}" rows="${rows}" data-md-source>${value}</textarea></label>
-  <p><button class="btn btn-outline btn-sm" type="button" data-md-toggle>Anteprima</button></p><div class="md-preview prose" data-md-preview hidden></div></div>`;
+const mdBlock = (name, value, rows = 16, media = []) => mdEditor(name, value, { rows, media });
 
 export function postFormPage(ctx, { v, isNew, media, tours, problems = [], flash = '', post = null }) {
   const has = (l) => v[`title_${l}`] || v[`body_${l}`];
@@ -80,7 +80,7 @@ export function postFormPage(ctx, { v, isNew, media, tours, problems = [], flash
     ${field('Titolo', `title_${l}`, v[`title_${l}`], { attrs: 'maxlength="160"' })}
     ${field('Riassunto', `summary_${l}`, v[`summary_${l}`], { hint: 'una o due frasi: elenco articoli e Google', rows: 3, attrs: 'maxlength="400"' })}
     ${field('Etichette', `tags_${l}`, v[`tags_${l}`], { hint: 'separate da virgola' })}
-    ${mdBlock(`body_${l}`, v[`body_${l}`])}
+    ${mdBlock(`body_${l}`, v[`body_${l}`], 16, media)}
   </details>`)}
   <div class="btn-row sticky-actions"><button class="btn btn-gold" type="submit">${isNew ? 'Crea l’articolo' : 'Salva le modifiche'}</button> <a class="btn btn-outline" href="/admin/blog">Annulla</a></div>
 </form>
@@ -98,7 +98,7 @@ export function pagesListPage(ctx, { flash = '', error = '' }) {
   return adminLayout(ctx, { title: 'Pagine', active: '/admin/pages', body, flash, error });
 }
 
-export function pageFormPage(ctx, { name, raw: data, problems = [], flash = '' }) {
+export function pageFormPage(ctx, { name, raw: data, media = [], problems = [], flash = '' }) {
   const [label, hint] = PAGE_INFO[name];
   const v = (l, k) => data?.[l]?.[k] ?? '';
   const body = html`
@@ -110,7 +110,7 @@ export function pageFormPage(ctx, { name, raw: data, problems = [], flash = '' }
     <summary><h2>${label} · ${LANG_META[l].name}</h2></summary>
     ${field('Titolo', `title_${l}`, v(l, 'title'), { attrs: 'maxlength="160"' })}
     ${field('Descrizione per Google', `description_${l}`, v(l, 'description'), { hint: 'una frase', attrs: 'maxlength="300"' })}
-    ${mdBlock(`body_${l}`, v(l, 'body'), 22)}
+    ${mdBlock(`body_${l}`, v(l, 'body'), 22, media)}
   </details>`)}
   <div class="btn-row sticky-actions"><button class="btn btn-gold" type="submit">Salva la pagina</button> <a class="btn btn-outline" href="/admin/pages">Annulla</a></div>
 </form>`;

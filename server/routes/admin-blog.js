@@ -86,7 +86,7 @@ export function adminBlogRouter(app) {
   r.get('/pages', (req, res) => send(res, pagesListPage(ctxOf(req), { flash: flash(req) })));
   r.get('/pages/:name', (req, res, next) => {
     if (!PAGE_NAMES.includes(req.params.name) || !store().rawPage(req.params.name)) return next();
-    send(res, pageFormPage(ctxOf(req), { name: req.params.name, raw: store().rawPage(req.params.name), flash: flash(req) }));
+    send(res, pageFormPage(ctxOf(req), { name: req.params.name, raw: store().rawPage(req.params.name), media: app.media.list(), flash: flash(req) }));
   });
   r.post('/pages/:name', form, (req, res, next) => {
     const name = req.params.name;
@@ -97,7 +97,7 @@ export function adminBlogRouter(app) {
       res.redirect(303, `/admin/pages/${name}?ok=saved`);
     } catch (err) {
       if (!(err instanceof ContentError)) throw err;
-      send(res, pageFormPage(ctxOf(req), { name, raw, problems: [err.detail] }), 400);
+      send(res, pageFormPage(ctxOf(req), { name, raw, media: app.media.list(), problems: [err.detail] }), 400);
     }
   });
 

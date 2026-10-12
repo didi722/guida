@@ -12,7 +12,7 @@ npm install            # solo la prima volta
 npm run sandbox        # sito di prova su http://localhost:3200, con dati d'esempio
 npm run sandbox -- --reset   # cancella tutto e ricomincia
 ```
-La prova usa una cartella a parte (`data-sandbox/`), **pagamenti simulati**, email non spedite, password admin `admin` e dati fiscali finti: non usa nulla di ciò che hai in `.env`. Il terminale stampa gli indirizzi, i partner d'esempio (password `prova-prova-1`), un codice sconto (`PROVA10`) e un buono regalo.
+La prova usa una cartella a parte (`data-sandbox/`), **pagamenti simulati**, email non spedite, password admin `admin` e dati fiscali finti: non usa nulla di ciò che hai in `.env`. Il terminale stampa gli indirizzi, i partner d'esempio (password `prova-prova-1`), un codice sconto (`PROVA10`) e un buono regalo. La prova include anche uno **storico di circa 65 prenotazioni dei mesi scorsi** (tra privati e partner, con qualche annullo, rimborso e penale): serve a dare dati alle **Statistiche**.
 
 ### B. Online, come servizio di prova
 Crea sulla tua piattaforma **un secondo servizio** dallo stesso repository (branch `main`) con le sue variabili:
@@ -50,7 +50,7 @@ Non si può far scorrere il tempo: le scadenze si provano scegliendo la **data d
 | Annullo **in uno scaglione parziale** | Stesso partner con «3 giorni 50%» → prenota fra 5 giorni: la pagina della prenotazione dice «annullando ora ricevi il 50%»; annulla: rimborso parziale (carta) oppure **penale** del 50% (fattura) |
 | Annullo **oltre l'ultimo scaglione** | Prenota fra 2 giorni: rimborso 0%; online non si può annullare (il cliente deve scriverti); dal pannello annulli tu e la **penale è l'intero importo** |
 | La penale in fattura | **Admin → Fatture → Da fatturare**: la penale compare come «Penale di annullo» (da incassare se il partner pagava a fattura; già incassata se aveva pagato con carta) |
-| Politica standard dei privati | Cliente privato (48 ore, `B2C_FREE_CANCEL_HOURS`) → prenota fra 6 giorni (rimborsabile) e fra 2 giorni (non rimborsabile) |
+| Politica standard dei privati | Cliente privato (48 ore: si cambia in **Sito › Impostazioni › Regole di prenotazione**) → prenota fra 6 giorni (rimborsabile) e fra 2 giorni (non rimborsabile) |
 | Decidi tu | **Admin → Prenotazioni → la prenotazione → Annulla prenotazione**: *Secondo la politica* (con l'anteprima di rimborso/penale), *Nessuna penale / rimborso totale* oppure *Penale totale / nessun rimborso* |
 
 Per annullare **come lo vede il cliente**: nella scheda della prenotazione, riga **«Pagina del cliente → Apri come la vede il cliente»**. Poi controlla lo stato in Admin: la prenotazione risulta *Annullata* e il pagamento *Rimborsato* oppure no. (Il preavviso minimo per prenotare è 24 ore per i privati e 12 per i partner.)
@@ -63,7 +63,20 @@ Per annullare **come lo vede il cliente**: nella scheda della prenotazione, riga
 - **Richiesta di recensione**: parte il giorno dopo il tour alle 10:00; la sandbox ha già una prenotazione svolta, quindi la email compare subito in Admin → Email.
 - **Fatture**: **Admin → Fatture → Da fatturare**: la sandbox ha già delle voci pronte (prenotazioni pagate o già svolte, il buono regalo; due servizi sono già passati, uno pagato con carta e uno a fattura). Scegli le voci, crei la bozza, emetti, scarichi XML e PDF, provi la nota di credito.
 
-## 5. Cosa le prove non coprono
+## 5. Provare la gestione del sito dal pannello
+
+Tutto questo è nel pannello della prova (`/admin`, password `admin`) e, come sul sito vero, **vale subito**:
+
+- **Tour e prezzi**: **Sito › Tour** → *Duplica* un tour, cambia titolo e prezzo, salva e guarda `/it/tours`; **Sito › Listino** per cambiare più prezzi insieme (vale per le nuove prenotazioni).
+- **Un'agenzia con prezzi suoi**: la scheda del partner → *Listino dedicato* (vedi la sezione 2).
+- **Foto**: **Sito › Immagini** → carica una foto dal telefono o dal computer, poi usala come copertina di un tour o come foto della home (*Usa qui*); l'anteprima social si controlla guardando il sorgente della pagina (`og:image`).
+- **Blog**: **Sito › Blog › Nuovo articolo**, prova i pulsanti *Grassetto / Titolo / Foto* e *Anteprima*; lascia *Pubblicato* spento per vedere una bozza.
+- **Impostazioni**: **Sito › Impostazioni** → cambia il WhatsApp o il telefono e guarda la pagina **Contatti** e il piè di pagina; prova a scrivere un valore sbagliato (un'email non valida) per vedere la validazione; *Ripristina i valori predefiniti* annulla.
+- **Statistiche**: **Conti › Statistiche**, con lo storico della prova: cambia periodo, filtra un partner o un tour, scarica il CSV.
+- **Backup**: **Aiuto › Backup** → scarica lo zip e aprilo (dentro: database, foto, `contenuti.json`, istruzioni).
+- La guida completa è in **Aiuto › Guida** (la stessa di [`docs/GUIDA.md`](GUIDA.md)).
+
+## 6. Cosa le prove non coprono
 
 - **Pagamenti veri**: con le chiavi *test* di Stripe (`sk_test_…`) vedi la vera pagina di pagamento, con le carte di prova di Stripe, Apple Pay/Google Pay/PayPal se li attivi in modalità test.
 - **Email vere**: per provarle imposta `SMTP_*` con un tuo indirizzo di prova.

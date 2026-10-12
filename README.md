@@ -2,6 +2,8 @@
 
 Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **servizi privati**, **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese e spagnolo**, pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
 
+> 📖 **Come si usa il sito** (tour, prezzi, blog, foto, partner, fatture, statistiche, backup…): [`docs/GUIDA.md`](docs/GUIDA.md), che trovi anche nel pannello in **Aiuto › Guida**.
+
 > ⚠️ **Prima bozza.** Tour, prezzi, testi e illustrazioni sono **segnaposto** da rivedere (vedi la [checklist prima del lancio](#checklist-prima-del-lancio)). Le parti **fiscali e legali** (fatturazione elettronica, buoni regalo, privacy, condizioni) vanno **confermate dal commercialista**.
 
 ## Cosa fa
@@ -21,13 +23,16 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - Tu **approvi** dal pannello e puoi impostare per ogni partner: **sconto extra**, **finestra di cancellazione** (es. 7 giorni), pagamento **a fattura**.
 - Il partner vede le **tariffe riservate**, prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica**, scarica il **voucher PDF senza prezzi** (da girare al cliente finale) e richiede **programmi di più giorni**.
 
-**Per te (pannello `/admin`, ottimizzato per telefono)**
-- **Agenda** dei prossimi 14 giorni con prenotazioni **e giornate dei programmi**; elenco prenotazioni con ricerca e **annullamento/rimborso**.
+**Per te (pannello `/admin`, ottimizzato per telefono)** — quasi tutto si cambia da qui, senza toccare il codice ([guida](docs/GUIDA.md))
+- **Agenda** dei prossimi 14 giorni con prenotazioni **e giornate dei programmi**; elenco prenotazioni con ricerca e **annullamento/rimborso** (a percentuale, con penale per chi paga a fattura).
 - **Disponibilità**: orari di lavoro, chiusure, orari speciali, blocchi orari e **calendari collegati** (Google Calendar e simili): gli impegni segnati «Occupato» bloccano da soli gli slot, evitando sovrapposizioni.
 - **Programmi**: richieste, costruttore della proposta (giornate, prezzi, acconto, date trattenute), avvisi se una giornata si sovrappone a qualcos'altro, accettazione, acconto, annullo con rimborso.
+- **Sito**: **tour** (crea, modifica, nascondi, duplica; testi in italiano, inglese e spagnolo), **listino** con tutti i prezzi in una tabella, **blog** (bozze, copertine, foto nel testo), **pagine** fisse, **testi dell'interfaccia** per lingua, **libreria immagini** (foto di tour, articoli, home, ritratto, anteprima social) e **impostazioni** (contatti, regole di prenotazione, buoni regalo, dati fiscali).
+- **Partner**: approvazione, **listino dedicato** per ciascuno, **sconto**, pagamento a fattura e **politica di annullo a scaglioni** per ciascuno (rimborsi parziali, penali).
+- **Statistiche**: venduto, scontrino medio, incassato e da incassare, annulli, andamento, per tour/partner/canale/pagamento/lingua/giorno, portafoglio futuro, con confronto sul periodo precedente ed esportazione CSV.
 - **Fatture**: voci da fatturare, bozze, **fattura elettronica XML (FatturaPA)** con numerazione progressiva, copia PDF, invio al cliente, trasmissione a SdI via PEC, note di credito, registro CSV.
 - **Sconti e buoni**: codici sconto (percentuale o fisso, validità, tour, minimo, usi) e buoni regalo (saldo, movimenti, rettifiche, scadenza).
-- **Partner**, **Feedback** ricevuti, **feed calendario (.ics)** per vedere le prenotazioni accanto ai tuoi impegni.
+- **Feedback** ricevuti, **feed calendario (.ics)**, **backup** scaricabile (database, foto, contenuti), **guida** e registro delle **email**.
 - Email di avviso a ogni prenotazione, annullamento, richiesta partner o programma.
 
 **Logica pensata per una guida sola**
@@ -51,7 +56,7 @@ npm start                # http://localhost:3000
 - I dati stanno in `data/guida.sqlite`. Per ripartire da zero: ferma il server e cancella la cartella `data/`.
 
 ```bash
-npm test                 # ~110 test: motore prenotazioni, pagamenti, Stripe, B2B, sconti e buoni, calendari, programmi, PDF, fatture, traduzioni
+npm test                 # ~190 test: motore prenotazioni, pagamenti, Stripe, B2B, sconti e buoni, calendari, programmi, PDF, fatture, traduzioni, contenuti dal pannello, impostazioni, statistiche, backup, guida
 ```
 
 I test sui contenuti dei PDF usano `pdftotext` (poppler) e si saltano da soli se non c'è; l'XML delle fatture è controllato contro lo schema FatturaPA con `xmllint-wasm` (dipendenza di sviluppo).
@@ -70,21 +75,26 @@ Il sito è in **italiano, inglese e spagnolo** (`/it`, `/en`, `/es`); la lingua 
 
 ## Dove si cambiano le cose
 
+**Dal pannello `/admin`** (vale subito, senza pubblicare nulla; tutto spiegato in [`docs/GUIDA.md`](docs/GUIDA.md)):
+
 | Cosa | Dove |
 |---|---|
-| **Tour e servizi** (testi, prezzi, durata, orari, capienza, lingue) | `content/tours/*.yml` — un file per tour, con i blocchi `it:`, `en:` ed `es:` |
-| **Articoli del blog** | `content/blog/<slug>.it.md`, `<slug>.en.md` e `<slug>.es.md` |
-| **Chi sono, Privacy, Condizioni, Cookie** | `content/pages/<nome>.it.md`, `.en.md`, `.es.md` |
-| **Testi dell'interfaccia** | `server/strings.json` (`"chiave": ["italiano", "inglese", "spagnolo"]`) |
-| **Dati dell'attività** (P.IVA, abilitazione, contatti) | variabili in `.env` (vedi `.env.example`) |
-| **Regole** (cancellazione, preavviso, pausa, validità buoni, acconti…) | variabili in `.env` |
-| **Dati fiscali per le fatture** | variabili `INVOICE_*`, `FISCAL_CODE`, `PEC_*` in `.env` |
-| **Colori e stile** | `public/css/style.css` (variabili in cima al file) |
-| **Orari di lavoro, giorni chiusi, blocchi, calendari, partner, sconti, programmi, fatture** | pannello `/admin` |
+| **Tour e servizi** (testi, prezzi, durata, orari, capienza, lingue, copertina) | Sito › Tour |
+| **Prezzi** (pubblico e tariffa partner) | Sito › Listino; prezzi per singolo partner: Clienti › Partner |
+| **Articoli del blog**, **pagine** (Chi sono, privacy, condizioni, cookie) | Sito › Blog, Sito › Pagine |
+| **Testi dell'interfaccia** (home, pulsanti, domande frequenti…) | Sito › Testi |
+| **Foto** (copertine, home, ritratto, anteprima social, foto negli articoli) | Sito › Immagini |
+| **Dati dell'attività** (contatti, P.IVA, abilitazione), **regole** (cancellazione, preavviso, pause…), **buoni regalo e recensioni**, **dati fiscali** | Sito › Impostazioni |
+| Orari di lavoro, chiusure, blocchi, calendari | Agenda › Disponibilità |
+| Partner, sconti, programmi, fatture, statistiche, backup | Clienti, Agenda, Conti, Aiuto |
 
-Nel file di un tour: `model: person` = **a persona**, partenze fisse (`times: ["09:30", "14:30"]`); `model: group` = **privato**, prezzo per gruppo, con `flexible: true` il cliente sceglie l'orario ogni 30′. `price` è il prezzo pubblico, `b2bPrice` la tariffa per i partner. `cancelHours` (facoltativo) sovrascrive la cancellazione gratuita per quel tour. `payOnSite: true` consente il pagamento in loco **se** `ALLOW_PAY_ON_SITE=true`. `active: false` nasconde il tour senza perdere lo storico.
+**Dalla configurazione del server** (variabili d'ambiente, vedi `.env.example`): password del pannello, chiavi di Stripe, posta in uscita (SMTP), PEC per SdI, indirizzo del sito, cartella dei dati. Le variabili che corrispondono ai campi di *Impostazioni* (contatti, regole, dati fiscali…) fanno da **valori predefiniti**: se un campo è cambiato dal pannello vince il pannello.
 
-**Foto:** metti i file in `public/img/` e nel tour aggiungi `image: /img/nome.jpg`. Finché non c'è una foto il sito usa le illustrazioni SVG in `server/art.js`.
+**Nel codice**: i colori e lo stile (`public/css/style.css`, variabili in cima), le illustrazioni di riserva (`server/art.js`), i testi delle email automatiche (`server/emails.js`) e tutto ciò che è «come funziona».
+
+**I file di `content/`** (tour in `content/tours/*.yml`, articoli in `content/blog/`, pagine in `content/pages/`) sono solo il **contenuto iniziale**: vengono importati nel database **una volta**, la prima volta che il sito parte con un database vuoto. Dopo, si lavora dal pannello e modificarli non cambia più nulla. Il database (`data/guida.sqlite`) e le foto (`data/media/`) vanno quindi su un **disco persistente** e nel **backup**.
+
+Nel contenuto iniziale di un tour: `model: person` = **a persona**, partenze fisse (`times: ["09:30", "14:30"]`); `model: group` = **privato**, prezzo per gruppo, con `flexible: true` il cliente sceglie l'orario ogni 30′. `price` è il prezzo pubblico, `b2bPrice` la tariffa per i partner, `cancelHours` (facoltativo) la cancellazione gratuita di quel tour.
 
 ## Pagamento in contanti il giorno del tour
 
@@ -99,6 +109,8 @@ Nel pannello: **Disponibilità → Calendari collegati**. Su Google Calendar apr
 
 ## Fatturazione elettronica
 
+I dati fiscali si inseriscono dal pannello (**Sito › Impostazioni › Fatturazione elettronica**; le variabili `INVOICE_*`, `FISCAL_CODE`, `VAT_NUMBER` valgono come valori predefiniti, le credenziali della PEC restano nella configurazione del server).
+
 Dal pannello **Fatture**: tutte le prenotazioni pagate o già svolte, i buoni regalo venduti e i programmi conclusi finiscono in una lista «da fatturare» (con il termine consigliato di 12 giorni). Scegli le voci, rivedi l'intestatario e le righe, emetti: il sito assegna il **numero progressivo dell'anno** (`1/2027`…, senza buchi e in ordine di data) e genera il file **XML FatturaPA** (formato FPR12) più una **copia di cortesia PDF** da mandare al cliente. Gestisce clienti italiani (azienda, privato con codice fiscale), esteri, regime forfettario o ordinario, bollo virtuale, rivalsa INPS e ritenuta, note di credito e riemissione dopo uno scarto di SdI.
 
 La trasmissione può essere:
@@ -106,11 +118,11 @@ La trasmissione può essere:
 - **da qui via PEC**: imposta `PEC_SMTP_*` e il pulsante «Invia a SdI via PEC» manda il file a SdI. Gli esiti (consegnata, scartata…) arrivano alla tua casella PEC: li registri a mano nella scheda della fattura.
 
 **Importante — da far confermare al commercialista prima della prima fattura:**
-- regime (`INVOICE_REGIME`), natura IVA, bollo, rivalsa INPS e ritenuta d'acconto;
+- regime, natura IVA, bollo, rivalsa INPS e ritenuta d'acconto;
 - se per i **clienti privati** (in particolare i turisti stranieri) basta il documento commerciale o serve sempre la fattura, e come comportarsi con i clienti esteri senza codice fiscale (il sito usa `0000000` e il codice destinatario `XXXXXXX`);
-- il trattamento dei **buoni regalo**: monouso (fattura alla vendita, default `INVOICE_GIFT_AT=sale`) o multiuso (all'utilizzo, `redemption`);
-- la data di avvio `INVOICE_START_DATE` (es. `2027-01-01`): senza, ogni prenotazione passata finisce in «Da fatturare»; con la data impostata si fattura solo da lì in poi;
-- i prezzi del sito comprendono l'IVA? (`INVOICE_PRICES_INCLUDE_VAT_*`, conta solo se applichi l'IVA).
+- il trattamento dei **buoni regalo**: monouso (fattura alla vendita, predefinito) o multiuso (all'utilizzo);
+- la **prima data fatturabile** (es. `2027-01-01`): senza, ogni prenotazione passata finisce in «Da fatturare»; con la data impostata si fattura solo da lì in poi;
+- i prezzi del sito comprendono l'IVA? (impostazione per privati e per partner, conta solo se applichi l'IVA).
 
 I limiti di questa versione: non legge in automatico le ricevute di SdI, non conserva a norma (conservazione sostitutiva: la offre gratuitamente l'Agenzia delle Entrate o il tuo intermediario) e non è stata provata su un account reale di SdI: l'XML è controllato contro lo schema ufficiale, ma i controlli di merito li fa solo SdI.
 
@@ -121,7 +133,7 @@ A differenza del blog (che è statico), qui serve un **server** perché le preno
 1. Configura le variabili d'ambiente (vedi `.env.example`). In produzione sono **obbligatorie** `NODE_ENV=production`, `BASE_URL` (https), `SESSION_SECRET` e `ADMIN_PASSWORD`.
 2. Metti il sito dietro **HTTPS** (Caddy, nginx o il proxy della piattaforma).
 3. Avvio con Node (`npm ci --omit=dev && npm start`) oppure con Docker (`Dockerfile` incluso, volume su `/data`).
-4. **Backup**: copia periodicamente `data/guida.sqlite` (contiene prenotazioni, partner, fatture emesse e XML).
+4. **Disco persistente e backup**: la cartella dei dati (`DATA_DIR`, nel Docker `/data`) contiene il database (prenotazioni, clienti, partner, fatture, **tour, articoli, pagine, testi, impostazioni**) e le **foto** (`media/`): deve sopravvivere ai riavvii e agli aggiornamenti. Dal pannello, **Aiuto › Backup** scarica uno zip con tutto, pronto da conservare e da ripristinare (istruzioni nello zip e nella guida).
 
 ### Pagamenti con Stripe
 1. Crea un account Stripe (modalità test per provare). Imposta `STRIPE_SECRET_KEY`.
@@ -140,21 +152,29 @@ Il sito manda il cliente sulla pagina di pagamento **ospitata da Stripe** e non 
 Imposta `SMTP_*` e `MAIL_FROM` con il tuo provider (Brevo, Mailgun, Posteo, Gmail con password per app…). Usa un mittente del tuo dominio e verifica SPF/DKIM, altrimenti le conferme possono finire nello spam.
 
 ### Recensioni
-Imposta `REVIEW_URL` con il link «scrivi una recensione» del tuo Profilo dell'attività su Google (e, se vuoi, `REVIEW_URL_TRIPADVISOR`). La richiesta parte da sola il giorno dopo il tour alle 10:00, una sola volta, e non filtra mai i clienti: tutti vedono i link pubblici (le regole di Google vietano di indirizzare solo chi è soddisfatto).
+Imposta il link «scrivi una recensione» del tuo Profilo dell'attività su Google (e, se vuoi, quello di Tripadvisor) in **Sito › Impostazioni › Buoni regalo, programmi e recensioni** (o con `REVIEW_URL` / `REVIEW_URL_TRIPADVISOR` come valori predefiniti). La richiesta parte da sola il giorno dopo il tour alle 10:00, una sola volta, e non filtra mai i clienti: tutti vedono i link pubblici (le regole di Google vietano di indirizzare solo chi è soddisfatto).
 
 ## Come è fatto
 
 Node 22 + Express, **SQLite** (`node:sqlite`, nessun database da installare), HTML generato dal server con escaping automatico, JavaScript solo dove serve. Dipendenze: `express`, `nodemailer`, `marked`, `yaml`, `ical.js` (calendari), `pdfkit` (PDF) e il font (`@fontsource/josefin-sans`). In sviluppo, `xmllint-wasm` per validare le fatture.
 
 ```
-content/            tour, blog, pagine (modificabili a mano)
+content/            contenuto iniziale (tour, blog, pagine): importato una volta nel database
+docs/               guida d'uso (GUIDA.md, anche nel pannello) e simulazioni
 public/             css, js, immagini
+scripts/            sandbox con dati d'esempio
 server/
   availability.js   motore delle disponibilità (puro, testato)
-  bookings.js       prenotazioni, prezzi, cancellazioni
-  pricing.js        codici sconto e buoni regalo
+  bookings.js       prenotazioni, prezzi, cancellazioni a scaglioni (policy.js)
+  pricing.js        codici sconto, buoni regalo, prezzi dedicati ai partner
   programs.js       programmi di più giorni
   calendars.js      calendari collegati (iCal)
+  content.js        lettura e controllo di tour, articoli e pagine
+  contentStore.js   contenuti nel database (modificabili dal pannello)
+  media.js          libreria immagini; siteImages.js: foto delle pagine principali
+  settings.js       impostazioni del pannello (sovrascrivono la configurazione)
+  stats.js          statistiche e KPI (funzioni pure, testate)
+  backup.js         copia di sicurezza (zip)
   invoices.js       coda, bozze, emissione e note di credito
   fatturapa.js      importi e XML FatturaPA (puro)
   pdf.js            voucher, buoni regalo, proposte (e pdf-invoice.js)
@@ -168,15 +188,17 @@ Sicurezza: password B2B con scrypt, cookie `HttpOnly` + `SameSite=Lax`, controll
 
 ## Checklist prima del lancio
 
-- [ ] **Dati d'impresa**: `VAT_NUMBER`, `GUIDE_LICENSE`, `LEGAL_ADDRESS`, email e telefono veri (compaiono nel footer, nelle pagine legali, nelle email e sui PDF).
-- [ ] **Dati fiscali per le fatture** (`FISCAL_CODE`, `INVOICE_*`) **confermati dal commercialista**; non emettere una fattura «di prova» su SdI (consumerebbe il numero 1/2027): chiedi al commercialista come verificare il file prima dell'avvio.
-- [ ] **Prezzi e tour**: i valori in `content/tours/*.yml` sono esempi. Controlla anche lingue, punti d'incontro e durate.
-- [ ] **Testi**: rileggi Chi sono, articoli del blog e FAQ (sono bozze da rivedere e firmare, soprattutto i dettagli storici).
-- [ ] **Pagine legali** (privacy, condizioni, cookie): sono bozze, **fallo rivedere da commercialista/consulente**. In particolare buoni regalo (validità, recesso), acconti dei programmi, recensioni, conservazione delle fatture.
-- [ ] **Foto vere** (tour, ritratto) al posto delle illustrazioni.
+Passo per passo, con i percorsi del pannello, nella [guida](docs/GUIDA.md#20-da-fare-prima-del-lancio-e-a-gennaio). In sintesi:
+
+- [ ] **Dati d'impresa** (Sito › Impostazioni › Attività e contatti): Partita IVA, abilitazione, indirizzo, email e telefono veri (compaiono nel footer, nelle pagine legali, nelle email e sui PDF).
+- [ ] **Dati fiscali per le fatture** (Sito › Impostazioni › Fatturazione) **confermati dal commercialista**; non emettere una fattura «di prova» su SdI (consumerebbe il numero 1/2027): chiedi al commercialista come verificare il file prima dell'avvio.
+- [ ] **Tour e prezzi veri** (Sito › Tour e Listino): quelli iniziali sono esempi. Controlla anche lingue, punti d'incontro e durate.
+- [ ] **Testi**: rileggi Chi sono, articoli del blog e domande frequenti (sono bozze da rivedere e firmare, soprattutto i dettagli storici).
+- [ ] **Pagine legali** (privacy, condizioni, cookie): sono bozze, **falle rivedere da commercialista/consulente**. In particolare buoni regalo (validità, recesso), acconti dei programmi, recensioni, conservazione delle fatture.
+- [ ] **Foto vere** (tour, ritratto, home, anteprima social) al posto delle illustrazioni (Sito › Immagini).
 - [ ] **Stripe in modalità live**, webhook configurato, **SMTP** funzionante (fai una prenotazione di prova e un rimborso).
-- [ ] **Google Business Profile** con link di recensione in `REVIEW_URL`; calendario personale collegato dal pannello.
-- [ ] **Dominio + HTTPS**, `BASE_URL` corretto.
+- [ ] **Google Business Profile** con link di recensione (Impostazioni › Buoni regalo, programmi e recensioni); calendario personale collegato (Agenda › Disponibilità).
+- [ ] **Dominio + HTTPS**, `BASE_URL` corretto, **disco persistente** per `DATA_DIR`, primo **backup** (Aiuto › Backup).
 - [ ] Orari di lavoro e giorni di chiusura inseriti dal pannello `/admin`.
 
 ## Idee per i prossimi passi

@@ -14,7 +14,7 @@ export function mediaPage(ctx, { items, used, slots = [], flash = '', error = ''
   };
   const body = html`
 <div class="card pad" data-upload>
-  <p class="muted">Carica foto da telefono o computer: vengono ridimensionate (massimo 1600 px) e ottimizzate automaticamente, e i dati di posizione delle foto non vengono conservati. Poi le scegli come copertina di un tour o di un articolo, oppure per le pagine principali del sito (qui sotto).</p>
+  <p class="muted">Carica foto da telefono o computer: vengono ridimensionate (massimo 1600 px) e ottimizzate automaticamente, e i dati di posizione delle foto non vengono conservati. Poi le scegli come copertina di un tour o di un articolo, per le pagine principali del sito (qui sotto) o le inserisci dentro un articolo con il pulsante «Foto».</p>
   <p>${uploadControl()}</p>
 </div>
 ${slots.length ? html`<section class="card pad">

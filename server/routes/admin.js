@@ -18,6 +18,7 @@ import { adminBlogRouter } from './admin-blog.js';
 import { adminTextsRouter } from './admin-texts.js';
 import { adminSettingsRouter } from './admin-settings.js';
 import { adminBackupRouter } from './admin-backup.js';
+import { adminGuideRouter } from './admin-guide.js';
 import { adminInvoicesRouter } from './admin-invoices.js';
 import { dayConflicts } from '../programs.js';
 import { feedbackStats } from '../reviews.js';
@@ -113,6 +114,7 @@ export function adminRouter(app) {
   r.use(adminTextsRouter(app));
   r.use(adminSettingsRouter(app));
   r.use(adminBackupRouter(app));
+  r.use(adminGuideRouter(app));
 
   r.get('/feedback', (req, res) => {
     const items = db.prepare(`SELECT f.*, b.name, b.email, b.tour_slug, b.date FROM feedback f JOIN bookings b ON b.id = f.booking_id ORDER BY f.created_at DESC LIMIT 200`).all();

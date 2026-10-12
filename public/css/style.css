@@ -671,3 +671,19 @@ body.admin { --header-h: 64px; }
 .input-unit { display: flex; align-items: center; gap: 10px; } .input-unit input { max-width: 9em; } .unit { color: var(--muted); }
 .field .label em { font-weight: 400; }
 .settings-section { scroll-margin-top: calc(var(--header-h) + 14px); }
+
+/* Editor di testo: barra di formattazione e foto negli articoli */
+.md-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; } .md-toolbar[hidden], .md-photos[hidden] { display: none; }
+.md-photos { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; background: var(--soft); } .md-photos .media-picker { margin: 6px 0 2px; }
+.md-photos .media-choice { padding: 0; font: inherit; }
+.prose img { display: block; max-width: 100%; height: auto; margin: 1.4em auto; border-radius: 12px; }
+
+/* Guida nel pannello */
+.guide { max-width: 78ch; } .guide h2 { margin-top: 2.2em; padding-top: 0.6em; border-top: 1px solid var(--line); scroll-margin-top: calc(var(--header-h) + 12px); } .guide h3 { scroll-margin-top: calc(var(--header-h) + 12px); }
+.guide table { width: 100%; border-collapse: collapse; font-size: 0.95rem; } .guide th { text-align: left; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--line); }
+.guide td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; } .guide .table-wrap { margin: 1em 0; }
+.guide blockquote { margin: 1.2em 0; }
+.guide code { background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 0.88em; word-break: break-word; }
+.guide input[type='checkbox'] { margin-right: 8px; }
+.guide li > ul, .guide li > ol { margin-top: 0.4em; }
+.guide-top { position: fixed; right: 16px; bottom: 16px; z-index: 50; padding: 9px 16px; border-radius: 50px; background: var(--ink); color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.06em; text-decoration: none; box-shadow: var(--shadow-lg); }

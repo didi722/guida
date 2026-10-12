@@ -4,6 +4,7 @@ import { LANGS, LANG_META } from '../langs.js';
 import { formatMoney } from '../util.js';
 import { adminLayout } from './admin.js';
 import { uploadControl } from './admin-media.js';
+import { mdEditor } from './md-editor.js';
 
 export const TEXT_FIELDS = ['title', 'subtitle', 'summary', 'meetingPoint', 'meetingUrl', 'description', 'highlights', 'includes', 'excludes', 'notes'];
 export const LIST_FIELDS = ['highlights', 'includes', 'excludes'];
@@ -126,8 +127,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
     ${field('Riassunto', `summary_${l}`, v[`summary_${l}`], { hint: 'una o due frasi: compare negli elenchi e nei risultati di Google', rows: 3, attrs: l === 'it' ? 'required maxlength="400"' : 'maxlength="400"' })}
     ${field('Punto d’incontro', `meetingPoint_${l}`, v[`meetingPoint_${l}`], { attrs: 'maxlength="200"' })}
     ${field('Link alla mappa', `meetingUrl_${l}`, v[`meetingUrl_${l}`], { type: 'url', hint: 'indirizzo Google Maps (facoltativo)', attrs: 'maxlength="400"' })}
-    <div data-md><label class="field"><span class="label">Descrizione <em>(si può usare **grassetto**, *corsivo*, elenchi con «- » e titoli con «## »)</em></span><textarea name="description_${l}" rows="10" data-md-source>${v[`description_${l}`]}</textarea></label>
-      <p><button class="btn btn-outline btn-sm" type="button" data-md-toggle>Anteprima</button></p><div class="md-preview prose" data-md-preview hidden></div></div>
+    ${mdEditor(`description_${l}`, v[`description_${l}`], { rows: 10, label: 'Descrizione', media })}
     ${field('Punti salienti', `highlights_${l}`, v[`highlights_${l}`], { hint: 'uno per riga', rows: 4 })}
     ${field('Incluso', `includes_${l}`, v[`includes_${l}`], { hint: 'uno per riga', rows: 4 })}
     ${field('Non incluso', `excludes_${l}`, v[`excludes_${l}`], { hint: 'uno per riga', rows: 3 })}
