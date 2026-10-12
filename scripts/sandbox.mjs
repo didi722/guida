@@ -33,12 +33,70 @@ Object.assign(process.env, {
 
 const { createApp } = await import('../server/app.js');
 const { hashPassword } = await import('../server/auth.js');
-const { createBooking, confirmPaid } = await import('../server/bookings.js');
+const { cancelBooking, confirmPaid, createBooking, markRefund } = await import('../server/bookings.js');
 const { createAdminGift } = await import('../server/gifts.js');
 const { createProgramRequest, saveProposal } = await import('../server/programs.js');
-const { addDays, nowRome } = await import('../server/time.js');
+const { addDays, localToInstant, nowRome } = await import('../server/time.js');
 
 const { app, server } = createApp();
+
+/** Prenotazioni d'esempio dei 5 mesi scorsi (sempre le stesse: generatore pseudo-casuale con seme fisso). */
+function seedHistory({ lagoon, bluesail, d, now }) {
+  const { db } = app;
+  let state = 20260711;
+  const rnd = () => {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    return state / 4294967296;
+  };
+  const between = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const pickWeighted = (items) => {
+    let x = rnd() * items.reduce((t, i) => t + i.w, 0);
+    return items.find((i) => (x -= i.w) < 0) ?? items.at(-1);
+  };
+  const TOURS = [
+    { slug: 'san-marco-rialto', w: 5, times: ['09:30', '14:30'], pax: [1, 6] },
+    { slug: 'cannaregio-ghetto', w: 3, times: ['10:00', '15:00'], pax: [1, 6] },
+    { slug: 'passeggiata-privata-2h', w: 2, times: ['10:00', '11:30', '16:00'], pax: [2, 8] },
+    { slug: 'venezia-oriente-occidente', w: 1, times: ['09:30', '14:00'], pax: [4, 12] },
+    { slug: 'isole-murano-burano-torcello', w: 1, times: ['09:00'], pax: [4, 10] },
+  ];
+  const NAMES = ['Sofia Conti', 'Mark Thompson', 'Elena Pastore', 'Hans Becker', 'Lucía Fernández', 'Paolo Gentile', 'Emma Wilson', 'Marco De Luca', 'Chiara Longo', 'David Miller', 'Marta Ruiz', 'Giorgio Neri', 'Claire Dubois', 'Anna Costa'];
+  const LANGS = [{ w: 5, v: 'it' }, { w: 4, v: 'en' }, { w: 2, v: 'es' }].map((x) => ({ ...x }));
+  let created = 0;
+  let cancelled = 0;
+  for (let i = 0; i < 70; i++) {
+    const tour = pickWeighted(TOURS);
+    const date = d(-between(8, 150));
+    const lead = between(2, 24);
+    const at = localToInstant(addDays(date, -lead), '12:00');
+    const partner = rnd() < 0.3 ? (rnd() < 0.7 ? lagoon : bluesail) : null;
+    const lang = pickWeighted(LANGS).v;
+    const name = partner ? partner.contact_name : NAMES[i % NAMES.length];
+    const input = {
+      tourSlug: tour.slug, date, time: tour.times[between(0, tour.times.length - 1)], pax: between(...tour.pax), name,
+      email: partner ? partner.email : `${name.toLowerCase().replace(/[^a-z]+/g, '.')}@example.com`, lang,
+      ...(partner ? { channel: 'b2b', account: partner, paymentMethod: partner === lagoon ? 'invoice' : 'card', clientRef: `Gruppo ${between(1, 40)}` } : { paymentMethod: 'card' }),
+    };
+    let b;
+    try {
+      b = createBooking(app, input, at);
+    } catch {
+      continue; // orario già occupato: pazienza, ne bastano molte altre
+    }
+    created += 1;
+    if (input.paymentMethod === 'card') confirmPaid(app, b.id, `pi_storico_${b.ref}`, at);
+    else if (rnd() < 0.6) db.prepare("UPDATE bookings SET payment_status = 'paid' WHERE id = ?").run(b.id); // a fattura: una parte già incassata
+    if (rnd() < 0.12) {
+      const when = localToInstant(addDays(date, -between(0, 9)), '10:00');
+      const r = cancelBooking(app, b.id, { by: 'customer', refund: rnd() < 0.7 ? 'auto' : 'none' }, when);
+      if (!r.already) {
+        cancelled += 1;
+        if (r.refundCents > 0) markRefund(db, b.id, { ok: true, cents: r.refundCents });
+      }
+    }
+  }
+  return { created, cancelled };
+}
 
 async function seed() {
   const { db } = app;
@@ -110,6 +168,10 @@ async function seed() {
   } catch (err) {
     tries.push(`✗ Programma: ${err.message}`);
   }
+
+  // storico dei mesi scorsi: serve a dare qualcosa da guardare alle statistiche (andamento, prodotti, partner, annulli)
+  const history = seedHistory({ lagoon, bluesail, d, now });
+  tries.push(`✓ Storico: ${history.created} prenotazioni dei mesi scorsi (${history.cancelled} annullate), per le statistiche`);
 
   console.log('\nDati d\'esempio creati:\n  ' + tries.join('\n  '));
   return giftCode;
