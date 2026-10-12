@@ -3,7 +3,7 @@ import { bookingDue, cancellationState } from '../bookings.js';
 import { makeT } from '../i18n.js';
 import { splitAmounts } from '../policy.js';
 import { isSimplePolicy, tierSentences } from '../policyText.js';
-import { dayOfWeek, fmtDate, fmtMonth, monthDates } from '../time.js';
+import { dayOfWeek, fmtDate, fmtMonth, monthDates, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
 import { langName, normLang } from '../langs.js';
 
@@ -148,6 +148,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
   const tour = ctx.app.content.tour(b.tour_slug);
   const st = cancellationState(b);
   const live = b.status === 'confirmed' || b.status === 'held';
+  const today = nowRome().date;
   const wa = b.phone ? b.phone.replace(/[^\d]/g, '') : '';
   const body = html`
 <p><a href="/admin/bookings">← Tutte le prenotazioni</a></p>
@@ -166,6 +167,8 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       ${isSimplePolicy(st.tiers)
         ? html`<div><dt>Cancellazione gratuita fino a</dt><dd>${new Date(b.free_cancel_until).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'medium', timeStyle: 'short' })} ${st.free ? html`<span class="chip chip-ok">ancora valida</span>` : html`<span class="chip chip-warn">scaduta</span>`}</dd></div>`
         : html`<div><dt>Politica di annullo</dt><dd><ul class="plain tier-list">${tierSentences(makeT('it'), 'it', st.tiers, st.startsAt).map((x) => html`<li>${x}</li>`)}</ul>${b.status === 'confirmed' ? html`<span class="chip ${st.percent === 100 ? 'chip-ok' : 'chip-warn'}">oggi: rimborso ${st.percent}%</span>` : ''}</dd></div>`}
+      ${b.channel === 'b2c' && b.status === 'confirmed' && b.date >= today ? html`<div><dt>Promemoria al cliente</dt><dd>${b.reminder_status === 'sent' ? `inviato il ${new Date(b.reminder_sent_at).toLocaleDateString('it-IT')}` : b.reminder_status === 'skipped' ? 'non verrà inviato' : ctx.app.cfg.reminders.enabled ? `parte la sera prima, alle ${String(ctx.app.cfg.reminders.sendHour).padStart(2, '0')}:00` : 'disattivato (vedi Sito › Impostazioni)'}
+        ${!b.reminder_status ? html`<form method="post" action="/admin/bookings/${b.id}/reminder" class="inline-form"><button class="btn btn-sm btn-outline" type="submit" name="action" value="send">Invia ora</button> <button class="btn btn-sm btn-outline" type="submit" name="action" value="skip">Non inviare</button></form>` : ''}</dd></div>` : ''}
       ${b.channel === 'b2c' && b.status === 'confirmed' ? html`<div><dt>Richiesta recensione</dt><dd>${b.review_status === 'sent' ? `inviata il ${new Date(b.review_sent_at).toLocaleDateString('it-IT')}` : b.review_status === 'skipped' ? 'non verrà inviata' : 'parte il giorno dopo il tour'}
         ${!b.review_status ? html`<form method="post" action="/admin/bookings/${b.id}/review" class="inline-form"><button class="btn btn-sm btn-outline" type="submit" name="action" value="send">Invia ora</button> <button class="btn btn-sm btn-outline" type="submit" name="action" value="skip">Non inviare</button></form>` : ''}</dd></div>` : ''}
       ${b.status === 'cancelled' ? html`<div><dt>Annullata</dt><dd>${b.cancelled_by ?? ''}${b.cancel_reason ? ' · ' + b.cancel_reason : ''}</dd></div>

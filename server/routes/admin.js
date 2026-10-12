@@ -37,6 +37,7 @@ const FLASH = {
   notes: 'Note salvate.',
   paid: 'Prenotazione segnata come incassata.',
   review: 'Richiesta di recensione aggiornata.',
+  reminder: 'Promemoria aggiornato.',
   calendar: 'Calendario collegato e sincronizzato.',
   calsynced: 'Calendario sincronizzato.',
   caltoggled: 'Calendario aggiornato.',
@@ -180,6 +181,13 @@ export function adminRouter(app) {
     if (req.body.action === 'skip') app.reviews.skip(b.id);
     else if (b.status === 'confirmed' && b.channel === 'b2c' && !b.review_status) await app.reviews.send(b);
     res.redirect(303, `/admin/bookings/${b.id}?ok=review`);
+  });
+  r.post('/bookings/:id/reminder', form, async (req, res, next) => {
+    const b = getBooking(db, Number(req.params.id));
+    if (!b) return next();
+    if (req.body.action === 'skip') app.reminders.skip(b.id);
+    else if (b.status === 'confirmed' && b.channel === 'b2c' && !b.reminder_status) await app.reminders.send(b);
+    res.redirect(303, `/admin/bookings/${b.id}?ok=reminder`);
   });
   r.post('/bookings/:id/paid', form, (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));

@@ -169,6 +169,8 @@ export const SECTIONS = [
       { key: 'policy.bufferMin', type: 'int', min: 0, max: 240, unit: 'minuti', label: 'Pausa tra due servizi' },
       { key: 'policy.slotStepMin', type: 'int', min: 5, max: 180, unit: 'minuti', label: 'Passo degli orari liberi', hint: 'per i servizi a orario libero: ogni quanti minuti si può iniziare' },
       { key: 'policy.holdMinutes', type: 'int', min: 10, max: 180, unit: 'minuti', label: 'Blocco dell’orario durante il pagamento', hint: 'se non si paga entro questo tempo l’orario si libera' },
+      { key: 'reminders.enabled', type: 'bool', label: 'Promemoria al cliente la sera prima del tour', hint: 'email automatica con orario, punto d’incontro e come contattarti; solo clienti privati' },
+      { key: 'reminders.sendHour', type: 'int', min: 8, max: 22, unit: 'h', label: 'Ora di invio del promemoria', hint: 'ora di Venezia, la sera prima' },
       { key: 'policy.allowPayOnSite', type: 'bool', label: 'Consenti di pagare il giorno del servizio', hint: 'i privati prenotano senza pagare online: più comodo per loro, più rischio di assenze' },
     ],
   },

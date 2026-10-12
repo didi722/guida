@@ -335,6 +335,13 @@ CREATE TABLE media (
 );
 `;
 
+const V10_REMINDERS = `
+-- Promemoria ai clienti la sera prima del tour
+ALTER TABLE bookings ADD COLUMN reminder_status TEXT;      -- NULL = da inviare | sent | skipped
+ALTER TABLE bookings ADD COLUMN reminder_sent_at TEXT;
+ALTER TABLE bookings ADD COLUMN reminder_attempt_at TEXT;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -354,6 +361,8 @@ export const MIGRATIONS = [
   V8_PARTNER_TERMS,
   // v9 — contenuti nel database (tour, articoli, pagine, testi, immagini)
   V9_CONTENT,
+  // v10 — promemoria il giorno prima
+  V10_REMINDERS,
 ];
 
 export function migrate(db) {

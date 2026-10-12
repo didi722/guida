@@ -90,7 +90,8 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 2. **Partner da approvare**: se c'è un numero, apri **Clienti › Partner** e rispondi (vedi [sezione 14](#14-partner-agenzie-dmc-tour-operator)). Il partner è avvisato per email.
 3. **Programmi da preparare**: richieste di più giorni in attesa di una tua proposta ([sezione 12](#12-prenotazioni-annulli-e-programmi-di-più-giorni)).
 4. **Fatture** (una o due volte a settimana): le prenotazioni svolte o pagate finiscono in *Da fatturare*; il termine consigliato per emettere è **12 giorni** ([sezione 13](#13-fatture)).
-5. Ogni nuova prenotazione, annullo o richiesta ti arriva **per email** all'indirizzo delle notifiche (si cambia in **Sito › Impostazioni › Attività e contatti**). Se le email non arrivano, guarda **Aiuto › Email**: lì il sito elenca quelle che ha tentato di inviare.
+5. I clienti privati ricevono da soli un **promemoria la sera prima del tour** (alle 18:00, con orario, punto d'incontro, mappa e come contattarti): non devi fare nulla, e si spegne o si sposta in **Sito › Impostazioni › Regole di prenotazione**.
+6. Ogni nuova prenotazione, annullo o richiesta ti arriva **per email** all'indirizzo delle notifiche (si cambia in **Sito › Impostazioni › Attività e contatti**). Se le email non arrivano, guarda **Aiuto › Email**: lì il sito elenca quelle che ha tentato di inviare.
 
 **Calendario sul telefono.** In fondo all'Agenda trovi un indirizzo privato da aggiungere come *calendario in abbonamento* a Google Calendar, Apple Calendar o Outlook: vedrai le prenotazioni confermate accanto ai tuoi impegni. Non condividerlo con nessuno.
 
@@ -226,7 +227,7 @@ Regole:
 ### Prenotazioni
 **Agenda › Prenotazioni**: schede *Prossime*, *Passate*, *Annullate*, *Tutte* e ricerca per nome, email o codice. Tocca una prenotazione per vedere tutto:
 
-- **Prenotazione**: tour, data, orario, persone, prezzo, **metodo e stato del pagamento**, politica di annullo e, per i privati, la **richiesta di recensione** (parte da sola il giorno dopo il tour; puoi **Invia ora** o **Non inviare**).
+- **Prenotazione**: tour, data, orario, persone, prezzo, **metodo e stato del pagamento**, politica di annullo e, per i privati, il **Promemoria al cliente** (parte da solo la sera prima; non serve se la prenotazione è stata fatta meno di 24 ore prima) e la **richiesta di recensione** (il giorno dopo il tour). Per entrambi puoi **Invia ora** o **Non inviare**.
 - **Apri come la vede il cliente**: la pagina privata del cliente (da lì si prova anche l'annullo).
 - **Voucher PDF**, dati del **Cliente** (telefono, WhatsApp), **Note del cliente**, riferimento pratica e dati fattura.
 - **Note interne**: solo per te. **Salva note**.
@@ -316,7 +317,7 @@ In fondo alla pagina, **Come sono calcolati i numeri** spiega ogni definizione.
 **Sito › Impostazioni** ha quattro sezioni, ciascuna con il suo pulsante **Salva questa sezione** (le modifiche valgono subito). Se un campo non è valido, nulla viene salvato e vedi quale correggere.
 
 - **Attività e contatti**: nome del sito, nome per i documenti, email di contatto, **email che riceve le notifiche**, telefono, **WhatsApp** (solo cifre con prefisso, es. `393331234567`; vuoto = nascosto), Instagram, **Partita IVA**, abilitazione di guida turistica, indirizzo. Compaiono nel piè di pagina, nelle email, nei voucher e nei PDF.
-- **Regole di prenotazione**: cancellazione gratuita per privati e partner (ore), preavviso minimo, anticipo massimo (giorni), pausa tra due servizi, passo degli orari liberi, blocco dell'orario durante il pagamento, **pagamento il giorno del servizio** (sì/no).
+- **Regole di prenotazione**: cancellazione gratuita per privati e partner (ore), preavviso minimo, anticipo massimo (giorni), pausa tra due servizi, passo degli orari liberi, blocco dell'orario durante il pagamento, **promemoria al cliente la sera prima** (sì/no e a che ora), **pagamento il giorno del servizio** (sì/no).
 - **Buoni regalo, programmi e recensioni**: validità e importi dei buoni, acconto e validità dei preventivi dei programmi, richiesta di recensione dopo il tour (sì/no, link Google e Tripadvisor, ora d'invio).
 - **Fatturazione elettronica**: dati del cedente (nome o denominazione, codice fiscale, indirizzo), regime, IVA, natura, bollo, rivalsa INPS, ritenuta, diciture, IBAN, scadenze, buoni regalo, prima data fatturabile.
 
@@ -388,6 +389,8 @@ Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, 
 **Le email non arrivano ai clienti / a me**
 - **Aiuto › Email** mostra le email tentate. Se in alto c'è *«SMTP non configurato»* le email **non partono**: imposta le variabili `SMTP_*` e `MAIL_FROM` sul server.
 - Usa un mittente del tuo dominio con SPF/DKIM, altrimenti finiscono nello spam. Chiedi ai clienti di controllare la cartella *Posta indesiderata*.
+
+**Il cliente dice di non aver ricevuto il promemoria**: il promemoria parte solo per i clienti **privati** con prenotazione confermata fatta **almeno 24 ore prima** dell'inizio; per i partner non parte. Nella scheda della prenotazione leggi lo stato (*inviato il…*, *non verrà inviato*, *parte la sera prima*). Se le email non partono in generale, vedi sopra.
 
 **Un cliente ha pagato ma non ha la conferma**: guarda **Agenda › Prenotazioni** (tab *Tutte*, ricerca per email). I pagamenti con carta si confermano quando arriva l'avviso di Stripe (webhook): se **mai** funziona, controlla il webhook nella dashboard di Stripe. Se lo slot è stato preso nel frattempo il cliente viene **rimborsato in automatico** e avvisato.
 

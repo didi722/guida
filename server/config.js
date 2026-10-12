@@ -112,6 +112,11 @@ export function createConfig(overrides = {}) {
       staleWarnMinutes: 60, // avviso nell'admin se la sincronizzazione non riesce da oltre un'ora
     },
 
+    reminders: {
+      enabled: bool(e.REMINDERS_ENABLED, true), // la sera prima del tour, ai clienti privati: orario, punto d'incontro, come contattarti
+      sendHour: num(e.REMINDER_SEND_HOUR, 18), // ora di Venezia
+    },
+
     reviews: {
       enabled: bool(e.REVIEWS_ENABLED, true),
       googleUrl: e.REVIEW_URL || '', // link «scrivi una recensione» del profilo Google Business

@@ -530,6 +530,116 @@ export async function sendReviewRequest(app, b) {
   });
 }
 
+// ───────────── Promemoria la sera prima del tour ─────────────
+const RM = {
+  it: {
+    subject: (title) => `Domani: ${title} a Venezia`,
+    intro: 'ti ricordo che domani ci vediamo per il tuo tour. Ecco i dettagli.',
+    ref: 'Codice',
+    tour: 'Servizio',
+    date: 'Data',
+    time: 'Orario',
+    people: 'Partecipanti',
+    meeting: 'Punto d’incontro',
+    map: 'Apri la mappa',
+    know: 'Da sapere',
+    contact: 'Se hai un imprevisto o non riesci a trovarmi, scrivimi o chiamami:',
+    contactMail: 'Se hai un imprevisto o non riesci a trovarmi, rispondi a questa email.',
+    manage: 'Vedi la prenotazione e scarica il voucher',
+    bye: 'A domani!',
+  },
+  en: {
+    subject: (title) => `Tomorrow: ${title} in Venice`,
+    intro: 'just a reminder that we are meeting tomorrow for your tour. Here are the details.',
+    ref: 'Code',
+    tour: 'Service',
+    date: 'Date',
+    time: 'Time',
+    people: 'Guests',
+    meeting: 'Meeting point',
+    map: 'Open the map',
+    know: 'Good to know',
+    contact: 'If anything comes up or you cannot find me, message or call me:',
+    contactMail: 'If anything comes up or you cannot find me, just reply to this email.',
+    manage: 'See your booking and download the voucher',
+    bye: 'See you tomorrow!',
+  },
+  es: {
+    subject: (title) => `Mañana: ${title} en Venecia`,
+    intro: 'te recuerdo que mañana nos vemos para tu tour. Aquí tienes los detalles.',
+    ref: 'Código',
+    tour: 'Servicio',
+    date: 'Fecha',
+    time: 'Hora',
+    people: 'Participantes',
+    meeting: 'Punto de encuentro',
+    map: 'Abrir el mapa',
+    know: 'Conviene saber',
+    contact: 'Si surge algún imprevisto o no me encuentras, escríbeme o llámame:',
+    contactMail: 'Si surge algún imprevisto o no me encuentras, responde a este correo.',
+    manage: 'Ver la reserva y descargar el voucher',
+    bye: '¡Hasta mañana!',
+  },
+};
+
+/** Come raggiungerti: telefono, WhatsApp ed email del sito (solo quelli impostati). */
+const contactParts = (cfg) => [cfg.site.phone, cfg.site.whatsapp ? `WhatsApp https://wa.me/${cfg.site.whatsapp}` : '', cfg.site.email].filter(Boolean);
+
+export async function sendReminder(app, b) {
+  const lang = normLang(b.lang);
+  const tr = RM[lang];
+  const ti = tourText(app, b.tour_slug, lang);
+  const manageUrl = `${app.cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`;
+  const hasDirect = !!(app.cfg.site.phone || app.cfg.site.whatsapp);
+  const contacts = contactParts(app.cfg);
+  const rows = [
+    [tr.tour, ti.title],
+    [tr.date, fmtDate(b.date, lang)],
+    [tr.time, `${b.start_time}–${b.end_time}`],
+    [tr.people, String(b.participants)],
+    [tr.meeting, ti.meetingPoint],
+    [tr.ref, b.ref],
+  ];
+  const text = [
+    greet(lang, b.name),
+    '',
+    tr.intro,
+    '',
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    ti.meetingUrl ? `${tr.map}: ${ti.meetingUrl}` : null,
+    ti.notes ? `${tr.know}: ${ti.notes}` : null,
+    '',
+    hasDirect ? `${tr.contact} ${contacts.join(' · ')}` : tr.contactMail,
+    '',
+    `${tr.manage}: ${manageUrl}`,
+    '',
+    tr.bye,
+    app.cfg.site.name,
+  ].filter((x) => x !== null).join('\n');
+  const button = (href, label) => html`<p><a href="${href}" style="display:inline-block;border:2px solid #af9168;color:#7d6238;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${label}</a></p>`;
+  return app.mail.send({
+    to: b.email,
+    subject: tr.subject(ti.title),
+    text,
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${greet(lang, b.name)}</p><p>${tr.intro}</p>
+        <table style="border-collapse:collapse;width:100%;font-size:15px">
+          ${rows.map(([k, v]) => html`<tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top">${k}</td><td style="padding:6px 0"><strong>${v}</strong></td></tr>`)}
+        </table>
+        ${ti.meetingUrl ? button(ti.meetingUrl, tr.map) : ''}
+        ${ti.notes ? html`<p><strong>${tr.know}.</strong> ${ti.notes}</p>` : ''}
+        <p>${hasDirect ? tr.contact : tr.contactMail}${hasDirect ? html`<br><strong>${contacts.join(' · ')}</strong>` : ''}</p>
+        ${button(manageUrl, tr.manage)}
+        <p style="color:#666;font-size:13px">${tr.bye}<br>${app.cfg.site.name}</p>`,
+      ),
+    ),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
 export async function notifyGuideFeedback(app, b, fb) {
   const to = app.cfg.mail.notifyTo;
   if (!to) return;

@@ -14,6 +14,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - Possono usare un **codice sconto** e/o un **buono regalo** al checkout, anche in più volte.
 - Ricevono email di conferma con **voucher PDF**, punto d'incontro, file calendario (.ics) e link per gestire/annullare.
 - **Cancellazione gratuita fino a N ore prima** (default 48): oltre il termine il sito non la offre. Se avevano pagato con carta, il **rimborso parte da solo**.
+- La **sera prima del tour** ricevono un promemoria (orario, punto d'incontro, mappa, come contattarti): meno assenze e meno «dove ci troviamo?».
 - Il giorno dopo il tour ricevono **una sola email** con i link per recensire (Google, Tripadvisor) o per lasciare un feedback privato.
 - Possono **regalare un'esperienza** (`/it/gift`): buono da 20 a 1.000 € (configurabile) con PDF, messaggio e invio programmato al destinatario.
 - Per i soggiorni lunghi compilano il **modulo programmi** (`/it/programs`): ricevono una proposta con giornate, prezzo e acconto, la accettano online e pagano l'acconto.
