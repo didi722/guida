@@ -747,7 +747,7 @@ body.admin { --header-h: 64px; }
 .dep-price { text-align: right; display: flex; flex-direction: column; } .dep-price small { color: var(--muted); }
 @media (max-width: 640px) { .dep-list { grid-template-columns: 1fr; } }
 
-/* home: le due categorie (guida privata a ore, tour di gruppo) */
+/* home: le due categorie (guida privata, tour di gruppo) */
 .choose .section-head { margin-bottom: 26px; }
 .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: stretch; }
 .choice-card { display: flex; flex-direction: column; overflow: hidden; }

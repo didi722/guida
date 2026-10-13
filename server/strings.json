@@ -210,10 +210,10 @@
   "貸切"
  ],
  "home.private.title": [
-  "Guida privata a ore",
-  "Private guide by the hour",
-  "Guía privado por horas",
-  "時間制プライベートガイド"
+  "guida privata",
+  "private guide",
+  "guía privado",
+  "プライベートガイド"
  ],
  "home.private.p": [
   "Una guida abilitata a tua disposizione, nel giorno e all’ora che preferisci. Scegli quante ore: il prezzo è per tutto il gruppo e lo vedi subito.",
@@ -624,9 +624,9 @@
   "ツアーとサービス"
  ],
  "tours.lead": [
-  "Due modi di visitare Venezia: una guida privata a ore, oppure un tour di gruppo con posti liberi. In italiano, inglese, spagnolo e giapponese.",
-  "Two ways to visit Venice: a private guide by the hour, or a group tour with open seats. In Italian, English, Spanish and Japanese.",
-  "Dos formas de visitar Venecia: un guía privado por horas o un tour en grupo con plazas libres. En italiano, inglés, español y japonés.",
+  "Due modi di visitare Venezia: una guida privata, oppure un tour di gruppo con posti liberi. In italiano, inglese, spagnolo e giapponese.",
+  "Two ways to visit Venice: a private guide, or a group tour with open seats. In Italian, English, Spanish and Japanese.",
+  "Dos formas de visitar Venecia: un guía privado o un tour en grupo con plazas libres. En italiano, inglés, español y japonés.",
   "ヴェネツィアを巡る2つの方法：時間制のプライベートガイドと、空席のあるグループツアー。イタリア語・英語・スペイン語・日本語に対応しています。"
  ],
  "tours.groupTitle": [
@@ -642,10 +642,10 @@
   "出発日時が決まっていて、料金はお一人様ごと。少人数のグループに加わってご参加いただきます。"
  ],
  "tours.privateTitle": [
-  "Guida privata a ore",
-  "Private guide by the hour",
-  "Guía privado por horas",
-  "時間制プライベートガイド"
+  "guida privata",
+  "private guide",
+  "guía privado",
+  "プライベートガイド"
  ],
  "tours.privateLead": [
   "Giorno e orario a tua scelta, prezzo per l’intero gruppo: scegli quante ore e il prezzo si calcola subito.",
@@ -3870,10 +3870,10 @@
   "時間制ガイド"
  ],
  "hourly.title": [
-  "Guida privata a ore",
-  "Private guide by the hour",
-  "Guía privado por horas",
-  "時間制プライベートガイド"
+  "guida privata",
+  "private guide",
+  "guía privado",
+  "プライベートガイド"
  ],
  "hourly.titleB2b": [
   "Servizi a ore per agenzie",

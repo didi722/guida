@@ -1,6 +1,6 @@
 # Guida Venezia — sito di prenotazione
 
-Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **guida privata a ore** (con assistente, tour leader e meet & greet per le agenzie), **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese, spagnolo e giapponese** (la guida è abilitata in tutte e quattro: lo dice subito la home), pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
+Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **guida privata** (con assistente, tour leader e meet & greet per le agenzie), **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese, spagnolo e giapponese** (la guida è abilitata in tutte e quattro: lo dice subito la home), pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
 
 > 📖 **Come si usa il sito** (tour, prezzi, blog, foto, partner, fatture, statistiche, backup…): [`docs/GUIDA.md`](docs/GUIDA.md), che trovi anche nel pannello in **Aiuto › Guida**.
 
@@ -9,9 +9,9 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 ## Cosa fa
 
 **Per i clienti (B2C)**
-- La home propone **due strade**: la **guida privata a ore** (con le tariffe a colpo d'occhio e il calcolatore del preventivo) e i **tour di gruppo a posti liberi** (con le prossime partenze, prenotabili con un tocco). La pagina *Tour* è divisa nello stesso modo.
+- La home propone **due strade**: la **guida privata** (con le tariffe a colpo d'occhio e il calcolatore del preventivo) e i **tour di gruppo a posti liberi** (con le prossime partenze, prenotabili con un tocco). La pagina *Tour* è divisa nello stesso modo.
 - Scelgono il tour e vedono un **calendario con le date libere** e gli orari, oppure partono dalla data (`/it/book`). Dove si sceglie una data (ricerca, filtri dell'area agenzie) c'è un **selettore di date proprio**, più curato di quello del browser (mese con frecce, «Oggi», giorni non disponibili in grigio, a tutta larghezza sul telefono; senza JavaScript resta il campo data standard).
-- Per la **guida privata a ore** (`/it/hourly`) scelgono giorno, ora, ore e persone e vedono subito il totale, con festivo, notturno e auricolari calcolati dal sito.
+- Per la **guida privata** (`/it/hourly`) scelgono giorno, ora, ore e persone e vedono subito il totale, con festivo, notturno e auricolari calcolati dal sito.
 - Prenotano senza registrarsi e **pagano subito con carta** (Stripe). Il pagamento «il giorno del tour» è **spento di default** (vedi [Pagamento in contanti](#pagamento-in-contanti-il-giorno-del-tour)).
 - Possono usare un **codice sconto** e/o un **buono regalo** al checkout, anche in più volte.
 - Ricevono email di conferma con **voucher PDF**, punto d'incontro, file calendario (.ics) e link per gestire/annullare. Dalla pagina della prenotazione possono **aggiungerla al wallet del telefono** (Google Wallet e Apple Wallet, se configurati: vedi [Wallet](#wallet-del-telefono)).

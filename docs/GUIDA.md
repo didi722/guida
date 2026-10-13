@@ -122,7 +122,7 @@ Ogni elenco mostra il prezzo (o il rimando alle tariffe a ore) e lo stato (*visi
    - **Ordine nell'elenco**: non c'è nessun numero da scrivere. Un tour nuovo va **in fondo**; per spostarlo apri la sua sezione (**Sito › Tour B2C** o **Tour B2B**) e **trascinalo** dalla maniglia ⠿ a sinistra (con il dito o il mouse; con la tastiera o le frecce ▲ ▼ se preferisci). L'ordine si salva da solo e vale subito anche sul sito.
    - **A chi è rivolto**: *Clienti privati (B2C)* oppure *Agenzie (B2B)*. Un tour è dell'uno o dell'altro, con un solo prezzo; cambiarlo lo sposta nell'altra sezione.
    - **Visibile sul sito e prenotabile**: se lo togli il tour sparisce dal sito (per un tour B2B: dall'area delle agenzie); le prenotazioni già fatte restano.
-   - **In evidenza**: la home ha due schede, *Guida privata a ore* e *Tour di gruppo*; per ciascuna mostra la foto del tour «in evidenza» (se ce ne sono più d'uno, il primo; se nessuno, il primo dell'elenco).
+   - **In evidenza**: la home ha due schede, *Guida privata* e *Tour di gruppo*; per ciascuna mostra la foto del tour «in evidenza» (se ce ne sono più d'uno, il primo; se nessuno, il primo dell'elenco).
    - **Tipo di servizio**:
      - *Partenze fisse, prezzo a persona*: tour in piccolo gruppo con orari stabiliti (per esempio 09:30 e 14:30). Più clienti possono prenotare la stessa partenza fino alla **capienza massima**.
      - *Servizio privato, prezzo a gruppo*: il cliente prenota tutta la fascia. Con **Orario libero** sceglie lui quando iniziare (ogni 30 minuti, nei tuoi orari di lavoro).
@@ -202,7 +202,7 @@ Le percentuali dei supplementi si calcolano sul prezzo base (già scontato, per 
 | **Meet & greet**: 1 ora · ora extra | — | 50 · 30 € |
 
 **Chi vede cosa**
-- Il pubblico vede i **tour B2C**: per i servizi a ore, solo il servizio guida con la colonna *Pubblico*, nella pagina **Guida privata a ore** (voce *Guida a ore* del menu) con il calcolatore.
+- Il pubblico vede i **tour B2C**: per i servizi a ore, solo il servizio guida con la colonna *Pubblico*, nella pagina **guida privata** (voce *Guida a ore* del menu) con il calcolatore.
 - Le tariffe **Agenzie** non sono mai pubbliche: la pagina *Per agenzie* non le mostra (la vedono tutti, anche i clienti privati). Le agenzie le vedono **solo nella loro area riservata, dopo l'approvazione**: sono la **prima cosa** che compare nella home dell'area (vedi la [sezione 14](#14-partner-agenzie-dmc-tour-operator)), e prenotano solo i **tour B2B**.
 - Lo **sconto %** del partner (**Clienti › Partner**) si toglie dalle **tariffe Agenzie** (le tariffe a ore e i tour B2B) e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (per eccesso), senza mai superare la tariffa senza sconto. Esempi con il 15%: guida 2 ore 160 € → 136 € → **140 €**; 4 ore 300 € → **255 €**; 8 ore 560 € → 476 € → **480 €**. Lo sconto non si applica ai privati. Il [listino dedicato](#prezzi-dedicati-a-un-partner) per singolo tour non riguarda i servizi a ore.
 
