@@ -1,6 +1,6 @@
 // Area riservata alle agenzie: elenco delle loro prenotazioni (con ricerca e filtri), riepilogo e fatture.
 // Solo lettura del database: nessuna regola di prenotazione qui, quelle stanno in bookings.js.
-import { addDays, addMonths, isDate, localToInstant, nowRome } from './time.js';
+import { addDays, addMonths, dayOfWeek, isDate, isMonth, localToInstant, monthDates, nowRome } from './time.js';
 import { CREDITABLE_STATUS } from './invoices.js';
 
 /** Le schede dell'elenco, nell'ordine in cui si mostrano. */
@@ -109,6 +109,31 @@ export function partnerBookings(app, accountId, filters, { nowMs = Date.now(), l
     rows.map((b) => b.id),
   );
   return { rows: rows.map((b) => ({ ...b, invoice: invoices.get(b.id) ?? null })), counts, total, page, pages, view: filters.view };
+}
+
+/**
+ * Il calendario del mese dell'agenzia: le sue pratiche vive giorno per giorno (confermate, in pagamento, opzioni non scadute).
+ * `month` = AAAA-MM; `selected` = il giorno da mostrare sotto (se manca o è fuori dal mese: oggi, o il primo del mese).
+ */
+export function partnerCalendar(app, accountId, { month, selected } = {}, nowMs = Date.now()) {
+  const { db } = app;
+  const today = nowRome(nowMs).date;
+  const m = isMonth(String(month ?? '')) ? month : today.slice(0, 7);
+  const dates = monthDates(m);
+  const offset = (dayOfWeek(dates[0]) + 6) % 7; // lunedì = 0
+  const gridStart = addDays(dates[0], -offset);
+  const total = Math.ceil((offset + dates.length) / 7) * 7;
+  const gridEnd = addDays(gridStart, total - 1);
+  const nowIso = new Date(nowMs).toISOString();
+  const rows = db
+    .prepare(`SELECT * FROM bookings WHERE account_id = ? AND date BETWEEN ? AND ? AND (status = 'confirmed' OR (status = 'held' AND hold_expires_at > ?) OR (status = 'option' AND option_expires_at > ?)) ORDER BY date, start_time, id`)
+    .all(accountId, gridStart, gridEnd, nowIso, nowIso);
+  const cells = Array.from({ length: total }, (_, i) => {
+    const date = addDays(gridStart, i);
+    return { date, inMonth: date.slice(0, 7) === m, items: rows.filter((b) => b.date === date) };
+  });
+  const wanted = isDate(String(selected ?? '')) && cells.some((c) => c.date === selected) ? selected : cells.some((c) => c.date === today) ? today : dates[0];
+  return { month: m, prev: addMonths(`${m}-01`, -1).slice(0, 7), next: addMonths(`${m}-01`, 1).slice(0, 7), cells, selected: wanted, selectedItems: cells.find((c) => c.date === wanted).items };
 }
 
 /** Il riepilogo in alto: partenze in arrivo, opzioni aperte, il mese in corso e quanto resta da saldare. */

@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import express from 'express';
-import { getBooking } from '../bookings.js';
+import { BookingError, getBooking } from '../bookings.js';
 import { LIVE_BOOKING_SQL } from '../availability.js';
 import { paymentsFrom, isPreOpening } from '../opening.js';
 import { calendar, eventLines } from '../ics.js';
@@ -255,7 +255,12 @@ export function adminRouter(app) {
   r.post('/bookings/:id/option/extend', form, async (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));
     if (!b) return next();
-    const done = await services.extendOption(b.id, Number(req.body.days));
+    let done = null;
+    try {
+      done = await services.extendOption(b.id, Number(req.body.days));
+    } catch (e) {
+      if (!(e instanceof BookingError)) throw e; // numero di giorni non valido: nulla cambia
+    }
     res.redirect(303, `/admin/bookings/${b.id}${done ? '?ok=extended' : ''}`);
   });
 

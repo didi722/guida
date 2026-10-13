@@ -2,10 +2,11 @@
 // Il login, la registrazione e l'uscita stanno in public.js; la prenotazione vera e propria (cerca, pagamento) è la stessa del sito,
 // solo con la barra dell'area agenzie al posto di quella pubblica (vedi views/layout.js, area: 'partner').
 import express from 'express';
+import { parseCookies, setCookie } from '../auth.js';
 import { getBookingByRef } from '../bookings.js';
 import { notifyGuideBookingEdited } from '../emails.js';
 import { send, sendPdf } from '../http.js';
-import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerInvoice, partnerInvoices, partnerSummary } from '../partner.js';
+import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerSummary } from '../partner.js';
 import { renderInvoicePdf } from '../pdf-invoice.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { cleanText } from '../util.js';
@@ -14,7 +15,7 @@ import { bookingPage } from '../views/booking.js';
 
 export function partnerRouter(app) {
   const r = express.Router();
-  const { db } = app;
+  const { db, cfg } = app;
   const form = express.urlencoded({ extended: false, limit: '50kb' });
 
   // dati personali e fiscali: mai in cache del browser o di proxy
@@ -36,13 +37,24 @@ export function partnerRouter(app) {
     return b && b.account_id === req.acct.id ? b : null;
   };
 
+  // «Elenco» o «Calendario»: la scelta si ricorda (cookie); cercare, filtrare o cambiare scheda porta sempre all'elenco
+  const VIEW_COOKIE = 'pv';
+  const YEAR = 365 * 24 * 3600;
   r.get('/b2b/account', (req, res) => {
     if (!req.acct) return toLogin(req, res);
     const ctx = res.locals.ctx;
     if (req.acct.status !== 'approved') return send(res, accountPage(ctx, { acct: req.acct }));
-    const filters = parseFilters(req.query);
     const nowMs = Date.now();
-    send(res, accountPage(ctx, { acct: req.acct, filters, list: partnerBookings(app, req.acct.id, filters, { nowMs }), summary: partnerSummary(app, req.acct.id, nowMs), flash: String(req.query.flash ?? '') }));
+    const asked = ['cal', 'list'].includes(req.query.v) ? req.query.v : null;
+    const listParams = ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page'].some((k) => req.query[k] !== undefined);
+    const mode = asked ?? (listParams ? 'list' : parseCookies(req.headers.cookie)[VIEW_COOKIE] === 'cal' ? 'cal' : 'list');
+    if (asked) setCookie(res, cfg, VIEW_COOKIE, asked, { maxAgeSec: YEAR });
+    const filters = parseFilters(req.query);
+    send(res, accountPage(ctx, {
+      acct: req.acct, mode, filters, summary: partnerSummary(app, req.acct.id, nowMs), flash: String(req.query.flash ?? ''),
+      list: mode === 'list' ? partnerBookings(app, req.acct.id, filters, { nowMs }) : null,
+      calendar: mode === 'cal' ? partnerCalendar(app, req.acct.id, { month: req.query.m, selected: req.query.d }, nowMs) : null,
+    }));
   });
 
   // elenco filtrato in un foglio di calcolo (per la contabilità dell'agenzia)

@@ -76,7 +76,8 @@ export function loadWallet(cfg) {
 export function walletOptions(app, b, nowMs = Date.now()) {
   if (b.channel !== 'b2c' || b.status !== 'confirmed' || localToInstant(b.date, b.end_time || b.start_time) < nowMs) return { google: false, apple: false };
   const w = loadWallet(app.cfg);
-  return { google: !!w.google, apple: !!w.apple };
+  // il certificato di Apple dura un anno: da quando scade il pulsante sparisce (e il pass non verrebbe accettato)
+  return { google: !!w.google, apple: !!w.apple && Date.parse(w.apple.cert.validTo) > nowMs };
 }
 
 // ───────────── testi e dati del pass ─────────────

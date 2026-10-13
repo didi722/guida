@@ -222,6 +222,55 @@ test('area agenzie: elenco per schede, ricerca per cliente o pratica, filtri per
   }
 });
 
+test('area agenzie: vista Calendario del mese con le sue pratiche (mai quelle di altri), la scelta si ricorda; cercare porta all’elenco', async () => {
+  const s = await start();
+  try {
+    const { app, lagoon, blue } = s;
+    const rossi = book(app, lagoon, { ref: 'Gruppo Rossi', name: 'Mario Rossi', date: day(10) });
+    const conti = book(app, lagoon, { ref: 'Preventivo Conti', date: day(40), kind: 'option' });
+    const annullata = book(app, lagoon, { ref: 'Annullata Bruni', date: day(12) });
+    cancelBooking(app, annullata.id, { by: 'admin', refund: 'full' });
+    book(app, blue, { ref: 'Gruppo Altrui', kind: 'card', date: day(11) });
+    const f = await s.login('giulia@lagoon.example');
+    const get = async (qs = '') => nb(await (await f(`/it/b2b/account${qs}`)).text());
+
+    // predefinito: l'elenco (è lo strumento di lavoro); il calendario è a un tocco e la scelta si ricorda
+    const first = await get();
+    assert.ok(!first.includes('class="acal"') && first.includes('class="tabs-bar"'));
+    assert.match(first, /<a href="\/it\/b2b\/account\?v=list" aria-current="page">Elenco<\/a><a href="\/it\/b2b\/account\?v=cal" >Calendario<\/a>/);
+    const cal = await get('?v=cal');
+    assert.match(cal, /class="acal"/);
+    assert.ok(!cal.includes('class="tabs-bar"') && !cal.includes('class="filters"'), 'niente elenco né filtri nel calendario');
+    assert.match(cal, /<a href="\/it\/b2b\/account\?v=cal" aria-current="page">Calendario<\/a>/);
+    // le sue pratiche nella data giusta; non quelle annullate né di altre agenzie
+    const month = day(10).slice(0, 7);
+    const m10 = await get(`?v=cal&m=${day(10).slice(0, 7)}&d=${day(10)}`);
+    assert.ok(m10.includes('Gruppo Rossi'));
+    assert.ok(!m10.includes('Gruppo Altrui') && !m10.includes('Annullata Bruni'));
+    assert.match(m10, new RegExp(`id="giorno"><h3>[^<]*${Number(day(10).slice(8))}[^]*?href="/it/b2b/bookings/${rossi.ref}"`), 'il giorno scelto elenca la pratica con il link alla scheda');
+    assert.match(m10, /ev-ok/);
+    // l'opzione è tratteggiata e nel giorno compare con il suo stato
+    const mo = await get(`?v=cal&m=${day(40).slice(0, 7)}&d=${day(40)}`);
+    assert.match(mo, /ev-opt/);
+    assert.match(mo, new RegExp(`href="/it/b2b/bookings/${conti.ref}"[^]*?Opzione`));
+    // la scelta si ricorda: senza parametri resta il calendario; cercare o filtrare porta all'elenco
+    assert.match(await get(), /class="acal"/);
+    assert.ok((await get('?q=rossi')).includes('class="tabs-bar"'));
+    assert.ok((await get('?view=past')).includes('class="tabs-bar"'));
+    assert.ok((await get('?v=list')).includes('class="tabs-bar"'));
+    assert.ok((await get()).includes('class="tabs-bar"'), 'tornata all’elenco, ricorda l’elenco');
+    // mesi e giorni strani non rompono nulla
+    for (const q of ['?v=cal&m=2027-13', '?v=cal&m=boh&d=zz', `?v=cal&m=${month}&d=1999-01-01`, '?v=zzz', '?v=cal&m=2027-02-30']) assert.equal((await f(`/it/b2b/account${q}`)).status, 200, q);
+    assert.match(await get('?v=cal&m=2031-05'), /maggio 2031/);
+    // in inglese: nomi dei giorni e testi nella lingua
+    const en = nb(await (await f('/en/b2b/account?v=cal')).text());
+    assert.match(en, /Previous month/);
+    assert.match(en, /<span class="acal-dow">Mon<\/span>/);
+  } finally {
+    s.close();
+  }
+});
+
 test('area agenzie: esportazione dell’elenco in CSV (solo le proprie pratiche, senza formule che si eseguono)', async () => {
   const s = await start();
   try {

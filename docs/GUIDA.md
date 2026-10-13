@@ -44,7 +44,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 
 1. Apri `https://tuodominio.it/admin` (dal telefono va benissimo: puoi aggiungerlo alla schermata Home).
 2. Scrivi la **password del pannello** e tocca **Entra**. Se non riesci a entrare, vai a [Quando qualcosa non va](#19-quando-qualcosa-non-va).
-3. Per uscire: **Esci**, in alto a destra.
+3. Per uscire: **Esci**, in alto a destra. Chiude la sessione e ti riporta alla **home del sito**.
 
 **Il menu** ha cinque voci; ciascuna ha delle schede sotto il titolo:
 
@@ -77,6 +77,10 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 | Cambiare **ore di cancellazione, preavviso**, pausa fra i servizi | **Sito › Impostazioni › Regole di prenotazione** |
 | Inserire i **dati per fatturare** | **Sito › Impostazioni › Fatturazione elettronica** |
 | **Approvare** un'agenzia, dare **sconti, prezzi e cancellazione** dedicati | **Clienti › Partner** › tocca l'agenzia |
+| **Riordinare** i tour nell'elenco del sito | **Sito › Tour**: trascina le righe dalla maniglia ⠿ |
+| Decidere **quanto dura un'opzione** per le agenzie (e quante ne possono tenere) | **Sito › Impostazioni › Opzioni per le agenzie**; per una sola agenzia **Clienti › Partner › Opzioni** |
+| **Prolungare o rilasciare** l'opzione di un'agenzia | **Agenda › Prenotazioni › Opzioni** › tocca l'opzione |
+| **Prendere prenotazioni prima di aprire la Partita IVA**, senza incassare | **Sito › Impostazioni › Regole di prenotazione › Incassi dal** ([sezione 20](#20-da-fare-prima-del-lancio-e-a-gennaio)) |
 | Creare un **codice sconto** o un **buono regalo** | **Clienti › Sconti** |
 | **Chiudere un giorno**, ferie, orari speciali, collegare **Google Calendar** | **Agenda › Disponibilità** |
 | **Annullare** una prenotazione, rimborsare, segnare un pagamento incassato | **Agenda › Prenotazioni** › tocca la prenotazione |
@@ -86,6 +90,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 | Scaricare una **copia di sicurezza** | **Aiuto › Backup** |
 | **Rimettere il sito com'era** in una copia scaricata (o tornare indietro dopo un errore) | **Aiuto › Backup › Ripristina da una copia** |
 | Leggere le **email** mandate dal sito | **Aiuto › Email** |
+| Far **tradurre i commenti** dei clienti nella lingua di chi guarda, o offrire **«Aggiungi al wallet»** | chiavi sul server: [sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello) |
 
 ## 4. Ogni giorno: cinque minuti
 
@@ -107,7 +112,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 1. **Sito › Tour › Nuovo tour**. (Per partire da un tour simile apri quello esistente e tocca **Duplica**: ottieni una copia da ritoccare.)
 2. **Informazioni generali**
    - **Indirizzo web (slug)**: come compare nell'indirizzo, per esempio `gondola-al-tramonto` → `…/tours/gondola-al-tramonto`. Solo lettere minuscole, numeri e trattini; **dopo la creazione non si cambia**.
-   - **Ordine nell'elenco**: numero più basso = più in alto.
+   - **Ordine nell'elenco**: non c'è nessun numero da scrivere. Un tour nuovo va **in fondo**; per spostarlo apri **Sito › Tour** e **trascinalo** dalla maniglia ⠿ a sinistra (con il dito o il mouse; con la tastiera o le frecce ▲ ▼ se preferisci). L'ordine si salva da solo e vale subito anche sul sito.
    - **Visibile sul sito e prenotabile**: se lo togli il tour sparisce dal sito (le prenotazioni già fatte restano).
    - **In evidenza**: la home ha due schede, *Guida privata a ore* e *Tour di gruppo*; per ciascuna mostra la foto del tour «in evidenza» (se ce ne sono più d'uno, il primo; se nessuno, il primo dell'elenco).
    - **Tipo di servizio**:
@@ -290,13 +295,14 @@ Regole:
 ## 12. Prenotazioni, annulli e programmi di più giorni
 
 ### Prenotazioni
-**Agenda › Prenotazioni**: schede *Prossime*, *Passate*, *Annullate*, *Tutte* e ricerca per nome, email o codice. Tocca una prenotazione per vedere tutto:
+**Agenda › Prenotazioni**: schede *Prossime*, *Opzioni*, *Passate*, *Annullate*, *Tutte* e ricerca per nome, email o codice. Tocca una prenotazione per vedere tutto:
 
 - **Prenotazione**: tour, data, orario, persone, prezzo, **metodo e stato del pagamento**, politica di annullo e, per i privati, il **Promemoria al cliente** (parte da solo la sera prima; non serve se la prenotazione è stata fatta meno di 24 ore prima) e la **richiesta di recensione** (il giorno dopo il tour). Per entrambi puoi **Invia ora** o **Non inviare**.
 - **Apri come la vede il cliente**: la pagina privata del cliente (da lì si prova anche l'annullo).
 - **Voucher PDF**, dati del **Cliente** (telefono, WhatsApp), **Note del cliente**, riferimento pratica e dati fattura.
 - **Note interne**: solo per te. **Salva note**.
 - **Segna come incassata**: per le prenotazioni a fattura o con pagamento sul posto, quando i soldi arrivano.
+- **Opzione** (solo per le agenzie): la scheda ha **Prolunga la scadenza** e **Rilascia la data**: vedi [Opzioni](#opzioni-tenere-una-data-senza-pagare).
 
 ### Annullare una prenotazione
 Nella scheda: **Annulla prenotazione**. Scegli **Rimborso e penale**:
@@ -315,7 +321,9 @@ Il giorno dopo il tour i clienti privati ricevono **una sola email**: i link per
 - in **home**, nella sezione *Cosa dicono i clienti* (gli ultimi tre scelti);
 - nella **pagina del tour** a cui si riferisce (*Dicono di questo tour*).
 
-Se non scegli nulla, la sezione non compare. Se hai almeno **5 feedback**, sotto i commenti compare anche la **media di tutti i voti** ricevuti (non solo di quelli mostrati): è una scelta di correttezza, tienila così. Non scegliere solo i commenti da cinque stelle: sono commenti veri di clienti veri, anche quelli sinceri e misurati. Se vuoi rimandare alle recensioni pubbliche, metti l'indirizzo del tuo profilo Google o Tripadvisor in **Sito › Impostazioni › Buoni regalo, programmi e recensioni › Pagina con tutte le recensioni**: compare come *Leggi tutte le recensioni*. In Europa chi mostra recensioni deve poter dire che vengono da clienti reali: il sito lo dichiara (*commenti di clienti che hanno fatto il tour, pubblicati con il loro permesso*); per il resto chiedi al tuo consulente.
+Se non scegli nulla, la sezione non compare. Se hai almeno **5 feedback**, sotto i commenti compare anche la **media di tutti i voti** ricevuti (non solo di quelli mostrati): è una scelta di correttezza, tienila così. Non scegliere solo i commenti da cinque stelle: sono commenti veri di clienti veri, anche quelli sinceri e misurati. Se vuoi rimandare alle recensioni pubbliche, metti l'indirizzo del tuo profilo Google o Tripadvisor in **Sito › Impostazioni › Buoni regalo, programmi e recensioni › Pagina con tutte le recensioni**: compare come *Leggi tutte le recensioni*. **Tradotti nella lingua di chi guarda.** Se hai attivato la traduzione automatica ([sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)), chi guarda il sito in inglese, spagnolo, giapponese o italiano legge ogni commento **nella sua lingua**, con la dicitura *Tradotto automaticamente* e il pulsante **Vedi originale**, che mostra il testo come l'ha scritto il cliente. La traduzione parte da sola, una volta per commento, **solo per i commenti che hai scelto di mostrare** (il feedback privato non esce mai dal sito); se il cliente cambia il commento, si rifà. In **Clienti › Feedback** una riga ti dice se la traduzione è attiva e l'eventuale ultimo errore. Senza chiave il sito mostra i commenti com'erano.
+
+In Europa chi mostra recensioni deve poter dire che vengono da clienti reali: il sito lo dichiara (*commenti di clienti che hanno fatto il tour, pubblicati con il loro permesso*); per il resto chiedi al tuo consulente.
 
 ### Programmi di più giorni
 **Agenda › Programmi**: richieste di clienti e partner per soggiorni lunghi.
@@ -348,7 +356,36 @@ Se non scegli nulla, la sezione non compare. Se hai almeno **5 feedback**, sotto
 ### Approvare un partner
 1. Apri la richiesta: vedi dati aziendali (Partita IVA, SDI/PEC), referente e messaggio.
 2. In **Stato e pagamento** scegli **Stato**: *Approvato*, *Rifiutato* o *Sospeso*; imposta lo **Sconto su tutto il listino (%)** (vale per i tour senza prezzo dedicato) e se **può pagare a fattura / bonifico**; aggiungi **Note interne**. **Salva**.
-3. Il partner riceve un'email e può entrare nella sua area: vede le **tariffe riservate** (anche quelle **a ore**, con il suo sconto), prenota in autonomia (anche gruppi fino a 25), inserisce un **riferimento pratica**, scarica il **voucher senza prezzi** da girare al cliente finale e richiede **programmi di più giorni**.
+3. Il partner riceve un'email e può entrare nella sua area (vedi sotto). Se scegli **Sconto %**, il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (mai oltre il prezzo senza sconto).
+
+### L'area riservata dell'agenzia
+L'agenzia entra da **Login agenzie** (il pulsante in alto, accanto a *Prenota*; sul telefono è l'icona della persona): da lì può anche **chiedere la registrazione**. Una volta dentro trova un'area **pulita**, pensata per lavorare in fretta: niente blog, *Chi sono*, tour o prezzi al pubblico.
+
+- **In alto**: i pulsanti **Nuova prenotazione** e **Calcola un preventivo** (i servizi a ore), e un **riepilogo**: prossime partenze (con le persone), opzioni aperte (e quando scade la prima), partenze del mese con il loro importo, e **quanto resta da saldare**.
+- **Elenco o Calendario**: sopra le prenotazioni due pulsanti, *Elenco* (predefinito) e *Calendario*: il calendario mostra il mese con le pratiche di ogni giorno (le opzioni tratteggiate; si tocca un giorno per vederlo sotto) e la scelta si ricorda.
+- **L'elenco delle prenotazioni** (*In arrivo · Opzioni · Passate · Annullate · Tutte*): per ogni pratica il **nome della pratica** (il riferimento che l'agenzia ha scritto), il nominativo, il tour, la data di partenza e quella in cui è stata prenotata, lo stato e il totale. C'è la **ricerca** per nome del cliente, pratica o codice, e il filtro **per data di partenza e per data di prenotazione** (*Filtra per data*). Ogni riga ha **Apri**, **Voucher**, **Fattura** (quando è stata emessa) e, per le opzioni, **Conferma** e **Rilascia**. **Scarica l'elenco (CSV)** esporta quello che si vede, per la contabilità dell'agenzia.
+- **La scheda della pratica**: voucher **senza prezzi** (PDF) da girare al cliente finale, fattura, annullo e, finché il servizio non è iniziato, la possibilità di **cambiare nominativo, riferimento pratica, telefono e note**: l'agenzia spesso prenota prima di conoscere il nome del cliente finale. Se su una prenotazione già confermata cambia nominativo, telefono o note **ricevi un'email** (se cambia solo il riferimento pratica, no).
+- **Tariffe e condizioni**: soltanto le **sue** tariffe (mai quelle al pubblico), lo sconto, le condizioni di annullo e le regole delle opzioni. **Fatture**: le fatture e le note di credito emesse al suo account, in PDF, con l'importo ancora da saldare.
+- **Esci**: chiude la sessione e porta alla **home del sito**. Anche mentre prenota (ricerca, preventivo, pagamento) l'agenzia resta in questa barra semplice.
+- Nella **ricerca di disponibilità** l'agenzia ha due spunte: **Tour privati** (accesa) e **Tour condivisi** (spenta).
+
+### Opzioni: tenere una data senza pagare
+Un tour operator prima **quota il pacchetto al suo cliente finale**, che lo approva e paga, e solo dopo conferma i servizi. Per questo, oltre a prenotare, l'agenzia può **opzionare**: la data resta **trattenuta**, senza pagare e senza impegno, fino a una **scadenza**. Se l'agenzia non conferma, la data **si libera da sola** (e prima le arriva un promemoria): non resti con una data bloccata da un preventivo rifiutato.
+
+- **Quanto dura** dipende da quanto manca al tour (più è lontano, più l'opzione dura). La tabella iniziale: tour fra almeno **60 giorni** → 14 giorni di opzione; **30** → 10; **14** → 5; **7** → 3; **3** → 1. Per un tour più vicino di 3 giorni non si opziona: si prenota direttamente. La tabella si cambia in **Sito › Impostazioni › Opzioni per le agenzie**.
+- **Mai troppo tardi**: l'opzione scade sempre almeno **48 ore prima** del servizio (regolabile), così hai ancora il tempo di rivendere la data. Per esempio, con una durata fissa di 7 giorni e un tour fra 5 giorni, l'opzione dura 3 giorni (scade 48 ore prima).
+- **Limite**: ogni agenzia può tenere aperte al massimo **5** opzioni insieme (regolabile; 0 = nessun limite), per non bloccarti l'agenda.
+- **Per una sola agenzia** (**Clienti › Partner › Opzioni**): una **durata fissa** (per esempio 7 giorni per tutti i tour), un numero massimo diverso, oppure **togliere le opzioni**. Lasciando vuoto valgono le regole del sito.
+- **Cosa fa l'agenzia**: al momento di pagare sceglie **Opziona senza pagare**. La pratica compare nell'elenco come *Opzione*, con la scadenza; da lì può **Confermare** (a fattura o bonifico → subito confermata; con carta → passa dal pagamento) o **Rilasciare**. Riceve un'email quando la data è trattenuta, un **promemoria** (di default 24 ore prima della scadenza, non per le opzioni brevissime) e un'email alla scadenza.
+- **Cosa vedi tu**: l'opzione blocca lo slot (nessun altro lo può prenotare) e nell'**Agenda** è **tratteggiata** (nel calendario sul telefono compare come *OPZIONE*). **Agenda › Prenotazioni › Opzioni** le elenca. Nella scheda puoi **Prolungare** (da 1 a 14 giorni, mai oltre un'ora prima del servizio; l'agenzia è avvisata) o **Rilasciare la data**. Una opzione scaduta o rilasciata **non è un annullo**: nessuna penale e non entra nelle statistiche degli annulli. Ricevi un'email quando un'opzione nasce, scade o viene rilasciata.
+
+> **Perché l'opzione e non «si paga quando non è più rimborsabile»?** Far pagare l'agenzia solo quando il tour diventa non rimborsabile significherebbe **addebitare la sua carta giorni dopo**, quando non c'è e non può rimediare: se la carta è scaduta o senza fondi ti ritroveresti con una data venduta e non pagata. L'opzione invece **non muove denaro** (niente rimborsi né storni) e non può fallire. Per chi paga a fattura non c'è nessun addebito automatico: la fattura parte dopo il servizio.
+
+### Come pagano le agenzie
+Per ogni partner decidi in **Clienti › Partner › Stato e pagamento** se **può pagare a fattura / bonifico**. Le agenzie hanno quindi:
+- **Carta online** (sempre): su Stripe, rimborso automatico se annullano nei termini. Compare anche *Apple Pay*, *Google Pay*, *PayPal* o altro se li hai attivati in Stripe ([sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)).
+- **Fattura / bonifico** (solo se lo consenti): la prenotazione è **confermata subito, senza pagare nulla**. Dopo il servizio la pratica compare in **Conti › Fatture › Da fatturare** e tu emetti la **fattura elettronica** (entro 12 giorni); l'agenzia paga con **bonifico entro la scadenza scritta in fattura** (**30 giorni** di default: **Sito › Impostazioni › Fatturazione elettronica › Scadenza delle fatture ai partner**). Quando arriva il bonifico tocca **Segna come incassata** nella prenotazione. Nella sua area l'agenzia vede l'importo ancora non saldato come **Da saldare**.
+- Se un'agenzia annulla oltre il termine gratuito, la **penale** (la parte non rimborsata) si fattura allo stesso modo.
 
 ### Listino dedicato
 Nella stessa pagina, **Listino dedicato**: scrivi il prezzo per ogni tour (vuoto = tariffa B2B con lo sconto %). **Salva il listino**. I servizi **a ore** non compaiono qui: il loro prezzo viene da **Sito › Tariffe a ore**, con lo sconto % del partner. *Copia il listino da…* parte da un altro partner.
@@ -388,10 +425,11 @@ In fondo alla pagina, **Come sono calcolati i numeri** spiega ogni definizione.
 
 ## 16. Impostazioni
 
-**Sito › Impostazioni** ha quattro sezioni, ciascuna con il suo pulsante **Salva questa sezione** (le modifiche valgono subito). Se un campo non è valido, nulla viene salvato e vedi quale correggere.
+**Sito › Impostazioni** ha cinque sezioni, ciascuna con il suo pulsante **Salva questa sezione** (le modifiche valgono subito). Se un campo non è valido, nulla viene salvato e vedi quale correggere.
 
 - **Attività e contatti**: nome del sito, nome per i documenti, email di contatto, **email che riceve le notifiche**, telefono, **WhatsApp** (solo cifre con prefisso, es. `393331234567`; vuoto = nascosto), Instagram, **Partita IVA**, abilitazione di guida turistica, indirizzo. Compaiono nel piè di pagina, nelle email, nei voucher e nei PDF.
-- **Regole di prenotazione**: cancellazione gratuita per privati e partner (ore), preavviso minimo, anticipo massimo (giorni), pausa tra due servizi, passo degli orari liberi, blocco dell'orario durante il pagamento, **promemoria al cliente la sera prima** (sì/no e a che ora), **pagamento il giorno del servizio** (sì/no).
+- **Regole di prenotazione**: cancellazione gratuita per privati e partner (ore), preavviso minimo, anticipo massimo (giorni), pausa tra due servizi, passo degli orari liberi, blocco dell'orario durante il pagamento, **promemoria al cliente la sera prima** (sì/no e a che ora), **pagamento il giorno del servizio** (sì/no) e **Incassi dal** (la data di partenza degli incassi online: vedi [sezione 20](#20-da-fare-prima-del-lancio-e-a-gennaio)).
+- **Opzioni per le agenzie**: se le agenzie possono opzionare, la **tabella** «tour fra almeno N giorni → opzione di D giorni» (fino a 5 righe), la scadenza al più tardi (ore prima del servizio), il numero massimo di opzioni aperte per agenzia e quanto prima della scadenza parte il promemoria. Vedi [Opzioni](#opzioni-tenere-una-data-senza-pagare).
 - **Buoni regalo, programmi e recensioni**: validità e importi dei buoni, acconto e validità dei preventivi dei programmi, richiesta di recensione dopo il tour (sì/no, link per recensire su Google e Tripadvisor, ora d'invio) e **Pagina con tutte le recensioni** (il link che compare accanto ai commenti sul sito).
 - **Fatturazione elettronica**: dati del cedente (nome o denominazione, codice fiscale, indirizzo), regime, IVA, natura, bollo, rivalsa INPS, ritenuta, diciture, IBAN, scadenze, buoni regalo, prima data fatturabile.
 
@@ -449,10 +487,25 @@ Qualche accortezza:
 | `PEC_SMTP_*`, `SDI_PEC_ADDRESS` | invio delle fatture a SdI dalla tua PEC |
 | `DATA_DIR`, `PORT`, `NODE_ENV`, `TRUST_PROXY` | dove stanno i dati e come gira il server |
 | `UMAMI_WEBSITE_ID`, `UMAMI_SRC` | statistiche di visita anonime (facoltative) |
+| `TRANSLATE_PROVIDER`, `TRANSLATE_API_KEY` | traduzione automatica dei commenti (`deepl` o `google`): vedi sotto |
+| `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_KEY_FILE` | «Aggiungi a Google Wallet»: vedi sotto |
+| `APPLE_WALLET_PASS_TYPE_ID`, `APPLE_WALLET_TEAM_ID`, `APPLE_WALLET_CERT_FILE`, `APPLE_WALLET_KEY_FILE`, `APPLE_WALLET_WWDR_FILE` | «Aggiungi ad Apple Wallet»: vedi sotto |
 
 Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, regole, fatturazione…) restano valide come **valori predefiniti**: se un campo è stato cambiato dal pannello, vince il pannello. La sezione **Impostazioni** è l'unico posto da cui cambiarli.
 
-**Pagamenti con carta, Apple Pay, Google Pay, PayPal.** Il cliente paga su una pagina ospitata da Stripe: i metodi che attivi nella **dashboard di Stripe** (*Impostazioni → Metodi di pagamento*) compaiono da soli, senza toccare il sito. Scegli metodi **a conferma immediata**: quelli che confermano in giorni (addebito SEPA, bonifici) lasciano lo slot occupato in attesa. Il webhook di Stripe (`https://tuodominio.it/api/stripe/webhook`) va configurato una volta.
+**Pagamenti con carta, Apple Pay, Google Pay, PayPal.** Il pulsante dice *Paga ora online* perché il cliente paga su una pagina ospitata da **Stripe** e non solo con la carta: i metodi che attivi nella **dashboard di Stripe** (*Impostazioni → Metodi di pagamento*: carte, Apple Pay, Google Pay, PayPal, Klarna, bonifici online…) compaiono da soli, secondo il Paese e il dispositivo del cliente, senza toccare il sito. Scegli metodi **a conferma immediata**: quelli che confermano in giorni (addebito SEPA, bonifici) lasciano lo slot occupato in attesa. Il webhook di Stripe (`https://tuodominio.it/api/stripe/webhook`) va configurato una volta.
+
+**Email sul tuo dominio (per esempio `tours@davidetomio.it`).** Un account **Posteo non permette di usare un dominio proprio**: gli indirizzi sono solo quelli di Posteo (`@posteo.net`, `.de`, `.eu`…; controlla sul loro sito se è cambiato). Non serve però cambiare provider per avere le notifiche (nuova prenotazione, richiesta di registrazione di un'agenzia, opzioni…): vanno **a qualsiasi indirizzo**, anche il tuo Posteo, impostato in **Sito › Impostazioni › Attività e contatti › Email che riceve le notifiche**. Per avere un indirizzo del tuo dominio:
+- **per ricevere**: quasi tutti i registrar offrono l'**inoltro gratuito** (`tours@davidetomio.it` → il tuo indirizzo Posteo), così i clienti scrivono a un indirizzo professionale e leggi tutto in Posteo;
+- **per inviare** le email del sito (conferme, voucher, fatture) con il tuo dominio come mittente serve un servizio di posta che lo permetta: una casella del dominio presso il tuo hosting/registrar, oppure un servizio di invio email (per esempio Brevo, Resend o Mailgun, con piani gratuiti per volumi piccoli). Inserisci i dati SMTP nelle variabili `SMTP_*` e il mittente in `MAIL_FROM=Davide Tomio <tours@davidetomio.it>`, e attiva **SPF e DKIM** del dominio (il servizio ti dice come) altrimenti le email finiscono nello spam.
+Con Posteo come mittente (`MAIL_FROM` con un indirizzo `@posteo.net`) il sito funziona, ma i clienti vedono un indirizzo che non è il tuo dominio.
+
+**Traduzione automatica dei commenti** (facoltativa). Serve una chiave di **DeepL** (piano gratuito: 500.000 caratteri al mese, di solito più che sufficienti) o di **Google Traduttore**: imposta `TRANSLATE_PROVIDER=deepl` (oppure `google`) e `TRANSLATE_API_KEY=…`. Il sito traduce in background **solo i commenti che hai scelto di mostrare** e conserva le traduzioni; se il servizio non risponde riprova dopo un po' e nel frattempo mostra l'originale. I testi dei commenti pubblici vengono inviati al servizio di traduzione che scegli: citalo nella privacy.
+
+**Wallet del telefono: «Aggiungi a Google Wallet» e «Aggiungi ad Apple Wallet»** (facoltativi, solo per i clienti **privati** con prenotazione confermata e servizio non ancora finito). Nella pagina della prenotazione compaiono i pulsanti per salvare un **pass** con tour, data, orario, punto d'incontro e un codice; si apre anche senza connessione e sul telefono compare al momento giusto. **Ogni piattaforma si accende da sola quando ha tutti i dati; senza, il pulsante non compare.** Il pass è una fotografia della prenotazione: se poi viene annullata, quello già salvato sul telefono non si aggiorna da solo.
+- **Google Wallet** (gratuito): 1) crea l'**account emittente** nella *Google Pay & Wallet Console* (`pay.google.com/business/console`) e annota l'**Issuer ID**; 2) in *Google Cloud* crea un progetto, abilita la **Google Wallet API**, crea un **account di servizio** e scarica la sua chiave in formato **JSON**; 3) nella Wallet Console, in *Utenti*, aggiungi l'indirizzo dell'account di servizio; 4) metti il file JSON sul server (fuori dalla cartella pubblica) e imposta `GOOGLE_WALLET_ISSUER_ID` e `GOOGLE_WALLET_KEY_FILE=/percorso/chiave.json`. All'inizio Google lavora in **modalità prova**: solo gli account che aggiungi come *tester* nella Console possono salvare il pass; per aprirlo a tutti chiedi l'**accesso alla pubblicazione** dalla Console (Google controlla i dati dell'attività, in genere pochi giorni).
+- **Apple Wallet** (richiede l'**Apple Developer Program**, 99 $ l'anno): 1) in *Certificates, Identifiers & Profiles* crea un **Pass Type ID** (per esempio `pass.it.davidetomio.prenotazione`) e genera il suo **certificato**; 2) scarica anche il certificato intermedio **Apple WWDR** (G4); 3) convertili in PEM sul tuo computer: `openssl x509 -inform DER -in pass.cer -out pass.pem`, `openssl x509 -inform DER -in AppleWWDRCAG4.cer -out wwdr.pem` e, se hai la chiave in un file `.p12`, `openssl pkcs12 -in Certificati.p12 -nocerts -out pass.key` (se la chiave è protetta da una frase, indicala in `APPLE_WALLET_KEY_PASSPHRASE`); 4) metti i tre file sul server e imposta `APPLE_WALLET_PASS_TYPE_ID`, `APPLE_WALLET_TEAM_ID` (lo trovi nel tuo account Apple), `APPLE_WALLET_CERT_FILE`, `APPLE_WALLET_KEY_FILE`, `APPLE_WALLET_WWDR_FILE`. **Il certificato scade dopo un anno**: allora il pulsante sparisce e va rinnovato dal tuo account Apple.
+- Se un pulsante non compare, guarda i **log** del sito all'avvio: una riga `[wallet] … non attivo: …` dice che cosa manca o non va.
 
 **Aggiornare il sito (il codice).** I contenuti **non passano da qui**. Quando c'è una nuova versione del codice (nuove funzioni, correzioni):
 - se l'hosting è collegato al repository GitHub, si aggiorna da solo quando cambia il ramo `main`, oppure con il pulsante *Deploy* / *Redeploy*;
@@ -475,6 +528,14 @@ Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, 
 - Un tour **nascosto**, un articolo in **bozza** o scritto in un'altra lingua non compaiono.
 - Hai modificato i file della cartella `content/` del codice? Dopo il primo avvio non vengono più letti: usa il pannello.
 
+**Da computer non vedo il menu laterale (☰)**: è normale. Su uno schermo largo le voci stanno nella barra in alto; il menu laterale compare solo su schermi stretti (telefono, tablet o finestra ristretta) e contiene le stesse voci. Quando un'agenzia è dentro, la barra in alto mostra solo le sue voci di lavoro.
+
+**Un'agenzia non riesce a opzionare**: l'opzione non c'è se il tour è **troppo vicino** (meno di 3 giorni con la tabella iniziale), se l'agenzia ha già il **numero massimo** di opzioni aperte, se è **spenta per quell'agenzia** (**Clienti › Partner › Opzioni**) o per tutto il sito (**Impostazioni › Opzioni per le agenzie**). In tutti i casi l'agenzia vede il motivo e può prenotare direttamente.
+
+**I pulsanti del wallet non compaiono**: sono solo per i clienti **privati**, con prenotazione **confermata** e servizio **non ancora finito**, e solo se hai configurato la piattaforma ([sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)).
+
+**I commenti non vengono tradotti**: la traduzione è facoltativa e serve una chiave ([sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)); riguarda solo i commenti che hai scelto di mostrare sul sito. Se il servizio dà errore, **Clienti › Feedback** mostra l'ultimo errore e il sito riprova da solo.
+
 **Un prezzo o una regola non cambia per una prenotazione già fatta**: è voluto, ogni prenotazione conserva le condizioni di quando è stata creata.
 
 **Le email non arrivano ai clienti / a me**
@@ -493,6 +554,19 @@ Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, 
 
 ## 20. Da fare prima del lancio e a gennaio
 
+### Prima di aprire la Partita IVA: riempire l'agenda senza incassare
+Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appuntamenti** per le date in cui lavorerai. È la modalità **pre-apertura**: la accendi scrivendo la data di apertura in **Sito › Impostazioni › Regole di prenotazione › Incassi dal** (per esempio il giorno in cui apri la Partita IVA) e **Salva questa sezione**. Finché quella data non arriva:
+
+- il sito accetta prenotazioni **solo per le date da quel giorno in poi** (prima non lavori), e la home, la pagina *Prenota* e il pagamento lo spiegano con un avviso;
+- **non si paga online**: niente carta, e **buoni regalo** e **acconti dei programmi** restano sospesi;
+- i **clienti privati** prenotano **senza pagare** e saldano **di persona il giorno del servizio** (contanti o carta al punto d'incontro): la prenotazione è confermata subito, con voucher ed email;
+- le **agenzie** prenotano **a fattura** (nessun pagamento) oppure **opzionano** la data ([Opzioni](#opzioni-tenere-una-data-senza-pagare));
+- nell'**Agenda** un avviso azzurro ti ricorda che gli incassi non sono ancora attivi.
+
+**Quando arriva la data degli incassi, il pagamento online si accende da solo**: i clienti che avevano prenotato per pagare di persona trovano nella pagina della loro prenotazione il pulsante **Paga ora online** (finché il servizio non è iniziato) e possono pagare in anticipo con il rimborso automatico, come tutti. Per riattivare subito gli incassi basta **svuotare** il campo *Incassi dal*.
+
+> Questa è una funzione tecnica, **non un parere fiscale**: cosa si può fare prima dell'apertura (per esempio prendere prenotazioni per le date successive, senza anticipi) va **confermato dal commercialista**. Per le prenotazioni già prese prima dell'apertura, le fatture si emettono **dopo** la data di apertura: imposta anche **Prima data fatturabile** in *Fatturazione elettronica*.
+
 **Prima del lancio**
 - [ ] **Tour e prezzi veri** (Sito › Tour e Listino): i tour d'esempio sono segnaposto. Controlla orari, durate, punti d'incontro, lingue.
 - [ ] **Tariffe a ore** (Sito › Tariffe a ore): le cifre iniziali sono un punto di partenza. Rivedi prezzi, supplementi e giorni festivi, **confermali col commercialista** e fai una prova col calcolatore (*Prova il calcolatore*).
@@ -503,6 +577,8 @@ Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, 
 - [ ] **Stripe**: prima in modalità test (carte di prova), poi **in modalità reale** con il webhook configurato; **SMTP** funzionante. Fai una prenotazione di prova e un rimborso (in reale, con un importo piccolo).
 - [ ] **Orari di lavoro**, giorni di chiusura e **calendario personale** collegato (Agenda › Disponibilità).
 - [ ] **Dominio e HTTPS**, `BASE_URL` corretto, disco persistente, **primo backup**.
+- [ ] Se parti **prima della Partita IVA**: scrivi la data in **Incassi dal** e fai una prenotazione di prova da privato (deve proporre solo il pagamento di persona) e da agenzia (fattura o opzione).
+- [ ] Opzioni per le agenzie: guarda la tabella in **Impostazioni › Opzioni per le agenzie** e decidi se ti vanno bene i giorni e il limite.
 
 **Quando apri la Partita IVA (gennaio)**
 - [ ] In **Impostazioni › Attività e contatti**: **Partita IVA**, **abilitazione**, **indirizzo**, nome per i documenti.
@@ -510,6 +586,7 @@ Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, 
 - [ ] Decidi con il commercialista come trattare **clienti privati e stranieri**, **buoni regalo** e **penali di annullo**.
 - [ ] Non emettere una fattura «di prova» su SdI (consumerebbe il numero 1): chiedi al commercialista come verificare il file prima.
 - [ ] Imposta la **PEC** sul server se vuoi inviare a SdI da qui; altrimenti caricherai l'XML su *Fatture e Corrispettivi*.
+- [ ] Se avevi usato *Incassi dal*: la data è passata (o il campo è vuoto), quindi controlla che nel pagamento compaia di nuovo **Paga ora online** e fai una prova con Stripe.
 
 ## 21. Appendice: formattare un testo
 

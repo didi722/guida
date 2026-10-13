@@ -55,15 +55,29 @@ Non si può far scorrere il tempo: le scadenze si provano scegliendo la **data d
 
 Per annullare **come lo vede il cliente**: nella scheda della prenotazione, riga **«Pagina del cliente → Apri come la vede il cliente»**. Poi controlla lo stato in Admin: la prenotazione risulta *Annullata* e il pagamento *Rimborsato* oppure no. (Il preavviso minimo per prenotare è 24 ore per i privati e 12 per i partner.)
 
-## 4. Altre simulazioni utili
+## 4. Provare le opzioni e l'area dell'agenzia
+
+La prova ha già due agenzie (`giulia@lagoon-dmc.example` con fattura e sconto del 15%, `luca@bluesail.example` solo carta; password `prova-prova-1`) con prenotazioni e **due opzioni aperte**.
+
+1. **L'area pulita.** Entra con **Login agenzie** (in alto, accanto a *Prenota*): vedi riepilogo, schede, ricerca e filtri per data, e solo le voci di lavoro nella barra. **Esci** riporta alla home del sito. Prova la ricerca per un nome di pratica (*Gruppo Rossi*) o per codice, le schede *Opzioni* e *Passate*, **Scarica l'elenco (CSV)**, **Tariffe e condizioni** e **Fatture** (le fatture compaiono dopo che le emetti da **Admin → Fatture**).
+2. **Cambiare il nominativo.** Apri una pratica → **Nominativo e note** → cambia il nome e **Salva**: in **Admin → Email** vedi l'avviso alla guida («Prenotazione modificata»).
+3. **Opzionare.** Da agenzia: *Nuova prenotazione* → scegli un tour **fra più di 3 giorni** → al pagamento tocca **Opziona senza pagare**. Nell'**Agenda** (Calendario) compare tratteggiata; in **Agenda › Prenotazioni › Opzioni** la trovi con la scadenza (10 giorni per un tour fra 40 giorni, 3 per uno fra 8). In **Admin → Email**: l'email all'agenzia («Opzione registrata») e l'avviso alla guida.
+4. **Confermare o rilasciare.** Dalla pratica dell'agenzia: **Conferma la prenotazione** (scegli *Fattura / bonifico*: subito confermata, arrivano voucher e riepilogo) oppure **Rilascia la data** (la data torna libera, nessuna penale). Dal pannello: **Prolunga la scadenza** e **Rilascia la data**.
+5. **La scadenza.** Il sito controlla ogni minuto: per vedere una scadenza vera scegli un'opzione che scade presto (in **Impostazioni › Opzioni per le agenzie** metti una riga come *tour fra 3 giorni → opzione di 1 giorno*) e riprova il giorno dopo; l'agenzia riceve il promemoria 24 ore prima e, a scadenza, l'email «Opzione scaduta»; la data torna prenotabile da chiunque.
+6. **Opzioni diverse per un'agenzia.** **Clienti › Partner › Opzioni**: durata fissa (7 giorni), numero massimo di opzioni, oppure spente per quell'agenzia (nel checkout non compare più il pulsante).
+7. **Prima della Partita IVA.** **Sito › Impostazioni › Regole di prenotazione › Incassi dal** → una data futura (per esempio fra 30 giorni): il sito diventa «pre-apertura». Da privato: si prenotano solo date da quel giorno, il pagamento è *di persona*; da agenzia: *fattura* o opzione; l'Agenda mostra l'avviso azzurro. Svuota il campo per tornare come prima.
+
+## 5. Altre simulazioni utili
 
 - **Cliente privato in spagnolo/inglese**: cambia lingua dal menu in alto e prenota; email e voucher PDF escono nella lingua scelta.
 - **Codice sconto e buono regalo**: nel checkout inserisci `PROVA10` e il codice del buono (stampato all'avvio di `npm run sandbox`); in **Admin → Sconti** li crei e li gestisci.
+- **Traduzione dei commenti**: senza chiave non fa nulla. Per provarla senza spendere imposta una chiave DeepL gratuita (`TRANSLATE_PROVIDER=deepl`, `TRANSLATE_API_KEY=…:fx`), scegli un commento in **Clienti › Feedback › Mostra sul sito** e, dopo un minuto, guarda la home in un'altra lingua: compare la traduzione con **Vedi originale**.
+- **Wallet**: i pulsanti compaiono sulla pagina di una prenotazione confermata di un cliente privato solo se hai configurato Google o Apple Wallet (vedi la [guida](GUIDA.md#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)); con credenziali di prova vedi i link e scarichi il file `.pkpass`, ma per **aprirlo davvero** servono quelle vere.
 - **Programma di più giorni**: `/it/programs` → richiesta; in **Admin → Programmi** prepari la proposta (giornate, prezzi, acconto); il cliente la apre dal link nell'email (la vedi in Admin → Email), la accetta e paga l'acconto (simulato).
 - **Richiesta di recensione**: parte il giorno dopo il tour alle 10:00; la sandbox ha già una prenotazione svolta, quindi la email compare subito in Admin → Email.
 - **Fatture**: **Admin → Fatture → Da fatturare**: la sandbox ha già delle voci pronte (prenotazioni pagate o già svolte, il buono regalo; due servizi sono già passati, uno pagato con carta e uno a fattura). Scegli le voci, crei la bozza, emetti, scarichi XML e PDF, provi la nota di credito.
 
-## 5. Provare la gestione del sito dal pannello
+## 6. Provare la gestione del sito dal pannello
 
 Tutto questo è nel pannello della prova (`/admin`, password `admin`) e, come sul sito vero, **vale subito**:
 
@@ -76,7 +90,7 @@ Tutto questo è nel pannello della prova (`/admin`, password `admin`) e, come su
 - **Backup**: **Aiuto › Backup** → scarica lo zip e aprilo (dentro: database, foto, `contenuti.json`, istruzioni).
 - La guida completa è in **Aiuto › Guida** (la stessa di [`docs/GUIDA.md`](GUIDA.md)).
 
-## 6. Cosa le prove non coprono
+## 7. Cosa le prove non coprono
 
 - **Pagamenti veri**: con le chiavi *test* di Stripe (`sk_test_…`) vedi la vera pagina di pagamento, con le carte di prova di Stripe, Apple Pay/Google Pay/PayPal se li attivi in modalità test.
 - **Email vere**: per provarle imposta `SMTP_*` con un tuo indirizzo di prova.

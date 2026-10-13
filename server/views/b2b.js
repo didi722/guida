@@ -3,6 +3,7 @@ import { unitPriceFor } from '../bookings.js';
 import { maxActiveOptions, normalizeOptionTiers } from '../optionPolicy.js';
 import { PARTNER_VIEWS, hasSearch } from '../partner.js';
 import { accountTiers } from '../policy.js';
+import { localeOf } from '../langs.js';
 import { isSimplePolicy, tierSentencesHours } from '../policyText.js';
 import { daysInMonth, fmtDate, fmtInstant, fmtMonth, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
@@ -111,6 +112,42 @@ function optionTerms(ctx, acct) {
   </ul>`;
 }
 
+
+const SHORT = (title, n = 14) => (title.length > n ? `${title.slice(0, n - 1).trimEnd()}…` : title);
+const EV_CLASS = { confirmed: 'ev-ok', held: 'ev-wait', option: 'ev-opt' };
+
+/** Il calendario del mese dell'agenzia: ogni giorno con le sue pratiche in miniatura; toccando un giorno se ne vede il dettaglio sotto. */
+function agencyCalendar(ctx, cal) {
+  const { t, lang, u, app } = ctx;
+  const { month, prev, next, cells, selected, selectedItems } = cal;
+  const today = nowRome().date;
+  const base = u('/b2b/account');
+  const href = (m, d = '') => `${base}?v=cal&m=${m}${d ? `&d=${d}` : ''}`;
+  const dows = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(localeOf(lang), { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, 0, 1 + i)))); // lunedì…domenica
+  const title = (b) => app.content.tour(b.tour_slug)?.i18n[lang].title ?? b.tour_slug;
+  const label = (b) => b.client_ref || title(b);
+  return html`
+<div class="acal-head"><a class="btn btn-sm btn-outline" href="${href(prev)}" aria-label="${t('partner.cal.prev')}">←</a><strong class="acal-title">${fmtMonth(month, lang)}</strong><a class="btn btn-sm btn-outline" href="${href(next)}" aria-label="${t('partner.cal.next')}">→</a>
+  ${month !== today.slice(0, 7) || selected !== today ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7), today)}">${t('partner.cal.today')}</a>` : ''}</div>
+<div class="acal" role="grid" aria-label="${t('partner.cal.grid', { month: fmtMonth(month, lang) })}">
+  ${dows.map((d) => html`<span class="acal-dow">${d}</span>`)}
+  ${cells.map((c) => html`<a class="acal-cell ${c.inMonth ? '' : 'is-other'} ${c.date === today ? 'is-today' : ''} ${c.date === selected ? 'is-selected' : ''} ${c.items.length ? 'has-items' : ''}" href="${href(month, c.date)}#giorno" aria-label="${fmtDate(c.date, lang, 'weekday')}${c.items.length ? `: ${c.items.length}` : ''}">
+    <span class="acal-n">${Number(c.date.slice(8))}</span>
+    <span class="acal-evs">${c.items.slice(0, 3).map((b) => html`<span class="acal-ev ${EV_CLASS[b.status] ?? 'ev-ok'}" title="${b.start_time} ${label(b)}">${b.start_time} ${SHORT(label(b))}</span>`)}${c.items.length > 3 ? html`<span class="acal-more">+${c.items.length - 3}</span>` : ''}</span>
+    ${c.items.length ? html`<span class="acal-count" aria-hidden="true">${c.items.length}</span>` : ''}
+  </a>`)}
+</div>
+<p class="small muted acal-legend"><span class="legend ev-ok"></span> ${t('partner.cal.ok')} · <span class="legend ev-opt"></span> ${t('partner.cal.opt')} · <span class="legend ev-wait"></span> ${t('partner.cal.wait')} · ${t('partner.cal.hint')}.</p>
+<section class="agenda-day" id="giorno"><h3>${fmtDate(selected, lang)}${selected === today ? html` <span class="chip chip-accent">${t('partner.cal.today')}</span>` : ''}</h3>
+  ${selectedItems.length
+    ? html`<div class="card">${selectedItems.map((b) => html`<a class="agenda-item" href="${u(`/b2b/bookings/${b.ref}`)}">
+      <span class="agenda-time"><strong>${b.start_time}</strong><small>${b.end_time}</small></span>
+      <span class="agenda-main"><strong>${b.client_ref || b.name}</strong><small>${title(b)} · ${b.participants} · ${b.client_ref ? `${b.name} · ` : ''}${b.ref}</small></span>
+      <span class="agenda-state">${statusChip(ctx, b)}</span>
+    </a>`)}</div>`
+    : html`<p class="muted">${t('partner.cal.none')}</p>`}</section>`;
+}
+
 function pendingPage(ctx, acct) {
   const { t, lang, u } = ctx;
   const chip = { pending: 'chip-warn', rejected: 'chip-err', suspended: 'chip-err' }[acct.status];
@@ -133,7 +170,7 @@ function pendingPage(ctx, acct) {
  * La dashboard dell'agenzia: riepilogo, ricerca e filtri, elenco delle prenotazioni con le azioni di ogni giorno.
  * list: { rows, counts, total, page, pages, view } · summary: vedi partnerSummary · filters: vedi parseFilters.
  */
-export function accountPage(ctx, { acct, filters, list, summary, flash = '' }) {
+export function accountPage(ctx, { acct, filters, list, summary, flash = '', mode = 'list', calendar = null }) {
   if (acct.status !== 'approved') return pendingPage(ctx, acct);
   const { t, lang, u, app } = ctx;
   const { content } = app;
@@ -176,6 +213,11 @@ export function accountPage(ctx, { acct, filters, list, summary, flash = '' }) {
     <p class="small"><a href="${u('/b2b/rates')}">${t('partner.terms.all')} →</a></p>
   </details>
 
+  <div class="agenda-head spaced"><h2 class="h-sub">${t('b2b.myBookings')}</h2>
+    <nav class="tabs view-tabs" aria-label="${t('partner.view.aria')}"><a href="${base}?v=list" ${mode === 'list' ? raw('aria-current="page"') : ''}>${t('partner.view.list')}</a><a href="${base}?v=cal" ${mode === 'cal' ? raw('aria-current="page"') : ''}>${t('partner.view.cal')}</a></nav></div>
+  ${mode === 'cal' && calendar
+    ? agencyCalendar(ctx, calendar)
+    : html`
   <div class="tabs-bar">
     <div class="tabs" role="tablist" aria-label="${t('b2b.myBookings')}">
       ${PARTNER_VIEWS.map((v) => html`<a class="tab" role="tab" href="${base}${qs({ view: v, page: '' })}" aria-selected="${v === filters.view ? 'true' : 'false'}" ${v === filters.view ? raw('aria-current="page"') : ''}>${t(`partner.tab.${v}`)} <span class="tab-n">${list.counts[v]}</span></a>`)}
@@ -230,7 +272,7 @@ export function accountPage(ctx, { acct, filters, list, summary, flash = '' }) {
     : html`<div class="card pad center empty-state">
         <p>${searching ? t('partner.results.none') : list.counts.all ? t('partner.results.noneHere') : t('partner.results.empty')}</p>
         <p class="btn-row center">${searching ? html`<a class="btn btn-outline" href="${base}?view=${filters.view}">${t('partner.filter.clear')}</a>` : html`<a class="btn btn-gold" href="${u('/book')}">${t('partner.nav.new')}</a>`}</p>
-      </div>`}
+      </div>`}`}
 </div></section>`;
   return page(ctx, { title: t('partner.nav.bookings'), path: `/${lang}/b2b/account`, body, noindex: true, activeNav: 'b2b-account', area: 'partner' });
 }

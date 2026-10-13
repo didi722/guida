@@ -5044,5 +5044,77 @@
   "Venice tour booking",
   "Reserva de un tour en Venecia",
   "ヴェネツィアのツアー予約"
+ ],
+ "partner.view.list": [
+  "Elenco",
+  "List",
+  "Lista",
+  "一覧"
+ ],
+ "partner.view.cal": [
+  "Calendario",
+  "Calendar",
+  "Calendario",
+  "カレンダー"
+ ],
+ "partner.view.aria": [
+  "Come vedere le prenotazioni",
+  "How to view your bookings",
+  "Cómo ver las reservas",
+  "予約の表示方法"
+ ],
+ "partner.cal.prev": [
+  "Mese precedente",
+  "Previous month",
+  "Mes anterior",
+  "前の月"
+ ],
+ "partner.cal.next": [
+  "Mese successivo",
+  "Next month",
+  "Mes siguiente",
+  "次の月"
+ ],
+ "partner.cal.today": [
+  "Oggi",
+  "Today",
+  "Hoy",
+  "今日"
+ ],
+ "partner.cal.ok": [
+  "confermata",
+  "confirmed",
+  "confirmada",
+  "確定"
+ ],
+ "partner.cal.opt": [
+  "opzione (data trattenuta)",
+  "option (date held)",
+  "opción (fecha reservada)",
+  "オプション（日程を仮押さえ中）"
+ ],
+ "partner.cal.wait": [
+  "in attesa di pagamento",
+  "awaiting payment",
+  "pendiente de pago",
+  "お支払い待ち"
+ ],
+ "partner.cal.hint": [
+  "tocca un giorno per vederlo qui sotto",
+  "tap a day to see it below",
+  "toca un día para verlo debajo",
+  "日付をタップすると下に表示されます"
+ ],
+ "partner.cal.none": [
+  "Nessuna prenotazione in questo giorno.",
+  "No bookings on this day.",
+  "Ninguna reserva este día.",
+  "この日の予約はありません。"
+ ],
+ "partner.cal.grid": [
+  "Calendario delle prenotazioni di {month}",
+  "Bookings calendar for {month}",
+  "Calendario de reservas de {month}",
+  "{month}の予約カレンダー"
  ]
 }

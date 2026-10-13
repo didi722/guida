@@ -1,6 +1,6 @@
 # Guida Venezia — sito di prenotazione
 
-Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **guida privata a ore** (con assistente, tour leader e meet & greet per le agenzie), **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese, spagnolo e giapponese**, pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
+Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **guida privata a ore** (con assistente, tour leader e meet & greet per le agenzie), **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese, spagnolo e giapponese** (la guida è abilitata in tutte e quattro: lo dice subito la home), pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
 
 > 📖 **Come si usa il sito** (tour, prezzi, blog, foto, partner, fatture, statistiche, backup…): [`docs/GUIDA.md`](docs/GUIDA.md), che trovi anche nel pannello in **Aiuto › Guida**.
 
@@ -14,10 +14,10 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - Per la **guida privata a ore** (`/it/hourly`) scelgono giorno, ora, ore e persone e vedono subito il totale, con festivo, notturno e auricolari calcolati dal sito.
 - Prenotano senza registrarsi e **pagano subito con carta** (Stripe). Il pagamento «il giorno del tour» è **spento di default** (vedi [Pagamento in contanti](#pagamento-in-contanti-il-giorno-del-tour)).
 - Possono usare un **codice sconto** e/o un **buono regalo** al checkout, anche in più volte.
-- Ricevono email di conferma con **voucher PDF**, punto d'incontro, file calendario (.ics) e link per gestire/annullare.
+- Ricevono email di conferma con **voucher PDF**, punto d'incontro, file calendario (.ics) e link per gestire/annullare. Dalla pagina della prenotazione possono **aggiungerla al wallet del telefono** (Google Wallet e Apple Wallet, se configurati: vedi [Wallet](#wallet-del-telefono)).
 - **Cancellazione gratuita fino a N ore prima** (default 48): oltre il termine il sito non la offre. Se avevano pagato con carta, il **rimborso parte da solo**.
 - La **sera prima del tour** ricevono un promemoria (orario, punto d'incontro, mappa, come contattarti): meno assenze e meno «dove ci troviamo?».
-- Il giorno dopo il tour ricevono **una sola email** con i link per recensire (Google, Tripadvisor) o per lasciare un feedback privato; i commenti che il cliente permette di citare puoi **mostrarli sul sito** (home e pagina del tour, solo con il nome di battesimo), con la media di tutti i voti.
+- Il giorno dopo il tour ricevono **una sola email** con i link per recensire (Google, Tripadvisor) o per lasciare un feedback privato; i commenti che il cliente permette di citare puoi **mostrarli sul sito** (home e pagina del tour, solo con il nome di battesimo), con la media di tutti i voti, **tradotti automaticamente nella lingua di chi guarda** (con *Vedi originale*) se hai una chiave di traduzione.
 - Possono **regalare un'esperienza** (`/it/gift`): buono da 20 a 1.000 € (configurabile) con PDF, messaggio e invio programmato al destinatario.
 - Per i soggiorni lunghi compilano il **modulo programmi** (`/it/programs`): ricevono una proposta con giornate, prezzo e acconto, la accettano online e pagano l'acconto.
 
@@ -25,13 +25,15 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - Pagina commerciale (`/it/b2b`) e **richiesta di accesso** con dati aziendali (P.IVA, SDI/PEC).
 - Tu **approvi** dal pannello e puoi impostare per ogni partner: **sconto extra**, **finestra di cancellazione** (es. 7 giorni), pagamento **a fattura**.
 - La pagina agenzie mette **in cima le tariffe a ore** (mezza giornata, giornata, ora extra, supplementi festivo/superfestivo/notturno/auricolari) per guida, **assistente in loco**, **tour leader** e **meet & greet**, con un calcolatore di preventivo.
-- Il partner vede le **tariffe riservate** (con il suo sconto), prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica**, scarica il **voucher PDF senza prezzi** (da girare al cliente finale) e richiede **programmi di più giorni**.
+- **Login agenzie** sempre visibile in alto, accanto a *Prenota*. Dopo il login l'**area riservata è pulita** (niente blog, tour o prezzi al pubblico): **riepilogo**, **elenco** (o **calendario** del mese) **delle prenotazioni** con schede, **ricerca** per cliente o pratica, **filtri per data di partenza e di prenotazione**, **voucher PDF senza prezzi**, **fatture** in PDF, **modifica del nominativo** e delle note, annullo, **CSV** per la contabilità, tariffe e condizioni, **Esci** verso la home pubblica.
+- Il partner vede le **tariffe riservate** (con il suo sconto, arrotondato ai 5 € successivi), cerca la disponibilità tra **tour privati** (predefinito) e **condivisi**, prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica** e richiede **programmi di più giorni**.
+- **Opzioni**: l'agenzia può **tenere una data senza pagare** mentre il suo cliente decide; la durata dipende da quanto manca al tour (tabella e limiti modificabili, anche per singolo partner), arriva un promemoria e, se non conferma, la data **si libera da sola**. Nessun addebito automatico: se paga a fattura il servizio si fattura dopo.
 
 **Per te (pannello `/admin`, ottimizzato per telefono)** — quasi tutto si cambia da qui, senza toccare il codice ([guida](docs/GUIDA.md))
-- **Agenda** dei prossimi 14 giorni con prenotazioni **e giornate dei programmi**; elenco prenotazioni con ricerca e **annullamento/rimborso** (a percentuale, con penale per chi paga a fattura).
+- **Agenda**: **calendario** del mese (predefinito) oppure elenco dei prossimi 14 giorni, con prenotazioni, **opzioni** e giornate dei programmi; elenco prenotazioni con ricerca e **annullamento/rimborso** (a percentuale, con penale per chi paga a fattura). **Esci** riporta alla home del sito.
 - **Disponibilità**: orari di lavoro, chiusure, orari speciali, blocchi orari e **calendari collegati** (Google Calendar e simili): gli impegni segnati «Occupato» bloccano da soli gli slot, evitando sovrapposizioni.
 - **Programmi**: richieste, costruttore della proposta (giornate, prezzi, acconto, date trattenute), avvisi se una giornata si sovrappone a qualcos'altro, accettazione, acconto, annullo con rimborso.
-- **Sito**: **tour** (crea, modifica, nascondi, duplica; testi e domande frequenti in italiano, inglese, spagnolo e giapponese), **listino** con tutti i prezzi in una tabella, **tariffe a ore** (scaglioni, ora extra, supplementi, giorni festivi), **blog** (bozze, copertine, foto nel testo), **pagine** fisse, **testi dell'interfaccia** per lingua, **libreria immagini** (foto di tour, articoli, home, ritratto, anteprima social) e **impostazioni** (contatti, regole di prenotazione, buoni regalo, dati fiscali).
+- **Sito**: **tour** (crea, modifica, nascondi, duplica; testi e domande frequenti in italiano, inglese, spagnolo e giapponese), **listino** con tutti i prezzi in una tabella, **tariffe a ore** (scaglioni, ora extra, supplementi, giorni festivi), **blog** (bozze, copertine, foto nel testo), **pagine** fisse, **testi dell'interfaccia** per lingua, **libreria immagini** (foto di tour, articoli, home, ritratto, anteprima social) e **impostazioni** (contatti, regole di prenotazione e **incassi dal** per la pre-apertura, **opzioni per le agenzie**, buoni regalo, dati fiscali). L'**ordine dei tour** si cambia **trascinandoli**.
 - **Partner**: approvazione, **listino dedicato** per ciascuno, **sconto**, pagamento a fattura e **politica di annullo a scaglioni** per ciascuno (rimborsi parziali, penali).
 - **Statistiche**: venduto, scontrino medio, incassato e da incassare, annulli, andamento, per tour/partner/canale/pagamento/lingua/giorno, portafoglio futuro, con confronto sul periodo precedente ed esportazione CSV.
 - **Fatture**: voci da fatturare, bozze, **fattura elettronica XML (FatturaPA)** con numerazione progressiva, copia PDF, invio al cliente, trasmissione a SdI via PEC, note di credito, registro CSV.
@@ -60,7 +62,7 @@ npm start                # http://localhost:3000
 - I dati stanno in `data/guida.sqlite`. Per ripartire da zero: ferma il server e cancella la cartella `data/`.
 
 ```bash
-npm test                 # ~190 test: motore prenotazioni, pagamenti, Stripe, B2B, sconti e buoni, calendari, programmi, PDF, fatture, traduzioni, contenuti dal pannello, impostazioni, statistiche, backup, guida
+npm test                 # ~270 test: motore prenotazioni, pagamenti, Stripe, B2B, sconti e buoni, calendari, programmi, PDF, fatture, traduzioni, contenuti dal pannello, impostazioni, statistiche, backup, guida
 ```
 
 I test sui contenuti dei PDF usano `pdftotext` (poppler) e si saltano da soli se non c'è; l'XML delle fatture è controllato contro lo schema FatturaPA con `xmllint-wasm` (dipendenza di sviluppo).
@@ -105,6 +107,10 @@ Nel contenuto iniziale di un tour: `model: person` = **a persona**, partenze fis
 ## Pagamento in contanti il giorno del tour
 
 Di default **non è offerto**: per un tour prenotato online nel 2026 conviene incassare subito. Con una guida sola uno slot non pagato che salta (no show, prenotazione fasulla) è un'ora di lavoro persa; i turisti si aspettano di pagare con carta o telefono; e anche incassando in contanti serve comunque emettere il documento fiscale, mentre per le carte i professionisti hanno l'obbligo di accettare il POS. Se vuoi tenerlo (per esempio per i clienti locali), imposta `ALLOW_PAY_ON_SITE=true` e abilitalo solo sui tour dove ha senso con `payOnSite: true`. Per le agenzie resta il pagamento **a fattura** con bonifico.
+
+## Prima della Partita IVA: prenotare senza incassare
+
+Impostando **Incassi dal** (in **Sito › Impostazioni › Regole di prenotazione**, o con `PAYMENTS_FROM=2027-01-04`) il sito entra in **pre-apertura** fino a quel giorno: accetta prenotazioni **solo per le date da quel giorno in poi** e **non incassa online** (niente carta, buoni regalo e acconti sospesi). I privati prenotano e **pagano di persona il giorno del servizio**; le agenzie prenotano a **fattura** o con **opzione**. Quando la data arriva, i pagamenti online si accendono da soli e chi aveva prenotato può anche **pagare in anticipo** dalla pagina della sua prenotazione. È una funzione tecnica, non un parere fiscale: cosa si può fare prima dell'apertura va confermato dal commercialista.
 
 ## Calendario: una guida sola
 
@@ -155,10 +161,19 @@ Il sito manda il cliente sulla pagina di pagamento **ospitata da Stripe** e non 
 - Tutti gli importi sono in euro, come richiesto da PayPal e da molti altri metodi.
 
 ### Email
-Imposta `SMTP_*` e `MAIL_FROM` con il tuo provider (Brevo, Mailgun, Posteo, Gmail con password per app…). Usa un mittente del tuo dominio e verifica SPF/DKIM, altrimenti le conferme possono finire nello spam.
+Imposta `SMTP_*` e `MAIL_FROM` con il tuo provider (Brevo, Resend, Mailgun, la casella del tuo hosting…). Usa un mittente del tuo dominio e verifica SPF/DKIM, altrimenti le conferme possono finire nello spam. **Posteo non permette di usare un dominio proprio** (solo indirizzi `@posteo.net` e simili): va bene come casella dove **ricevere le notifiche** (`NOTIFY_EMAIL`), ad esempio con l'inoltro gratuito di `tours@tuodominio.it` verso Posteo presso il registrar; per **inviare** con il tuo dominio come mittente serve un servizio di posta che lo supporti.
 
 ### Recensioni
 Imposta il link «scrivi una recensione» del tuo Profilo dell'attività su Google (e, se vuoi, quello di Tripadvisor) in **Sito › Impostazioni › Buoni regalo, programmi e recensioni** (o con `REVIEW_URL` / `REVIEW_URL_TRIPADVISOR` come valori predefiniti). La richiesta parte da sola il giorno dopo il tour alle 10:00, una sola volta, e non filtra mai i clienti: tutti vedono i link pubblici (le regole di Google vietano di indirizzare solo chi è soddisfatto).
+
+#### Traduzione automatica dei commenti
+Con `TRANSLATE_PROVIDER=deepl` (o `google`) e `TRANSLATE_API_KEY`, i commenti che hai scelto di mostrare sul sito vengono tradotti **in background** nelle quattro lingue e salvati nel database (una traduzione per commento e lingua, che si rifà se il cliente cambia il testo): chi guarda il sito legge il commento nella sua lingua, con *Tradotto automaticamente* e il pulsante **Vedi originale**. Si traducono **solo** i commenti pubblici e scelti (mai il feedback privato). DeepL ha un piano gratuito (500.000 caratteri al mese); le chiavi `…:fx` usano l'indirizzo del piano gratuito. Se il servizio non risponde (o la quota è finita) il sito fa una pausa e intanto mostra l'originale. Senza chiave il modulo è spento. I testi dei commenti pubblici vengono inviati al servizio scelto: citalo nella privacy.
+
+### Wallet del telefono
+Nella pagina di una prenotazione **confermata** di un cliente **privato** compaiono **Aggiungi a Google Wallet** e **Aggiungi ad Apple Wallet** (solo per le piattaforme configurate). Nessun servizio esterno viene chiamato dal sito: il link di Google contiene il pass firmato (JWT RS256) con la chiave del tuo account di servizio; il file `.pkpass` di Apple lo costruisce il sito (zip con manifest e firma PKCS#7) con il tuo certificato Pass Type ID. Il pass è una fotografia della prenotazione (non si aggiorna se poi la annulli); il logo è quello del sito, disegnato dal codice.
+- **Google Wallet** (gratuito): `GOOGLE_WALLET_ISSUER_ID` e `GOOGLE_WALLET_KEY_FILE` (il JSON del service account), oppure `GOOGLE_WALLET_SERVICE_ACCOUNT` + `GOOGLE_WALLET_PRIVATE_KEY`. In modalità prova solo i tester aggiunti nella Wallet Console possono salvare il pass; per aprirlo a tutti serve l'accesso alla pubblicazione.
+- **Apple Wallet** (Apple Developer Program, 99 $/anno): `APPLE_WALLET_PASS_TYPE_ID`, `APPLE_WALLET_TEAM_ID`, `APPLE_WALLET_CERT_FILE`, `APPLE_WALLET_KEY_FILE` (PEM, con `APPLE_WALLET_KEY_PASSPHRASE` se protetta) e `APPLE_WALLET_WWDR_FILE` (certificato intermedio Apple). Il certificato dura un anno: alla scadenza il pulsante sparisce.
+- I passaggi, con i comandi `openssl` per convertire i certificati, sono nella [guida](docs/GUIDA.md#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello). All'avvio il sito scrive nei log un `[wallet] … non attivo: …` se una piattaforma è configurata a metà.
 
 ## Come è fatto
 
@@ -184,6 +199,11 @@ server/
   backup.js         copia di sicurezza (zip)
   restore.js        ripristino da una copia (controllo, anteprima, sostituzione dei dati in una transazione, copie di sicurezza)
   zipread.js        lettura sicura di uno zip caricato
+  optionPolicy.js   opzioni delle agenzie: durata, limiti, promemoria (puro, testato)
+  opening.js        pre-apertura: «Incassi dal» (puro)
+  partner.js        area agenzie: elenco con filtri, riepilogo, fatture dell'agenzia
+  translate.js      traduzione automatica dei commenti (DeepL / Google), con cache nel database
+  wallet.js         Google Wallet (JWT) e Apple Wallet (.pkpass con firma PKCS#7); png.js: il logo come PNG
   invoices.js       coda, bozze, emissione e note di credito
   fatturapa.js      importi e XML FatturaPA (puro)
   pdf.js            voucher, buoni regalo, proposte (e pdf-invoice.js)
