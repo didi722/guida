@@ -11,6 +11,17 @@
     });
   });
 
+  // Tabelle: ogni cella conosce la sua intestazione (serve alla vista a schede su telefono)
+  document.querySelectorAll('table.table').forEach(function (table) {
+    var heads = Array.prototype.map.call(table.querySelectorAll('thead th'), function (th) { return th.textContent.trim(); });
+    if (!heads.length) return;
+    table.querySelectorAll('tbody tr').forEach(function (tr) {
+      Array.prototype.forEach.call(tr.children, function (td, i) {
+        if (td.tagName === 'TD' && heads[i] && !td.hasAttribute('data-label')) td.setAttribute('data-label', heads[i]);
+      });
+    });
+  });
+
   // Menu delle lingue: si chiude con un clic fuori o con Esc
   var langMenu = document.querySelector('.lang-menu');
   if (langMenu) {

@@ -1,9 +1,10 @@
 import { art } from '../art.js';
 import { html, raw } from '../html.js';
 import { freeCancelHours, unitPriceFor } from '../bookings.js';
-import { fmtDate } from '../time.js';
+import { fmtDate, fmtMonth } from '../time.js';
 import { formatMoney } from '../util.js';
-import { LANGS, LANG_META } from '../langs.js';
+import { LANGS, LANG_META, localeOf } from '../langs.js';
+import { MEDIA_NAME, smallName } from '../media.js';
 
 /** <option> di tutte le lingue del sito, con quella indicata selezionata. */
 export const langOptions = (selected) => html`${LANGS.map((l) => html`<option value="${l}" ${l === selected ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}`;
@@ -18,9 +19,25 @@ export function fmtHours(t, h) {
   return h >= 48 && h % 24 === 0 ? t('time.days', { n: h / 24 }) : t('time.hours', { n: h });
 }
 
+/** Immagine caricata dal pannello (due misure: `srcset`) oppure un percorso diretto a un file in public/. */
+export function mediaImg(image, alt = '', { sizes = '(max-width: 700px) 100vw, 50vw', eager = false } = {}) {
+  if (!image) return '';
+  const loading = eager ? raw('fetchpriority="high"') : raw('loading="lazy"');
+  if (MEDIA_NAME.test(image)) return html`<img src="/media/${image}" srcset="/media/${smallName(image)} 640w, /media/${image} 1600w" sizes="${sizes}" alt="${alt}" ${loading} decoding="async">`;
+  return html`<img src="${image}" alt="${alt}" ${loading} decoding="async">`;
+}
+/** Indirizzo assoluto dell'immagine di copertina (anteprima quando si condivide la pagina). */
+export const mediaUrl = (cfg, image) => (image && MEDIA_NAME.test(image) ? `${cfg.baseUrl}/media/${image}` : null);
+
+/** Immagine fissa del sito: la foto scelta nel pannello (Immagini) oppure, se manca, l'illustrazione. */
+export function siteArt(ctx, slot, artKey, { label = '', alt = label, sizes, eager = false } = {}) {
+  const name = ctx.app.siteImages?.get(slot);
+  return name ? mediaImg(name, alt, { sizes, eager }) : art(artKey, { label });
+}
+
 export function tourMedia(ctx, tour, label) {
   const ti = tour.i18n[ctx.lang];
-  return tour.image ? html`<img src="${tour.image}" alt="${label ?? ti.title}" loading="lazy" decoding="async">` : art(tour.art, { label: label ?? ti.title });
+  return tour.image ? mediaImg(tour.image, label ?? ti.title) : art(tour.art, { label: label ?? ti.title });
 }
 
 /** "€35 / persona" oppure "€190 / gruppo", con tariffa B2B se il visitatore è un partner approvato. */
@@ -28,6 +45,40 @@ export function priceParts(ctx, tour) {
   const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
   const unit = unitPriceFor(tour, channel, ctx.acct);
   return { channel, unit, money: formatMoney(unit, ctx.lang), per: tour.model === 'person' ? ctx.t('price.perPerson') : ctx.t('price.perGroup') };
+}
+
+/**
+ * «Cosa dicono i clienti»: i commenti scelti dal pannello (con il permesso del cliente), solo con il nome di battesimo.
+ * `stats` ({count, average}) mostra anche la media di TUTTI i voti ricevuti, ma solo da 5 voti in su; `readUrl` il collegamento alle recensioni pubbliche.
+ */
+export function testimonials(ctx, quotes, { stats = null, readUrl = '' } = {}) {
+  if (!quotes.length) return '';
+  const { t, lang, app } = ctx;
+  const avg = stats && stats.count >= 5 && stats.average != null ? new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 1 }).format(stats.average) : null;
+  return html`<div class="quotes">
+    <div class="quotes-grid">${quotes.map((q) => html`<figure class="quote">
+      <div class="quote-stars" role="img" aria-label="${t('fb.star', { n: q.rating })}">${'★'.repeat(q.rating)}${'☆'.repeat(5 - q.rating)}</div>
+      <blockquote lang="${q.lang}"><p>${q.comment}</p></blockquote>
+      <figcaption>${q.firstName ? html`<strong>${q.firstName}</strong> · ` : ''}${app.content.tour(q.tourSlug)?.i18n[lang].title ?? ''}, ${fmtMonth(q.date.slice(0, 7), lang)}</figcaption>
+    </figure>`)}</div>
+    <p class="quotes-note">${avg ? html`<strong>★ ${t('reviews.avg', { avg, n: stats.count })}</strong><br>` : ''}${t('reviews.note')}${readUrl ? html` <a href="${readUrl}" target="_blank" rel="noopener">${t('reviews.readAll')}</a>` : ''}</p>
+  </div>`;
+}
+
+/** «Prossime partenze»: i primi orari prenotabili dei tour a partenza fissa; un tocco porta al pagamento. */
+export function departuresList(ctx, departures, { pax = 2 } = {}) {
+  const { t, lang, u } = ctx;
+  if (!departures.length) return '';
+  return html`<ul class="dep-list">${departures.map((d) => {
+    const { money, per } = priceParts(ctx, d.tour);
+    const n = Math.max(1, Math.min(pax, d.left));
+    const note = d.left <= 3 ? (d.left === 1 ? t('departures.left1') : t('departures.left', { n: d.left })) : d.joined ? t('book.confirmedDeparture') : fmtDuration(d.tour.durationMin);
+    return html`<li><a class="dep" href="${u('/book/checkout')}?tour=${encodeURIComponent(d.tour.slug)}&date=${d.date}&time=${d.time}&pax=${n}">
+      <span class="dep-when"><strong>${fmtDate(d.date, lang, 'weekday')}</strong><span class="dep-time">${d.time}</span></span>
+      <span class="dep-what"><strong>${d.tour.i18n[lang].title}</strong><small class="${d.left <= 3 ? 'dep-few' : ''}">${note}</small></span>
+      <span class="dep-price"><strong>${money}</strong><small>/ ${per}</small></span>
+    </a></li>`;
+  })}</ul>`;
 }
 
 export function tourCard(ctx, tour) {
@@ -52,7 +103,7 @@ export function postCard(ctx, post) {
   const { lang, u, t } = ctx;
   const pi = post.i18n[lang];
   return html`<a class="card post-card reveal" href="${u('/blog/' + post.slug)}">
-    <div class="card-media">${art(post.art, { label: '' })}</div>
+    <div class="card-media">${post.image ? mediaImg(post.image, '') : art(post.art, { label: '' })}</div>
     <div class="card-body">
       <p class="eyebrow small">${fmtDate(post.date, lang, 'short')} · ${t('blog.minutes', { n: pi.minutes })}</p>
       <h3>${pi.title}</h3>

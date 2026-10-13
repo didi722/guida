@@ -178,17 +178,17 @@ export function buyerProblems(b) {
 /** Problemi dei dati del cedente (te): servono per poter emettere. */
 export function sellerProblems(s) {
   const out = [];
-  if (!validItalianVat(String(s.vatNumber ?? '').replace(/^IT/i, ''))) out.push('Partita IVA mancante o non valida (VAT_NUMBER).');
-  if (!(validPersonTaxCode(s.fiscalCode ?? '') || validCompanyTaxCode(s.fiscalCode ?? ''))) out.push('Codice fiscale mancante o non valido (FISCAL_CODE).');
-  if (!latin1(s.name) && !(latin1(s.firstName) && latin1(s.lastName))) out.push('Nome e cognome (INVOICE_FIRST_NAME, INVOICE_LAST_NAME) o denominazione (INVOICE_NAME) mancanti.');
-  if (!/^RF(0[1-2]|0[4-9]|1\d|20)$/.test(String(s.regime ?? ''))) out.push('Regime fiscale mancante (INVOICE_REGIME, es. RF19 forfettario o RF01 ordinario).');
+  if (!validItalianVat(String(s.vatNumber ?? '').replace(/^IT/i, ''))) out.push('Partita IVA mancante o non valida.');
+  if (!(validPersonTaxCode(s.fiscalCode ?? '') || validCompanyTaxCode(s.fiscalCode ?? ''))) out.push('Codice fiscale mancante o non valido.');
+  if (!latin1(s.name) && !(latin1(s.firstName) && latin1(s.lastName))) out.push('Nome e cognome oppure denominazione mancanti.');
+  if (!/^RF(0[1-2]|0[4-9]|1\d|20)$/.test(String(s.regime ?? ''))) out.push('Regime fiscale mancante (es. RF19 forfettario o RF01 ordinario).');
   const a = s.address ?? {};
-  if (!latin1(a.street)) out.push('Indirizzo mancante (INVOICE_ADDRESS).');
-  if (!/^\d{5}$/.test(String(a.zip ?? ''))) out.push('CAP mancante o non valido (INVOICE_ZIP).');
-  if (!latin1(a.city)) out.push('Comune mancante (INVOICE_CITY).');
-  if (!/^[A-Za-z]{2}$/.test(String(a.province ?? ''))) out.push('Provincia mancante (INVOICE_PROVINCE, es. VE).');
+  if (!latin1(a.street)) out.push('Indirizzo mancante.');
+  if (!/^\d{5}$/.test(String(a.zip ?? ''))) out.push('CAP mancante o non valido.');
+  if (!latin1(a.city)) out.push('Comune mancante.');
+  if (!/^[A-Za-z]{2}$/.test(String(a.province ?? ''))) out.push('Provincia mancante (es. VE).');
   if (s.vatBp > 0 && s.nature) out.push('Con aliquota IVA maggiore di zero non va indicata la natura.');
-  if (s.vatBp === 0 && !/^(N1|N2\.[12]|N3\.[1-6]|N4|N5|N6\.[1-9]|N7)$/.test(String(s.nature ?? ''))) out.push('Con IVA a zero serve la natura dell’operazione (INVOICE_NATURE, es. N2.2).');
+  if (s.vatBp === 0 && !/^(N1|N2\.[12]|N3\.[1-6]|N4|N5|N6\.[1-9]|N7)$/.test(String(s.nature ?? ''))) out.push('Con IVA a zero serve la natura dell’operazione (es. N2.2).');
   return out;
 }
 

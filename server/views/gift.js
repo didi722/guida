@@ -2,9 +2,8 @@ import { html, raw } from '../html.js';
 import { fmtDate } from '../time.js';
 import { formatGiftCode } from '../pricing.js';
 import { formatMoney } from '../util.js';
-import { art } from '../art.js';
 import { page } from './layout.js';
-import { breadcrumbs, checkIcon } from './components.js';
+import { breadcrumbs, checkIcon, siteArt } from './components.js';
 import { pick } from '../langs.js';
 
 export function giftPage(ctx, { values = {}, error = '', unavailable = false } = {}) {
@@ -61,7 +60,7 @@ export function giftPage(ctx, { values = {}, error = '', unavailable = false } =
     </form>
   </div>
   <aside class="gift-side">
-    <div class="gift-art">${art('bridge', { label: '' })}</div>
+    <div class="gift-art">${siteArt(ctx, 'gift', 'bridge', { alt: t('gift.title'), sizes: '(max-width: 900px) 100vw, 480px' })}</div>
     <ol class="steps steps-col">
       ${[1, 2, 3].map((n) => html`<li><span class="step-n" aria-hidden="true">${n}</span><div><p>${t(`gift.how.${n}`)}</p></div></li>`)}
     </ol>

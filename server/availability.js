@@ -167,3 +167,22 @@ export function nextAvailableDates(db, cfg, tours, from, { pax = 1, channel = 'b
   }
   return [...found].sort().slice(0, limit);
 }
+
+/**
+ * Le prossime partenze prenotabili dei tour a partenza fissa (prezzo a persona), in ordine di data e ora:
+ * servono a «scegliere subito» senza dover indovinare una data. I tour a orario libero non compaiono.
+ */
+export function nextDepartures(db, cfg, tours, from, { pax = 1, channel = 'b2c', nowMs, limit = 6, days = 45 } = {}) {
+  const fixed = tours.filter((t) => t.model === 'person' && !t.flexible);
+  if (!fixed.length) return [];
+  const ctx = loadAvailabilityContext(db, cfg, from, addDays(from, days), nowMs);
+  const out = [];
+  for (let i = 0; i <= days && out.length < limit; i++) {
+    const date = addDays(from, i);
+    const day = [];
+    for (const tour of fixed) for (const slot of slotsForDay(ctx, cfg, tour, date, { pax, channel, nowMs })) day.push({ tour, date, ...slot });
+    day.sort((a, b) => a.time.localeCompare(b.time) || a.tour.order - b.tour.order);
+    out.push(...day);
+  }
+  return out.slice(0, limit);
+}

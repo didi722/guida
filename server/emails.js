@@ -9,6 +9,7 @@ import { formatMoney } from './util.js';
 import { formatGiftCode } from './pricing.js';
 import { makeT } from './i18n.js';
 import { normLang, pick } from './langs.js';
+import { isSimplePolicy, tierSentences } from './policyText.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
 const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,' }, lang);
@@ -26,6 +27,9 @@ const T = {
     cancelledIntro: 'la prenotazione è stata annullata.',
     refundLine: (m) => `Rimborso: ${m}, accreditato sul metodo di pagamento originale (di solito entro 5–10 giorni lavorativi).`,
     noRefundLine: 'Nessun rimborso previsto per questa cancellazione.',
+    refundPartialLine: (m, p) => `Rimborso parziale (${p}%): ${m}, accreditato sul metodo di pagamento originale (di solito entro 5–10 giorni lavorativi).`,
+    penaltyLine: (m) => `Come da condizioni, per questo annullo si applica una penale di ${m}: sarà inclusa nella fattura.`,
+    retainedLine: (m) => `Importo trattenuto come penale di annullo: ${m}.`,
     conflictSubject: (ref) => `Prenotazione ${ref}: slot non più disponibile, rimborso in corso`,
     conflictBody: 'purtroppo il pagamento è arrivato dopo la scadenza del blocco e nel frattempo lo slot è stato assegnato ad altri. Ti abbiamo rimborsato l’intero importo. Scusaci: puoi sceglierne un altro sul sito o scrivermi.',
     tour: 'Servizio',
@@ -56,6 +60,9 @@ const T = {
     cancelledIntro: 'your booking has been cancelled.',
     refundLine: (m) => `Refund: ${m}, returned to the original payment method (usually within 5–10 business days).`,
     noRefundLine: 'No refund applies to this cancellation.',
+    refundPartialLine: (m, p) => `Partial refund (${p}%): ${m}, returned to the original payment method (usually within 5–10 business days).`,
+    penaltyLine: (m) => `As per the terms, a cancellation fee of ${m} applies and will be included in the invoice.`,
+    retainedLine: (m) => `Amount kept as cancellation fee: ${m}.`,
     conflictSubject: (ref) => `Booking ${ref}: slot no longer available, refund issued`,
     conflictBody: 'unfortunately your payment arrived after the hold expired and the slot has meanwhile been taken. We have refunded the full amount. Sorry about that: you can pick another time on the website or write to me.',
     tour: 'Service',
@@ -86,6 +93,9 @@ const T = {
     cancelledIntro: 'la reserva ha sido cancelada.',
     refundLine: (m) => `Reembolso: ${m}, abonado en el método de pago original (normalmente entre 5 y 10 días hábiles).`,
     noRefundLine: 'Esta cancelación no da derecho a reembolso.',
+    refundPartialLine: (m, p) => `Reembolso parcial (${p}%): ${m}, abonado en el método de pago original (normalmente entre 5 y 10 días hábiles).`,
+    penaltyLine: (m) => `Según las condiciones, se aplica una penalización por cancelación de ${m}, que se incluirá en la factura.`,
+    retainedLine: (m) => `Importe retenido como penalización por cancelación: ${m}.`,
     conflictSubject: (ref) => `Reserva ${ref}: horario ya no disponible, reembolso en curso`,
     conflictBody: 'por desgracia, el pago llegó cuando el bloqueo de la reserva ya había caducado y, entretanto, ese horario se ha asignado a otras personas. Te hemos reembolsado el importe íntegro. Disculpa las molestias: puedes elegir otro horario en la web o escribirme.',
     tour: 'Servicio',
@@ -136,7 +146,8 @@ function policyLine(b, lang, nowMs) {
   const tr = T[lang];
   const st = cancellationState(b, nowMs);
   if (!st.everRefundable) return tr.policyNone;
-  return `${tr.policyFree(fmtInstant(st.until, lang))} ${tr.policyAfter}`;
+  if (isSimplePolicy(st.tiers)) return `${tr.policyFree(fmtInstant(st.until, lang))} ${tr.policyAfter}`;
+  return tierSentences(makeT(lang), lang, st.tiers, st.startsAt).join(' '); // politica a scaglioni: una frase per scaglione
 }
 
 export function icsFor(app, b, lang = normLang(b.lang)) {
@@ -215,7 +226,12 @@ export async function sendBookingConfirmed(app, b, nowMs = Date.now()) {
 export async function sendBookingCancelled(app, b, refundCents) {
   const lang = normLang(b.lang);
   const tr = T[lang];
-  const line = refundCents ? tr.refundLine(formatMoney(refundCents, lang, b.currency)) : b.payment_status === 'paid' || b.payment_method === 'card' ? tr.noRefundLine : '';
+  const money = (c) => formatMoney(c, lang, b.currency);
+  const parts = [];
+  if (refundCents) parts.push(b.cancel_percent != null && b.cancel_percent < 100 ? tr.refundPartialLine(money(refundCents), b.cancel_percent) : tr.refundLine(money(refundCents)));
+  else if (b.payment_status === 'paid' || b.payment_method === 'card') parts.push(tr.noRefundLine);
+  if (b.retained_cents > 0) parts.push(b.payment_status === 'unpaid' ? tr.penaltyLine(money(b.retained_cents)) : tr.retainedLine(money(b.retained_cents)));
+  const line = parts.join(' ');
   await app.mail.send({
     to: b.email,
     subject: tr.cancelledSubject(b.ref),
@@ -252,7 +268,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
     b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
     b.notes ? `Note: ${b.notes}` : null,
     `Totale: ${formatMoney(b.total_cents, 'it', b.currency)}${b.discount_cents ? ` (sconto ${b.promo_code}: −${formatMoney(b.discount_cents, 'it', b.currency)})` : ''}${b.gift_cents ? ` · buono regalo: −${formatMoney(b.gift_cents, 'it', b.currency)}` : ''} · pagamento: ${b.payment_method} (${b.payment_status})`,
-    kind === 'cancelled' ? `Rimborso: ${refundCents ? formatMoney(refundCents, 'it', b.currency) : 'nessuno'}${b.cancelled_by ? ` · annullata da: ${b.cancelled_by}` : ''}` : null,
+    kind === 'cancelled' ? `Rimborso: ${refundCents ? formatMoney(refundCents, 'it', b.currency) : 'nessuno'}${b.cancel_percent != null ? ` (${b.cancel_percent}%)` : ''}${b.retained_cents > 0 ? ` · penale: ${formatMoney(b.retained_cents, 'it', b.currency)}${b.payment_status === 'unpaid' ? ' (da fatturare)' : ' (trattenuta)'}` : ''}${b.cancelled_by ? ` · annullata da: ${b.cancelled_by}` : ''}` : null,
     '',
     `${app.cfg.baseUrl}/admin/bookings/${b.id}`,
   ].filter((x) => x !== null);
@@ -508,6 +524,116 @@ export async function sendReviewRequest(app, b) {
         ${links.map(([url, label]) => button(url, label, true))}
         <p style="color:#444">${tr.privateAsk}</p>${button(feedbackUrl, tr.privateCta, links.length === 0)}
         <p style="color:#666;font-size:13px">${tr.thanks} ${app.cfg.site.name}<br>${tr.once}</p>`,
+      ),
+    ),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+// ───────────── Promemoria la sera prima del tour ─────────────
+const RM = {
+  it: {
+    subject: (title) => `Domani: ${title} a Venezia`,
+    intro: 'ti ricordo che domani ci vediamo per il tuo tour. Ecco i dettagli.',
+    ref: 'Codice',
+    tour: 'Servizio',
+    date: 'Data',
+    time: 'Orario',
+    people: 'Partecipanti',
+    meeting: 'Punto d’incontro',
+    map: 'Apri la mappa',
+    know: 'Da sapere',
+    contact: 'Se hai un imprevisto o non riesci a trovarmi, scrivimi o chiamami:',
+    contactMail: 'Se hai un imprevisto o non riesci a trovarmi, rispondi a questa email.',
+    manage: 'Vedi la prenotazione e scarica il voucher',
+    bye: 'A domani!',
+  },
+  en: {
+    subject: (title) => `Tomorrow: ${title} in Venice`,
+    intro: 'just a reminder that we are meeting tomorrow for your tour. Here are the details.',
+    ref: 'Code',
+    tour: 'Service',
+    date: 'Date',
+    time: 'Time',
+    people: 'Guests',
+    meeting: 'Meeting point',
+    map: 'Open the map',
+    know: 'Good to know',
+    contact: 'If anything comes up or you cannot find me, message or call me:',
+    contactMail: 'If anything comes up or you cannot find me, just reply to this email.',
+    manage: 'See your booking and download the voucher',
+    bye: 'See you tomorrow!',
+  },
+  es: {
+    subject: (title) => `Mañana: ${title} en Venecia`,
+    intro: 'te recuerdo que mañana nos vemos para tu tour. Aquí tienes los detalles.',
+    ref: 'Código',
+    tour: 'Servicio',
+    date: 'Fecha',
+    time: 'Hora',
+    people: 'Participantes',
+    meeting: 'Punto de encuentro',
+    map: 'Abrir el mapa',
+    know: 'Conviene saber',
+    contact: 'Si surge algún imprevisto o no me encuentras, escríbeme o llámame:',
+    contactMail: 'Si surge algún imprevisto o no me encuentras, responde a este correo.',
+    manage: 'Ver la reserva y descargar el voucher',
+    bye: '¡Hasta mañana!',
+  },
+};
+
+/** Come raggiungerti: telefono, WhatsApp ed email del sito (solo quelli impostati). */
+const contactParts = (cfg) => [cfg.site.phone, cfg.site.whatsapp ? `WhatsApp https://wa.me/${cfg.site.whatsapp}` : '', cfg.site.email].filter(Boolean);
+
+export async function sendReminder(app, b) {
+  const lang = normLang(b.lang);
+  const tr = RM[lang];
+  const ti = tourText(app, b.tour_slug, lang);
+  const manageUrl = `${app.cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`;
+  const hasDirect = !!(app.cfg.site.phone || app.cfg.site.whatsapp);
+  const contacts = contactParts(app.cfg);
+  const rows = [
+    [tr.tour, ti.title],
+    [tr.date, fmtDate(b.date, lang)],
+    [tr.time, `${b.start_time}–${b.end_time}`],
+    [tr.people, String(b.participants)],
+    [tr.meeting, ti.meetingPoint],
+    [tr.ref, b.ref],
+  ];
+  const text = [
+    greet(lang, b.name),
+    '',
+    tr.intro,
+    '',
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    ti.meetingUrl ? `${tr.map}: ${ti.meetingUrl}` : null,
+    ti.notes ? `${tr.know}: ${ti.notes}` : null,
+    '',
+    hasDirect ? `${tr.contact} ${contacts.join(' · ')}` : tr.contactMail,
+    '',
+    `${tr.manage}: ${manageUrl}`,
+    '',
+    tr.bye,
+    app.cfg.site.name,
+  ].filter((x) => x !== null).join('\n');
+  const button = (href, label) => html`<p><a href="${href}" style="display:inline-block;border:2px solid #af9168;color:#7d6238;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${label}</a></p>`;
+  return app.mail.send({
+    to: b.email,
+    subject: tr.subject(ti.title),
+    text,
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${greet(lang, b.name)}</p><p>${tr.intro}</p>
+        <table style="border-collapse:collapse;width:100%;font-size:15px">
+          ${rows.map(([k, v]) => html`<tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top">${k}</td><td style="padding:6px 0"><strong>${v}</strong></td></tr>`)}
+        </table>
+        ${ti.meetingUrl ? button(ti.meetingUrl, tr.map) : ''}
+        ${ti.notes ? html`<p><strong>${tr.know}.</strong> ${ti.notes}</p>` : ''}
+        <p>${hasDirect ? tr.contact : tr.contactMail}${hasDirect ? html`<br><strong>${contacts.join(' · ')}</strong>` : ''}</p>
+        ${button(manageUrl, tr.manage)}
+        <p style="color:#666;font-size:13px">${tr.bye}<br>${app.cfg.site.name}</p>`,
       ),
     ),
     replyTo: app.cfg.mail.notifyTo || undefined,

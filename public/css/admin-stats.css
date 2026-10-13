@@ -1,0 +1,161 @@
+/* Statistiche e KPI (admin). Si carica dopo style.css e ne usa le variabili colore, che cambiano nel tema scuro.
+   Niente stili in linea nella pagina (CSP): i grafici SVG si colorano da qui. */
+
+.st {
+  /* Colore dei segni nei grafici: ambra, in sintonia con oro e bronzo del sito ma con almeno 3:1 sulla scheda chiara e su quella scura
+     (--gold e --bronze sulla scheda chiara non ci arrivano). Validata con lo script di dataviz in entrambi i temi. */
+  --st-bar: #b8860b;
+  --st-track: var(--line);
+  --st-track: color-mix(in srgb, var(--st-bar) 16%, transparent);
+}
+
+.st-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.st-section { margin: 0 0 30px; }
+.st-head { margin: 0 0 12px; }
+.st-head .h-sub { margin-bottom: 2px; }
+.st-head p { margin: 0; }
+.st-h { font-size: 1.15rem; margin: 0 0 0.7rem; }
+.st-sub { font-size: 1.05rem; margin: 0 0 0.7rem; }
+.st-empty { margin: 4px 0; }
+.st-more { margin: 12px 0 0; }
+.st-info { background: var(--soft); border-color: var(--line); color: var(--text); }
+
+/* ───────── Filtri ───────── */
+.st-filters { margin-bottom: 18px; }
+.st-filters-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.st-filters-head .st-h { margin: 0; }
+.st-presets { margin-bottom: 12px; gap: 6px; }
+.st-presets a { padding: 6px 13px; font-size: 0.8rem; }
+.st-adv { border-top: 1px solid var(--line); padding-top: 4px; }
+.st-adv > summary { cursor: pointer; font-weight: 700; color: var(--accent-text); padding: 10px 0; }
+.st-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; margin-top: 8px; }
+.st-fields .field { margin-bottom: 12px; min-width: 0; }
+.st-fields .st-wide { grid-column: 1 / -1; }
+.st-actions { margin-top: 2px; }
+.st-hint { margin: 12px 0 0; }
+.st-summary { margin: 0 0 22px; }
+.st-summary p { margin: 0 0 4px; }
+
+/* ───────── KPI ───────── */
+.st-group { margin: 0 0 20px; }
+.st-group-title { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
+.st-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.st-kpi { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 14px 14px 12px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.st-kpi dt, .st-kpi dd { margin: 0; }
+.st-kpi-hero { border-left: 4px solid var(--st-bar); }
+.st-kpi-label { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--muted); line-height: 1.3; }
+.st-kpi-value { font-size: clamp(1.2rem, 5.2vw, 1.75rem); font-weight: 700; line-height: 1.15; color: var(--ink); overflow-wrap: anywhere; }
+[data-theme='dark'] .st-kpi-value, [data-theme='dark'] .st-tile-value { color: var(--gold); }
+.st-kpi-sub { font-size: 0.8rem; line-height: 1.35; color: var(--muted); }
+.st-kpi-note { font-size: 0.74rem; line-height: 1.4; color: var(--muted); margin-top: 2px; }
+.st-delta { display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; font-weight: 700; line-height: 1.2; }
+.st-ico { width: 9px; height: 9px; flex: none; fill: currentColor; }
+.st-good { color: var(--ok); }
+.st-bad { color: var(--err); }
+.st-neutral, .st-flat { color: var(--muted); }
+
+/* ───────── Grafico a colonne ───────── */
+.st-fig { margin: 0; }
+.st-fig figcaption { margin-top: 6px; }
+.st-chart { container-type: inline-size; }
+.st-svg { display: block; width: 100%; height: auto; max-width: 640px; margin-inline: auto; overflow: visible; }
+.st-svg-wide { display: none; }
+@container (min-width: 600px) {
+  .st-svg-narrow { display: none; }
+  .st-svg-wide { display: block; max-width: none; }
+}
+.st-svg text { font-family: inherit; font-size: 11.5px; fill: var(--muted); }
+.st-svg-wide text { font-size: 13px; }
+.st-svg .st-peak { fill: var(--text); font-weight: 700; paint-order: stroke; stroke: var(--card); stroke-width: 4px; stroke-linejoin: round; }
+.st-grid line { stroke: var(--line); stroke-width: 1; }
+.st-grid line.st-axis { stroke: var(--muted); stroke-opacity: 0.55; }
+.st-bar { fill: var(--st-bar); }
+.st-hit { fill: transparent; }
+.st-col:hover .st-hit { fill: var(--gold-soft); }
+.st-col:hover .st-bar { fill-opacity: 0.8; }
+.st-details { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 8px; }
+.st-details summary { cursor: pointer; font-weight: 700; color: var(--accent-text); padding: 8px 0; }
+.st-details .st-wrap { max-height: 28rem; overflow-y: auto; }
+
+/* ───────── Tabelle con barre ───────── */
+/* Non usano la classe «table» del sito: su telefono quella trasforma ogni riga in una scheda, qui serve una vista più compatta. */
+.st-wrap { overflow-x: auto; }
+.st-table { width: 100%; border-collapse: collapse; font-size: 0.97rem; }
+.st-table th, .st-table td { padding: 12px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.st-table thead th { text-align: left; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.st-table th[scope='row'] { text-align: left; font-weight: 400; color: var(--text); }
+.st-table .num { text-align: right; white-space: nowrap; }
+.st-table tbody tr:last-child th, .st-table tbody tr:last-child td { border-bottom: 1px solid var(--line); }
+.st-table tfoot th, .st-table tfoot td { font-weight: 700; border-top: 2px solid var(--line); border-bottom: 0; color: var(--text); }
+.st-name { min-width: 7.5rem; }
+.st-name-text { display: block; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+[data-theme='dark'] .st-name-text { color: #f1ede2; }
+a.st-name-text { color: var(--accent-text); }
+.st-meter { display: block; width: 100%; height: 8px; margin-top: 7px; }
+.st-meter-track { fill: var(--st-track); }
+.st-meter-fill { fill: var(--st-bar); }
+.st-subline { display: none; margin-top: 5px; color: var(--muted); font-size: 0.8rem; line-height: 1.35; }
+.st-subline-always { display: block; }
+.st-compact .st-name { min-width: 0; }
+.st-code { font-family: ui-monospace, monospace; font-weight: 700; letter-spacing: 0.04em; overflow-wrap: anywhere; }
+.st-data th, .st-data td { padding: 9px 10px; font-size: 0.92rem; }
+
+/* ───────── Riquadri (portafoglio, buoni, programmi) ───────── */
+.st-tiles { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0; }
+.st-tile { min-width: 0; padding: 14px; background: var(--soft); border: 1px solid var(--line); border-radius: 10px; }
+.st-tile dt { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; line-height: 1.3; }
+.st-tile dd { margin: 0; }
+.st-tile-value { font-size: 1.45rem; font-weight: 700; line-height: 1.2; color: var(--ink); margin: 3px 0 2px; overflow-wrap: anywhere; }
+.st-tile .small { line-height: 1.4; }
+
+/* ───────── Definizioni ───────── */
+.st-defs summary { cursor: pointer; font-weight: 700; color: var(--accent-text); }
+.st-defs dl { margin: 12px 0 0; }
+.st-defs dl > div { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.st-defs dl > div:last-child { border-bottom: 0; }
+.st-defs dt { font-weight: 700; color: var(--ink); }
+[data-theme='dark'] .st-defs dt { color: #f1ede2; }
+.st-defs dd { margin: 2px 0 0; color: var(--muted); font-size: 0.95rem; }
+
+/* ───────── Schermi larghi ───────── */
+.st-cols2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 20px; }
+
+@media (min-width: 720px) {
+  .st-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .st-kpi-value { font-size: 1.75rem; }
+  .st-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; margin-top: 4px; }
+  .st-fields .st-wide { grid-column: auto; }
+  .st-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .st-tiles-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1040px) {
+  .st-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .st-cols2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st-cols2 > .st-section { display: flex; flex-direction: column; }
+  .st-cols2 > .st-section > .card { flex: 1; }
+}
+
+/* ───────── Telefoni: le colonne secondarie passano sotto il nome ───────── */
+@media (max-width: 719px) {
+  .st-hide-sm { display: none; }
+  .st-subline { display: block; }
+  .st-table th, .st-table td { padding-left: 8px; padding-right: 8px; }
+  .st-details .st-wrap { max-height: 22rem; }
+}
+
+/* Su schermi larghi i filtri restano sempre aperti (dove il browser lo consente); altrimenti basta un tocco su «altri filtri» */
+@supports selector(::details-content) {
+  @media (min-width: 720px) {
+    .st-adv::details-content { content-visibility: visible; }
+    .st-adv > summary { display: none; }
+    .st-adv { border-top: 0; padding-top: 0; }
+  }
+}
+
+/* Contrasto elevato (Windows): i segni usano i colori di sistema */
+@media (forced-colors: active) {
+  .st-bar, .st-meter-fill { fill: Highlight; }
+  .st-meter-track { fill: Canvas; stroke: GrayText; }
+  .st-grid line { stroke: GrayText; }
+  .st-svg text { fill: CanvasText; }
+}

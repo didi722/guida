@@ -589,6 +589,61 @@
   "Full terms",
   "Condiciones completas"
  ],
+ "policy.title": [
+  "Condizioni di annullo",
+  "Cancellation terms",
+  "Condiciones de cancelación"
+ ],
+ "policy.tierFull": [
+  "Rimborso totale fino al {until}.",
+  "Full refund until {until}.",
+  "Reembolso total hasta el {until}."
+ ],
+ "policy.tier": [
+  "Rimborso del {percent}% fino al {until}.",
+  "{percent}% refund until {until}.",
+  "Reembolso del {percent}% hasta el {until}."
+ ],
+ "policy.rest": [
+  "Dopo: nessun rimborso.",
+  "After that: no refund.",
+  "Después: sin reembolso."
+ ],
+ "policy.tierHoursFull": [
+  "Rimborso totale fino a {when} prima dell’inizio.",
+  "Full refund up to {when} before the start.",
+  "Reembolso total hasta {when} antes del inicio."
+ ],
+ "policy.tierHours": [
+  "Rimborso del {percent}% fino a {when} prima dell’inizio.",
+  "{percent}% refund up to {when} before the start.",
+  "Reembolso del {percent}% hasta {when} antes del inicio."
+ ],
+ "booking.cancelNow": [
+  "Annullando ora ricevi un rimborso del {percent}% ({amount}).",
+  "If you cancel now you get a {percent}% refund ({amount}).",
+  "Si cancelas ahora recibes un reembolso del {percent}% ({amount})."
+ ],
+ "booking.cancelNowFee": [
+  "Annullando ora si applica una penale del {percent}% ({amount}), che verrà fatturata.",
+  "If you cancel now a {percent}% cancellation fee applies ({amount}), to be invoiced.",
+  "Si cancelas ahora se aplica una penalización del {percent}% ({amount}), que se facturará."
+ ],
+ "booking.confirmCancelFee": [
+  "Annullando ora si applica una penale. Vuoi procedere?",
+  "A cancellation fee applies if you cancel now. Continue?",
+  "Si cancelas ahora se aplica una penalización. ¿Continuar?"
+ ],
+ "booking.penalty": [
+  "Penale di annullo: {amount}",
+  "Cancellation fee: {amount}",
+  "Penalización por cancelación: {amount}"
+ ],
+ "booking.refundedPartial": [
+  "Rimborsati {amount} ({percent}%)",
+  "{amount} refunded ({percent}%)",
+  "Reembolsado: {amount} ({percent}%)"
+ ],
  "w.title": [
   "Prenota questo tour",
   "Book this tour",
@@ -1173,6 +1228,11 @@
   "Nessun addebito reale: questa pagina simula il pagamento.",
   "No real charge: this page simulates the payment.",
   "No se realiza ningún cargo real: esta página simula el pago."
+ ],
+ "demo.siteBanner": [
+  "Sito di prova: i pagamenti sono simulati e nessuna carta viene addebitata.",
+  "Test site: payments are simulated and no card is charged.",
+  "Sitio de prueba: los pagos son simulados y no se cobra ninguna tarjeta."
  ],
  "demo.title": [
   "Pagamento (simulato)",
@@ -2145,9 +2205,9 @@
   "¿Qué te ha gustado? ¿Qué podría hacer mejor?"
  ],
  "fb.publish": [
-  "Puoi citare le mie parole sul sito (senza cognome)",
-  "You may quote my words on the website (without my surname)",
-  "Puedes citar mis palabras en el sitio web (sin apellido)"
+  "Puoi citare le mie parole sul sito, con il mio nome di battesimo (senza cognome)",
+  "You may quote my words on the website, with my first name (without my surname)",
+  "Puedes citar mis palabras en el sitio web, con mi nombre de pila (sin apellido)"
  ],
  "fb.send": [
   "Invia il feedback",
@@ -3038,5 +3098,60 @@
   "Pagamento sicuro",
   "Secure payment",
   "Pago seguro"
+ ],
+ "departures.title": [
+  "Prossime partenze",
+  "Next departures",
+  "Próximas salidas"
+ ],
+ "departures.lead": [
+  "Tour in piccolo gruppo con posti liberi nei prossimi giorni. Tocca un orario per prenotare.",
+  "Small-group tours with free places in the coming days. Tap a departure to book.",
+  "Tours en grupo reducido con plazas libres en los próximos días. Toca una salida para reservar."
+ ],
+ "departures.left": [
+  "Ultimi {n} posti",
+  "Last {n} places",
+  "Últimas {n} plazas"
+ ],
+ "departures.left1": [
+  "Ultimo posto",
+  "Last place",
+  "Última plaza"
+ ],
+ "departures.more": [
+  "Cerca un’altra data",
+  "Look for another date",
+  "Buscar otra fecha"
+ ],
+ "checkout.update": [
+  "Aggiorna",
+  "Update",
+  "Actualizar"
+ ],
+ "reviews.title": [
+  "Cosa dicono i clienti",
+  "What guests say",
+  "Qué dicen los clientes"
+ ],
+ "reviews.tourTitle": [
+  "Dicono di questo tour",
+  "What guests say about this tour",
+  "Lo que dicen de este tour"
+ ],
+ "reviews.avg": [
+  "{avg} su 5 · media di {n} voti lasciati dai clienti dopo il tour",
+  "{avg} out of 5 · average of {n} ratings left by guests after the tour",
+  "{avg} de 5 · media de {n} valoraciones dejadas por clientes después del tour"
+ ],
+ "reviews.note": [
+  "Commenti di clienti che hanno fatto il tour, pubblicati con il loro permesso.",
+  "Comments from guests who took the tour, published with their permission.",
+  "Comentarios de clientes que hicieron el tour, publicados con su permiso."
+ ],
+ "reviews.readAll": [
+  "Leggi tutte le recensioni",
+  "Read all reviews",
+  "Leer todas las reseñas"
  ]
 }

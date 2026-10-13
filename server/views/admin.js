@@ -1,18 +1,19 @@
 import { html, raw } from '../html.js';
-import { cancellationState } from '../bookings.js';
-import { dayOfWeek, fmtDate, fmtMonth, monthDates } from '../time.js';
+import { bookingDue, cancellationState } from '../bookings.js';
+import { makeT } from '../i18n.js';
+import { splitAmounts } from '../policy.js';
+import { isSimplePolicy, tierSentences } from '../policyText.js';
+import { dayOfWeek, fmtDate, fmtMonth, monthDates, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
-import { langName } from '../langs.js';
+import { langName, normLang } from '../langs.js';
 
-const NAV = [
-  ['/admin', 'Agenda'],
-  ['/admin/bookings', 'Prenotazioni'],
-  ['/admin/programs', 'Programmi'],
-  ['/admin/invoices', 'Fatture'],
-  ['/admin/availability', 'Disponibilità'],
-  ['/admin/partners', 'Partner'],
-  ['/admin/discounts', 'Sconti'],
-  ['/admin/feedback', 'Feedback'],
+// Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
+export const ADMIN_GROUPS = [
+  { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità']] },
+  { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
+  { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
+  { label: 'Sito', items: [['/admin/tours', 'Tour'], ['/admin/prices', 'Listino'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/settings', 'Impostazioni']] },
+  { label: 'Aiuto', items: [['/admin/guide', 'Guida'], ['/admin/backup', 'Backup'], ['/admin/mail', 'Email']] },
 ];
 
 const WEEKDAYS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
@@ -23,23 +24,25 @@ export const PAY_IT = { card: 'Carta', onsite: 'Sul posto', invoice: 'Fattura', 
 export const PAYSTATUS_IT = { unpaid: 'Da incassare', paid: 'Pagata', refunded: 'Rimborsata', refund_failed: 'Rimborso fallito' };
 const chipFor = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
 
-export function adminLayout(ctx, { title, active, body, flash = '', error = '', scripts = '' }) {
+export function adminLayout(ctx, { title, active, body, flash = '', error = '', scripts = '', styles = [] }) {
   const { app } = ctx;
+  const group = ADMIN_GROUPS.find((g) => g.items.some(([href]) => href === active));
   return html`<!doctype html>
 <html lang="it"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow"><title>${title} · Admin</title>
 <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/css/style.css?v=${app.assetVersion}"><script src="/js/theme.js"></script>
+<link rel="stylesheet" href="/css/style.css?v=${app.assetVersion}">${styles.map((href) => html`<link rel="stylesheet" href="${href}?v=${app.assetVersion}">`)}<script src="/js/theme.js"></script>
 </head><body class="admin">
 <header class="admin-bar"><div class="admin-bar-inner">
   <a class="brand" href="/admin"><span class="brand-name">${app.cfg.site.name}</span><span class="brand-sub">Pannello</span></a>
-  <nav class="admin-nav" aria-label="Admin">${NAV.map(([href, label]) => html`<a href="${href}" ${active === href ? raw('aria-current="page"') : ''}>${label}</a>`)}</nav>
+  <nav class="admin-nav" aria-label="Admin">${ADMIN_GROUPS.map((g) => html`<a href="${g.items[0][0]}" ${g === group ? raw('aria-current="page"') : ''}>${g.label}</a>`)}</nav>
   <form method="post" action="/admin/logout"><button class="tool" type="submit" title="Esci">Esci</button></form>
 </div></header>
 <main class="wrap admin-main">
   ${flash ? html`<div class="notice notice-ok" role="status">${flash}</div>` : ''}
   ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
+  ${group && group.items.length > 1 ? html`<nav class="tabs admin-subnav" aria-label="${group.label}">${group.items.map(([href, label]) => html`<a href="${href}" ${active === href ? raw('aria-current="page"') : ''}>${label}</a>`)}</nav>` : ''}
   <h1>${title}</h1>
   ${body}
 </main>
@@ -62,11 +65,12 @@ export function adminLoginPage(ctx, { error = '' } = {}) {
   <div class="card pad">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
     <form method="post" action="/admin/login" class="form">
-      <label class="field"><span class="label">Password</span><input type="password" name="password" required autofocus autocomplete="current-password"></label>
+      <label class="field"><span class="label">Password</span><input type="password" name="password" required autofocus autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-password></label>
+      <label class="check"><input type="checkbox" data-show-password> Mostra la password</label>
       <button class="btn btn-gold btn-block" type="submit">Entra</button>
     </form>
   </div>
-</main></body></html>`;
+</main><script src="/js/admin-login.js?v=${ctx.app.assetVersion}" defer></script></body></html>`;
 }
 
 function bookingRow(ctx, b) {
@@ -130,10 +134,21 @@ ${items.length
   return adminLayout(ctx, { title: 'Prenotazioni', active: '/admin/bookings', body });
 }
 
+/** Cosa succede annullando adesso secondo la politica della prenotazione. */
+function cancelPreview(b, st) {
+  if (b.status !== 'confirmed') return 'Secondo la politica (nulla da pagare: era in attesa di pagamento)';
+  const due = bookingDue(b);
+  const paid = b.payment_status === 'paid';
+  const { refundCents, retainedCents } = splitAmounts({ paidCents: paid ? due : 0, dueCents: due }, st.percent);
+  if (paid) return `Secondo la politica: oggi ${st.percent}% → rimborso ${formatMoney(refundCents, 'it', b.currency)}${retainedCents ? `, trattenuti ${formatMoney(retainedCents, 'it', b.currency)}` : ''}`;
+  return `Secondo la politica: oggi ${st.percent}% → ${retainedCents ? `penale ${formatMoney(retainedCents, 'it', b.currency)} da fatturare` : 'nessuna penale'}`;
+}
+
 export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
   const tour = ctx.app.content.tour(b.tour_slug);
   const st = cancellationState(b);
   const live = b.status === 'confirmed' || b.status === 'held';
+  const today = nowRome().date;
   const wa = b.phone ? b.phone.replace(/[^\d]/g, '') : '';
   const body = html`
 <p><a href="/admin/bookings">← Tutte le prenotazioni</a></p>
@@ -145,13 +160,19 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       <div><dt>Data</dt><dd>${fmtDate(b.date, 'it')}</dd></div>
       <div><dt>Orario</dt><dd>${b.start_time}–${b.end_time}</dd></div>
       <div><dt>Persone</dt><dd>${b.participants}</dd></div>
+      <div><dt>Pagina del cliente</dt><dd><a href="/${normLang(b.lang)}/booking/${b.ref}?t=${b.token}">Apri come la vede il cliente</a> <small class="muted">(da qui si prova anche l’annullo)</small></dd></div>
       ${b.discount_cents ? html`<div><dt>Sconto</dt><dd>${b.promo_code} · −${formatMoney(b.discount_cents, 'it', b.currency)} (listino ${formatMoney(b.list_cents, 'it', b.currency)})</dd></div>` : ''}
       ${b.gift_cents ? html`<div><dt>Buono regalo</dt><dd>−${formatMoney(b.gift_cents, 'it', b.currency)}</dd></div>` : ''}
       <div><dt>${b.discount_cents || b.gift_cents ? 'Da pagare' : 'Totale'}</dt><dd>${formatMoney(b.total_cents - b.gift_cents, 'it', b.currency)} · ${PAY_IT[b.payment_method]} · <strong>${PAYSTATUS_IT[b.payment_status]}</strong>${b.refund_cents ? ` (rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)})` : ''}</dd></div>
-      <div><dt>Cancellazione gratuita fino a</dt><dd>${new Date(b.free_cancel_until).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'medium', timeStyle: 'short' })} ${st.free ? html`<span class="chip chip-ok">ancora valida</span>` : html`<span class="chip chip-warn">scaduta</span>`}</dd></div>
+      ${isSimplePolicy(st.tiers)
+        ? html`<div><dt>Cancellazione gratuita fino a</dt><dd>${new Date(b.free_cancel_until).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'medium', timeStyle: 'short' })} ${st.free ? html`<span class="chip chip-ok">ancora valida</span>` : html`<span class="chip chip-warn">scaduta</span>`}</dd></div>`
+        : html`<div><dt>Politica di annullo</dt><dd><ul class="plain tier-list">${tierSentences(makeT('it'), 'it', st.tiers, st.startsAt).map((x) => html`<li>${x}</li>`)}</ul>${b.status === 'confirmed' ? html`<span class="chip ${st.percent === 100 ? 'chip-ok' : 'chip-warn'}">oggi: rimborso ${st.percent}%</span>` : ''}</dd></div>`}
+      ${b.channel === 'b2c' && b.status === 'confirmed' && b.date >= today ? html`<div><dt>Promemoria al cliente</dt><dd>${b.reminder_status === 'sent' ? `inviato il ${new Date(b.reminder_sent_at).toLocaleDateString('it-IT')}` : b.reminder_status === 'skipped' ? 'non verrà inviato' : ctx.app.cfg.reminders.enabled ? `parte la sera prima, alle ${String(ctx.app.cfg.reminders.sendHour).padStart(2, '0')}:00` : 'disattivato (vedi Sito › Impostazioni)'}
+        ${!b.reminder_status ? html`<form method="post" action="/admin/bookings/${b.id}/reminder" class="inline-form"><button class="btn btn-sm btn-outline" type="submit" name="action" value="send">Invia ora</button> <button class="btn btn-sm btn-outline" type="submit" name="action" value="skip">Non inviare</button></form>` : ''}</dd></div>` : ''}
       ${b.channel === 'b2c' && b.status === 'confirmed' ? html`<div><dt>Richiesta recensione</dt><dd>${b.review_status === 'sent' ? `inviata il ${new Date(b.review_sent_at).toLocaleDateString('it-IT')}` : b.review_status === 'skipped' ? 'non verrà inviata' : 'parte il giorno dopo il tour'}
         ${!b.review_status ? html`<form method="post" action="/admin/bookings/${b.id}/review" class="inline-form"><button class="btn btn-sm btn-outline" type="submit" name="action" value="send">Invia ora</button> <button class="btn btn-sm btn-outline" type="submit" name="action" value="skip">Non inviare</button></form>` : ''}</dd></div>` : ''}
-      ${b.status === 'cancelled' ? html`<div><dt>Annullata</dt><dd>${b.cancelled_by ?? ''}${b.cancel_reason ? ' · ' + b.cancel_reason : ''}</dd></div>` : ''}
+      ${b.status === 'cancelled' ? html`<div><dt>Annullata</dt><dd>${b.cancelled_by ?? ''}${b.cancel_reason ? ' · ' + b.cancel_reason : ''}</dd></div>
+      ${b.cancel_percent != null ? html`<div><dt>Esito dell'annullo</dt><dd>rimborso ${b.cancel_percent}%${b.refund_cents ? ` · rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)}` : ''}${b.retained_cents ? html` · <strong>penale ${formatMoney(b.retained_cents, 'it', b.currency)}</strong> ${b.payment_status === 'unpaid' ? 'da fatturare' : 'trattenuta'}` : ''}</dd></div>` : ''}` : ''}
       ${b.status === 'confirmed' || invoice ? invoiceRow(invoice, { warn: true }) : ''}
     </dl>
     ${b.status === 'confirmed' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/voucher.pdf" target="_blank" rel="noopener">Voucher PDF</a></p>` : ''}
@@ -181,10 +202,10 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
   ${live
     ? html`<form class="card pad form" method="post" action="/admin/bookings/${b.id}/cancel" data-confirm="Annullare la prenotazione e avvisare il cliente?">
     <h2>Annulla prenotazione</h2>
-    <label class="field"><span class="label">Rimborso</span><select name="refund">
-      <option value="auto">Automatico (secondo la politica)${b.payment_status === 'paid' ? '' : ' — nulla da rimborsare'}</option>
-      <option value="full" ${b.payment_status === 'paid' ? '' : raw('disabled')}>Rimborsa tutto</option>
-      <option value="none">Nessun rimborso</option></select></label>
+    <label class="field"><span class="label">Rimborso e penale</span><select name="refund">
+      <option value="auto">${cancelPreview(b, st)}</option>
+      <option value="full">${b.payment_status === 'paid' ? 'Rimborsa tutto (nessuna penale)' : 'Nessuna penale'}</option>
+      <option value="none">${b.payment_status === 'paid' ? 'Nessun rimborso (si trattiene tutto)' : 'Penale totale (da fatturare)'}</option></select></label>
     <label class="field"><span class="label">Motivo <em>(facoltativo)</em></span><input name="reason" maxlength="300"></label>
     <button class="btn btn-danger" type="submit">Annulla e avvisa il cliente</button>
   </form>`
@@ -283,49 +304,3 @@ export function availabilityPage(ctx, { weekly, month, overrides, blocks, bookin
 </div>`;
   return adminLayout(ctx, { title: 'Disponibilità', active: '/admin/availability', body, flash, error });
 }
-
-export function partnersPage(ctx, { items, filter }) {
-  const tabs = [['all', 'Tutti'], ['pending', 'Da approvare'], ['approved', 'Approvati']];
-  const ST = { pending: 'Da approvare', approved: 'Approvato', rejected: 'Rifiutato', suspended: 'Sospeso' };
-  const body = html`<div class="tabs">${tabs.map(([k, l]) => html`<a href="/admin/partners?f=${k}" ${filter === k ? raw('aria-current="page"') : ''}>${l}</a>`)}</div>
-${items.length
-  ? html`<div class="card table-wrap"><table class="table"><thead><tr><th>Azienda</th><th>Referente</th><th>Stato</th><th class="num">Sconto</th><th class="num">Prenotazioni</th></tr></thead><tbody>
-    ${items.map((a) => html`<tr><td><a href="/admin/partners/${a.id}"><strong>${a.company}</strong></a><br><small class="muted">${a.country ?? ''} ${a.vat ?? ''}</small></td><td>${a.contact_name}<br><small class="muted">${a.email}</small></td>
-      <td><span class="chip ${a.status === 'approved' ? 'chip-ok' : a.status === 'pending' ? 'chip-warn' : 'chip-err'}">${ST[a.status]}</span></td><td class="num">${a.discount_percent ? a.discount_percent + '%' : '—'}</td><td class="num">${a.bookings}</td></tr>`)}
-  </tbody></table></div>`
-  : html`<p class="muted">Nessun partner.</p>`}`;
-  return adminLayout(ctx, { title: 'Partner B2B', active: '/admin/partners', body });
-}
-
-export function partnerDetailPage(ctx, a, bookings, flash = '') {
-  const { cfg } = ctx.app;
-  const body = html`
-<p><a href="/admin/partners">← Tutti i partner</a></p>
-<div class="grid grid-2 admin-detail">
-  <div class="card pad"><h2>${a.company}</h2>
-    <dl class="summary-list">
-      <div><dt>P.IVA / VAT</dt><dd>${a.vat ?? ''} ${a.country ? '(' + a.country + ')' : ''}</dd></div>
-      <div><dt>SDI / PEC</dt><dd>${a.sdi_code ?? '—'} / ${a.pec ?? '—'}</dd></div>
-      ${a.address ? html`<div><dt>Indirizzo</dt><dd>${a.address}</dd></div>` : ''}
-      <div><dt>Referente</dt><dd>${a.contact_name} · <a href="mailto:${a.email}">${a.email}</a>${a.phone ? html` · <a href="tel:${a.phone}">${a.phone}</a>` : ''}</dd></div>
-      ${a.website ? html`<div><dt>Sito</dt><dd><a href="${a.website}" rel="noopener nofollow" target="_blank">${a.website}</a></dd></div>` : ''}
-      ${a.message ? html`<div><dt>Messaggio</dt><dd>${a.message}</dd></div>` : ''}
-      <div><dt>Registrato</dt><dd>${new Date(a.created_at).toLocaleDateString('it-IT')}</dd></div>
-    </dl></div>
-  <form class="card pad form" method="post" action="/admin/partners/${a.id}">
-    <h2>Condizioni</h2>
-    <label class="field"><span class="label">Stato</span><select name="status">${[['pending', 'Da approvare'], ['approved', 'Approvato'], ['rejected', 'Rifiutato'], ['suspended', 'Sospeso']].map(([v, l]) => html`<option value="${v}" ${a.status === v ? raw('selected') : ''}>${l}</option>`)}</select></label>
-    <label class="field"><span class="label">Sconto extra sulla tariffa B2B (%)</span><input type="number" name="discount_percent" min="0" max="60" step="0.5" value="${a.discount_percent}"></label>
-    <label class="field"><span class="label">Cancellazione gratuita fino a (ore prima) <em>— vuoto = predefinito (${cfg.policy.b2bFreeCancelHours} h)</em></span><input type="number" name="cancel_hours" min="0" max="2000" value="${a.cancel_hours ?? ''}"></label>
-    <label class="check"><input type="checkbox" name="allow_invoice" value="1" ${a.allow_invoice ? raw('checked') : ''}> Può pagare a fattura / bonifico</label>
-    <label class="field"><span class="label">Note interne</span><textarea name="admin_notes" rows="3" maxlength="2000">${a.admin_notes ?? ''}</textarea></label>
-    <button class="btn btn-gold" type="submit">Salva${a.status === 'pending' ? ' (e approva se imposti "Approvato")' : ''}</button>
-  </form>
-</div>
-<h2 class="h-sub spaced">Prenotazioni</h2>
-${bookings.length
-  ? html`<div class="card table-wrap"><table class="table"><tbody>${bookings.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')} ${b.start_time}</a></td><td>${ctx.app.content.tour(b.tour_slug)?.i18n.it.title}</td><td class="num">${b.participants}</td><td><span class="chip ${chipFor(b.status)}">${STATUS_IT[b.status]}</span></td><td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}</tbody></table></div>`
-  : html`<p class="muted">Ancora nessuna prenotazione.</p>`}`;
-  return adminLayout(ctx, { title: 'Partner', active: '/admin/partners', body, flash });
-}
-

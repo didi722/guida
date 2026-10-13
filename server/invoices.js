@@ -36,8 +36,8 @@ export function settingsOf(cfg) {
 export function configProblems(cfg) {
   const s = settingsOf(cfg);
   const out = sellerProblems({ ...s.seller, vatBp: s.vatBp, nature: s.nature });
-  if (s.iban && !/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s.iban)) out.push('L’IBAN (INVOICE_IBAN) non ha un formato valido.');
-  if (s.seller.regime === 'RF19' && s.vatBp > 0) out.push('Il regime forfettario (RF19) non prevede IVA: imposta INVOICE_VAT_RATE=0.');
+  if (s.iban && !/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s.iban)) out.push('L’IBAN non ha un formato valido.');
+  if (s.seller.regime === 'RF19' && s.vatBp > 0) out.push('Il regime forfettario (RF19) non prevede IVA: imposta l’aliquota IVA a 0.');
   return out;
 }
 
@@ -97,6 +97,30 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
     if (!b) return null;
     const tour = content.tour(b.tour_slug);
     const acct = b.channel === 'b2b' ? account(b.account_id) : null;
+    if (b.status === 'cancelled') {
+      // prenotazione annullata con penale: si fattura solo quanto resta dovuto (se non c'è nulla, la voce non esiste)
+      const kept = b.retained_cents ?? 0;
+      const paidPart = b.payment_status !== 'unpaid';
+      const cancelDate = dateOf(b.cancelled_at) ?? today;
+      const title = tour?.i18n.it.title ?? b.tour_slug;
+      return {
+        ...common,
+        ref: b.ref,
+        label: `Penale di annullo · ${title} · ${fmtDate(b.date, 'it', 'short')} ${b.start_time} · ${b.participants} pers.`,
+        date: cancelDate,
+        served: true,
+        channel: b.channel,
+        accountId: acct?.id ?? null,
+        buyerKey: acct ? `account:${acct.id}` : `email:${b.email}`,
+        customer: acct ? acct.company : b.name,
+        buyer: acct ? buyerFromAccount(acct) : buyerFromPerson(b.name, b.email, b.lang),
+        hint: b.billing_json ? (JSON.parse(b.billing_json).text ?? null) : null,
+        description: `Penale di annullo – ${title} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${b.participants} ${b.participants === 1 ? 'persona' : 'persone'}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
+        amountCents: kept,
+        payments: [{ method: paidPart ? ({ card: 'MP08', onsite: 'MP01', invoice: 'MP05' }[b.payment_method] ?? null) : 'MP05', cents: kept, paid: paidPart }],
+        dueBy: addDays(cancelDate, 12),
+      };
+    }
     // la parte pagata con un buono regalo è già stata fatturata alla vendita del buono (se è considerato monouso)
     const cents = s.giftInvoiceAt === 'sale' ? bookingDue(b) : b.total_cents;
     const paidNow = b.payment_status === 'paid';
@@ -191,14 +215,18 @@ export const invoiceForSource = (db, type, id) =>
 
 /** Una voce è fatturabile solo finché è valida: una prenotazione annullata o rimborsata, un buono annullato o un programma chiuso non si fatturano. */
 function isBillable(db, type, id) {
-  const table = { booking: 'bookings', gift: 'gift_cards', program: 'programs' }[type];
-  const ok = { booking: 'confirmed', gift: 'active', program: 'confirmed' }[type];
+  if (type === 'booking') {
+    const b = db.prepare('SELECT status, retained_cents FROM bookings WHERE id = ?').get(id);
+    return b?.status === 'confirmed' || (b?.status === 'cancelled' && b.retained_cents > 0); // annullata ma con una penale dovuta
+  }
+  const table = { gift: 'gift_cards', program: 'programs' }[type];
+  const ok = { gift: 'active', program: 'confirmed' }[type];
   return db.prepare(`SELECT status FROM ${table} WHERE id = ?`).get(id)?.status === ok;
 }
 
 const isReserved = (db, type, id) => !!db.prepare('SELECT 1 FROM invoice_lines WHERE source_type = ? AND source_id = ? AND released = 0').get(type, id);
 
-/** Voci ancora da fatturare: prenotazioni confermate (pagate o già svolte), buoni venduti, programmi conclusi. */
+/** Voci ancora da fatturare: prenotazioni confermate (pagate o già svolte), penali di annullo, buoni venduti, programmi conclusi. */
 export function invoiceQueue(app, nowMs = Date.now()) {
   const { db, cfg } = app;
   const today = nowRome(nowMs).date;
@@ -209,7 +237,7 @@ export function invoiceQueue(app, nowMs = Date.now()) {
     const item = describeSource(app, type, id, nowMs);
     if (item && item.amountCents > 0 && (!start || (item.date ?? '') >= start)) items.push({ ...item, overdue: item.dueBy < today });
   };
-  for (const { id } of db.prepare(`SELECT id FROM bookings WHERE status = 'confirmed' AND (payment_status = 'paid' OR date <= ?) ORDER BY date, start_time`).all(today)) push('booking', id);
+  for (const { id } of db.prepare(`SELECT id FROM bookings WHERE (status = 'confirmed' AND (payment_status = 'paid' OR date <= ?)) OR (status = 'cancelled' AND retained_cents > 0) ORDER BY date, start_time`).all(today)) push('booking', id);
   if (settingsOf(cfg).giftInvoiceAt === 'sale') for (const { id } of db.prepare(`SELECT id FROM gift_cards WHERE status = 'active' ORDER BY id`).all()) push('gift', id);
   for (const { id } of db.prepare(`SELECT id FROM programs WHERE status = 'confirmed' ORDER BY id`).all()) {
     const item = describeSource(app, 'program', id, nowMs);
@@ -507,7 +535,7 @@ export function issueInvoice(app, id, nowMs = Date.now()) {
     const date = inv.issue_date;
     if (!isDate(date)) throw new InvoiceError('date', 'la data della fattura non è valida');
     if (!reissue && date > today) throw new InvoiceError('date', 'la data della fattura non può essere futura');
-    if (!reissue && s.startDate && date < s.startDate) throw new InvoiceError('date', `prima del ${fmtDate(s.startDate, 'it', 'date')} non si emettono fatture (INVOICE_START_DATE)`);
+    if (!reissue && s.startDate && date < s.startDate) throw new InvoiceError('date', `prima del ${fmtDate(s.startDate, 'it', 'date')} non si emettono fatture (data iniziale impostata in Impostazioni › Fatturazione)`);
     if (buyer.country?.toUpperCase() === 'IT' && ((buyer.vat && buyer.vat === s.seller.vatNumber.replace(/^IT/i, '')) || (buyer.taxCode && buyer.taxCode === s.seller.fiscalCode))) {
       throw new InvoiceError('buyer', 'l’intestatario coincide con te (cedente): SdI scarta le fatture a sé stessi', ['Partita IVA o codice fiscale uguali ai tuoi.']);
     }

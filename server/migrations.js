@@ -308,6 +308,45 @@ ALTER TABLE invoices ADD COLUMN file_seq INTEGER;
 CREATE UNIQUE INDEX invoices_file_seq ON invoices(file_seq) WHERE file_seq IS NOT NULL;
 `;
 
+const V8_PARTNER_TERMS = `
+-- Condizioni dedicate ai partner: listino e politica di annullo a scaglioni
+ALTER TABLE accounts ADD COLUMN prices_json TEXT;                  -- listino dedicato {"slug-del-tour": centesimi}; assente = tariffa B2B meno lo sconto %
+ALTER TABLE accounts ADD COLUMN cancel_policy_json TEXT;           -- [{"hours":168,"refund":100},{"hours":72,"refund":50}]; NULL = ore singole (cancel_hours) o predefinito del sito
+ALTER TABLE bookings ADD COLUMN cancel_policy_json TEXT;           -- scaglioni validi al momento della prenotazione (non cambiano se poi cambi le condizioni)
+ALTER TABLE bookings ADD COLUMN cancel_percent INTEGER;            -- annullata: percentuale di rimborso applicata
+ALTER TABLE bookings ADD COLUMN retained_cents INTEGER NOT NULL DEFAULT 0;  -- annullata: importo che resta dovuto (penale), trattenuto o da fatturare
+`;
+
+const V9_CONTENT = `
+-- Contenuti modificabili dal pannello: tour, articoli, pagine, testi del sito, immagini
+CREATE TABLE content_tours (slug TEXT PRIMARY KEY, data_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE content_posts (slug TEXT PRIMARY KEY, data_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE content_pages (name TEXT PRIMARY KEY, data_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE content_texts (key TEXT NOT NULL, lang TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (key, lang));
+CREATE TABLE media (
+  id          INTEGER PRIMARY KEY,
+  name        TEXT NOT NULL UNIQUE,   -- file a risoluzione piena (nome = impronta del contenuto + estensione)
+  small_name  TEXT,                   -- versione piccola per gli elenchi
+  mime        TEXT NOT NULL,
+  bytes       INTEGER NOT NULL,
+  width       INTEGER,
+  height      INTEGER,
+  created_at  TEXT NOT NULL
+);
+`;
+
+const V10_REMINDERS = `
+-- Promemoria ai clienti la sera prima del tour
+ALTER TABLE bookings ADD COLUMN reminder_status TEXT;      -- NULL = da inviare | sent | skipped
+ALTER TABLE bookings ADD COLUMN reminder_sent_at TEXT;
+ALTER TABLE bookings ADD COLUMN reminder_attempt_at TEXT;
+`;
+
+const V11_FEATURED_FEEDBACK = `
+-- Commenti dei clienti scelti per essere mostrati sul sito (solo se il cliente ha dato il permesso)
+ALTER TABLE feedback ADD COLUMN featured INTEGER NOT NULL DEFAULT 0;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -323,6 +362,14 @@ export const MIGRATIONS = [
   V6_INVOICES,
   // v7 — progressivo univoco dei file di fattura
   V7_INVOICE_FILES,
+  // v8 — condizioni dedicate ai partner (listino, scaglioni di annullo)
+  V8_PARTNER_TERMS,
+  // v9 — contenuti nel database (tour, articoli, pagine, testi, immagini)
+  V9_CONTENT,
+  // v10 — promemoria il giorno prima
+  V10_REMINDERS,
+  // v11 — commenti dei clienti mostrati sul sito
+  V11_FEATURED_FEEDBACK,
 ];
 
 export function migrate(db) {

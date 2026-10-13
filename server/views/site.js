@@ -4,7 +4,7 @@ import { paymentOptions, unitPriceFor } from '../bookings.js';
 import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
-import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, postCard, priceParts, sectionHead, tourCard, tourMedia } from './components.js';
+import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, pick } from '../langs.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
@@ -22,7 +22,7 @@ function faqItems(ctx, keys) {
 }
 
 // ───────────────────────── Home ─────────────────────────
-export function homePage(ctx) {
+export function homePage(ctx, { departures = [], quotes = [], reviewStats = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { content, cfg } = app;
   const featured = content.tours.filter((x) => x.featured);
@@ -44,9 +44,17 @@ export function homePage(ctx) {
       </form>
       <p class="hero-links"><a href="${u('/tours')}">${t('home.allTours')} →</a> <span aria-hidden="true">·</span> <a href="${u('/b2b')}">${t('home.forAgencies')}</a></p>
     </div>
-    <div class="hero-art">${art('dome', { label: t('home.artAlt') })}</div>
+    <div class="hero-art">${siteArt(ctx, 'home', 'dome', { label: t('home.artAlt'), alt: t('site.title'), sizes: '(max-width: 900px) 100vw, 560px', eager: true })}</div>
   </div>
 </section>
+
+${departures.length ? html`<section class="section tight departures">
+  <div class="wrap">
+    <h2 class="h-sub">${t('departures.title')}</h2>
+    <p class="muted">${t('departures.lead')}</p>
+    ${departuresList(ctx, departures)}
+  </div>
+</section>` : ''}
 
 <section class="trust">
   <div class="wrap trust-grid">
@@ -73,6 +81,13 @@ export function homePage(ctx) {
     <p class="center reveal"><a class="btn btn-outline" href="${u('/about')}">${t('why.cta')}</a></p>
   </div>
 </section>
+
+${quotes.length ? html`<section class="section">
+  <div class="wrap">
+    ${sectionHead(t('reviews.title'))}
+    ${testimonials(ctx, quotes, { stats: reviewStats, readUrl: cfg.reviews.readUrl })}
+  </div>
+</section>` : ''}
 
 <section class="section">
   <div class="wrap">
@@ -156,7 +171,7 @@ export function toursPage(ctx) {
   return page(ctx, { title: t('nav.tours'), description: t('tours.lead'), path: `/${lang}/tours`, body, activeNav: 'tours' });
 }
 
-export function tourPage(ctx, tour) {
+export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { cfg } = app;
   const ti = tour.i18n[lang];
@@ -225,6 +240,10 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
       <p>${cancellationLine(ctx, tour, channel)} ${t('policy.after')} <a href="${u('/terms')}">${t('policy.terms')}</a></p>
     </div>
 
+    ${ti.faq?.length ? html`<h2 class="h-sub">${t('faq.title')}</h2><div class="faq tour-faq">${ti.faq.map((f) => html`<details class="faq-item"><summary>${f.q}</summary><div class="faq-a prose">${raw(f.html)}</div></details>`)}</div>` : ''}
+
+    ${quotes.length ? html`<h2 class="h-sub">${t('reviews.tourTitle')}</h2>${testimonials(ctx, quotes, { stats: reviewStats, readUrl: cfg.reviews.readUrl })}` : ''}
+
     ${related.length ? html`<h2 class="h-sub">${t('tour.readMore')}</h2><div class="grid grid-2">${related.map((x) => postCard(ctx, x))}</div>` : ''}
   </article>
   <div class="tour-side">${widget}</div>
@@ -240,7 +259,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     provider: { '@type': 'Person', name: cfg.site.name },
     offers: { '@type': 'Offer', price: (unitPriceFor(tour, 'b2c') / 100).toFixed(2), priceCurrency: 'EUR', url: `${cfg.baseUrl}/${lang}/tours/${tour.slug}` },
   };
-  return page(ctx, { title: ti.title, description: ti.summary, path: `/${lang}/tours/${tour.slug}`, body, ld, activeNav: 'tours', bodyClass: 'tour-page', scripts: raw('<script src="/js/booking.js?v=' + app.assetVersion + '" defer></script>') });
+  return page(ctx, { title: ti.title, description: ti.summary, path: `/${lang}/tours/${tour.slug}`, body, ld, ogImage: mediaUrl(cfg, tour.image), activeNav: 'tours', bodyClass: 'tour-page', scripts: raw('<script src="/js/booking.js?v=' + app.assetVersion + '" defer></script>') });
 }
 
 // ───────────────────────── Blog ─────────────────────────
@@ -269,24 +288,27 @@ export function postPage(ctx, post) {
     <p class="lead">${pi.summary}</p>
     <ul class="tags">${pi.tags.map((x) => html`<li>${x}</li>`)}</ul>
   </header>
-  <div class="article-art">${art(post.art, { label: '' })}</div>
+  <div class="article-art">${post.image ? mediaImg(post.image, '', { sizes: '(max-width: 900px) 100vw, 900px', eager: true }) : art(post.art, { label: '' })}</div>
   <div class="prose article-body">${raw(pi.html)}</div>
   ${tours.length ? html`<aside class="article-cta"><h2>${t('blog.tourCta')}</h2><div class="grid grid-2">${tours.map((x) => tourCard(ctx, x))}</div></aside>` : ''}
 </article>`;
   const ld = { '@context': 'https://schema.org', '@type': 'Article', headline: pi.title, datePublished: post.date, author: { '@type': 'Person', name: app.cfg.site.name }, inLanguage: lang };
-  return page(ctx, { title: pi.title, description: pi.summary, path: `/${lang}/blog/${post.slug}`, body, article: true, ld, activeNav: 'blog' });
+  return page(ctx, { title: pi.title, description: pi.summary, path: `/${lang}/blog/${post.slug}`, body, article: true, ld, activeNav: 'blog', ogImage: mediaUrl(app.cfg, post.image) });
 }
 
 // ───────────────────────── Pagine statiche ─────────────────────────
 export function staticPage(ctx, name, pg, vars, { activeNav = '' } = {}) {
   const { t, lang } = ctx;
   const htmlBody = String(pg.html).replace(/\{\{(\w+)\}\}/g, (_, k) => (k in vars ? esc(vars[k]) : ''));
+  const portrait = name === 'about' ? ctx.app.siteImages?.get('about') : null;
   const body = html`
 <section class="page-head"><div class="wrap narrow">
   ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [pg.title]])}
   <h1>${pg.title}</h1>
 </div></section>
-<section class="section tight"><div class="wrap narrow"><div class="prose">${raw(htmlBody)}</div>
+<section class="section tight"><div class="wrap narrow">
+  ${portrait ? html`<figure class="portrait">${mediaImg(portrait, pg.title, { sizes: '(max-width: 640px) 100vw, 260px', eager: true })}</figure>` : ''}
+  <div class="prose">${raw(htmlBody)}</div>
   ${name === 'about' ? html`<p class="btn-row"><a class="btn btn-gold" href="/${lang}/tours">${t('about.cta')}</a> <a class="btn btn-outline" href="/${lang}/contact">${t('cta.contact')}</a></p>` : ''}
 </div></section>`;
   return page(ctx, { title: pg.title, description: pg.description, path: `/${lang}/${name}`, body, activeNav, noindex: false });
@@ -346,7 +368,7 @@ export function b2bLandingPage(ctx) {
         ${ctx.acct ? html`<a class="btn btn-gold" href="${u('/b2b/account')}">${t('nav.myAccount')}</a>` : html`<a class="btn btn-gold" href="${u('/b2b/register')}">${t('b2b.requestAccess')}</a> <a class="btn btn-outline" href="${u('/b2b/login')}">${t('b2b.login')}</a>`}
       </p>
     </div>
-    <div class="hero-art">${art('walk', { label: '' })}</div>
+    <div class="hero-art">${siteArt(ctx, 'b2b', 'walk', { alt: t('b2b.h1'), sizes: '(max-width: 900px) 100vw, 560px', eager: true })}</div>
   </div>
 </section>
 

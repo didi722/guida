@@ -24,7 +24,7 @@ function tabs(active, counts) {
 
 const problemsBox = (problems, intro) =>
   problems.length
-    ? html`<div class="notice notice-err" role="alert"><strong>${intro}</strong><ul class="plain problems">${problems.map((p) => html`<li>${p}</li>`)}</ul></div>`
+    ? html`<div class="notice notice-err" role="alert"><strong>${intro}</strong><ul class="plain problems">${problems.map((p) => html`<li>${p}</li>`)}</ul><p><a href="/admin/settings#invoice">Completa i dati fiscali →</a></p></div>`
     : '';
 
 export function invoicesPage(ctx, { tab, queue, drafts, issued, year, years, counts, problems, settings, pec, flash, error }) {
@@ -84,19 +84,19 @@ ${issued.length
 ${problemsBox(problems, 'Mancano o non tornano questi dati: finché non li sistemi non puoi emettere fatture.')}
 <div class="card pad">
   <h2>Dati fiscali in uso</h2>
-  <p class="muted">Si impostano con le variabili d’ambiente del server (vedi <code>.env.example</code>). <strong>Fatti confermare ogni voce dal commercialista</strong> prima di emettere la prima fattura.</p>
+  <p class="muted">Si modificano da <a href="/admin/settings#invoice">Sito › Impostazioni › Fatturazione elettronica</a>. <strong>Fatti confermare ogni voce dal commercialista</strong> prima di emettere la prima fattura.</p>
   <dl class="summary-list">
-    <div><dt>Partita IVA <small>(VAT_NUMBER)</small></dt><dd>${ok(s.seller.vatNumber)} ${s.seller.vatNumber}</dd></div>
-    <div><dt>Codice fiscale <small>(FISCAL_CODE)</small></dt><dd>${ok(s.seller.fiscalCode)} ${s.seller.fiscalCode}</dd></div>
+    <div><dt>Partita IVA</dt><dd>${ok(s.seller.vatNumber)} ${s.seller.vatNumber}</dd></div>
+    <div><dt>Codice fiscale</dt><dd>${ok(s.seller.fiscalCode)} ${s.seller.fiscalCode}</dd></div>
     <div><dt>Intestazione</dt><dd>${s.seller.name || `${s.seller.firstName} ${s.seller.lastName}`.trim() || html`<span class="field-error">manca</span>`}</dd></div>
-    <div><dt>Indirizzo <small>(INVOICE_ADDRESS, ZIP, CITY, PROVINCE)</small></dt><dd>${s.seller.address.street ? `${s.seller.address.street}, ${s.seller.address.zip} ${s.seller.address.city} (${s.seller.address.province})` : html`<span class="field-error">manca</span>`}</dd></div>
-    <div><dt>Regime fiscale <small>(INVOICE_REGIME)</small></dt><dd>${s.seller.regime} · ${regimes[s.seller.regime] ?? 'altro regime'}</dd></div>
-    <div><dt>IVA <small>(INVOICE_VAT_RATE, INVOICE_NATURE)</small></dt><dd>${s.vatBp ? `${s.vatBp / 100}%` : `nessuna — natura ${s.nature}`}</dd></div>
+    <div><dt>Indirizzo</dt><dd>${s.seller.address.street ? `${s.seller.address.street}, ${s.seller.address.zip} ${s.seller.address.city} (${s.seller.address.province})` : html`<span class="field-error">manca</span>`}</dd></div>
+    <div><dt>Regime fiscale</dt><dd>${s.seller.regime} · ${regimes[s.seller.regime] ?? 'altro regime'}</dd></div>
+    <div><dt>IVA</dt><dd>${s.vatBp ? `${s.vatBp / 100}%` : `nessuna — natura ${s.nature}`}</dd></div>
     <div><dt>Prezzi del sito comprensivi di IVA</dt><dd>${s.vatBp ? `privati: ${s.vatIncluded.b2c ? 'sì' : 'no'} · partner: ${s.vatIncluded.b2b ? 'sì' : 'no'}` : 'non conta (nessuna IVA)'}</dd></div>
     <div><dt>Bollo virtuale 2 €</dt><dd>${s.bollo === 'never' ? 'mai' : 'automatico sulle operazioni senza IVA oltre 77,47 €'}</dd></div>
     <div><dt>Rivalsa INPS / ritenuta d’acconto</dt><dd>${s.contributionPercent ? `rivalsa ${s.contributionPercent}%` : 'nessuna rivalsa'} · ${s.withholdingPercent ? `ritenuta ${s.withholdingPercent}% alle imprese italiane` : 'nessuna ritenuta'}</dd></div>
     <div><dt>Buoni regalo</dt><dd>${s.giftInvoiceAt === 'sale' ? 'considerati monouso: fattura alla vendita del buono' : 'considerati multiuso: fattura all’utilizzo'}</dd></div>
-    <div><dt>Conto per i bonifici <small>(INVOICE_IBAN)</small></dt><dd>${s.iban ? `${s.iban}${s.bank ? ` · ${s.bank}` : ''}` : 'non indicato (le fatture a bonifico non riportano l’IBAN)'}</dd></div>
+    <div><dt>Conto per i bonifici</dt><dd>${s.iban ? `${s.iban}${s.bank ? ` · ${s.bank}` : ''}` : 'non indicato (le fatture a bonifico non riportano l’IBAN)'}</dd></div>
     <div><dt>Scadenza fatture ai partner</dt><dd>${s.b2bDueDays} giorni</dd></div>
     <div><dt>Trasmissione a SdI</dt><dd>${pec ? html`<span class="ok-text">✓</span> via PEC a ${s.sdiAddress}` : 'manuale: scarichi l’XML e lo carichi su «Fatture e Corrispettivi» (Agenzia delle Entrate); per l’invio da qui servono PEC_SMTP_HOST, PEC_SMTP_USER e PEC_SMTP_PASS'}</dd></div>
   </dl>

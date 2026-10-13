@@ -7,6 +7,7 @@ import { bookingDue, cancellationState } from './bookings.js';
 import { ROOT } from './config.js';
 import { makeT } from './i18n.js';
 import { localeOf, normLang, pick } from './langs.js';
+import { isSimplePolicy, tierSentences } from './policyText.js';
 import { formatGiftCode } from './pricing.js';
 import { fmtDate, fmtInstant, nowRome } from './time.js';
 import { formatMoney } from './util.js';
@@ -268,7 +269,8 @@ export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = 
     keyValueRows(doc, pricing, { pad: 4 });
     if (b.status === 'confirmed') {
       const st = cancellationState(b, nowMs);
-      doc.font('R').fontSize(10).fillColor(C.text).text(fold(st.everRefundable ? (st.free ? t('booking.canCancel', { until: fmtInstant(st.until, lang) }) : t('booking.cancelClosed', { until: fmtInstant(st.until, lang) })) : t('checkout.nonRefundable')), PAGE.m, doc.y, { width: CW });
+      const policy = !st.everRefundable ? t('checkout.nonRefundable') : isSimplePolicy(st.tiers) ? (st.free ? t('booking.canCancel', { until: fmtInstant(st.until, lang) }) : t('booking.cancelClosed', { until: fmtInstant(st.until, lang) })) : tierSentences(t, lang, st.tiers, st.startsAt).join(' ');
+      doc.font('R').fontSize(10).fillColor(C.text).text(fold(policy), PAGE.m, doc.y, { width: CW });
       doc.moveDown(0.6);
     }
   } else {

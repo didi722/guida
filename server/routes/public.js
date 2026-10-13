@@ -1,10 +1,10 @@
 import express from 'express';
-import { loadAvailabilityContext, nextAvailableDates, slotsForDay } from '../availability.js';
+import { loadAvailabilityContext, nextAvailableDates, nextDepartures, slotsForDay } from '../availability.js';
 import { BookingError, cancellationState, getBookingByRef, slotStillOpen } from '../bookings.js';
 import { previewPricing } from '../pricing.js';
 import { hashPassword, verifyPassword } from '../auth.js';
 import { sendContactMessage, sendPartnerRegistered, icsFor } from '../emails.js';
-import { isDate, isTime } from '../time.js';
+import { isDate, isTime, nowRome } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
 import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js';
 import { renderVoucherPdf } from '../pdf.js';
@@ -12,6 +12,7 @@ import { accountPage, loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
 import { normLang, pick } from '../langs.js';
+import { featuredQuotes, feedbackStats } from '../reviews.js';
 
 const clampInt = (v, min, max, d) => {
   const n = Number.parseInt(v, 10);
@@ -32,12 +33,16 @@ export function publicRouter(app) {
     next();
   });
 
-  r.get('/', (req, res) => send(res, homePage(res.locals.ctx)));
+  r.get('/', (req, res) => {
+    const nowMs = Date.now();
+    const departures = nextDepartures(db, cfg, content.tours, nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 4 });
+    send(res, homePage(res.locals.ctx, { departures, quotes: featuredQuotes(db, { limit: 3 }), reviewStats: feedbackStats(db) }));
+  });
   r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx)));
   r.get('/tours/:slug', (req, res, next) => {
     const tour = content.tour(req.params.slug);
     if (!tour?.active) return next();
-    send(res, tourPage(res.locals.ctx, tour));
+    send(res, tourPage(res.locals.ctx, tour, { quotes: featuredQuotes(db, { tourSlug: tour.slug, limit: 3 }), reviewStats: feedbackStats(db) }));
   });
   r.get('/blog', (req, res) => send(res, blogPage(res.locals.ctx)));
   r.get('/blog/:slug', (req, res, next) => {
@@ -100,7 +105,9 @@ export function publicRouter(app) {
       results = list.map((tour) => ({ tour, slots: slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs }) })).filter((x) => x.slots.length);
       if (!results.length) suggestions = nextAvailableDates(db, cfg, list, date < minDate ? minDate : date, { pax, channel, nowMs });
     }
-    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, channel }));
+    // senza una data in mente: le prossime partenze, prenotabili con un tocco
+    const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : content.tours, nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
+    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel }));
   });
 
   // ───── checkout ─────
@@ -185,7 +192,7 @@ export function publicRouter(app) {
     const b = loadBooking(req);
     if (!b) return next();
     const back = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}`);
-    if (b.status !== 'confirmed' || !cancellationState(b).free) return back('cancel-error');
+    if (b.status !== 'confirmed' || cancellationState(b).percent <= 0) return back('cancel-error'); // senza rimborso si scrive alla guida
     await services.cancel(b.id, { by: 'customer' });
     back('cancelled');
   });

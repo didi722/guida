@@ -10,7 +10,8 @@ import { openDb } from '../server/db.js';
 import { makeT } from '../server/i18n.js';
 import { createPayments } from '../server/payments.js';
 import { addDays, localToInstant, nowRome } from '../server/time.js';
-import { base as bookingBase, isPdf } from './helpers.js';
+import { addAccount, base as bookingBase, isPdf } from './helpers.js';
+import { hashPassword } from '../server/auth.js';
 import { validateInvoiceXml } from './xsd.js';
 import { confirmPaid, createBooking } from '../server/bookings.js';
 
@@ -69,7 +70,7 @@ const loc = (res) => res.headers.get('location');
 after(() => fs.rmSync(tmp, { recursive: true, force: true }));
 
 test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
-  const s = await start();
+  const s = await start({ fakeStripe: true }); // con i pagamenti simulati il sito non si indicizza (vedi il test «istanza di prova»)
   try {
     const f = s.jar();
     for (const lang of ['it', 'en', 'es']) {
@@ -99,6 +100,43 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
     assert.match(es, /hreflang="x-default"/);
     assert.match(await (await f('/robots.txt')).text(), /Disallow: \/admin/);
     assert.equal((await f('/admin/calendar.ics?k=sbagliato')).status, 404);
+  } finally {
+    s.close();
+  }
+});
+
+test('istanza di prova (pagamenti simulati): avviso su ogni pagina, niente indicizzazione, registro delle email nel pannello', async () => {
+  const s = await start(); // demoPayments: true
+  try {
+    const f = s.jar();
+    for (const lang of ['it', 'en', 'es']) {
+      const html = await (await f(`/${lang}/`)).text();
+      assert.ok(html.includes(makeT(lang)('demo.siteBanner')), `avviso di prova in ${lang}`);
+      assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
+      assert.ok(!/hreflang="x-default"/.test(html));
+    }
+    assert.match(await (await f('/robots.txt')).text(), /Disallow: \/\n/);
+
+    // registro delle email nel pannello (richiede il login)
+    assert.equal(loc(await f('/admin/mail')), '/admin/login');
+    await f('/admin/login', form({ password: 'segreto-admin' }));
+    const empty = await (await f('/admin/mail')).text();
+    assert.match(empty, /Ancora nessuna email/);
+    assert.match(empty, /SMTP non configurato/);
+    const date = day(27);
+    await f('/it/book/checkout', form({ tour: 'cannaregio-ghetto', date, time: '10:00', pax: '2', name: 'Anna <b>Verdi</b>', email: 'anna@example.com', lang: 'it', paymentMethod: 'onsite', consent: '1' }));
+    await s.app.mail.send({ to: 'x@example.com', subject: 'Prova allegato', text: `Ecco il link ${s.app.cfg.baseUrl}/it/booking/VE-X e uno esterno https://evil.example/phish`, attachments: [{ filename: 'voucher test.pdf', content: Buffer.from('%PDF-1.4 prova'), contentType: 'application/pdf' }] });
+    const list = await (await f('/admin/mail')).text();
+    assert.match(list, /Prova allegato/);
+    assert.match(list, /anna@example\.com/, 'la conferma della prenotazione è nel registro');
+    assert.ok(list.includes(`<a href="${s.app.cfg.baseUrl}/it/booking/VE-X">`), 'i link del sito sono cliccabili');
+    assert.ok(!list.includes('<a href="https://evil.example'), 'i link esterni no');
+    assert.ok(!list.includes('<b>Verdi'), 'testo dei clienti escapato');
+    const id = s.app.mail.sent.find((m) => m.subject === 'Prova allegato').id;
+    const att = await f(`/admin/mail/${id}/attachment/0`);
+    assert.equal(att.status, 200);
+    assert.match(att.headers.get('content-disposition'), /attachment; filename="voucher_test\.pdf"/);
+    assert.equal((await f(`/admin/mail/${id}/attachment/5`)).status, 404);
   } finally {
     s.close();
   }
@@ -178,6 +216,37 @@ test('prenotazione B2C con pagamento demo, voucher, calendario e annullo con rim
     assert.match(after, /Rimborsati/);
     const again = await (await f(`/api/slots?tour=san-marco-rialto&date=${date}&pax=9`)).json();
     assert.deepEqual(again.slots.map((x) => x.time), ['09:30', '14:30']);
+  } finally {
+    s.close();
+  }
+});
+
+test('metodi di pagamento: la sessione Stripe non fissa l’elenco (decide la Dashboard: carte, Apple Pay, Google Pay, PayPal…); i pagamenti ritardati si confermano solo quando arrivano', async () => {
+  const s = await start({ fakeStripe: true });
+  try {
+    const f = s.jar();
+    const date = day(26);
+    const res = await f('/it/book/checkout', form({ tour: 'cannaregio-ghetto', date, time: '10:00', pax: '2', name: 'Paul Miller', email: 'paul@example.com', lang: 'en', paymentMethod: 'card', consent: '1' }));
+    assert.equal(res.status, 303);
+    const p = new URLSearchParams(s.calls.find((c) => c.url.endsWith('/checkout/sessions')).init.body);
+    assert.ok(![...p.keys()].some((k) => k.startsWith('payment_method_types') || k.startsWith('payment_method_options')), 'nessun elenco fisso di metodi: così Stripe mostra quelli attivi in Dashboard');
+    assert.equal(p.get('locale'), 'en');
+    assert.equal(p.get('line_items[0][price_data][currency]'), 'eur', 'una sola valuta (PayPal e altri metodi la richiedono)');
+    const ref = p.get('client_reference_id');
+    const event = (type, over = {}) => Buffer.from(JSON.stringify({ type, data: { object: { id: 'cs_test_' + ref, client_reference_id: ref, payment_status: 'paid', payment_intent: 'pi_pp', amount_total: 7000, ...over } } }));
+    const sign = (body) => {
+      const t = Math.floor(Date.now() / 1000);
+      return `t=${t},v1=${crypto.createHmac('sha256', 'whsec_test').update(`${t}.`).update(body).digest('hex')}`;
+    };
+    const post = (body) => f('/api/stripe/webhook', { method: 'POST', headers: { 'content-type': 'application/json', 'stripe-signature': sign(body) }, body });
+    const status = () => s.app.db.prepare('SELECT status, payment_status FROM bookings WHERE ref = ?').get(ref);
+
+    // metodo con conferma ritardata (es. addebito SEPA): «completata» ma non ancora pagata → non si conferma
+    await post(event('checkout.session.completed', { payment_status: 'unpaid' }));
+    assert.equal(status().status, 'held');
+    // quando i soldi arrivano
+    await post(event('checkout.session.async_payment_succeeded'));
+    assert.deepEqual({ ...status() }, { status: 'confirmed', payment_status: 'paid' });
   } finally {
     s.close();
   }
@@ -326,8 +395,9 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     assert.equal((await admin('/admin/login', form({ password: 'no' }))).status, 401);
     assert.equal((await admin('/admin/login', form({ password: 'segreto-admin' }))).status, 303);
     const id = s.app.db.prepare('SELECT id FROM accounts').get().id;
-    const ap = await admin(`/admin/partners/${id}`, form({ status: 'approved', discount_percent: '5', cancel_hours: '120', allow_invoice: '1' }));
+    const ap = await admin(`/admin/partners/${id}`, form({ status: 'approved', discount_percent: '5', allow_invoice: '1' }));
     assert.equal(ap.status, 303);
+    assert.match(loc(await admin(`/admin/partners/${id}/policy`, form({ h1: '5', u1: 'd', r1: '100' }))), /ok=policy/, 'politica del partner: 5 giorni, rimborso totale');
     assert.ok(s.app.mail.sent.some((m) => m.to === 'dmc@example.com' && /attivo|active/i.test(m.subject)));
 
     // partner approvato
@@ -345,6 +415,7 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
 
     // l'admin vede la prenotazione e può annullarla
     const detail = await (await admin(`/admin/bookings/${b.id}`)).text();
+    assert.ok(detail.includes(`href="/${b.lang}/booking/${b.ref}?t=${b.token}"`), 'dal pannello si apre la pagina del cliente (e si prova l’annullo)');
     assert.match(detail, /PRATICA 42/);
     assert.match(detail, new RegExp(`/admin/bookings/${b.id}/voucher\\.pdf`));
     const adminVoucher = await admin(`/admin/bookings/${b.id}/voucher.pdf`);
@@ -358,6 +429,89 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     await admin(`/admin/partners/${id}`, form({ status: 'suspended', discount_percent: '5' }));
     const susp = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
     assert.equal(susp.slots[0].totalCents, 24000);
+  } finally {
+    s.close();
+  }
+});
+
+test('partner: listino dedicato e politica di annullo gestiti dall’admin (validazioni, effetto su prezzi e riepilogo, copia tra partner)', async () => {
+  const s = await start();
+  try {
+    const admin = s.jar();
+    const partner = s.jar();
+    await admin('/admin/login', form({ password: 'segreto-admin' }));
+    const hash = await hashPassword('password-lunga-1');
+    const a1 = addAccount(s.app.db, { email: 'uno@example.com', company: 'Uno Viaggi', password_hash: hash, discount_percent: 10 });
+    const a2 = addAccount(s.app.db, { email: 'due@example.com', company: 'Due Viaggi', password_hash: hash });
+    const row = (id) => s.app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(id);
+
+    const page = await (await admin(`/admin/partners/${a1.id}`)).text();
+    assert.match(page, /Listino dedicato/);
+    assert.match(page, /Politica di annullo/);
+    assert.match(page, /name="price_servizio-mezza-giornata"/);
+    assert.match(page, /Ora vale quella predefinita del sito/);
+
+    // listino: un valore sbagliato blocca tutto; i vuoti usano la tariffa standard
+    assert.match(loc(await admin(`/admin/partners/${a1.id}/prices`, form({ 'price_servizio-mezza-giornata': 'abc' }))), /err=price/);
+    assert.equal(row(a1.id).prices_json, null, 'nulla salvato');
+    assert.match(loc(await admin(`/admin/partners/${a1.id}/prices`, form({ 'price_servizio-mezza-giornata': '150,50', 'price_cannaregio-ghetto': '' }))), /ok=prices/);
+    assert.deepEqual(JSON.parse(row(a1.id).prices_json), { 'servizio-mezza-giornata': 15050 });
+    assert.match(await (await admin(`/admin/partners/${a1.id}`)).text(), /150,50/);
+
+    // il partner vede il prezzo dedicato e, per gli altri tour, tariffa B2B meno sconto
+    assert.equal((await partner('/it/b2b/login', form({ email: 'uno@example.com', password: 'password-lunga-1' }))).status, 303);
+    const date = day(40);
+    const dedicated = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
+    assert.equal(dedicated.slots[0].totalCents, 15050);
+    const discounted = await (await partner(`/api/slots?tour=cannaregio-ghetto&date=${date}&pax=2`)).json();
+    assert.equal(discounted.slots[0].totalCents, 5040, '2 × (28 € − 10%)');
+    assert.match(await (await partner('/it/b2b/account')).text(), /150,50/);
+
+    // politica: validazioni, poi salvataggio (giorni → ore)
+    for (const [fields, err] of [
+      [{ h1: '7', u1: 'd', r1: '100', h2: '3', u2: 'd', r2: '150' }, 'refund'],
+      [{ h1: '3', u1: 'd', r1: '50', h2: '1', u2: 'd', r2: '80' }, 'order'],
+      [{ h1: 'x', u1: 'd', r1: '100' }, 'hours'],
+      [{ h1: '3', u1: 'd', r1: '100', h2: '72', u2: 'h', r2: '50' }, 'duplicate'],
+      [{ h1: '7', u1: 'd', r1: '100', h2: '5', u2: 'd', r2: '75', h3: '3', u3: 'd', r3: '50', h4: '1', u4: 'd', r4: '25' }, null],
+    ]) {
+      const res = loc(await admin(`/admin/partners/${a1.id}/policy`, form(fields)));
+      if (err) assert.match(res, new RegExp(`err=${err}`), JSON.stringify(fields));
+    }
+    assert.equal(row(a1.id).cancel_policy_json, JSON.stringify([{ hours: 168, refund: 100 }, { hours: 120, refund: 75 }, { hours: 72, refund: 50 }]), 'l’ultimo caso (4 righe) ne tiene 3: la quarta è ignorata dal modulo');
+    assert.match(loc(await admin(`/admin/partners/${a1.id}/policy`, form({ h1: '7', u1: 'd', r1: '100', h2: '3', u2: 'd', r2: '50' }))), /ok=policy/);
+    assert.equal(row(a1.id).cancel_policy_json, JSON.stringify([{ hours: 168, refund: 100 }, { hours: 72, refund: 50 }]));
+    const edited = await (await admin(`/admin/partners/${a1.id}`)).text();
+    assert.match(edited, /Questo partner ha una politica propria/);
+    assert.match(edited, /Rimborso del 50% fino al/);
+
+    // il riepilogo del partner mostra gli scaglioni; la prenotazione li conserva; la pagina della prenotazione li spiega
+    const q = `tour=servizio-mezza-giornata&date=${date}&time=09:00&pax=10`;
+    assert.match(await (await partner(`/it/book/checkout?${q}`)).text(), /Rimborso del 50% fino al/);
+    const booked = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata', date, time: '09:00', pax: '10', name: 'Anna', email: 'uno@example.com', lang: 'it', paymentMethod: 'invoice', consent: '1' }));
+    assert.equal(booked.status, 303);
+    const b = s.app.db.prepare('SELECT * FROM bookings WHERE account_id = ?').get(a1.id);
+    assert.equal(JSON.parse(b.cancel_policy_json).length, 2);
+    assert.match(await (await partner(loc(booked))).text(), /Rimborso del 50% fino al/);
+    // modificare le condizioni del partner dopo non cambia la prenotazione già fatta
+    await admin(`/admin/partners/${a1.id}/policy`, form({ h1: '1', u1: 'h', r1: '100' }));
+    assert.equal(JSON.parse(s.app.db.prepare('SELECT cancel_policy_json FROM bookings WHERE id = ?').get(b.id).cancel_policy_json).length, 2);
+    // salvare stato e sconto non cancella la politica
+    await admin(`/admin/partners/${a1.id}`, form({ status: 'approved', discount_percent: '10', allow_invoice: '1' }));
+    assert.ok(row(a1.id).cancel_policy_json);
+
+    // copia verso un altro partner
+    assert.match(loc(await admin(`/admin/partners/${a2.id}/prices`, form({ action: 'copy', copy_from: String(a1.id) }))), /ok=copied/);
+    assert.equal(row(a2.id).prices_json, row(a1.id).prices_json);
+    assert.match(loc(await admin(`/admin/partners/${a2.id}/policy`, form({ action: 'copy', copy_from: String(a1.id) }))), /ok=copied/);
+    assert.equal(row(a2.id).cancel_policy_json, row(a1.id).cancel_policy_json);
+    assert.match(loc(await admin(`/admin/partners/${a2.id}/policy`, form({ action: 'copy', copy_from: '9999' }))), /err=copy/);
+    // «svuota» = predefinito del sito
+    await admin(`/admin/partners/${a2.id}/policy`, form({}));
+    assert.equal(row(a2.id).cancel_policy_json, null);
+    // i partner non vedono né modificano nulla
+    assert.equal(loc(await partner(`/admin/partners/${a1.id}`)), '/admin/login');
+    assert.equal(loc(await partner(`/admin/partners/${a1.id}/prices`, form({ 'price_cannaregio-ghetto': '1' }))), '/admin/login');
   } finally {
     s.close();
   }
@@ -446,10 +600,11 @@ test('codici sconto e buoni regalo: checkout con "Applica", buono acquistato onl
     assert.equal(card.balance_cents, 5000);
     assert.ok(card.expires_at > day(700), 'valido 24 mesi');
     assert.ok(status.includes(card.code.slice(0, 4) + '-' + card.code.slice(4, 8)), 'il codice è mostrato');
+    await s.app.runJobs(localToInstant(day(0), '10:00')); // la consegna «oggi» parte dalle 9: il test non deve dipendere dall'ora in cui gira
     const mails = s.app.mail.sent.filter((m) => m.subject.match(/buono regalo|regalato/i));
     assert.ok(mails.some((m) => m.to === 'anna@example.com'), 'conferma all’acquirente');
     assert.ok(mails.some((m) => m.to === 'luca@example.com' && /Buon compleanno!/.test(m.text) && m.text.includes(card.code.slice(0, 4))), 'consegna al destinatario con messaggio e codice');
-    assert.ok(card.delivered_at);
+    assert.ok(s.app.db.prepare('SELECT delivered_at FROM gift_cards WHERE id = ?').get(card.id).delivered_at, 'consegna registrata');
     assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /Buono regalo venduto/.test(m.subject)));
     for (const to of ['anna@example.com', 'luca@example.com']) {
       const m = mails.find((x) => x.to === to);
@@ -1017,5 +1172,78 @@ test('senza pagamento sul posto il sito non lo promette: home, FAQ, checkout off
   } finally {
     off.close();
     on.close();
+  }
+});
+
+test('accesso admin: la password si tollera con spazi attorno; da variabile d’ambiente si ripuliscono spazi e virgolette; vuota in sviluppo vale «admin»', async () => {
+  // dal form (tastiera del telefono: spazio finale)
+  const s = await start();
+  try {
+    const f = s.jar();
+    assert.equal((await f('/admin/login', form({ password: 'segreto-admin ' }))).status, 303, 'spazio finale');
+    assert.equal((await f('/admin/login', form({ password: 'segreto-admin\n' }))).status, 303, 'a capo finale');
+    assert.equal((await s.jar()('/admin/login', form({ password: 'segreto admin' }))).status, 401, 'uno spazio in mezzo non va ignorato');
+    assert.match(await (await s.jar()('/admin/login')).text(), /data-show-password/, 'c’è «Mostra la password»');
+  } finally {
+    s.close();
+  }
+  // dalla configurazione
+  const saved = { ...process.env };
+  try {
+    const cfgWith = (env, over = {}) => {
+      for (const k of Object.keys(process.env)) if (/^(ADMIN_PASSWORD|NODE_ENV|SESSION_SECRET)$/.test(k)) delete process.env[k];
+      Object.assign(process.env, env);
+      return createConfig({ __skipDotEnv: true, dataDir: path.join(ROOT, 'data', 'test-cfg-' + crypto.randomBytes(3).toString('hex')), ...over }).admin.password;
+    };
+    assert.equal(cfgWith({ ADMIN_PASSWORD: '1234567-Ab' }), '1234567-Ab');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: ' 1234567-Ab \n' }), '1234567-Ab', 'spazi e a capo attorno');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: '"1234567-Ab"' }), '1234567-Ab', 'virgolette doppie incollate');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: "'1234567-Ab'" }), '1234567-Ab', 'virgolette singole incollate');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: 'ab"cd' }), 'ab"cd', 'virgolette in mezzo: parte della password');
+    assert.equal(cfgWith({ ADMIN_PASSWORD: '' }), 'admin', 'sviluppo, variabile vuota (cp .env.example .env): vale «admin»');
+    assert.equal(cfgWith({}), 'admin', 'sviluppo, variabile assente');
+    assert.equal(cfgWith({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40), ADMIN_PASSWORD: '' }), '', 'produzione, vuota: pannello disattivato');
+    assert.equal(cfgWith({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40), ADMIN_PASSWORD: '1234567-Ab' }), '1234567-Ab');
+  } finally {
+    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
+    Object.assign(process.env, saved);
+    for (const d of fs.readdirSync(path.join(ROOT, 'data')).filter((x) => x.startsWith('test-cfg-'))) fs.rmSync(path.join(ROOT, 'data', d), { recursive: true, force: true });
+  }
+});
+
+test('prossime partenze: in home e in «Prenota» (senza data), con prezzo, posti e collegamento diretto al pagamento', async () => {
+  const s = await start();
+  try {
+    const f = s.jar();
+    const home = await (await f('/it/')).text();
+    assert.match(home, /Prossime partenze/);
+    const hrefs = (html) => [...html.matchAll(/class="dep" href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+    const links = hrefs(home);
+    assert.ok(links.length >= 1 && links.length <= 4, `${links.length} partenze in home`);
+    assert.match(home, /class="dep-price"><strong>[^<]*€/);
+    // il collegamento porta a un pagamento valido per quella partenza
+    const checkout = await f(links[0]);
+    assert.equal(checkout.status, 200);
+    const checkoutHtml = await checkout.text();
+    assert.match(checkoutHtml, /name="time" value="\d\d:\d\d"/);
+    // il numero di persone si cambia in pagina: ricalcola i posti e tiene i dati già scritti
+    assert.match(checkoutHtml, /<select name="pax" id="pax-select" form="checkout-form"/);
+    const q = new URL('http://x' + links[0]).searchParams;
+    const changed = await f('/it/book/checkout', form({ tour: q.get('tour'), date: q.get('date'), time: q.get('time'), pax: '4', apply: '1', name: 'Mario Rossi', email: 'mario@example.com' }));
+    assert.equal(changed.status, 200);
+    const changedHtml = await changed.text();
+    assert.match(changedHtml, /<option value="4" selected>4<\/option>/);
+    assert.match(changedHtml, /value="Mario Rossi"/);
+    assert.equal((await f('/it/book/checkout', form({ tour: q.get('tour'), date: q.get('date'), time: q.get('time'), pax: '99', apply: '1' }))).status, 400, 'più persone dei posti: partenza non più disponibile');
+    // «Prenota» senza data: elenco (6 al massimo); con una data scelta c'è solo l'elenco degli orari
+    const book = await (await f('/en/book')).text();
+    assert.match(book, /Next departures/);
+    assert.ok(hrefs(book).length >= 1 && hrefs(book).length <= 6);
+    assert.doesNotMatch(await (await f(`/en/book?date=${day(3)}`)).text(), /class="dep-list"/);
+    assert.match(await (await f('/es/')).text(), /Próximas salidas/);
+    // se la persona ha scelto 5 persone, il collegamento le porta con sé
+    assert.ok(hrefs(await (await f('/it/book?pax=5')).text()).every((h) => /pax=5\b/.test(h)), 'pax conservato');
+  } finally {
+    s.close();
   }
 });

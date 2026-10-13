@@ -16,6 +16,7 @@ export function createMailer(cfg) {
       })
     : null;
   const sent = [];
+  let seq = 0;
   const outbox = path.join(cfg.dataDir, 'outbox');
 
   return {
@@ -24,7 +25,7 @@ export function createMailer(cfg) {
     async send({ to, subject, text, html, replyTo, attachments }) {
       if (!to) return false;
       const msg = { from: cfg.mail.from, to, subject, text, html, replyTo, attachments };
-      sent.push({ to, subject, text, html, attachments });
+      sent.push({ id: ++seq, at: Date.now(), to, subject, text, html, attachments });
       if (sent.length > 200) sent.shift();
       try {
         if (transport) {

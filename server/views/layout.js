@@ -1,5 +1,6 @@
 import { esc, html, jsonLd, raw } from '../html.js';
 import { LANGS, LANG_META } from '../langs.js';
+import { mediaUrl } from './components.js';
 
 const ICON = {
   sun: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
@@ -28,8 +29,12 @@ const NAV = [
 export function page(ctx, { title, description = '', path, body, bodyClass = '', ld = null, noindex = false, article = false, ogImage = null, activeNav = '', scripts = '' }) {
   const { app, lang, t } = ctx;
   const { cfg } = app;
+  const demo = app.payments.demo; // istanza di prova (pagamenti simulati): non si indicizza e lo si dice a chiare lettere
+  noindex = noindex || demo;
   const others = LANGS.filter((l) => l !== lang);
   const canonical = `${cfg.baseUrl}${path}`;
+  // anteprima quando si condivide il link: la copertina della pagina, altrimenti l'immagine «Anteprima social» (o la foto della home)
+  const shareImage = ogImage ?? mediaUrl(cfg, app.siteImages?.get('og') ?? app.siteImages?.get('home'));
   const fullTitle = title ? `${title} · ${cfg.site.name}` : `${cfg.site.name} — ${t('site.title')}`;
   const desc = description || t('site.description');
   const u = (p) => `/${lang}${p}`;
@@ -53,7 +58,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   <meta property="og:url" content="${canonical}">
   <meta property="og:locale" content="${LANG_META[lang].og}">
   ${others.map((l) => html`<meta property="og:locale:alternate" content="${LANG_META[l].og}">`)}
-  ${ogImage ? html`<meta property="og:image" content="${ogImage}">` : ''}
+  ${shareImage ? html`<meta property="og:image" content="${shareImage}"><meta name="twitter:card" content="summary_large_image">` : ''}
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/josefin-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/style.css?v=${app.assetVersion}">
@@ -84,6 +89,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
     </div>
   </div>
   ${article ? raw('<div class="progress" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div></div>') : ''}
+  ${demo ? html`<div class="demo-note" role="note">${t('demo.siteBanner')}</div>` : ''}
 </header>
 
 <nav class="side-menu" id="side-menu" aria-label="${t('a11y.menu')}" hidden>

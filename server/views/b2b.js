@@ -1,5 +1,7 @@
 import { html, raw } from '../html.js';
-import { freeCancelHours, unitPriceFor } from '../bookings.js';
+import { unitPriceFor } from '../bookings.js';
+import { accountTiers } from '../policy.js';
+import { isSimplePolicy, tierSentencesHours } from '../policyText.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
@@ -67,7 +69,7 @@ export function accountPage(ctx, { acct, bookings, flash = '' }) {
   const { t, lang, u, app } = ctx;
   const { cfg, content } = app;
   const approved = acct.status === 'approved';
-  const hours = freeCancelHours(cfg, { cancelHours: null }, 'b2b', acct);
+  const tiers = accountTiers(cfg, acct);
   const upcoming = bookings.filter((b) => b.status !== 'expired');
   const statusChip = { pending: 'chip-warn', approved: 'chip-ok', rejected: 'chip-err', suspended: 'chip-err' }[acct.status];
 
@@ -84,7 +86,9 @@ export function accountPage(ctx, { acct, bookings, flash = '' }) {
       <p><span class="chip ${statusChip}">${t(`b2b.st.${acct.status}`)}</span></p>
       <p class="muted">${t(`b2b.st.${acct.status}.text`)}</p>
       ${approved ? html`<ul class="plain facts-list">
-        <li><span class="muted">${t('b2b.cancelPolicy')}</span> <strong>${fmtHours(t, hours)}</strong></li>
+        ${isSimplePolicy(tiers)
+          ? html`<li><span class="muted">${t('b2b.cancelPolicy')}</span> <strong>${fmtHours(t, tiers[0].hours)}</strong></li>`
+          : html`<li><span class="muted">${t('policy.title')}</span><ul class="plain tier-list">${tierSentencesHours(t, tiers, fmtHours).map((x) => html`<li>${x}</li>`)}</ul></li>`}
         <li><span class="muted">${t('b2b.discount')}</span> <strong>${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')}</strong></li>
         <li><span class="muted">${t('b2b.payments')}</span> <strong>${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</strong></li></ul>` : ''}
     </div>

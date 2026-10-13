@@ -14,6 +14,11 @@ function loadDotEnv() {
   }
 }
 
+/** Segreto da variabile d'ambiente: toglie spazi, a capo e virgolette attorno (capita quando si incolla nel pannello dell'hosting). */
+const secret = (v) => {
+  const s = String(v ?? '').trim();
+  return s.length > 1 && ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) ? s.slice(1, -1).trim() : s;
+};
 const num = (v, d) => (v === undefined || v === '' || Number.isNaN(Number(v)) ? d : Number(v));
 const bool = (v, d) => (v === undefined || v === '' ? d : ['1', 'true', 'yes', 'on'].includes(String(v).toLowerCase()));
 
@@ -67,7 +72,8 @@ export function createConfig(overrides = {}) {
     languages: LANGS,
     defaultLang: 'it',
 
-    admin: { password: overrides.adminPassword ?? e.ADMIN_PASSWORD ?? (isProd ? '' : 'admin') },
+    // vuota in produzione = pannello disattivato; in sviluppo, se manca o è vuota (come dopo `cp .env.example .env`), vale «admin»
+    admin: { password: overrides.adminPassword ?? (secret(e.ADMIN_PASSWORD) || (isProd ? '' : 'admin')) },
 
     stripe: { secretKey: stripeKey, webhookSecret: e.STRIPE_WEBHOOK_SECRET || '' },
     // Pagamento simulato: solo se NON c'è Stripe e non siamo in produzione (o lo si abilita a mano).
@@ -106,10 +112,16 @@ export function createConfig(overrides = {}) {
       staleWarnMinutes: 60, // avviso nell'admin se la sincronizzazione non riesce da oltre un'ora
     },
 
+    reminders: {
+      enabled: bool(e.REMINDERS_ENABLED, true), // la sera prima del tour, ai clienti privati: orario, punto d'incontro, come contattarti
+      sendHour: num(e.REMINDER_SEND_HOUR, 18), // ora di Venezia
+    },
+
     reviews: {
       enabled: bool(e.REVIEWS_ENABLED, true),
       googleUrl: e.REVIEW_URL || '', // link «scrivi una recensione» del profilo Google Business
       tripadvisorUrl: e.REVIEW_URL_TRIPADVISOR || '',
+      readUrl: e.REVIEWS_PAGE_URL || '', // pagina con tutte le recensioni (profilo Google o Tripadvisor): link accanto ai commenti sul sito
       sendHour: num(e.REVIEW_SEND_HOUR, 10), // la richiesta parte il giorno dopo il tour a quest'ora (ora di Venezia)
       catchUpDays: 7, // dopo un'interruzione non si inviano richieste più vecchie di così
     },
