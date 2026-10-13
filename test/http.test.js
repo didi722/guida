@@ -466,7 +466,7 @@ test('partner: listino dedicato e politica di annullo gestiti dall’admin (vali
     assert.equal(dedicated.slots[0].totalCents, 15050);
     const discounted = await (await partner(`/api/slots?tour=cannaregio-ghetto&date=${date}&pax=2`)).json();
     assert.equal(discounted.slots[0].totalCents, 5600, '2 × 28 €: 28 € − 10% = 25,20 € salirebbe a 30 €, oltre il listino, quindi resta 28 €');
-    assert.match(await (await partner('/it/b2b/account')).text(), /150,50/);
+    assert.match(await (await partner('/it/b2b/rates')).text(), /150,50/);
 
     // politica: validazioni, poi salvataggio (giorni → ore)
     for (const [fields, err] of [

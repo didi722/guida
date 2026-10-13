@@ -10,6 +10,7 @@ const ICON = {
   mail: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>',
   phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>',
   user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>',
+  logout: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9"/><path d="M16 8l4 4-4 4M20 12H9"/></svg>',
 };
 export const icon = (name) => raw(ICON[name] ?? '');
 
@@ -27,8 +28,16 @@ const NAV = [
   ['about', 'nav.about'],
 ];
 
-export function page(ctx, { title, description = '', path, body, bodyClass = '', ld = null, noindex = false, article = false, ogImage = null, activeNav = '', scripts = '' }) {
+/** La barra dell'area agenzie: poche voci, tutte per lavorare (niente blog, tour, programmi). «Nuova prenotazione» è il pulsante in evidenza. */
+const PARTNER_NAV = [
+  ['b2b-account', '/b2b/account', 'partner.nav.bookings'],
+  ['b2b-rates', '/b2b/rates', 'partner.nav.rates'],
+  ['b2b-invoices', '/b2b/invoices', 'partner.nav.invoices'],
+];
+
+export function page(ctx, { title, description = '', path, body, bodyClass = '', ld = null, noindex = false, article = false, ogImage = null, activeNav = '', scripts = '', area = '' }) {
   const { app, lang, t } = ctx;
+  const partner = area === 'partner' && ctx.acct?.status === 'approved'; // barra e piè di pagina dell'area agenzie
   const { cfg } = app;
   const demo = app.payments.demo; // istanza di prova (pagamenti simulati): non si indicizza e lo si dice a chiare lettere
   noindex = noindex || demo;
@@ -41,6 +50,8 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   const u = (p) => `/${lang}${p}`;
   // «Login agenzie» sempre visibile in alto, accanto a Prenota (su telefono resta come icona); chi ha già fatto il login vede «Area agenzia»
   const agencyLabel = ctx.acct ? t('nav.agencyArea') : t('nav.agencyLogin');
+  // «Esci»: un modulo POST (non un link, così nessuna anteprima o prefetch può farti uscire) che riporta alla pagina pubblica
+  const logoutForm = (cls, inner) => html`<form class="logout-form" method="post" action="${u('/b2b/logout')}"><button class="${cls}" type="submit">${inner}</button></form>`;
   const agencyLink = html`<a class="tool header-login" href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}" aria-label="${agencyLabel}" title="${agencyLabel}" ${activeNav === 'b2b-account' ? raw('aria-current="page"') : ''}><span class="login-icon">${icon('user')}</span><span class="login-label">${agencyLabel}</span></a>`;
   const umami = cfg.analytics.umamiId ? raw(`<script defer src="${esc(cfg.analytics.umamiSrc)}" data-website-id="${esc(cfg.analytics.umamiId)}"></script>`) : '';
 
@@ -70,21 +81,23 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   ${ld ? html`<script type="application/ld+json">${jsonLd(ld)}</script>` : ''}
   ${umami}
 </head>
-<body class="${bodyClass}">
+<body class="${[bodyClass, partner ? 'partner-area' : ''].filter(Boolean).join(' ')}">
 <a class="skip" href="#main">${t('a11y.skip')}</a>
 
 <header class="site-header" id="site-header">
   <div class="header-inner">
-    <a class="brand" href="${u('/')}" aria-label="${cfg.site.name} — ${t('nav.home')}">
+    <a class="brand" href="${partner ? u('/b2b/account') : u('/')}" aria-label="${cfg.site.name} — ${partner ? t('nav.agencyArea') : t('nav.home')}">
       <span class="brand-name">${cfg.site.name}</span>
-      <span class="brand-sub">${cfg.site.tagline[lang]}</span>
+      <span class="brand-sub">${partner ? t('nav.agencyArea') : cfg.site.tagline[lang]}</span>
     </a>
     <nav class="main-nav" aria-label="${t('a11y.mainNav')}">
-      ${NAV.filter(([k]) => k !== 'book').map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
+      ${partner
+        ? PARTNER_NAV.map(([k, p, label]) => html`<a href="${u(p)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)
+        : NAV.filter(([k]) => k !== 'book').map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
     </nav>
     <div class="header-tools">
-      <a class="btn btn-sm btn-dark header-cta" href="${u('/book')}">${t('nav.book')}</a>
-      ${agencyLink}
+      <a class="btn btn-sm btn-dark header-cta" href="${u('/book')}">${partner ? t('partner.nav.new') : t('nav.book')}</a>
+      ${partner ? logoutForm('tool header-login header-logout', html`<span class="login-icon">${icon('logout')}</span><span class="login-label">${t('b2b.logout')}</span>`) : agencyLink}
       <details class="lang-menu">
         <summary class="tool lang-switch" aria-label="${LANG_META[lang].name}" title="${LANG_META[lang].name}">${LANG_META[lang].short}</summary>
         <ul class="lang-list">${LANGS.map((l) => html`<li><a href="${swapLang(path, lang, l)}" hreflang="${l}" lang="${l}" ${l === lang ? raw('aria-current="true"') : ''}>${LANG_META[l].name}</a></li>`)}</ul>
@@ -99,10 +112,14 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
 
 <nav class="side-menu" id="side-menu" aria-label="${t('a11y.menu')}" hidden>
   <a class="side-agency" href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}">${icon('user')}<span>${agencyLabel}</span></a>
-  ${NAV.map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
+  ${partner
+    ? html`${PARTNER_NAV.map(([k, p, label]) => html`<a href="${u(p)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
+  <a href="${u('/book')}" ${activeNav === 'book' ? raw('aria-current="page"') : ''}>${t('partner.nav.new')}</a>`
+    : html`${NAV.map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
   <a href="${u('/gift')}" ${activeNav === 'gift' ? raw('aria-current="page"') : ''}>${t('nav.gift')}</a>
-  <a href="${u('/contact')}">${t('nav.contact')}</a>
+  <a href="${u('/contact')}">${t('nav.contact')}</a>`}
   <div class="side-langs">${others.map((l) => html`<a class="side-sub" href="${swapLang(path, lang, l)}" hreflang="${l}" lang="${l}">${LANG_META[l].name}</a>`)}</div>
+  ${ctx.acct ? logoutForm('side-logout', html`${icon('logout')}<span>${t('b2b.logout')}</span>`) : ''}
 </nav>
 <div class="scrim" id="scrim" hidden></div>
 
@@ -110,7 +127,19 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
 ${body}
 </main>
 
-<footer class="site-footer">
+${partner
+  ? html`<footer class="site-footer partner-footer">
+  <div class="wrap footer-bottom">
+    <span>&copy; ${new Date().getFullYear()} ${cfg.site.legalName}</span>
+    <ul class="plain partner-contact">
+      <li><a href="mailto:${cfg.site.email}">${icon('mail')} ${cfg.site.email}</a></li>
+      ${cfg.site.whatsapp ? html`<li><a href="https://wa.me/${cfg.site.whatsapp}" rel="noopener">${icon('whatsapp')} WhatsApp</a></li>` : ''}
+      ${cfg.site.phone ? html`<li><a href="tel:${cfg.site.phone.replace(/\s+/g, '')}">${icon('phone')} ${cfg.site.phone}</a></li>` : ''}
+    </ul>
+    <span class="footer-links"><a href="${u('/privacy')}">${t('footer.privacy')}</a> · <a href="${u('/terms')}">${t('footer.terms')}</a></span>
+  </div>
+</footer>`
+  : html`<footer class="site-footer">
   <div class="wrap footer-grid">
     <div>
       <p class="footer-brand">${cfg.site.name}</p>
@@ -130,6 +159,7 @@ ${body}
         <li><a href="${u('/about')}">${t('nav.about')}</a></li>
         <li><a href="${u('/contact')}">${t('nav.contact')}</a></li>
         <li><a href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}">${agencyLabel}</a></li>
+        ${ctx.acct ? html`<li>${logoutForm('linklike', t('b2b.logout'))}</li>` : ''}
       </ul>
     </div>
     <div>
@@ -146,7 +176,7 @@ ${body}
     <span>&copy; ${new Date().getFullYear()} ${cfg.site.legalName}</span>
     <span class="footer-links"><a href="${u('/privacy')}">${t('footer.privacy')}</a> · <a href="${u('/terms')}">${t('footer.terms')}</a> · <a href="${u('/cookies')}">${t('footer.cookies')}</a></span>
   </div>
-</footer>
+</footer>`}
 <script src="/js/main.js?v=${app.assetVersion}" defer></script>
 ${scripts}
 </body>

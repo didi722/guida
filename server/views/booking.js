@@ -4,9 +4,10 @@ import { freeHoursOf, hasFreeTier, policyFor, refundPercentAt } from '../policy.
 import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { isPreOpening, paymentsFrom } from '../opening.js';
+import { isEditable } from '../partner.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
-import { breadcrumbs, departuresList, fmtDuration, fmtHours, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
+import { areaOf, breadcrumbs, departuresList, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
 import { quoteLines } from './hourly.js';
 import { parseServiceRecord } from '../rates.js';
 
@@ -24,7 +25,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
   const { t, lang, u, app } = ctx;
   const body = html`
 <section class="page-head"><div class="wrap">
-  ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.book')]])}
+  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('nav.book')]])}
   <h1>${t('book.title')}</h1><p class="lead">${t('book.lead')}</p>
   ${channel === 'b2b' ? html`<p><span class="chip chip-accent">${t('b2b.partnerRate')}</span> ${t('book.partnerNote')}</p>` : ''}
   ${preOpenNotice(ctx, { agency: channel === 'b2b' })}
@@ -74,7 +75,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
     : html`<p class="muted spaced">${t('book.pickPrompt')}</p>
       ${departures.length ? html`<h2 class="h-sub spaced">${t('departures.title')}</h2>${departuresList(ctx, departures, { pax })}` : ''}`}
 </div></section>`;
-  return page(ctx, { title: t('nav.book'), description: t('book.lead'), path: `/${lang}/book`, body, activeNav: 'book' });
+  return page(ctx, { title: t('nav.book'), description: t('book.lead'), path: `/${lang}/book`, body, activeNav: 'book', area: areaOf(ctx) });
 }
 
 // ───────────────────────── Checkout ─────────────────────────
@@ -100,7 +101,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
 
   const body = html`
 <section class="page-head"><div class="wrap">
-  ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.book'), u('/book')], [t('checkout.title')]])}
+  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('nav.book'), u('/book')], [t('checkout.title')]])}
   <h1>${t('checkout.title')}</h1>
   ${preOpenNotice(ctx, { agency: isB2b })}
 </div></section>
@@ -185,7 +186,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
     </div>
   </aside>
 </div></section>`;
-  return page(ctx, { title: t('checkout.title'), path: `/${lang}/book/checkout`, body, noindex: true, activeNav: 'book', scripts: raw(`<script src="/js/checkout.js?v=${ctx.app.assetVersion}" defer></script>`) });
+  return page(ctx, { title: t('checkout.title'), path: `/${lang}/book/checkout`, body, noindex: true, activeNav: 'book', area: areaOf(ctx), scripts: raw(`<script src="/js/checkout.js?v=${ctx.app.assetVersion}" defer></script>`) });
 }
 
 export function slotGonePage(ctx, { tour, date, pax }) {
@@ -193,7 +194,7 @@ export function slotGonePage(ctx, { tour, date, pax }) {
   const body = html`<section class="page-head"><div class="wrap narrow center">
     <h1>${t('checkout.goneTitle')}</h1><p class="lead">${t('checkout.goneText')}</p>
     <p class="btn-row center"><a class="btn btn-gold" href="${tour?.pricing === 'hourly' ? `${u('/hourly')}?product=${tour.slug}${date ? '&date=' + date : ''}&pax=${pax}` : `${u('/book')}?${tour ? 'tour=' + tour.slug + '&' : ''}${date ? 'date=' + date + '&' : ''}pax=${pax}`}">${t('checkout.pickAnother')}</a></p></div></section>`;
-  return page(ctx, { title: t('checkout.goneTitle'), path: `/${lang}/book/checkout`, body, noindex: true });
+  return page(ctx, { title: t('checkout.goneTitle'), path: `/${lang}/book/checkout`, body, noindex: true, area: areaOf(ctx) });
 }
 
 /** Conferma o rilascia di un'opzione: dal link della prenotazione e dall'area dell'agenzia. */
@@ -204,7 +205,7 @@ export function optionActions(ctx, b, { st, nextUrl = '' }) {
   const late = st.percent < 100; // già oltre il periodo di cancellazione gratuita: confermando non è più rimborsabile (del tutto)
   const left = Date.parse(b.option_expires_at) - Date.now();
   const base = `/${lang}/booking/${b.ref}`;
-  return html`<div class="option-actions">
+  return html`<div class="option-actions" id="option">
     <p class="chip ${left < 48 * 3600_000 ? 'chip-warn' : ''}">${t('booking.optionLeft', { when: timeLeft(t, Math.max(0, left)) })}</p>
     <form method="post" action="${base}/option/confirm" class="form option-confirm" data-confirm="${late ? t('booking.optionConfirmAskLate') : t('booking.optionConfirmAsk')}">
       <input type="hidden" name="t" value="${b.token}">${nextUrl ? html`<input type="hidden" name="next" value="${nextUrl}">` : ''}
@@ -219,7 +220,11 @@ export function optionActions(ctx, b, { st, nextUrl = '' }) {
 }
 
 // ───────────────────────── Stato prenotazione ─────────────────────────
-export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = '' } = {}) {
+/**
+ * owner: chi guarda è l'agenzia che ha fatto la prenotazione (con il suo accesso): vede la scheda nella sua area, con fattura e modifica del nominativo.
+ * invoice: la fattura emessa che contiene la prenotazione, se c'è.
+ */
+export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = '', owner = false, invoice = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { cfg } = app;
   const tour = app.content.tour(b.tour_slug);
@@ -230,6 +235,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   const service = parseServiceRecord(b.service_json);
   const holdLeft = b.status === 'held' ? Math.max(0, Math.ceil((Date.parse(b.hold_expires_at) - Date.now()) / 60000)) : 0;
 
+  const invoiceBtn = owner && invoice ? html`<a class="btn btn-outline" href="${u(`/b2b/invoices/${invoice.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.act.invoice', { n: invoice.number })}</a>` : '';
   const wasOption = !!b.option_expires_at; // un'opzione (anche se poi scaduta o confermata)
   const optionUntil = b.option_expires_at ? fmtInstant(Date.parse(b.option_expires_at), lang) : '';
   const heads = {
@@ -252,7 +258,8 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
 
   const body = html`
 <section class="page-head"><div class="wrap narrow">
-  ${flash ? html`<div class="notice notice-${/error|expired/.test(flash) ? 'err' : 'ok'}" role="status">${t(`booking.flash.${flash}`)}</div>` : ''}
+  ${owner ? html`<p class="back-link"><a href="${u('/b2b/account')}">← ${t('partner.back')}</a></p>` : ''}
+  ${flash ? html`<div class="notice notice-${/error|expired|locked/.test(flash) ? 'err' : 'ok'}" role="status">${t(`booking.flash.${flash}`)}</div>` : ''}
   <div class="status status-${tone}"><span class="status-dot" aria-hidden="true"></span><div><h1>${title}</h1><p class="lead">${text}</p></div></div>
 </div></section>
 <section class="section tight"><div class="wrap narrow">
@@ -291,14 +298,28 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       <p class="btn-row">
         <a class="btn btn-outline" href="${base}/calendar.ics${q}">${t('booking.addCalendar')}</a>
         <a class="btn btn-outline" href="${base}/voucher.pdf${q}" target="_blank" rel="noopener">${t('booking.voucher')}</a>
+        ${invoiceBtn}
       </p>
       ${st.percent > 0
         ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${st.percent < 100 && b.payment_status !== 'paid' ? t('booking.confirmCancelFee') : t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
         : st.started ? '' : html`<p class="small muted">${t('booking.contactForChanges')} <a href="mailto:${cfg.site.email}">${cfg.site.email}</a>${cfg.site.whatsapp ? html` · <a href="https://wa.me/${cfg.site.whatsapp}">WhatsApp</a>` : ''}</p>`}`
-      : ''}
+      : invoiceBtn ? html`<p class="btn-row">${invoiceBtn}</p>` : ''}
+    ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && !invoice ? html`<p class="small muted">${t('partner.docs.invoiceLater')}</p>` : ''}
   </div>
+  ${owner && isEditable(b)
+    ? html`<form class="card pad form edit-card" method="post" action="${u(`/b2b/bookings/${b.ref}/edit`)}" id="edit">
+    <h2>${t('partner.edit.title')}</h2><p class="small muted">${t('partner.edit.hint')}</p>
+    <div class="form-grid">
+      <label class="field"><span class="label">${t('partner.edit.name')}</span><input name="name" required maxlength="120" value="${b.name}"></label>
+      <label class="field"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${b.client_ref ?? ''}"></label>
+      <label class="field"><span class="label">${t('f.phone')}</span><input type="tel" name="phone" maxlength="40" value="${b.phone ?? ''}"></label>
+    </div>
+    <label class="field"><span class="label">${t('f.notes')}</span><textarea name="notes" rows="3" maxlength="1000">${b.notes ?? ''}</textarea></label>
+    <button class="btn btn-gold" type="submit">${t('partner.edit.btn')}</button>
+  </form>`
+    : ''}
 </div></section>`;
-  return page(ctx, { title: `${t('s.ref')} ${b.ref}`, path: `/${lang}/booking/${b.ref}`, body, noindex: true });
+  return page(ctx, { title: `${t('s.ref')} ${b.ref}`, path: `/${lang}/booking/${b.ref}`, body, noindex: true, ...(owner ? { area: 'partner', activeNav: 'b2b-account' } : {}) });
 }
 
 export function demoPayPage(ctx, o) {

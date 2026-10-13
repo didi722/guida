@@ -166,6 +166,15 @@ export function cancellationLine(ctx, tour, channel = 'b2c') {
 export const checkIcon = raw('<svg class="i-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>');
 export const crossIcon = raw('<svg class="i-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>');
 
+/**
+ * Un'agenzia approvata che prenota (cerca, preventivo, pagamento, scheda) resta nella sua area riservata: stessa barra semplice,
+ * senza blog, «chi sono», tour o programmi. Per tutti gli altri è il sito di sempre.
+ */
+export const areaOf = (ctx) => (ctx.acct?.status === 'approved' ? 'partner' : '');
+
+/** Il primo gradino delle briciole di pane: la home del sito, o l'area dell'agenzia. */
+export const homeCrumb = (ctx) => (areaOf(ctx) ? [ctx.t('nav.agencyArea'), ctx.u('/b2b/account')] : [ctx.t('nav.home'), `/${ctx.lang}/`]);
+
 export function breadcrumbs(ctx, items) {
   return html`<nav class="breadcrumbs" aria-label="${ctx.t('a11y.breadcrumbs')}">${items.map(([label, href], i) => (href ? html`<a href="${href}">${label}</a><span aria-hidden="true">›</span>` : html`<span aria-current="page">${label}</span>`))}</nav>`;
 }

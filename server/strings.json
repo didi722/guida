@@ -4522,5 +4522,479 @@
   "Other durations and times →",
   "Otras duraciones y horarios →",
   "他の時間数・開始時刻を見る →"
+ ],
+ "partner.nav.bookings": [
+  "Prenotazioni",
+  "Bookings",
+  "Reservas",
+  "予約一覧"
+ ],
+ "partner.nav.new": [
+  "Nuova prenotazione",
+  "New booking",
+  "Nueva reserva",
+  "新規予約"
+ ],
+ "partner.nav.rates": [
+  "Tariffe e condizioni",
+  "Rates & terms",
+  "Tarifas y condiciones",
+  "料金・条件"
+ ],
+ "partner.nav.invoices": [
+  "Fatture",
+  "Invoices",
+  "Facturas",
+  "請求書"
+ ],
+ "partner.kpi.upcoming": [
+  "Prossime partenze",
+  "Upcoming departures",
+  "Próximas salidas",
+  "今後の出発"
+ ],
+ "partner.kpi.pax": [
+  "Persone: {n}",
+  "Guests: {n}",
+  "Personas: {n}",
+  "人数：{n}"
+ ],
+ "partner.kpi.options": [
+  "Opzioni aperte",
+  "Open options",
+  "Opciones abiertas",
+  "保留中のオプション"
+ ],
+ "partner.kpi.optNext": [
+  "La prima scade: {when}",
+  "First one expires: {when}",
+  "La primera caduca: {when}",
+  "最初の期限：{when}"
+ ],
+ "partner.kpi.optNone": [
+  "Nessuna in sospeso",
+  "None pending",
+  "Ninguna pendiente",
+  "保留なし"
+ ],
+ "partner.kpi.month": [
+  "Partenze di {month}",
+  "Departures in {month}",
+  "Salidas de {month}",
+  "{month}の出発"
+ ],
+ "partner.kpi.due": [
+  "Da saldare",
+  "To be paid",
+  "Pendiente de pago",
+  "未払い"
+ ],
+ "partner.kpi.dueNote": [
+  "Con fattura o bonifico",
+  "By invoice or bank transfer",
+  "Con factura o transferencia",
+  "請求書・銀行振込"
+ ],
+ "partner.kpi.dueNone": [
+  "Tutto in regola",
+  "All settled",
+  "Todo al día",
+  "未払いなし"
+ ],
+ "partner.terms.title": [
+  "Le tue condizioni",
+  "Your terms",
+  "Tus condiciones",
+  "お取引条件"
+ ],
+ "partner.terms.all": [
+  "Tariffe e condizioni complete",
+  "Full rates and terms",
+  "Tarifas y condiciones completas",
+  "料金・条件の詳細"
+ ],
+ "partner.terms.options": [
+  "Opzione sulla data",
+  "Date option",
+  "Opción sobre la fecha",
+  "日程のオプション（仮押さえ）"
+ ],
+ "partner.terms.optionsOff": [
+  "Non attiva: si prenota direttamente",
+  "Not active: you book directly",
+  "No activa: se reserva directamente",
+  "ご利用いただけません（直接のご予約のみ）"
+ ],
+ "partner.terms.optFixed": [
+  "Ogni opzione dura {days}",
+  "Each option lasts {days}",
+  "Cada opción dura {days}",
+  "オプションの保持期間は{days}"
+ ],
+ "partner.terms.optTier": [
+  "Servizio fra almeno {from}: opzione di {days}",
+  "Service at least {from} away: option of {days}",
+  "Servicio con al menos {from} de antelación: opción de {days}",
+  "サービスまで{from}以上：保持期間{days}"
+ ],
+ "partner.terms.optRelease": [
+  "Se non confermi, la data si libera da sola, al più tardi {hours} prima del servizio",
+  "If you don’t confirm, the date is released automatically, at the latest {hours} before the service",
+  "Si no confirmas, la fecha se libera sola, como máximo {hours} antes del servicio",
+  "確定されない場合は、遅くともサービスの{hours}前に自動で解除されます"
+ ],
+ "partner.terms.optMax": [
+  "Al massimo {n} opzioni aperte insieme",
+  "Up to {n} options open at the same time",
+  "Como máximo {n} opciones abiertas a la vez",
+  "同時に保持できるオプションは最大{n}件です"
+ ],
+ "partner.tab.upcoming": [
+  "In arrivo",
+  "Upcoming",
+  "Próximas",
+  "今後"
+ ],
+ "partner.tab.options": [
+  "Opzioni",
+  "Options",
+  "Opciones",
+  "オプション"
+ ],
+ "partner.tab.past": [
+  "Passate",
+  "Past",
+  "Pasadas",
+  "過去"
+ ],
+ "partner.tab.cancelled": [
+  "Annullate",
+  "Cancelled",
+  "Canceladas",
+  "キャンセル"
+ ],
+ "partner.tab.all": [
+  "Tutte",
+  "All",
+  "Todas",
+  "すべて"
+ ],
+ "partner.search.label": [
+  "Cerca",
+  "Search",
+  "Buscar",
+  "検索"
+ ],
+ "partner.search.ph": [
+  "Cerca per cliente, pratica o codice",
+  "Search by client, file or reference",
+  "Buscar por cliente, expediente o código",
+  "お客様名・案件番号・予約番号で検索"
+ ],
+ "partner.search.btn": [
+  "Cerca",
+  "Search",
+  "Buscar",
+  "検索"
+ ],
+ "partner.filter.dates": [
+  "Filtra per data",
+  "Filter by date",
+  "Filtrar por fecha",
+  "日付で絞り込む"
+ ],
+ "partner.filter.depFrom": [
+  "Partenza dal",
+  "Departure from",
+  "Salida desde",
+  "出発日（から）"
+ ],
+ "partner.filter.depTo": [
+  "Partenza al",
+  "Departure to",
+  "Salida hasta",
+  "出発日（まで）"
+ ],
+ "partner.filter.bookFrom": [
+  "Prenotata dal",
+  "Booked from",
+  "Reservada desde",
+  "予約日（から）"
+ ],
+ "partner.filter.bookTo": [
+  "Prenotata al",
+  "Booked to",
+  "Reservada hasta",
+  "予約日（まで）"
+ ],
+ "partner.filter.clear": [
+  "Azzera i filtri",
+  "Clear filters",
+  "Quitar filtros",
+  "絞り込みを解除"
+ ],
+ "partner.export": [
+  "Scarica l’elenco (CSV)",
+  "Download the list (CSV)",
+  "Descargar la lista (CSV)",
+  "一覧をダウンロード（CSV）"
+ ],
+ "partner.results.none": [
+  "Nessuna prenotazione corrisponde alla ricerca.",
+  "No booking matches your search.",
+  "Ninguna reserva coincide con la búsqueda.",
+  "検索条件に一致する予約はありません。"
+ ],
+ "partner.results.noneHere": [
+  "Nessuna prenotazione in questa scheda.",
+  "No bookings in this tab.",
+  "No hay reservas en esta pestaña.",
+  "このタブに該当する予約はありません。"
+ ],
+ "partner.results.empty": [
+  "Non hai ancora prenotazioni. Comincia da qui.",
+  "You have no bookings yet. Start here.",
+  "Aún no tienes reservas. Empieza aquí.",
+  "まだご予約はありません。こちらから始めましょう。"
+ ],
+ "partner.col.file": [
+  "Pratica e nominativo",
+  "File and name",
+  "Expediente y nombre",
+  "案件・お名前"
+ ],
+ "partner.col.actions": [
+  "Azioni",
+  "Actions",
+  "Acciones",
+  "操作"
+ ],
+ "partner.col.booked": [
+  "Prenotata il",
+  "Booked on",
+  "Reservada el",
+  "予約日"
+ ],
+ "partner.col.invoice": [
+  "Fattura",
+  "Invoice",
+  "Factura",
+  "請求書"
+ ],
+ "partner.bookedOn": [
+  "Prenotata il {date}",
+  "Booked on {date}",
+  "Reservada el {date}",
+  "予約日 {date}"
+ ],
+ "partner.optUntil": [
+  "fino al {when}",
+  "until {when}",
+  "hasta el {when}",
+  "{when}まで"
+ ],
+ "b2b.bst.option": [
+  "Opzione",
+  "Option",
+  "Opción",
+  "オプション"
+ ],
+ "b2b.bst.optionExpired": [
+  "Opzione scaduta",
+  "Option expired",
+  "Opción caducada",
+  "オプション期限切れ"
+ ],
+ "partner.act.open": [
+  "Apri",
+  "Open",
+  "Abrir",
+  "開く"
+ ],
+ "partner.act.voucher": [
+  "Voucher",
+  "Voucher",
+  "Voucher",
+  "バウチャー"
+ ],
+ "partner.act.invoice": [
+  "Fattura {n}",
+  "Invoice {n}",
+  "Factura {n}",
+  "請求書 {n}"
+ ],
+ "partner.act.confirm": [
+  "Conferma",
+  "Confirm",
+  "Confirmar",
+  "確定する"
+ ],
+ "partner.act.release": [
+  "Rilascia",
+  "Release",
+  "Liberar",
+  "解除"
+ ],
+ "partner.page.aria": [
+  "Pagine dell’elenco",
+  "List pages",
+  "Páginas de la lista",
+  "一覧のページ"
+ ],
+ "partner.page.prev": [
+  "Precedenti",
+  "Previous",
+  "Anteriores",
+  "前へ"
+ ],
+ "partner.page.next": [
+  "Successive",
+  "Next",
+  "Siguientes",
+  "次へ"
+ ],
+ "partner.page.of": [
+  "Pagina {n} di {total}",
+  "Page {n} of {total}",
+  "Página {n} de {total}",
+  "{n} / {total} ページ"
+ ],
+ "partner.back": [
+  "Tutte le prenotazioni",
+  "All bookings",
+  "Todas las reservas",
+  "予約一覧へ戻る"
+ ],
+ "partner.edit.title": [
+  "Nominativo e note",
+  "Name and notes",
+  "Nombre y notas",
+  "お名前・ご要望の変更"
+ ],
+ "partner.edit.hint": [
+  "Quando il cliente è deciso, scrivi qui il suo nome. Puoi cambiare questi dati finché il servizio non è iniziato; la guida riceve l’aggiornamento.",
+  "Once your client has decided, enter their name here. You can change these details until the service starts; the guide is notified of the update.",
+  "Cuando el cliente se haya decidido, escribe aquí su nombre. Puedes cambiar estos datos hasta que empiece el servicio; el guía recibe la actualización.",
+  "お客様が決まりましたら、こちらにお名前をご入力ください。サービス開始前であれば変更でき、ガイドに更新が通知されます。"
+ ],
+ "partner.edit.name": [
+  "Nominativo (cliente o capogruppo)",
+  "Name (client or group leader)",
+  "Nombre (cliente o responsable del grupo)",
+  "お名前（お客様またはグループ代表者）"
+ ],
+ "partner.edit.btn": [
+  "Salva le modifiche",
+  "Save changes",
+  "Guardar cambios",
+  "変更を保存"
+ ],
+ "partner.docs.invoiceLater": [
+  "La fattura comparirà qui, nella sezione Fatture, appena sarà emessa.",
+  "The invoice will appear here, under Invoices, as soon as it is issued.",
+  "La factura aparecerá aquí, en la sección Facturas, en cuanto se emita.",
+  "請求書は発行され次第、「請求書」に表示されます。"
+ ],
+ "booking.flash.edited": [
+  "Modifiche salvate.",
+  "Changes saved.",
+  "Cambios guardados.",
+  "変更を保存しました。"
+ ],
+ "booking.flash.edit-error": [
+  "Il nominativo è obbligatorio.",
+  "The name is required.",
+  "El nombre es obligatorio.",
+  "お名前は必須です。"
+ ],
+ "booking.flash.edit-locked": [
+  "Il servizio è già iniziato o la prenotazione è chiusa: non si può più modificare.",
+  "The service has already started or the booking is closed: it can no longer be changed.",
+  "El servicio ya ha comenzado o la reserva está cerrada: ya no se puede modificar.",
+  "サービスが開始済み、または予約が終了しているため、変更できません。"
+ ],
+ "partner.rates.title": [
+  "Tariffe e condizioni",
+  "Rates and terms",
+  "Tarifas y condiciones",
+  "料金とお取引条件"
+ ],
+ "partner.rates.lead": [
+  "Le tue tariffe riservate e le condizioni del tuo account, sempre a portata di mano.",
+  "Your reserved rates and your account terms, always at hand.",
+  "Tus tarifas reservadas y las condiciones de tu cuenta, siempre a mano.",
+  "貴社専用の料金とお取引条件を、いつでもご確認いただけます。"
+ ],
+ "partner.rates.fixed": [
+  "Tour a prezzo fisso",
+  "Fixed-price tours",
+  "Tours de precio fijo",
+  "固定料金のツアー"
+ ],
+ "partner.inv.title": [
+  "Fatture",
+  "Invoices",
+  "Facturas",
+  "請求書"
+ ],
+ "partner.inv.lead": [
+  "Le fatture e le note di credito emesse al tuo account. L’originale elettronico ti arriva da SdI; qui trovi una copia in PDF.",
+  "Invoices and credit notes issued to your account. The electronic original reaches you through SdI; here you will find a PDF copy.",
+  "Facturas y notas de crédito emitidas a tu cuenta. El original electrónico te llega a través de SdI; aquí tienes una copia en PDF.",
+  "貴社宛に発行された請求書とクレジットノートです。電子データの原本は SdI（イタリアの電子請求書システム）経由で届き、こちらでは PDF の控えをご覧いただけます。"
+ ],
+ "partner.inv.number": [
+  "Numero",
+  "Number",
+  "Número",
+  "番号"
+ ],
+ "partner.inv.type": [
+  "Tipo",
+  "Type",
+  "Tipo",
+  "種類"
+ ],
+ "partner.inv.td01": [
+  "Fattura",
+  "Invoice",
+  "Factura",
+  "請求書"
+ ],
+ "partner.inv.td04": [
+  "Nota di credito",
+  "Credit note",
+  "Nota de crédito",
+  "クレジットノート"
+ ],
+ "partner.inv.pdf": [
+  "Scarica PDF",
+  "Download PDF",
+  "Descargar PDF",
+  "PDFをダウンロード"
+ ],
+ "partner.inv.none": [
+  "Non ci sono ancora fatture.",
+  "There are no invoices yet.",
+  "Todavía no hay facturas.",
+  "請求書はまだありません。"
+ ],
+ "partner.inv.due": [
+  "Importo ancora da saldare: {amount}.",
+  "Amount still to be paid: {amount}.",
+  "Importe pendiente de pago: {amount}.",
+  "未払い金額：{amount}"
+ ],
+ "partner.inv.howInvoice": [
+  "Le prenotazioni a fattura vengono fatturate dopo il servizio e si saldano con bonifico entro la scadenza indicata in fattura. Compaiono qui appena emesse.",
+  "Bookings paid by invoice are invoiced after the service and settled by bank transfer by the due date shown on the invoice. They appear here as soon as they are issued.",
+  "Las reservas con factura se facturan después del servicio y se saldan por transferencia antes del vencimiento indicado en la factura. Aparecen aquí en cuanto se emiten.",
+  "請求書払いのご予約は、サービス後に請求書を発行し、請求書記載の期日までに銀行振込でお支払いいただきます。発行され次第、こちらに表示されます。"
+ ],
+ "partner.inv.howCard": [
+  "La fattura delle prenotazioni pagate con carta compare qui appena è emessa.",
+  "The invoice for bookings paid by card appears here as soon as it is issued.",
+  "La factura de las reservas pagadas con tarjeta aparece aquí en cuanto se emite.",
+  "カードでお支払いのご予約の請求書は、発行され次第こちらに表示されます。"
  ]
 }

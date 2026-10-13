@@ -9,8 +9,9 @@ import { sendContactMessage, sendPartnerRegistered, icsFor } from '../emails.js'
 import { isDate, isTime, localToInstant, nowRome } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
 import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js';
+import { invoiceOfBooking } from '../partner.js';
 import { renderVoucherPdf } from '../pdf.js';
-import { accountPage, loginPage, registerPage } from '../views/b2b.js';
+import { loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { hourlyPage } from '../views/hourly.js';
 import { hourOptions, minHours, openTo } from '../rates.js';
@@ -266,7 +267,9 @@ export function publicRouter(app) {
     let b = loadBooking(req);
     if (!b) return next();
     if (req.query.paid && (b.status === 'held' || services.payableLater(b))) b = await services.syncStripe(b);
-    send(res, bookingPage(res.locals.ctx, b, { flash: req.query.flash ? String(req.query.flash) : '', payLater: services.payableLater(b) }));
+    // l'agenzia che ha fatto la prenotazione (se è entrata) la vede dentro la sua area, con fattura e modifica del nominativo
+    const owner = !!req.acct && b.account_id === req.acct.id && req.acct.status === 'approved';
+    send(res, bookingPage(res.locals.ctx, b, { flash: req.query.flash ? String(req.query.flash) : '', payLater: services.payableLater(b), owner, invoice: owner ? invoiceOfBooking(db, b.id) : null }));
   });
   r.get('/booking/:ref/calendar.ics', (req, res, next) => {
     const b = loadBooking(req);
@@ -324,7 +327,7 @@ export function publicRouter(app) {
   });
   r.post('/b2b/logout', form, (req, res) => {
     logoutPartner(res, cfg);
-    res.redirect(303, `/${req.lang}/b2b`);
+    res.redirect(303, `/${req.lang}/`); // si esce dall'area riservata e si torna alla pagina di tutti
   });
   r.get('/b2b/register', (req, res) => send(res, registerPage(res.locals.ctx)));
   r.post('/b2b/register', form, async (req, res) => {
@@ -353,12 +356,6 @@ export function publicRouter(app) {
     loginPartner(res, cfg, acct.id);
     send(res, registerPage(ctx, { done: true }));
   });
-  r.get('/b2b/account', (req, res) => {
-    if (!req.acct) return res.redirect(`/${req.lang}/b2b/login?next=${encodeURIComponent(`/${req.lang}/b2b/account`)}`);
-    const bookings = db.prepare(`SELECT * FROM bookings WHERE account_id = ? ORDER BY date DESC, start_time DESC LIMIT 200`).all(req.acct.id);
-    send(res, accountPage(res.locals.ctx, { acct: req.acct, bookings }));
-  });
-
   return r;
 }
 

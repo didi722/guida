@@ -4,7 +4,7 @@ import { parseDayList, rateRows, hourOptions, minHours } from '../rates.js';
 import { localeOf } from '../langs.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
-import { breadcrumbs, hoursLabel } from './components.js';
+import { areaOf, breadcrumbs, homeCrumb, hoursLabel } from './components.js';
 
 export { hoursLabel };
 
@@ -105,7 +105,7 @@ export function hourlyPage(ctx, { products, product, channel, values, quote, slo
   const body = products.length
     ? html`
 <section class="page-head"><div class="wrap">
-  ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [title]])}
+  ${breadcrumbs(ctx, [homeCrumb(ctx), [title]])}
   <h1>${title}</h1><p class="lead">${lead}</p>
   ${isB2b ? html`<p><span class="chip chip-accent">${t('b2b.partnerRate')}</span></p>` : ''}
 </div></section>
@@ -147,5 +147,5 @@ export function hourlyPage(ctx, { products, product, channel, values, quote, slo
   ${ratesBlock(ctx, { channel, services: isB2b ? services : [product.service], discountPercent: isB2b ? (ctx.acct?.discount_percent ?? 0) : 0 })}
 </div></section>`
     : html`<section class="page-head"><div class="wrap narrow center"><h1>${title}</h1><p class="lead">${t('hourly.err.service')}</p><p class="btn-row center"><a class="btn btn-gold" href="${u('/contact')}">${t('nav.contact')}</a></p></div></section>`;
-  return page(ctx, { title, description: lead, path: `/${lang}/hourly`, body, activeNav: isB2b ? 'b2b' : 'tours' });
+  return page(ctx, { title, description: lead, path: `/${lang}/hourly`, body, activeNav: isB2b ? 'book' : 'tours', area: areaOf(ctx) });
 }

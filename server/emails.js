@@ -456,6 +456,27 @@ export async function notifyGuideOption(app, b, kind) {
   await app.mail.send({ to, subject: `${label}: ${tour?.i18n.it.title ?? b.tour_slug} — ${b.date} ${b.start_time}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
 }
 
+/** Avviso alla guida (in italiano): l'agenzia ha cambiato nominativo, telefono o note di una prenotazione confermata. */
+export async function notifyGuideBookingEdited(app, before, after) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const tour = app.content.tour(before.tour_slug);
+  const account = before.account_id ? app.db.prepare('SELECT company FROM accounts WHERE id = ?').get(before.account_id) : null;
+  const changes = [
+    ['Nominativo', before.name, after.name],
+    ['Telefono', before.phone, after.phone],
+    ['Note', before.notes, after.notes],
+  ].filter(([, a, b]) => (a ?? '') !== (b ?? ''));
+  const lines = [
+    `Prenotazione modificata dall’agenzia: ${before.ref}${account ? ` — ${account.company}` : ''}`,
+    `${tour?.i18n.it.title ?? before.tour_slug} · ${fmtDate(before.date, 'it')} · ${before.start_time}–${before.end_time} · ${before.participants} pers.`,
+    ...changes.map(([label, a, b]) => `${label}: ${a || '—'} → ${b || '—'}`),
+    '',
+    `${app.cfg.baseUrl}/admin/bookings/${before.id}`,
+  ];
+  await app.mail.send({ to, subject: `Prenotazione modificata: ${tour?.i18n.it.title ?? before.tour_slug} — ${before.date} ${before.start_time}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
+}
+
 // ───────────── Partner B2B ─────────────
 const P = {
   it: {

@@ -141,7 +141,7 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
     const landing = await (await anon('/it/b2b')).text().then(nb);
     assert.match(landing, /Le mie tariffe a ore/);
     assert.match(landing, /Assistente in loco[^]*?80 €/, 'le tariffe agenzie sono visibili a tutti (impostazione predefinita)');
-    const account = await (await partner('/it/b2b/account')).text().then(nb);
+    const account = await (await partner('/it/b2b/rates')).text().then(nb);
     assert.match(account, /Le tue tariffe/);
     assert.match(account, /Assistente in loco[^]*?70 €/);
     assert.ok(!/passeggiata|servizio-mezza/i.test(account));
