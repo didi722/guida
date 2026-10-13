@@ -4,7 +4,7 @@ import { freeCancelHours, unitPriceFor } from '../bookings.js';
 import { fmtDate, fmtMonth } from '../time.js';
 import { formatMoney } from '../util.js';
 import { LANGS, LANG_META, localeOf } from '../langs.js';
-import { minHours } from '../rates.js';
+import { minHours, openTo } from '../rates.js';
 import { MEDIA_NAME, smallName } from '../media.js';
 
 /** <option> di tutte le lingue del sito, con quella indicata selezionata. */
@@ -16,6 +16,27 @@ export function fmtDuration(min, lang) {
   if (lang === 'ja') return h ? (m ? `${h}時間${m}分` : `${h}時間`) : `${m}分`;
   return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
 }
+
+const GLOBE = raw('<svg class="i-globe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>');
+
+/**
+ * «Guida abilitata in 4 lingue»: le lingue in cui conduco i tour, ben visibili (per le agenzie è un punto di forza: un solo referente per gruppi di lingue diverse).
+ * variant: 'hero' (sotto il titolo, per tutti) | 'band' (con la frase per le agenzie).
+ */
+export function languagesBadge(ctx, { variant = 'hero' } = {}) {
+  const { t } = ctx;
+  return html`<div class="lang-badge lang-badge-${variant}" role="group" aria-label="${t('langs.badge.aria')}">
+    <p class="lang-badge-title">${GLOBE}<strong>${t('langs.badge.title')}</strong></p>
+    <ul class="lang-chips">${LANGS.map((l) => html`<li lang="${l}">${LANG_META[l].name}</li>`)}</ul>
+    <p class="lang-badge-sub">${t(variant === 'band' ? 'langs.badge.sub' : 'langs.badge.consumer')}</p>
+  </div>`;
+}
+
+/** Ci sono servizi a ore prenotabili da questo canale? Se no, «Calcola un preventivo» non porterebbe da nessuna parte e il pulsante non si mostra. */
+export const hasHourlyProducts = (ctx, channel) => {
+  const rates = ctx.app.rates.get();
+  return ctx.app.content.tours.some((x) => x.pricing === 'hourly' && openTo(rates, x, channel));
+};
 
 /** «1 ora», «2 ore», «2,5 ore». */
 export const hoursLabel = (t, lang, h) => (h === 1 ? t('hourly.hours1') : t('hourly.hoursN', { n: new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 1 }).format(h) }));

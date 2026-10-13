@@ -403,13 +403,13 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
 
     // partner approvato
     const now = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
-    assert.equal(now.slots[0].totalCents, 18050, '190 € − 5%');
+    assert.equal(now.slots[0].totalCents, 18500, '190 € − 5% = 180,50 → 185');
     const ok = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata', date, time: '09:00', pax: '10', name: 'Giulia', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 42', consent: '1' }));
     assert.equal(ok.status, 303);
     const b = s.app.db.prepare('SELECT * FROM bookings WHERE client_ref = ?').get('PRATICA 42');
     assert.equal(b.channel, 'b2b');
     assert.equal(b.status, 'confirmed');
-    assert.equal(b.total_cents, 18050);
+    assert.equal(b.total_cents, 18500);
     assert.equal(b.payment_method, 'invoice');
     assert.equal(Date.parse(b.free_cancel_until), localToInstant(date, '09:00') - 120 * 3600_000, 'partner con 120 h di cancellazione gratuita');
     assert.match(await (await partner('/it/b2b/account')).text(), /PRATICA 42|VE-/);
@@ -465,7 +465,7 @@ test('partner: listino dedicato e politica di annullo gestiti dall’admin (vali
     const dedicated = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
     assert.equal(dedicated.slots[0].totalCents, 15050);
     const discounted = await (await partner(`/api/slots?tour=cannaregio-ghetto&date=${date}&pax=2`)).json();
-    assert.equal(discounted.slots[0].totalCents, 5040, '2 × (28 € − 10%)');
+    assert.equal(discounted.slots[0].totalCents, 5600, '2 × 28 €: 28 € − 10% = 25,20 € salirebbe a 30 €, oltre il listino, quindi resta 28 €');
     assert.match(await (await partner('/it/b2b/account')).text(), /150,50/);
 
     // politica: validazioni, poi salvataggio (giorni → ore)
@@ -1140,13 +1140,13 @@ test('condizioni di prenotazione: i metodi di pagamento e i mesi dei buoni seguo
   const noCash = await start({ noOnSite: true });
   try {
     const a = await (await withCash.jar()('/it/terms')).text();
-    assert.match(a, /Puoi pagare online con carta oppure, dove previsto, il giorno del servizio/);
+    assert.match(a, /Puoi pagare online \(con carta e altri metodi elettronici\) oppure, dove previsto, il giorno del servizio/);
     assert.match(a, /\*\*|<strong>18 mesi<\/strong>/);
     const b = await (await noCash.jar()('/it/terms')).text();
-    assert.match(b, /Puoi pagare online con carta\./);
+    assert.match(b, /Puoi pagare online \(con carta e altri metodi elettronici\)\./);
     assert.ok(!/dove previsto, il giorno del servizio/.test(b));
     const en = await (await noCash.jar()('/en/terms')).text();
-    assert.match(en, /You can pay online by card\./);
+    assert.match(en, /You can pay online \(by card and other electronic methods\)\./);
     assert.match(en, /<strong>24 months<\/strong>/);
   } finally {
     withCash.close();
@@ -1160,14 +1160,14 @@ test('senza pagamento sul posto il sito non lo promette: home, FAQ, checkout off
   try {
     const home = await (await off.jar()('/it/')).text();
     assert.ok(!/il giorno del tour|il giorno del servizio/.test(home), 'nessun invito a pagare il giorno del tour');
-    assert.match(home, /Online con carta, in modo sicuro/);
+    assert.match(home, /Online, in modo sicuro: carta, Apple Pay, Google Pay/);
     const faq = await (await off.jar()('/it/tours')).text();
     assert.ok(!/dove previsto\)? il giorno del servizio|oppure \(dove previsto\)/.test(faq));
     const checkout = await (await off.jar()(`/it/book/checkout?tour=san-marco-rialto&date=${day(20)}&time=09:30&pax=2`)).text();
     assert.match(checkout, /value="card"/);
     assert.ok(!/value="onsite"/.test(checkout), 'il checkout non offre il pagamento in loco');
     const homeOn = await (await on.jar()('/it/')).text();
-    assert.match(homeOn, /Online con carta o il giorno del tour/);
+    assert.match(homeOn, /Online \(carta, Apple Pay, Google Pay\) o il giorno del tour/);
     const checkoutOn = await (await on.jar()(`/it/book/checkout?tour=san-marco-rialto&date=${day(20)}&time=09:30&pax=2`)).text();
     assert.match(checkoutOn, /value="onsite"/);
   } finally {

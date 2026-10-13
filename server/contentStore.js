@@ -7,6 +7,9 @@ import { LANGS } from './langs.js';
 
 const nowIso = () => new Date().toISOString();
 
+const HOURLY_KEY = 'content_hourly_seeded'; // data in cui si sono controllati i servizi a ore
+const LANGS_KEY = 'content_langs_filled'; // lingue per cui si sono già completate le traduzioni mancanti
+
 /** Importa i file di `content/` la prima volta (database senza contenuti). Restituisce true se ha importato. */
 export function seedContent(db, root) {
   if (getSetting(db, 'content_seeded')) return false;
@@ -22,15 +25,80 @@ export function seedContent(db, root) {
       for (const [name, p] of Object.entries(raw.pages)) db.prepare('INSERT INTO content_pages(name, data_json, updated_at) VALUES(?,?,?)').run(name, JSON.stringify(p), at);
     });
     imported = true;
+    // il contenuto iniziale è completo: non c'è nulla da recuperare
+    setSetting(db, HOURLY_KEY, nowIso());
+    setSetting(db, LANGS_KEY, [...LANGS]);
   }
   setSetting(db, 'content_seeded', nowIso());
   return imported;
+}
+
+/**
+ * Il contenuto iniziale si importa una volta sola: un sito creato con una versione più vecchia del codice non riceverebbe
+ * mai ciò che è arrivato dopo. Qui si recupera, una volta per ciascuna cosa e SENZA mai toccare ciò che c'è già:
+ *  - i servizi a ore (guida, assistente, tour leader, meet & greet): senza di essi «Calcola un preventivo» non ha nulla da mostrare;
+ *  - le traduzioni di una lingua arrivata dopo (blocchi di testo che nel database mancano del tutto: spagnolo, giapponese…).
+ * Ritorna cosa è stato aggiunto (utile ai test e al log).
+ */
+export function catchUpContent(db, root) {
+  const added = { tours: [], translations: [] };
+  const langsDone = new Set(getSetting(db, LANGS_KEY, ['it', 'en']));
+  const todoLangs = LANGS.filter((l) => !langsDone.has(l));
+  const needHourly = !getSetting(db, HOURLY_KEY);
+  if (!needHourly && !todoLangs.length) return added;
+  let raw;
+  try {
+    raw = readContentFiles(root);
+  } catch (err) {
+    console.error('[contenuti] aggiornamento del contenuto iniziale non riuscito:', err.message);
+    return added;
+  }
+  tx(db, () => {
+    const at = nowIso();
+    // «guida a ore con durata a scelta», «itinerario a durata fissa»…: un servizio dello stesso tipo che c'è già, con un altro indirizzo, non si duplica
+    const kind = (d) => `${d.service}:${d.chooseHours ? 'choose' : 'fixed'}`;
+    const hourlyHave = new Set(db.prepare('SELECT data_json FROM content_tours').all().map((r) => JSON.parse(r.data_json)).filter((d) => d.pricing === 'hourly').map(kind));
+    if (needHourly) {
+      for (const [slug, d] of Object.entries(raw.tours)) {
+        if (d.pricing !== 'hourly' || hourlyHave.has(kind(d)) || db.prepare('SELECT 1 FROM content_tours WHERE slug = ?').get(slug)) continue;
+        db.prepare('INSERT INTO content_tours(slug, data_json, updated_at) VALUES(?,?,?)').run(slug, JSON.stringify(d), at);
+        added.tours.push(slug);
+      }
+      setSetting(db, HOURLY_KEY, at);
+    }
+    if (todoLangs.length) {
+      const fill = (table, keyCol, seeds, withLanguages = false) => {
+        for (const [key, seed] of Object.entries(seeds)) {
+          const row = db.prepare(`SELECT data_json FROM ${table} WHERE ${keyCol} = ?`).get(key);
+          if (!row) continue;
+          const data = JSON.parse(row.data_json);
+          const filled = [];
+          for (const l of todoLangs) {
+            if (data[l] || !seed[l]) continue; // c'è già (anche se modificato dal pannello) o non c'è una traduzione da dare
+            data[l] = seed[l];
+            filled.push(l);
+            if (withLanguages && Array.isArray(data.languages) && !data.languages.includes(l) && Array.isArray(seed.languages) && seed.languages.includes(l)) data.languages.push(l);
+          }
+          if (!filled.length) continue;
+          db.prepare(`UPDATE ${table} SET data_json = ?, updated_at = ? WHERE ${keyCol} = ?`).run(JSON.stringify(data), at, key);
+          added.translations.push(...filled.map((l) => `${key}:${l}`));
+        }
+      };
+      fill('content_tours', 'slug', raw.tours, true);
+      fill('content_posts', 'slug', raw.posts);
+      fill('content_pages', 'name', raw.pages);
+      setSetting(db, LANGS_KEY, [...new Set([...langsDone, ...todoLangs])]);
+    }
+  });
+  return added;
 }
 
 const parse = (rows, key) => Object.fromEntries(rows.map((r) => [r[key], JSON.parse(r.data_json)]));
 
 export function createContentStore({ db, root }) {
   seedContent(db, root);
+  const caught = catchUpContent(db, root);
+  if (caught.tours.length || caught.translations.length) console.log(`[contenuti] aggiunti dal contenuto iniziale: ${[...caught.tours.map((t) => `servizio ${t}`), ...(caught.translations.length ? [`${caught.translations.length} traduzioni`] : [])].join(', ')}`);
   let current = makeContent({ tours: [], posts: [], pages: {} });
   let problems = [];
 

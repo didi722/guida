@@ -95,7 +95,7 @@ test('prezzi: a persona, a gruppo, tariffa B2B e sconto partner', (t) => {
   assert.equal(priceFor(shared, 3, 'b2c'), 10500);
   assert.equal(priceFor(priv, 7, 'b2c'), 15000);
   assert.equal(priceFor(shared, 3, 'b2b'), 8400);
-  assert.equal(priceFor(priv, 7, 'b2b', { discount_percent: 10 }), 10800);
+  assert.equal(priceFor(priv, 7, 'b2b', { discount_percent: 10 }), 11000, '120 € − 10% = 108 €: si arrotonda al multiplo di 5 € successivo');
 });
 
 test('metodi di pagamento: fattura solo ai partner approvati, in sede solo B2C', (t) => {

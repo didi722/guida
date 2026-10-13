@@ -95,9 +95,10 @@ export function adminRouter(app) {
     loginAdmin(res, cfg);
     res.redirect(303, '/admin');
   });
+  // «Esci» riporta al sito pubblico (la home nella lingua del browser), non alla pagina di accesso
   r.post('/logout', form, (req, res) => {
     logoutAdmin(res, cfg);
-    res.redirect(303, '/admin/login');
+    res.redirect(303, '/');
   });
   r.use((req, res, next) => (req.isAdmin ? next() : res.redirect('/admin/login')));
   r.use((req, res, next) => {

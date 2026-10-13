@@ -128,10 +128,10 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
     const page = await (await partner('/it/hourly')).text().then(nb);
     assert.match(page, /Servizi a ore per agenzie/);
     for (const name of ['Servizio guida', 'Assistente in loco', 'Tour leader', 'Meet &amp; greet']) assert.ok(page.includes(name), name);
-    // guida 4 ore: 300 − 15% = 255; assistente 2 ore: 80 − 15% = 68
+    // guida 4 ore: 300 − 15% = 255; guida 2 ore: 160 − 15% = 136 → 140; assistente 2 ore: 80 − 15% = 68 → 70 (sempre al multiplo di 5 € successivo)
     assert.match(page, /Mezza giornata · 4 ore[^]*?255 €/);
-    assert.match(page, /Servizio guida[^]*?136 €/, '160 − 15%');
-    assert.match(page, /Assistente in loco[^]*?68 €/);
+    assert.match(page, /Servizio guida[^]*?140 €/, '160 − 15% = 136 → 140');
+    assert.match(page, /Assistente in loco[^]*?70 €/);
     assert.match(page, /Nelle fatture alle imprese|Operazione senza IVA/);
     // il menu dei servizi
     assert.match(page, /<option value="assistente-a-ore"/);
@@ -143,7 +143,7 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
     assert.match(landing, /Assistente in loco[^]*?80 €/, 'le tariffe agenzie sono visibili a tutti (impostazione predefinita)');
     const account = await (await partner('/it/b2b/account')).text().then(nb);
     assert.match(account, /Le tue tariffe/);
-    assert.match(account, /Assistente in loco[^]*?68 €/);
+    assert.match(account, /Assistente in loco[^]*?70 €/);
     assert.ok(!/passeggiata|servizio-mezza/i.test(account));
 
     // il pubblico non può vedere né prenotare i servizi per agenzie
@@ -197,10 +197,10 @@ test('home e pagine Tour: due categorie (guida privata a ore e tour di gruppo), 
     assert.match(await (await anon('/en/')).text(), /How would you like to discover Venice\?[^]*?Private guide by the hour[^]*?Group tours/);
     assert.match(await (await anon('/es/')).text(), /¿Cómo quieres descubrir Venecia\?[^]*?Guía privado por horas[^]*?Tours en grupo/);
 
-    // un partner con lo sconto del 15% vede le sue tariffe: 160 → 136, 300 → 255, 560 → 476
+    // un partner con lo sconto del 15% vede le sue tariffe: 160 → 136 → 140, 300 → 255, 560 → 476 → 480
     const ph = await (await partner('/it/')).text().then(nb);
     const ppriv = /id="private">([^]*?)<\/article>/.exec(ph)?.[1] ?? '';
-    for (const price of ['136 €', '255 €', '476 €']) assert.ok(ppriv.includes(price), price);
+    for (const price of ['140 €', '255 €', '480 €']) assert.ok(ppriv.includes(price), price);
     assert.ok(!ppriv.includes('200 €'));
 
     // pagina Tour: prima la guida privata, poi i gruppi
@@ -286,13 +286,13 @@ test('servizi a ore: prenotazione di un partner a fattura con sconto, itinerari 
   try {
     const { app, partner, partnerRow } = s;
     const date = plainDay(14);
-    // assistente, 4 ore: 110 € − 15% = 93,50 → 94 € (importi in euro interi)
+    // assistente, 4 ore: 110 € − 15% = 93,50 → 95 € (multiplo di 5 € successivo)
     const res = await partner('/it/book/checkout', post({ tour: 'assistente-a-ore', date, time: '10:00', pax: '20', hours: '4', name: 'Giulia Bianchi', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 7', consent: '1' }));
     assert.equal(res.status, 303);
     const b = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
     assert.equal(b.channel, 'b2b');
     assert.equal(b.account_id, partnerRow.id);
-    assert.equal(b.total_cents, 9400);
+    assert.equal(b.total_cents, 9500);
     assert.equal(b.status, 'confirmed');
     assert.equal(b.payment_method, 'invoice');
     assert.equal(b.end_time, '14:00');
@@ -304,12 +304,12 @@ test('servizi a ore: prenotazione di un partner a fattura con sconto, itinerari 
     // e la scheda nel pannello
     const detail = await s.admin(`/admin/bookings/${b.id}`).then((r) => r.text().then(nb));
     assert.match(detail, /Servizio a ore<\/dt><dd>4 ore<\/dd>/);
-    assert.match(detail, /Servizio, 4 ore<\/dt><dd>94 €/);
+    assert.match(detail, /Servizio, 4 ore<\/dt><dd>95 €/);
 
-    // itinerario a durata fissa (3 ore): non si sceglie la durata; 230 € per le agenzie, meno il 15% = 195,5 → 196 €
+    // itinerario a durata fissa (3 ore): non si sceglie la durata; 230 € per le agenzie, meno il 15% = 195,5 → 200 €
     const fixed = await (await partner(`/it/book/checkout?tour=venezia-oriente-occidente&date=${date}&time=15:00&pax=6`)).text().then(nb);
     assert.match(fixed, /15:00–18:00 <span class="muted">\(3 ore\)<\/span>/);
-    assert.match(fixed, /Totale<\/dt><dd>196 €/);
+    assert.match(fixed, /Totale<\/dt><dd>200 €/);
     assert.ok(!fixed.includes('name="hours"'), 'durata fissa: nessun campo');
     // la stessa cosa al pubblico: 200 + 90 = 290 €
     const publicFixed = await (await s.anon(`/it/book/checkout?tour=venezia-oriente-occidente&date=${date}&time=15:00&pax=6`)).text().then(nb);

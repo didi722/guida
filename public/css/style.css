@@ -116,11 +116,12 @@ ul.plain, ol.plain { list-style: none; margin: 0; padding: 0; }
 .brand { display: flex; flex-direction: column; text-decoration: none; color: var(--header-ink); line-height: 1.1; margin-right: auto; min-width: 0; }
 .brand:hover { color: var(--header-ink); }
 .brand-name { font-weight: 700; font-size: 1.55rem; letter-spacing: 0.01em; transition: font-size 0.35s ease; white-space: nowrap; }
-.brand-sub { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; font-weight: 400; transition: opacity 0.3s, max-height 0.3s; max-height: 24px; overflow: hidden; padding-top: 5px; margin-top: -5px; } /* il padding lascia spazio agli accenti sulle maiuscole (GUÍA, TURÍSTICO) */
+/* Il sottotitolo sta sempre su una riga (a capo, la seconda riga veniva tagliata dal max-height) e non viene mai ritagliato: si nasconde solo quando l'header si restringe. Il padding lascia spazio agli accenti sulle maiuscole (GUÍA, TURÍSTICO). */
+.brand-sub { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; font-weight: 400; white-space: nowrap; transition: opacity 0.3s, max-height 0.3s; max-height: 3em; padding-top: 5px; margin-top: -5px; }
 .site-header.shrink .brand-name { font-size: 1.25rem; }
-.site-header.shrink .brand-sub { opacity: 0; max-height: 0; }
+.site-header.shrink .brand-sub { opacity: 0; max-height: 0; overflow: hidden; padding-top: 0; margin-top: 0; }
 .main-nav { display: flex; gap: 26px; }
-.main-nav a { color: var(--header-ink); text-decoration: none; font-weight: 700; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 0; border-bottom: 2px solid transparent; transition: border-color 0.25s; }
+.main-nav a { color: var(--header-ink); text-decoration: none; font-weight: 700; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 0; border-bottom: 2px solid transparent; transition: border-color 0.25s; white-space: nowrap; }
 .main-nav a:hover, .main-nav a[aria-current] { border-color: currentColor; color: var(--header-ink); }
 .header-tools { display: flex; align-items: center; gap: 8px; }
 .tool { background: transparent; border: 1.5px solid currentColor; color: var(--header-ink); border-radius: 50px; min-width: 40px; height: 40px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; font: inherit; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.08em; cursor: pointer; text-decoration: none; transition: background-color 0.2s, color 0.2s; }
@@ -168,6 +169,12 @@ ul.plain, ol.plain { list-style: none; margin: 0; padding: 0; }
 .btn-dark:hover { background: #000; color: #f0d96e; }
 .header-cta { background: var(--ink); color: var(--gold); }
 [data-theme='dark'] .header-cta { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+/* «Login agenzie»: accanto a Prenota; su schermi stretti resta come icona */
+.header-login { text-transform: uppercase; gap: 8px; white-space: nowrap; }
+.header-login svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.header-login .login-icon { display: none; }
+.side-menu a.side-agency { display: flex; align-items: center; justify-content: center; gap: 10px; border: 2px solid rgba(255, 255, 255, 0.85); border-radius: 50px; font-size: 1rem; padding: 12px 18px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.08em; }
+.side-menu a.side-agency svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .btn-outline { background: transparent; color: var(--accent-text); border-color: var(--bronze); }
 .btn-outline:hover { background: var(--bronze); color: #fff; }
 .btn-outline-light { background: transparent; color: #f1ede2; border-color: rgba(255, 255, 255, 0.55); }
@@ -232,6 +239,15 @@ a.card:hover .arrow { transform: translateX(5px); }
 .hero-art svg { width: 100%; height: 100%; }
 .hero-links { margin-top: 1.2rem; font-weight: 700; font-size: 0.95rem; }
 .hero-b2b { padding-bottom: 40px; }
+
+/* Le lingue in cui conduco i tour, in evidenza (home e pagina agenzie) */
+.lang-badge { margin: 0 0 1.4rem; }
+.lang-badge-title { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 0.98rem; color: var(--ink); }
+[data-theme='dark'] .lang-badge-title { color: #f1ede2; }
+.i-globe { width: 22px; height: 22px; flex: none; stroke: var(--bronze); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.lang-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0; }
+.lang-chips li { padding: 6px 16px; border-radius: 50px; background: var(--gold); color: var(--ink); font-weight: 700; font-size: 0.92rem; letter-spacing: 0.02em; }
+.lang-badge-sub { margin: 10px 0 0; color: var(--muted); font-size: 0.95rem; max-width: 52ch; }
 
 .trust { padding: 8px 0 12px; }
 .trust-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; border-block: 1px solid var(--line); padding-block: 22px; }
@@ -450,7 +466,7 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 
 /* ───────── Admin ───────── */
 body.admin { padding-top: var(--header-h); }
-.admin-bar { height: 64px; } .admin-bar .brand-name { font-size: 1.3rem; } .admin-bar .brand-sub { max-height: 20px; opacity: 0.85; }
+.admin-bar { height: 64px; } .admin-bar .brand-name { font-size: 1.3rem; } .admin-bar .brand-sub { max-height: 3em; opacity: 0.85; }
 .admin-nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; } .admin-nav a { color: var(--header-ink); text-decoration: none; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 11px; border-radius: 50px; white-space: nowrap; } .admin-nav a[aria-current], .admin-nav a:hover { background: var(--header-ink); color: var(--gold); }
 [data-theme='dark'] .admin-nav a[aria-current], [data-theme='dark'] .admin-nav a:hover { background: var(--gold); color: var(--ink); }
 .admin-main { padding-top: 32px; padding-bottom: 80px; } .admin-main h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); }
@@ -495,10 +511,25 @@ body.admin { --header-h: 64px; }
   .steps-4 { grid-template-columns: repeat(2, 1fr); }
   .search-card { grid-template-columns: 1fr 1fr; } .search-card .btn { grid-column: 1 / -1; }
 }
+@media (max-width: 74em) { /* ≈ 1180px */
+  .header-inner { gap: 14px; }
+  .main-nav { gap: 16px; }
+  .main-nav a { font-size: 0.76rem; letter-spacing: 0.06em; }
+  .header-login { padding: 0 10px; letter-spacing: 0.05em; }
+}
+/* con poco spazio il menu passa nel pannello laterale (☰); Prenota e Login agenzie restano in alto */
+@media (max-width: 68em) { /* ≈ 1090px */
+  .main-nav { display: none; }
+  .hamburger { display: block; }
+}
+@media (max-width: 56.25em) { /* ≈ 900px: Prenota passa nel pannello laterale, Login agenzie resta come icona */
+  .header-cta { display: none; }
+  .header-login { width: 40px; padding: 0; }
+  .header-login .login-label { display: none; }
+  .header-login .login-icon { display: inline-flex; }
+}
 @media (max-width: 900px) {
   :root { --header-h: 68px; }
-  .main-nav, .header-cta { display: none; }
-  .hamburger { display: block; }
   .site-header.shrink { height: 56px; }
   .brand-name { font-size: 1.35rem; }
   .hero-grid, .band-grid, .contact-grid, .checkout-grid { grid-template-columns: 1fr; gap: 32px; }
@@ -534,8 +565,11 @@ body.admin { --header-h: 64px; }
   .summary-list > div { flex-direction: column; gap: 2px; } .summary-list dd { text-align: left; }
   .summary-total { flex-direction: row !important; justify-content: space-between; }
   .header-inner { gap: 10px; padding: 0 14px; }
-  .tool { min-width: 38px; height: 38px; }
-  .brand-sub { font-size: 0.68rem; }
+  .header-tools { gap: 6px; }
+  .tool { min-width: 36px; height: 36px; }
+  .header-login { width: 36px; }
+  .hamburger { width: 40px; }
+  .brand-sub { font-size: 0.62rem; letter-spacing: 0.08em; }
 }
 @media (max-width: 380px) { .brand-name { font-size: 1.15rem; } .brand-sub { display: none; } }
 

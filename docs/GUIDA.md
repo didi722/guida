@@ -178,7 +178,7 @@ Per ogni servizio scrivi, per il **Pubblico** e per le **Agenzie**, il prezzo di
 - **Notturno** (+30%) solo per le ore che cadono nella fascia (all'inizio dalle 20:00 alle 07:00), in proporzione. Per offrire orari serali o all'alba allarga gli orari in **Agenda › Disponibilità**.
 - **Auricolari** (4 € a persona, da 8 persone, solo servizio guida): il cliente li spunta al pagamento.
 
-Le percentuali si calcolano sul prezzo base (già scontato, per un'agenzia con sconto) e si arrotondano all'euro. In fondo alla pagina, **Prova il calcolatore** apre quello che vedono i clienti.
+Le percentuali dei supplementi si calcolano sul prezzo base (già scontato, per un'agenzia con sconto) e si arrotondano all'euro. In fondo alla pagina, **Prova il calcolatore** apre quello che vedono i clienti.
 
 **Le cifre iniziali** sono un punto di partenza, non una verità: guardano le tariffe di altre guide e associazioni di Venezia (singole guide intorno a 80–85 € l'ora; un'associazione 125 € l'ora, ora extra 150 €, festivi +20%, auricolari 4 € da 8 persone; un coordinatore: meet & greet 55 €, 4 ore 120 €, 8 ore 220 €, notturno +30%). Il listino per le agenzie sta un po' sotto le guide già avviate, quello al pubblico circa il 25% sopra.
 
@@ -192,7 +192,7 @@ Le percentuali si calcolano sul prezzo base (già scontato, per un'agenzia con s
 **Chi vede cosa**
 - Il pubblico vede **solo il servizio guida**, colonna *Pubblico*: nella pagina **Guida privata a ore** (voce *Guida a ore* del menu) con il calcolatore.
 - Le agenzie vedono le tariffe **Agenzie** in cima alla pagina *Per agenzie* (se lasci spuntato il consenso in *Chi vede le tariffe*; altrimenti solo dopo l'approvazione) e nella loro area.
-- Lo **sconto %** del partner (**Clienti › Partner**) si applica alla tariffa Agenzie, arrotondato all'euro. Il [listino dedicato](#prezzi-dedicati-a-un-partner) per singolo tour non riguarda i servizi a ore.
+- Lo **sconto %** del partner (**Clienti › Partner**) si applica alla tariffa Agenzie e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (per eccesso): con il 15%, 160 € diventano 136 € → **140 €**; 110 € diventano 93,50 € → **95 €**. Il prezzo non supera mai quello senza sconto (28 € a persona con il 10% di sconto resterebbe 28 €, perché 25,20 € arrotondato salirebbe a 30 €). Il [listino dedicato](#prezzi-dedicati-a-un-partner) per singolo tour non riguarda i servizi a ore.
 
 **I servizi sono «tour» a ore.** In **Sito › Tour**, nel campo *Prezzo* scegli *Prezzo fisso* oppure *A ore*; per quelli a ore indichi il servizio (guida, assistente…), se *Il cliente sceglie quante ore* (altrimenti la durata è fissa, come per un itinerario di tre ore) e *Chi può prenotarlo* (tutti, oppure solo agenzie con account partner). Un itinerario a durata fissa usa le tariffe della guida per quella durata.
 
@@ -209,7 +209,7 @@ Le percentuali si calcolano sul prezzo base (già scontato, per un'agenzia con s
 ### Prezzi dedicati a un partner
 **Clienti › Partner** › il partner › **Listino dedicato**: per ogni tour puoi scrivere il prezzo che **solo quel partner** paga. Lascia vuoto per applicare la tariffa B2B (con lo sconto percentuale del partner, se c'è). Puoi **copiare il listino da un altro partner**.
 
-**Quale prezzo vale per un partner?** In quest'ordine: 1) il **prezzo dedicato** per quel tour; 2) altrimenti la **tariffa B2B** del tour meno lo **sconto %** del partner. Nella colonna *Applicato* vedi sempre il prezzo che il partner vedrà.
+**Quale prezzo vale per un partner?** In quest'ordine: 1) il **prezzo dedicato** per quel tour (così com'è scritto); 2) altrimenti la **tariffa B2B** del tour meno lo **sconto %** del partner, arrotondato al multiplo di 5 € successivo. Nella colonna *Applicato* vedi sempre il prezzo che il partner vedrà.
 
 ### Codici sconto e buoni regalo
 **Clienti › Sconti**:

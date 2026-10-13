@@ -33,8 +33,20 @@ export const DEFAULT_RATES = {
 const isInt = (n) => Number.isInteger(n);
 const clone = (x) => structuredClone(x);
 export const roundEuro = (cents) => Math.round(cents / 100) * 100;
-/** Prezzo con lo sconto del partner: senza sconto resta com'è scritto nelle tariffe, con lo sconto si arrotonda all'euro. */
-const discounted = (cents, discountPercent) => (discountPercent > 0 ? roundEuro(cents * (1 - discountPercent / 100)) : cents);
+/** Il prezzo scontato di un partner si arrotonda sempre al multiplo di 5 € successivo (per eccesso): cifre pulite, nessun centesimo. */
+export const DISCOUNT_STEP_CENTS = 500;
+/**
+ * Prezzo (centesimi) dopo lo sconto percentuale di un partner: arrotondato per eccesso al multiplo di 5 €, senza mai superare il prezzo non scontato
+ * (su un prezzo piccolo, per esempio 28 € a persona, con uno sconto del 10% si resta a 28 €: 25,20 € salirebbe a 30 €).
+ * Senza sconto il prezzo resta com'è scritto nel listino.
+ */
+export function applyPartnerDiscount(cents, discountPercent) {
+  const d = Math.min(100, Math.max(0, Number(discountPercent) || 0));
+  if (!(d > 0) || !(cents > 0)) return cents;
+  const exact = (cents * (10000 - Math.round(d * 100))) / 10000; // sconti a passi di 0,01%: si calcola con interi per non perdere centesimi
+  return Math.max(0, Math.min(cents, Math.ceil(exact / DISCOUNT_STEP_CENTS - 1e-9) * DISCOUNT_STEP_CENTS));
+}
+const discounted = applyPartnerDiscount;
 
 // ───────────── giorni festivi ─────────────
 /** Domenica di Pasqua (calendario gregoriano) come 'YYYY-MM-DD'. */

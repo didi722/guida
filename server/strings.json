@@ -414,10 +414,10 @@
   "お支払い方法をお選びいただけます"
  ],
  "trust.paySub": [
-  "Online con carta o il giorno del tour",
-  "Online by card or on the day",
-  "Online con tarjeta o el día del tour",
-  "オンラインのカード決済、またはツアー当日に"
+  "Online (carta, Apple Pay, Google Pay) o il giorno del tour",
+  "Online (card, Apple Pay, Google Pay) or on the day",
+  "Online (tarjeta, Apple Pay, Google Pay) o el día del tour",
+  "オンライン決済（カード、Apple Pay、Google Pay）、またはツアー当日に"
  ],
  "why.title": [
   "Un altro modo di guardare Venezia",
@@ -552,10 +552,10 @@
   "お支払い方法は？"
  ],
  "faq.pay.a": [
-  "Con carta online, in modo sicuro tramite Stripe, oppure (dove previsto) il giorno del servizio. Le agenzie possono pagare a fattura.",
-  "By card online, securely through Stripe, or (where offered) on the day. Agencies can pay by invoice.",
-  "Con tarjeta online, de forma segura a través de Stripe, o (cuando esté previsto) el día del servicio. Las agencias pueden pagar con factura.",
-  "オンラインのカード決済（Stripeによる安全な決済）、または（対応している場合）サービス当日のお支払いです。旅行会社様は請求書払いもご利用いただけます。"
+  "Online, in modo sicuro tramite Stripe: carta, Apple Pay, Google Pay e altri metodi disponibili sul tuo dispositivo; oppure (dove previsto) il giorno del servizio. Le agenzie possono pagare a fattura.",
+  "Online, securely through Stripe: card, Apple Pay, Google Pay and other methods available on your device; or (where offered) on the day. Agencies can pay by invoice.",
+  "Online, de forma segura a través de Stripe: tarjeta, Apple Pay, Google Pay y otros métodos disponibles en tu dispositivo; o (cuando esté previsto) el día del servicio. Las agencias pueden pagar con factura.",
+  "オンライン（Stripeによる安全な決済。クレジットカード、Apple Pay、Google Payなど、お使いの端末で利用できる方法）、または（対応している場合）サービス当日のお支払いです。旅行会社様は請求書払いもご利用いただけます。"
  ],
  "faq.meet.q": [
   "Dove ci incontriamo?",
@@ -1230,16 +1230,16 @@
   "パスワード"
  ],
  "pay.card.title": [
-  "Paga ora con carta",
-  "Pay now by card",
-  "Pagar ahora con tarjeta",
-  "今すぐカードで支払う"
+  "Paga ora online",
+  "Pay now online",
+  "Pagar ahora online",
+  "今すぐオンラインで支払う"
  ],
  "pay.card.desc": [
-  "Pagamento sicuro con Stripe. Rimborso automatico se annulli nei termini.",
-  "Secure payment with Stripe. Automatic refund if you cancel in time.",
-  "Pago seguro con Stripe. Reembolso automático si cancelas dentro del plazo.",
-  "Stripeによる安全な決済です。期限内にキャンセルされた場合は自動で返金されます。"
+  "Pagamento sicuro con Stripe: carta, Apple Pay, Google Pay e altri metodi, secondo il tuo dispositivo. Rimborso automatico se annulli nei termini.",
+  "Secure payment with Stripe: card, Apple Pay, Google Pay and other methods, depending on your device. Automatic refund if you cancel in time.",
+  "Pago seguro con Stripe: tarjeta, Apple Pay, Google Pay y otros métodos, según tu dispositivo. Reembolso automático si cancelas dentro del plazo.",
+  "Stripeによる安全な決済です。クレジットカード、Apple Pay、Google Payなど、お使いの端末で利用できる方法をお選びいただけます。期限内にキャンセルされた場合は自動で返金されます。"
  ],
  "pay.card.cta": [
   "Vai al pagamento",
@@ -1440,10 +1440,10 @@
   "オンライン支払い済み"
  ],
  "booking.cardPending": [
-  "pagamento con carta",
-  "card payment",
-  "pago con tarjeta",
-  "カード決済"
+  "pagamento online",
+  "online payment",
+  "pago online",
+  "オンライン決済"
  ],
  "booking.onsite": [
   "da pagare il giorno del servizio",
@@ -3762,34 +3762,34 @@
   "クレジットノート"
  ],
  "legal.payBoth": [
-  "online con carta oppure, dove previsto, il giorno del servizio",
-  "online by card or, where offered, on the day of the service",
-  "online con tarjeta o, cuando esté previsto, el día del servicio",
-  "オンラインのカード決済、または（対応している場合）サービス当日のお支払い"
+  "online (con carta e altri metodi elettronici) oppure, dove previsto, il giorno del servizio",
+  "online (by card and other electronic methods) or, where offered, on the day of the service",
+  "online (con tarjeta y otros métodos electrónicos) o, cuando esté previsto, el día del servicio",
+  "オンライン（カードなどの電子決済）、または（対応している場合）サービス当日のお支払い"
  ],
  "legal.payCard": [
-  "online con carta",
-  "online by card",
-  "online con tarjeta",
-  "オンラインのカード決済"
+  "online (con carta e altri metodi elettronici)",
+  "online (by card and other electronic methods)",
+  "online (con tarjeta y otros métodos electrónicos)",
+  "オンライン（カードなどの電子決済）"
  ],
  "trust.paySubCard": [
-  "Online con carta, in modo sicuro",
-  "Secure online card payment",
-  "Online con tarjeta, de forma segura",
-  "オンラインのカード決済で、安全です"
+  "Online, in modo sicuro: carta, Apple Pay, Google Pay",
+  "Secure online payment: card, Apple Pay, Google Pay",
+  "Online, de forma segura: tarjeta, Apple Pay, Google Pay",
+  "オンラインで安全にお支払い：カード、Apple Pay、Google Pay"
  ],
  "how.2.pCard": [
-  "Inserisci i dati e paga online in modo sicuro con carta.",
-  "Enter your details and pay securely online by card.",
-  "Introduce tus datos y paga online de forma segura con tarjeta.",
-  "お名前などを入力し、オンラインでカード決済してください。安全にお支払いいただけます。"
+  "Inserisci i dati e paga online in modo sicuro (carta, Apple Pay, Google Pay).",
+  "Enter your details and pay securely online (card, Apple Pay, Google Pay).",
+  "Introduce tus datos y paga online de forma segura (tarjeta, Apple Pay, Google Pay).",
+  "お名前などを入力し、オンラインで安全にお支払いください（カード、Apple Pay、Google Pay）。"
  ],
  "faq.pay.aCard": [
-  "Con carta online, in modo sicuro tramite Stripe. Le agenzie possono pagare a fattura.",
-  "Online by card, securely through Stripe. Agencies can pay by invoice.",
-  "Con tarjeta online, de forma segura a través de Stripe. Las agencias pueden pagar con factura.",
-  "オンラインのカード決済（Stripeによる安全な決済）です。旅行会社様は請求書払いもご利用いただけます。"
+  "Online, in modo sicuro tramite Stripe: carta, Apple Pay, Google Pay e altri metodi disponibili sul tuo dispositivo. Le agenzie possono pagare a fattura.",
+  "Online, securely through Stripe: card, Apple Pay, Google Pay and other methods available on your device. Agencies can pay by invoice.",
+  "Online, de forma segura a través de Stripe: tarjeta, Apple Pay, Google Pay y otros métodos disponibles en tu dispositivo. Las agencias pueden pagar con factura.",
+  "オンライン（Stripeによる安全な決済。クレジットカード、Apple Pay、Google Payなど、お使いの端末で利用できる方法）でお支払いいただけます。旅行会社様は請求書払いもご利用いただけます。"
  ],
  "trust.payCard": [
   "Pagamento sicuro",
@@ -4294,5 +4294,41 @@
   "Price calculated on the hours you choose.",
   "Precio calculado según las horas que elijas.",
   "選んだ時間数に応じて料金を計算します。"
+ ],
+ "nav.agencyLogin": [
+  "Login agenzie",
+  "Agency login",
+  "Acceso agencias",
+  "旅行会社ログイン"
+ ],
+ "nav.agencyArea": [
+  "Area agenzia",
+  "Agency area",
+  "Área de agencia",
+  "旅行会社エリア"
+ ],
+ "langs.badge.title": [
+  "Guida turistica abilitata in 4 lingue",
+  "Licensed tour guide in 4 languages",
+  "Guía turístico habilitado en 4 idiomas",
+  "4言語に対応する公認ツアーガイド"
+ ],
+ "langs.badge.sub": [
+  "Un solo referente per i tuoi gruppi italiani, inglesi, spagnoli e giapponesi: niente interpreti, niente cambi di guida.",
+  "One contact for your Italian-, English-, Spanish- and Japanese-speaking groups: no interpreters, no switching guides.",
+  "Un único referente para tus grupos de habla italiana, inglesa, española y japonesa: sin intérpretes ni cambios de guía.",
+  "イタリア語・英語・スペイン語・日本語のグループを、ひとりの窓口でご案内。通訳も、ガイドの交代も不要です。"
+ ],
+ "langs.badge.consumer": [
+  "Il tour si svolge nella tua lingua: italiano, inglese, spagnolo o giapponese.",
+  "The tour is led in your language: Italian, English, Spanish or Japanese.",
+  "El tour se hace en tu idioma: italiano, inglés, español o japonés.",
+  "ツアーは、イタリア語・英語・スペイン語・日本語のお好きな言語で行います。"
+ ],
+ "langs.badge.aria": [
+  "Lingue in cui conduco i tour",
+  "Languages I lead tours in",
+  "Idiomas en los que guío los tours",
+  "ツアーを案内できる言語"
  ]
 }

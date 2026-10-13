@@ -42,7 +42,7 @@ function assertFinite(value, where = 'report') {
 //   c4  condiviso  11 feb  3 pers.  privato  sul posto, buono da 50 €           105,00 (da pagare 55,00)  it
 //   c5  privato    12 feb  4 pers.  privato  sul posto, codice WELCOME −5       145,00   it
 //   c6  mezza gg.  15 feb  6 pers.  Alpha    fattura                            190,00   it
-//   c7  condiviso  16 feb  4 pers.  Bravo    carta, pagata (sconto 10%: 25,20 a persona) 100,80  en
+//   c7  condiviso  16 feb  4 pers.  Bravo    carta, pagata (prezzo dedicato: 25,20 a persona) 100,80  en
 //  febbraio, annullate:
 //   c8  privato    17 feb  5 pers.  Alpha    carta pagata 120,00; annullo a 100 ore: rimborso 50% = 60,00, trattenuti 60,00
 //   c9  condiviso  18 feb  2 pers.  privato  carta pagata 70,00; annullo senza rimborso: trattenuti 70,00
@@ -55,7 +55,7 @@ async function seed() {
   const app = makeApp();
   const { db } = app;
   const alpha = addAccount(db, { email: 'alpha@example.com', company: 'Alpha Viaggi', cancel_policy_json: TIERS });
-  const bravo = addAccount(db, { email: 'bravo@example.com', company: 'Bravo Tours', discount_percent: 10 });
+  const bravo = addAccount(db, { email: 'bravo@example.com', company: 'Bravo Tours', discount_percent: 10, prices_json: JSON.stringify({ shared: 2520 }) }); // il condiviso lo paga 25,20 (prezzo dedicato: lo sconto % arrotonda al multiplo di 5 €)
   addPromo(db, { code: 'ESTATE10', kind: 'percent', value: 10 });
   addPromo(db, { code: 'WELCOME', kind: 'fixed', value: 500 });
   const at = (date, time = '12:00') => new Date(localToInstant(date, time)).toISOString();

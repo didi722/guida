@@ -6,7 +6,7 @@ import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
 import { SERVICES } from '../rates.js';
 import { page } from './layout.js';
-import { breadcrumbs, fmtDuration, fmtHours } from './components.js';
+import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts } from './components.js';
 import { ratesBlock } from './hourly.js';
 
 const COUNTRIES = ['IT', 'DE', 'FR', 'ES', 'GB', 'US', 'NL', 'AT', 'CH', 'BE', 'PT', 'PL', 'CZ', 'SE', 'DK', 'NO', 'IE', 'JP', 'CN', 'KR', 'AU', 'CA', 'BR', 'IN', 'AE', 'OTHER'];
@@ -76,12 +76,13 @@ export function accountPage(ctx, { acct, bookings, flash = '' }) {
   const statusChip = { pending: 'chip-warn', approved: 'chip-ok', rejected: 'chip-err', suspended: 'chip-err' }[acct.status];
   const rateServices = approved ? SERVICES.filter((s) => app.rates.has(s, 'b2b')) : [];
   const fixedTours = content.tours.filter((x) => x.pricing !== 'hourly');
+  const canQuote = approved && hasHourlyProducts(ctx, 'b2b'); // senza servizi a ore prenotabili il calcolatore non avrebbe nulla da mostrare
 
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.myAccount')]])}
   <div class="account-head"><div><h1>${acct.company}</h1><p class="muted">${acct.contact_name} · ${acct.email}</p></div>
-    <div class="btn-row">${approved ? html`${rateServices.length ? html`<a class="btn btn-gold" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn ${rateServices.length ? 'btn-outline' : 'btn-gold'}" href="${u('/book')}">${t('b2b.newBooking')}</a>` : ''}<form method="post" action="${u('/b2b/logout')}"><button class="btn btn-outline" type="submit">${t('b2b.logout')}</button></form></div></div>
+    <div class="btn-row">${approved ? html`${canQuote ? html`<a class="btn btn-gold" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn ${canQuote ? 'btn-outline' : 'btn-gold'}" href="${u('/book')}">${t('b2b.newBooking')}</a>` : ''}<form method="post" action="${u('/b2b/logout')}"><button class="btn btn-outline" type="submit">${t('b2b.logout')}</button></form></div></div>
 </div></section>
 <section class="section tight"><div class="wrap">
   ${flash ? html`<div class="notice notice-ok" role="status">${t(`b2b.flash.${flash}`)}</div>` : ''}

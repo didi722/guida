@@ -4,7 +4,7 @@ import { paymentOptions, unitPriceFor } from '../bookings.js';
 import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
-import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
+import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, pick } from '../langs.js';
 import { SERVICES, openTo, rateRows } from '../rates.js';
 import { formatMoney } from '../util.js';
@@ -52,6 +52,7 @@ export function homePage(ctx, { departures = [], quotes = [], reviewStats = null
       <p class="eyebrow">${t('home.eyebrow')}</p>
       <h1>${t('home.h1')}</h1>
       <p class="lead">${t('home.lead')}</p>
+      ${languagesBadge(ctx)}
       <p class="btn-row">
         ${privateCover ? html`<a class="btn btn-gold" href="${guideTour ? u('/hourly') : u('/tours') + '#private'}">${t('home.private.title')}</a>` : ''}
         ${groupCover ? html`<a class="btn ${privateCover ? 'btn-outline' : 'btn-gold'}" href="${u('/book')}">${t('home.group.title')}</a>` : ''}
@@ -399,6 +400,7 @@ export function b2bLandingPage(ctx) {
   const notice = fmtHours(t, cfg.policy.b2bMinNoticeHours);
   const rateServices = SERVICES.filter((s) => app.rates.has(s, 'b2b'));
   const showRates = rateServices.length && (app.rates.get().showB2bPublic || ctx.acct?.status === 'approved');
+  const canQuote = hasHourlyProducts(ctx, ctx.acct?.status === 'approved' ? 'b2b' : 'b2c'); // il calcolatore (/hourly) mostra i servizi a ore di questo visitatore: se non ce ne sono, il pulsante non si mostra
   const body = html`
 <section class="hero hero-b2b">
   <div class="wrap hero-grid">
@@ -406,6 +408,7 @@ export function b2bLandingPage(ctx) {
       <p class="eyebrow">${t('b2b.eyebrow')}</p>
       <h1>${t('b2b.h1')}</h1>
       <p class="lead">${t('b2b.lead')}</p>
+      ${languagesBadge(ctx, { variant: 'band' })}
       <p class="btn-row">
         ${ctx.acct ? html`<a class="btn btn-gold" href="${u('/b2b/account')}">${t('nav.myAccount')}</a>` : html`<a class="btn btn-gold" href="${u('/b2b/register')}">${t('b2b.requestAccess')}</a> <a class="btn btn-outline" href="${u('/b2b/login')}">${t('b2b.login')}</a>`}
         ${showRates ? html`<a class="btn btn-outline" href="#tariffe">${t('b2b.seeRates')}</a>` : ''}
@@ -417,7 +420,7 @@ export function b2bLandingPage(ctx) {
 
 ${showRates ? html`<section class="section" id="tariffe">
   <div class="wrap">
-    ${sectionHead(t('b2b.ratesTitle'), t('b2b.ratesLead'), html`<a class="btn btn-gold" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>`)}
+    ${sectionHead(t('b2b.ratesTitle'), t('b2b.ratesLead'), canQuote ? html`<a class="btn btn-gold" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : '')}
     ${ratesBlock(ctx, { channel: 'b2b', services: rateServices })}
   </div>
 </section>` : ''}
@@ -453,7 +456,7 @@ ${showRates ? html`<section class="section" id="tariffe">
       <p class="muted small">${t('b2b.policy.note')}</p>
     </div>
     <p class="center reveal"><a href="${u('/programs')}">${t('pg.b2bLink')} →</a></p>
-    ${showRates ? html`<p class="center reveal"><a href="${u('/hourly')}">${t('b2b.ratesCta')} →</a></p>` : ''}
+    ${canQuote ? html`<p class="center reveal"><a href="${u('/hourly')}">${t('b2b.ratesCta')} →</a></p>` : ''}
   </div>
 </section>
 

@@ -9,6 +9,7 @@ const ICON = {
   whatsapp: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21l1.6-4.7A8.5 8.5 0 1 1 8 19.5z"/><path d="M9 8.5c.3 2.6 2.4 5 5.5 6l1.3-1.3-2-1-1 .7c-.8-.4-1.5-1.1-1.9-1.9l.7-1-1-2z"/></svg>',
   mail: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>',
   phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>',
+  user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>',
 };
 export const icon = (name) => raw(ICON[name] ?? '');
 
@@ -38,6 +39,9 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   const fullTitle = title ? `${title} · ${cfg.site.name}` : `${cfg.site.name} — ${t('site.title')}`;
   const desc = description || t('site.description');
   const u = (p) => `/${lang}${p}`;
+  // «Login agenzie» sempre visibile in alto, accanto a Prenota (su telefono resta come icona); chi ha già fatto il login vede «Area agenzia»
+  const agencyLabel = ctx.acct ? t('nav.agencyArea') : t('nav.agencyLogin');
+  const agencyLink = html`<a class="tool header-login" href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}" aria-label="${agencyLabel}" title="${agencyLabel}" ${activeNav === 'b2b-account' ? raw('aria-current="page"') : ''}><span class="login-icon">${icon('user')}</span><span class="login-label">${agencyLabel}</span></a>`;
   const umami = cfg.analytics.umamiId ? raw(`<script defer src="${esc(cfg.analytics.umamiSrc)}" data-website-id="${esc(cfg.analytics.umamiId)}"></script>`) : '';
 
   return html`<!doctype html>
@@ -80,6 +84,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
     </nav>
     <div class="header-tools">
       <a class="btn btn-sm btn-dark header-cta" href="${u('/book')}">${t('nav.book')}</a>
+      ${agencyLink}
       <details class="lang-menu">
         <summary class="tool lang-switch" aria-label="${LANG_META[lang].name}" title="${LANG_META[lang].name}">${LANG_META[lang].short}</summary>
         <ul class="lang-list">${LANGS.map((l) => html`<li><a href="${swapLang(path, lang, l)}" hreflang="${l}" lang="${l}" ${l === lang ? raw('aria-current="true"') : ''}>${LANG_META[l].name}</a></li>`)}</ul>
@@ -93,10 +98,10 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
 </header>
 
 <nav class="side-menu" id="side-menu" aria-label="${t('a11y.menu')}" hidden>
+  <a class="side-agency" href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}">${icon('user')}<span>${agencyLabel}</span></a>
   ${NAV.map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
   <a href="${u('/gift')}" ${activeNav === 'gift' ? raw('aria-current="page"') : ''}>${t('nav.gift')}</a>
   <a href="${u('/contact')}">${t('nav.contact')}</a>
-  <a class="side-sub" href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}">${ctx.acct ? t('nav.myAccount') : t('nav.partnerLogin')}</a>
   <div class="side-langs">${others.map((l) => html`<a class="side-sub" href="${swapLang(path, lang, l)}" hreflang="${l}" lang="${l}">${LANG_META[l].name}</a>`)}</div>
 </nav>
 <div class="scrim" id="scrim" hidden></div>
@@ -123,6 +128,8 @@ ${body}
         <li><a href="${u('/gift')}">${t('nav.gift')}</a></li>
         <li><a href="${u('/blog')}">${t('nav.blog')}</a></li>
         <li><a href="${u('/about')}">${t('nav.about')}</a></li>
+        <li><a href="${u('/contact')}">${t('nav.contact')}</a></li>
+        <li><a href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}">${agencyLabel}</a></li>
       </ul>
     </div>
     <div>

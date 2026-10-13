@@ -1,4 +1,5 @@
 // Prezzi, codici sconto e buoni regalo (solo database, nessuna rete).
+import { applyPartnerDiscount } from './rates.js';
 import { nowRome } from './time.js';
 
 /** Prezzo unitario. B2B: tariffa B2B del tour, meno lo sconto extra dell'account. */
@@ -24,9 +25,7 @@ export function unitPriceFor(tour, channel, account = null) {
   if (channel !== 'b2b') return tour.priceCents;
   const dedicated = accountPrices(account)[tour.slug];
   if (dedicated != null) return dedicated;
-  let unit = tour.b2bPriceCents;
-  if (account?.discount_percent) unit = Math.round(unit * (1 - account.discount_percent / 100));
-  return unit;
+  return applyPartnerDiscount(tour.b2bPriceCents, account?.discount_percent); // sconto del partner, arrotondato al multiplo di 5 € per eccesso
 }
 
 /** Preventivo di un servizio a ore: le ore sono quelle scelte dal cliente, oppure la durata del tour se è fissa. */

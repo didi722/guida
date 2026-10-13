@@ -23,11 +23,12 @@ test('tariffe: scaglioni 2 / 4 / 8 ore e ore extra, mai più dello scaglione suc
   }
 });
 
-test('tariffe: sconto del partner solo sul canale agenzie, importi sempre in euro interi', () => {
+test('tariffe: sconto del partner solo sul canale agenzie, sempre arrotondato al multiplo di 5 € successivo', () => {
   assert.equal(eur(b2b(4, { discountPercent: 15 }).totalCents), 255);
-  assert.equal(eur(b2b(2, { discountPercent: 15 }).totalCents), 136);
+  assert.equal(eur(b2b(2, { discountPercent: 15 }).totalCents), 140, '160 − 15% = 136 → 140');
   assert.equal(eur(pub(4, { discountPercent: 15 }).totalCents), 380, 'ai privati lo sconto dei partner non si applica');
-  assert.equal(eur(b2b(3, { discountPercent: 7 }).totalCents), Math.round(230 * 0.93), 'arrotondato all’euro');
+  assert.equal(eur(b2b(3, { discountPercent: 7 }).totalCents), 215, '230 − 7% = 213,90 → 215');
+  assert.equal(eur(b2b(4, { discountPercent: 15 }).baseCents), 255, 'un prezzo già multiplo di 5 resta com’è');
   for (const q of [b2b(3, { discountPercent: 7, date: '2027-05-01', time: '19:00' }), b2b(5, { date: '2027-12-25', pax: 11, earpieces: true })]) assert.ok(q.lines.every((l) => l.cents % 100 === 0), JSON.stringify(q.lines));
 });
 
@@ -94,7 +95,7 @@ test('tariffe: assistente, tour leader e meet & greet esistono solo per le agenz
   assert.deepEqual(quote(R, { service: 'guide', channel: 'b2b', hours: 13 }), { ok: false, reason: 'hours' });
   assert.deepEqual(quote(R, { service: 'driver', channel: 'b2b', hours: 4 }), { ok: false, reason: 'service' });
   assert.equal(fromPrice(R, 'guide', 'b2c').cents, 20000);
-  assert.deepEqual(fromPrice(R, 'guide', 'b2b', 15), { hours: 2, cents: 13600 });
+  assert.deepEqual(fromPrice(R, 'guide', 'b2b', 15), { hours: 2, cents: 14000 });
   assert.equal(fromPrice(R, 'assistant', 'b2c'), null);
   assert.deepEqual(hourOptions('meetgreet').slice(0, 3), [1, 1.5, 2]);
   assert.equal(hourOptions('guide').at(-1), 12);
