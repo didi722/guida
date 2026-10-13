@@ -362,6 +362,21 @@ ALTER TABLE accounts ADD COLUMN option_max INTEGER;           -- massimo di opzi
 CREATE INDEX IF NOT EXISTS bookings_option ON bookings(status, option_expires_at);
 `;
 
+const V14_REVIEW_TRANSLATIONS = `
+-- Traduzioni automatiche dei commenti in evidenza (una per lingua del sito). Se il cliente cambia il commento, l'impronta non coincide più e la traduzione non si usa.
+CREATE TABLE feedback_translations (
+  feedback_id INTEGER NOT NULL REFERENCES feedback(id) ON DELETE CASCADE,
+  lang        TEXT NOT NULL,               -- lingua della traduzione (it | en | es | ja)
+  src_hash    TEXT NOT NULL,               -- impronta del commento tradotto
+  src_lang    TEXT,                        -- lingua del commento originale, riconosciuta dal servizio di traduzione
+  same        INTEGER NOT NULL DEFAULT 0,  -- 1 = il commento è già scritto in questa lingua: niente da tradurre
+  text        TEXT,
+  provider    TEXT,
+  created_at  TEXT NOT NULL,
+  PRIMARY KEY (feedback_id, lang)
+);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -389,6 +404,8 @@ export const MIGRATIONS = [
   V12_SERVICE_JSON,
   // v13 — opzioni delle agenzie
   V13_OPTIONS,
+  // v14 — traduzioni automatiche dei commenti
+  V14_REVIEW_TRANSLATIONS,
 ];
 
 export function migrate(db) {

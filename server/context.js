@@ -17,6 +17,7 @@ import { createReviewServices } from './reviews.js';
 import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
 import { createServices } from './services.js';
+import { createTranslator } from './translate.js';
 
 export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl, assetVersion = '0' }) {
   const app = { cfg, db, content, assetVersion, jobs: [], limits: createLimits() };
@@ -39,6 +40,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.services = createServices(app);
   app.gifts = createGiftServices(app);
   app.reviews = createReviewServices(app);
+  app.translate = createTranslator(app, fetchImpl);
   app.reminders = createReminderServices(app);
   app.calendars = createCalendars(app, fetchImpl);
   app.programs = createProgramServices(app);

@@ -10,6 +10,9 @@ export function feedbackAdminPage(ctx, { items, stats, flash }) {
   <div class="card pad kpi"><span class="muted">Feedback ricevuti</span><strong>${stats.count}</strong><small>privati</small></div>
   <div class="card pad kpi"><span class="muted">Richieste inviate</span><strong>${stats.requested}</strong><small>email di recensione</small></div>
 </div>
+<p class="muted">${ctx.app.translate.enabled
+  ? html`<strong>Traduzione automatica attiva</strong> (${ctx.app.translate.label}): i commenti mostrati sul sito vengono tradotti nella lingua di chi guarda, con il pulsante «Vedi originale»${ctx.app.translate.lastError ? html` — <span class="chip chip-warn">ultimo errore: ${ctx.app.translate.lastError}</span>` : ''}.`
+  : html`<strong>Traduzione automatica non attiva</strong>: i commenti restano nella lingua del cliente. Per attivarla serve una chiave di DeepL o di Google Traduttore (<code>TRANSLATE_PROVIDER</code> e <code>TRANSLATE_API_KEY</code>, vedi la guida).`}</p>
 <p class="muted">Le recensioni pubbliche (Google, Tripadvisor) si leggono sulle piattaforme: qui compaiono solo i feedback lasciati dalla pagina privata. Un commento si può <strong>mostrare sul sito</strong> (in home e nella pagina del suo tour) solo se il cliente ha dato il permesso: compare con il solo nome di battesimo, così com'è scritto.</p>
 ${items.length
   ? html`<div class="card table-wrap"><table class="table"><thead><tr><th>Voto</th><th>Commento</th><th>Tour</th><th>Cliente</th><th>Sul sito</th></tr></thead><tbody>

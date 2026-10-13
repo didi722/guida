@@ -803,6 +803,15 @@ body.admin { --header-h: 64px; }
 .quote-stars { color: var(--bronze); letter-spacing: 3px; font-size: 1.05rem; }
 .quote blockquote { margin: 0; padding: 0; border: 0; background: none; font-size: 1.02rem; line-height: 1.6; white-space: pre-line; } .quote blockquote p { margin: 0; }
 .quote figcaption { margin-top: auto; padding-top: 6px; color: var(--muted); font-size: 0.9rem; }
+.quote-orig { font-size: 0.88rem; }
+.quote-orig > summary { cursor: pointer; color: var(--accent-text); font-weight: 700; list-style: none; width: fit-content; }
+.quote-orig > summary::-webkit-details-marker { display: none; }
+.quote-orig > summary::after { content: ' ›'; }
+.quote-orig[open] > summary::after { content: ' ‹'; }
+.quote-orig .q-close-label, .quote-orig[open] .q-open-label { display: none; }
+.quote-orig[open] .q-close-label { display: inline; }
+.quote-orig blockquote { margin-top: 6px; padding-left: 12px; border-left: 3px solid var(--line); color: var(--muted); font-size: 0.92rem; }
+.quote-auto { margin: 0; font-size: 0.74rem; letter-spacing: 0.02em; color: var(--muted); }
 .quotes-note { margin: 16px 0 0; color: var(--muted); font-size: 0.88rem; } .quotes-note strong { color: var(--text); }
 
 /* Admin: ripristino da una copia */
@@ -920,3 +929,8 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
   .partner-table td:first-child small { display: block; margin-left: 0; }
   .partner-footer .footer-bottom { flex-direction: column; align-items: flex-start; }
 }
+
+/* ───────── Wallet del telefono ───────── */
+.wallet-box { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--line); }
+.wallet-box p { margin: 0 0 0.5rem; }
+.wallet-box .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-right: 8px; vertical-align: -3px; }

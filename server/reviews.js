@@ -5,6 +5,7 @@
 // le regole di Google vietano di sollecitare solo i clienti soddisfatti ("review gating").
 import { sendReviewRequest } from './emails.js';
 import { addDays, localToInstant, nowRome } from './time.js';
+import { FEATURED_WHERE, attachTranslations } from './translate.js';
 import { cleanText } from './util.js';
 
 const RETRY_MS = 30 * 60_000;
@@ -28,6 +29,7 @@ export function saveFeedback(db, booking, { rating, comment, mayPublish }, nowMs
     `INSERT INTO feedback(booking_id, rating, comment, may_publish, created_at) VALUES(?,?,?,?,?)
      ON CONFLICT(booking_id) DO UPDATE SET rating = excluded.rating, comment = excluded.comment, may_publish = excluded.may_publish`,
   ).run(booking.id, r, cleanText(comment, 1500) || null, mayPublish ? 1 : 0, new Date(nowMs).toISOString());
+  db.prepare('DELETE FROM feedback_translations WHERE feedback_id IN (SELECT id FROM feedback WHERE booking_id = ?)').run(booking.id); // il commento può essere cambiato: si traduce di nuovo
   return { ok: true };
 }
 
@@ -36,19 +38,21 @@ export const firstNameOf = (name) => String(name ?? '').trim().split(/\s+/)[0].s
 
 /**
  * Commenti che il cliente ha permesso di citare e che hai scelto di mostrare sul sito, dal più recente.
- * @param {{tourSlug?: string|null, limit?: number}} [opts] con `tourSlug` solo quelli di quel tour
+ * @param {{tourSlug?: string|null, limit?: number, lang?: string|null}} [opts] con `tourSlug` solo quelli di quel tour;
+ *   con `lang` (la lingua di chi guarda) i commenti scritti in un'altra lingua portano la traduzione automatica, se è pronta
  */
-export function featuredQuotes(db, { tourSlug = null, limit = 3 } = {}) {
-  return db
+export function featuredQuotes(db, { tourSlug = null, limit = 3, lang = null } = {}) {
+  const quotes = db
     .prepare(
       `SELECT f.id, f.rating, f.comment, b.name, b.tour_slug, b.date, b.lang
        FROM feedback f JOIN bookings b ON b.id = f.booking_id
-       WHERE f.featured = 1 AND f.may_publish = 1 AND TRIM(COALESCE(f.comment, '')) <> '' AND b.status = 'confirmed' AND b.channel = 'b2c'
+       WHERE ${FEATURED_WHERE}
          ${tourSlug ? 'AND b.tour_slug = ?' : ''}
        ORDER BY b.date DESC, f.id DESC LIMIT ?`,
     )
     .all(...(tourSlug ? [tourSlug, limit] : [limit]))
     .map((r) => ({ id: r.id, rating: r.rating, comment: r.comment.trim(), firstName: firstNameOf(r.name), tourSlug: r.tour_slug, date: r.date, lang: r.lang }));
+  return lang ? attachTranslations(db, quotes, lang) : quotes;
 }
 
 /** Mostra (o toglie) un commento sul sito. Solo se il cliente ha dato il permesso e ha scritto qualcosa. @returns {boolean} */

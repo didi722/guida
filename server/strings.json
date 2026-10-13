@@ -4996,5 +4996,53 @@
   "The invoice for bookings paid by card appears here as soon as it is issued.",
   "La factura de las reservas pagadas con tarjeta aparece aquí en cuanto se emite.",
   "カードでお支払いのご予約の請求書は、発行され次第こちらに表示されます。"
+ ],
+ "reviews.seeOriginal": [
+  "Vedi originale",
+  "See original",
+  "Ver original",
+  "原文を見る"
+ ],
+ "reviews.hideOriginal": [
+  "Nascondi originale",
+  "Hide original",
+  "Ocultar original",
+  "原文を隠す"
+ ],
+ "reviews.autoTranslated": [
+  "Tradotto automaticamente",
+  "Automatically translated",
+  "Traducido automáticamente",
+  "自動翻訳"
+ ],
+ "wallet.hint": [
+  "Tieni la prenotazione sul telefono, anche senza connessione.",
+  "Keep your booking on your phone, even offline.",
+  "Lleva tu reserva en el teléfono, incluso sin conexión.",
+  "ご予約をスマートフォンに保存できます（オフラインでも表示可能）。"
+ ],
+ "wallet.google": [
+  "Aggiungi a Google Wallet",
+  "Add to Google Wallet",
+  "Añadir a Google Wallet",
+  "Google ウォレットに追加"
+ ],
+ "wallet.apple": [
+  "Aggiungi ad Apple Wallet",
+  "Add to Apple Wallet",
+  "Añadir a Apple Wallet",
+  "Apple ウォレットに追加"
+ ],
+ "wallet.manage": [
+  "Gestisci la prenotazione",
+  "Manage your booking",
+  "Gestionar la reserva",
+  "ご予約の確認・変更"
+ ],
+ "wallet.passDesc": [
+  "Prenotazione di un tour a Venezia",
+  "Venice tour booking",
+  "Reserva de un tour en Venecia",
+  "ヴェネツィアのツアー予約"
  ]
 }

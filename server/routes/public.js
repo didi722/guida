@@ -10,6 +10,7 @@ import { isDate, isTime, localToInstant, nowRome } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
 import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js';
 import { invoiceOfBooking } from '../partner.js';
+import { applePass, googleSaveUrl, walletOptions } from '../wallet.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
@@ -49,13 +50,13 @@ export function publicRouter(app) {
   r.get('/', (req, res) => {
     const nowMs = Date.now();
     const departures = nextDepartures(db, cfg, selectable(channelOf(req.acct)), nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 3 });
-    send(res, homePage(res.locals.ctx, { departures, quotes: featuredQuotes(db, { limit: 3 }), reviewStats: feedbackStats(db) }));
+    send(res, homePage(res.locals.ctx, { departures, quotes: featuredQuotes(db, { limit: 3, lang: req.lang }), reviewStats: feedbackStats(db) }));
   });
   r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx)));
   r.get('/tours/:slug', (req, res, next) => {
     const tour = content.tour(req.params.slug);
     if (!tour?.active || !openTo(app.rates.get(), tour, channelOf(req.acct))) return next();
-    send(res, tourPage(res.locals.ctx, tour, { quotes: featuredQuotes(db, { tourSlug: tour.slug, limit: 3 }), reviewStats: feedbackStats(db) }));
+    send(res, tourPage(res.locals.ctx, tour, { quotes: featuredQuotes(db, { tourSlug: tour.slug, limit: 3, lang: req.lang }), reviewStats: feedbackStats(db) }));
   });
   r.get('/blog', (req, res) => send(res, blogPage(res.locals.ctx)));
   r.get('/blog/:slug', (req, res, next) => {
@@ -280,6 +281,18 @@ export function publicRouter(app) {
     const b = loadBooking(req);
     if (!b || b.status !== 'confirmed') return next();
     sendPdf(res, await renderVoucherPdf(app, b, { lang: req.lang }), `voucher-${b.ref}.pdf`);
+  });
+  // «Aggiungi al wallet» (solo clienti privati con prenotazione confermata): il link di Google Wallet e il file .pkpass di Apple
+  r.get('/booking/:ref/wallet/google', (req, res, next) => {
+    const b = loadBooking(req);
+    if (!b || !walletOptions(app, b).google) return next();
+    res.redirect(302, googleSaveUrl(app, b, req.lang));
+  });
+  r.get('/booking/:ref/wallet/apple.pkpass', async (req, res, next) => {
+    const b = loadBooking(req);
+    if (!b || !walletOptions(app, b).apple) return next();
+    const file = await applePass(app, b, req.lang);
+    res.set({ 'Content-Type': 'application/vnd.apple.pkpass', 'Content-Disposition': `attachment; filename="${b.ref}.pkpass"`, 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }).send(file);
   });
   r.post('/booking/:ref/cancel', form, async (req, res, next) => {
     const b = loadBooking(req);

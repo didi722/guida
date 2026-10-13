@@ -137,6 +137,33 @@ export function createConfig(overrides = {}) {
       catchUpDays: 7, // dopo un'interruzione non si inviano richieste più vecchie di così
     },
 
+    // Traduzione automatica dei commenti in evidenza nella lingua di chi guarda il sito (con «Vedi originale»): spenta finché non c'è una chiave
+    translate: {
+      provider: ['deepl', 'google'].includes(String(e.TRANSLATE_PROVIDER || '').toLowerCase()) ? String(e.TRANSLATE_PROVIDER).toLowerCase() : '',
+      apiKey: secret(e.TRANSLATE_API_KEY),
+    },
+
+    // «Aggiungi al wallet» del telefono dalla pagina della prenotazione (clienti privati): ogni piattaforma si accende quando ha tutti i dati (vedi wallet.js)
+    wallet: {
+      google: {
+        issuerId: e.GOOGLE_WALLET_ISSUER_ID || '', // numero dell'«issuer» nella Google Pay & Wallet Console
+        keyFile: e.GOOGLE_WALLET_KEY_FILE || '', // il file JSON del service account (contiene indirizzo e chiave)
+        serviceAccount: e.GOOGLE_WALLET_SERVICE_ACCOUNT || '', // in alternativa al file: indirizzo del service account
+        privateKey: secret(e.GOOGLE_WALLET_PRIVATE_KEY), // e chiave privata (PEM, con \n al posto degli a capo)
+      },
+      apple: {
+        passTypeId: e.APPLE_WALLET_PASS_TYPE_ID || '', // es. pass.it.tuodominio.prenotazione
+        teamId: e.APPLE_WALLET_TEAM_ID || '',
+        certFile: e.APPLE_WALLET_CERT_FILE || '', // certificato del Pass Type ID (PEM)
+        keyFile: e.APPLE_WALLET_KEY_FILE || '', // la sua chiave privata (PEM)
+        wwdrFile: e.APPLE_WALLET_WWDR_FILE || '', // certificato intermedio Apple «WWDR» (PEM o .cer)
+        keyPassphrase: secret(e.APPLE_WALLET_KEY_PASSPHRASE),
+        certPem: secret(e.APPLE_WALLET_CERT), // in alternativa ai file: il contenuto PEM nelle variabili
+        keyPem: secret(e.APPLE_WALLET_KEY),
+        wwdrPem: secret(e.APPLE_WALLET_WWDR),
+      },
+    },
+
     program: {
       depositPercent: num(e.PROGRAM_DEPOSIT_PERCENT, 30), // acconto proposto nei preventivi dei programmi di più giorni
       validityDays: num(e.PROGRAM_VALIDITY_DAYS, 7), // validità predefinita di una proposta

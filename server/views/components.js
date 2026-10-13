@@ -100,7 +100,12 @@ export function testimonials(ctx, quotes, { stats = null, readUrl = '' } = {}) {
   return html`<div class="quotes">
     <div class="quotes-grid">${quotes.map((q) => html`<figure class="quote">
       <div class="quote-stars" role="img" aria-label="${t('fb.star', { n: q.rating })}">${'★'.repeat(q.rating)}${'☆'.repeat(5 - q.rating)}</div>
-      <blockquote lang="${q.lang}"><p>${q.comment}</p></blockquote>
+      ${q.translation
+        ? html`<blockquote lang="${lang}"><p>${q.translation.text}</p></blockquote>
+      <details class="quote-orig"><summary><span class="q-open-label">${t('reviews.seeOriginal')}</span><span class="q-close-label">${t('reviews.hideOriginal')}</span></summary>
+        <blockquote lang="${q.translation.from}"><p>${q.comment}</p></blockquote></details>
+      <p class="quote-auto">${t('reviews.autoTranslated')}</p>`
+        : html`<blockquote lang="${q.lang}"><p>${q.comment}</p></blockquote>`}
       <figcaption>${q.firstName ? html`<strong>${q.firstName}</strong> · ` : ''}${app.content.tour(q.tourSlug)?.i18n[lang].title ?? ''}, ${fmtMonth(q.date.slice(0, 7), lang)}</figcaption>
     </figure>`)}</div>
     <p class="quotes-note">${avg ? html`<strong>★ ${t('reviews.avg', { avg, n: stats.count })}</strong><br>` : ''}${t('reviews.note')}${readUrl ? html` <a href="${readUrl}" target="_blank" rel="noopener">${t('reviews.readAll')}</a>` : ''}</p>

@@ -6,7 +6,8 @@ import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { isPreOpening, paymentsFrom } from '../opening.js';
 import { isEditable } from '../partner.js';
 import { formatMoney } from '../util.js';
-import { page } from './layout.js';
+import { icon, page } from './layout.js';
+import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
 import { quoteLines } from './hourly.js';
 import { parseServiceRecord } from '../rates.js';
@@ -235,6 +236,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   const service = parseServiceRecord(b.service_json);
   const holdLeft = b.status === 'held' ? Math.max(0, Math.ceil((Date.parse(b.hold_expires_at) - Date.now()) / 60000)) : 0;
 
+  const wallet = walletOptions(app, b); // pulsanti «Aggiungi al wallet» solo se sono configurati e la prenotazione è di un cliente privato
   const invoiceBtn = owner && invoice ? html`<a class="btn btn-outline" href="${u(`/b2b/invoices/${invoice.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.act.invoice', { n: invoice.number })}</a>` : '';
   const wasOption = !!b.option_expires_at; // un'opzione (anche se poi scaduta o confermata)
   const optionUntil = b.option_expires_at ? fmtInstant(Date.parse(b.option_expires_at), lang) : '';
@@ -300,6 +302,11 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
         <a class="btn btn-outline" href="${base}/voucher.pdf${q}" target="_blank" rel="noopener">${t('booking.voucher')}</a>
         ${invoiceBtn}
       </p>
+      ${wallet.google || wallet.apple
+        ? html`<div class="wallet-box"><p class="small muted">${t('wallet.hint')}</p><p class="btn-row">
+          ${wallet.apple ? html`<a class="btn btn-dark" href="${base}/wallet/apple.pkpass${q}">${icon('wallet')} ${t('wallet.apple')}</a>` : ''}
+          ${wallet.google ? html`<a class="btn btn-dark" href="${base}/wallet/google${q}">${icon('wallet')} ${t('wallet.google')}</a>` : ''}</p></div>`
+        : ''}
       ${st.percent > 0
         ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${st.percent < 100 && b.payment_status !== 'paid' ? t('booking.confirmCancelFee') : t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
         : st.started ? '' : html`<p class="small muted">${t('booking.contactForChanges')} <a href="mailto:${cfg.site.email}">${cfg.site.email}</a>${cfg.site.whatsapp ? html` · <a href="https://wa.me/${cfg.site.whatsapp}">WhatsApp</a>` : ''}</p>`}`

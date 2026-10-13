@@ -9,6 +9,7 @@ import { createContext } from './context.js';
 import { LANGS } from './i18n.js';
 import { openTo } from './rates.js';
 import { langMiddleware, makeCtx, preferredLang, sameOrigin, securityHeaders, send, sessionMiddleware } from './http.js';
+import { brandIcon } from './png.js';
 import { partnerRouter } from './routes/partner.js';
 import { publicRouter } from './routes/public.js';
 import { featuresRouter } from './routes/features.js';
@@ -60,6 +61,8 @@ export function createApp(overrides = {}) {
     if (!MEDIA_NAME.test(name) || !fs.existsSync(app.media.file(name))) return next();
     res.type(MIME_BY_EXT[name.split('.').pop()]).set({ 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' }).sendFile(app.media.file(name));
   });
+  // logo quadrato per i pass del wallet (Google lo scarica da qui): disegnato dal codice, nessun file binario nel repository
+  server.get('/wallet/logo.png', (req, res) => res.type('png').set('Cache-Control', 'public, max-age=86400').send(brandIcon(192)));
   server.get('/robots.txt', (req, res) =>
     res.type('text/plain').send(app.payments.demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
   );
