@@ -266,7 +266,7 @@ test('wallet sulla pagina della prenotazione: pulsanti e percorsi solo per chi n
     assert.equal((await s.get(`/it/booking/${held.ref}/wallet/google?t=${held.token}`)).status, 404, 'annullata');
     assert.ok(!(await (await s.get(`/it/booking/${held.ref}?t=${held.token}`)).text()).includes('Wallet'));
     const acct = addAccount(s.app.db, { email: 'agenzia@example.com' });
-    const b2b = createBooking(s.app, { tourSlug: 'san-marco-rialto', date: addDays(nowRome().date, 7), time: '09:30', pax: 2, channel: 'b2b', account: acct, name: 'Anna', email: acct.email, lang: 'it', paymentMethod: 'invoice' });
+    const b2b = createBooking(s.app, { tourSlug: 'san-marco-rialto-agenzie', date: addDays(nowRome().date, 7), time: '09:30', pax: 2, channel: 'b2b', account: acct, name: 'Anna', email: acct.email, lang: 'it', paymentMethod: 'invoice' });
     assert.equal((await s.get(`/it/booking/${b2b.ref}/wallet/google?t=${b2b.token}`)).status, 404);
     assert.ok(!(await (await s.get(`/it/booking/${b2b.ref}?t=${b2b.token}`)).text()).includes('Wallet'));
 

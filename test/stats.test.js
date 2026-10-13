@@ -20,7 +20,7 @@ process.env.GUIDA_QUIET = '1';
 
 const HOUR = 3600_000;
 const TIERS = JSON.stringify([{ hours: 168, refund: 100 }, { hours: 72, refund: 50 }]);
-const TITLES = { shared: 'Tour condiviso', private: 'Tour privato', 'half-day': 'Mezza giornata' };
+const TITLES = { shared: 'Tour condiviso', private: 'Tour privato', 'half-day': 'Mezza giornata', 'shared-agenzie': 'Tour condiviso (agenzie)', 'private-agenzie': 'Tour privato (agenzie)', 'half-day-agenzie': 'Mezza giornata (agenzie)' };
 const tourTitle = (slug) => TITLES[slug] ?? slug;
 const FEB = { from: '2027-02-01', to: '2027-02-28' }; // 28 giorni; il periodo precedente è 4–31 gennaio
 const clean = (s) => String(s).replace(/\u00a0/g, ' '); // formatMoney usa uno spazio non divisibile prima di «€»
@@ -55,7 +55,7 @@ async function seed() {
   const app = makeApp();
   const { db } = app;
   const alpha = addAccount(db, { email: 'alpha@example.com', company: 'Alpha Viaggi', cancel_policy_json: TIERS });
-  const bravo = addAccount(db, { email: 'bravo@example.com', company: 'Bravo Tours', discount_percent: 10, prices_json: JSON.stringify({ shared: 2520 }) }); // il condiviso lo paga 25,20 (prezzo dedicato: lo sconto % arrotonda al multiplo di 5 €)
+  const bravo = addAccount(db, { email: 'bravo@example.com', company: 'Bravo Tours', discount_percent: 10, prices_json: JSON.stringify({ 'shared-agenzie': 2520 }) }); // il condiviso lo paga 25,20 (prezzo dedicato: lo sconto % arrotonda al multiplo di 5 €)
   addPromo(db, { code: 'ESTATE10', kind: 'percent', value: 10 });
   addPromo(db, { code: 'WELCOME', kind: 'fixed', value: 500 });
   const at = (date, time = '12:00') => new Date(localToInstant(date, time)).toISOString();
@@ -133,7 +133,7 @@ const { app, alpha, bravo, b } = world;
 const { db } = app;
 after(() => app.cleanup());
 
-const filters = (query = {}, nowMs = NOW) => parseFilters(query, { nowMs, tours: ['shared', 'private', 'half-day'], partners: [alpha.id, bravo.id] });
+const filters = (query = {}, nowMs = NOW) => parseFilters(query, { nowMs, tours: ['shared', 'private', 'half-day', 'shared-agenzie', 'private-agenzie', 'half-day-agenzie'], partners: [alpha.id, bravo.id] });
 const report = (query = {}, nowMs = NOW) => statsReport(db, filters(query, nowMs), { nowMs, tourTitle });
 const feb = (extra = {}) => report({ ...FEB, ...extra });
 const rows = (list, fields = ['key', 'n', 'pax', 'cents']) => list.map((r) => fields.map((f) => r[f]));
@@ -294,9 +294,10 @@ test('i dettagli sommano sempre al venduto: prodotto, canale, partner, pagamento
   assert.equal(sum(r.partners.rows) + (r.partners.others?.cents ?? 0), r.kpi.soldB2b);
   assert.equal(r.tours.reduce((a, x) => a + x.share, 0).toFixed(6), '1.000000');
 
-  assert.deepEqual(rows(r.tours), [['shared', 5, 14, 44380], ['half-day', 1, 6, 19000], ['private', 1, 4, 14500]], 'ordinati per venduto');
-  assert.deepEqual(r.tours.map((t) => [t.label, t.avg]), [['Tour condiviso', 8876], ['Mezza giornata', 19000], ['Tour privato', 14500]]);
-  assert.equal(Math.round(r.tours[0].share * 1000) / 10, 57, '443,80 / 778,80');
+  // i tour B2B sono prodotti a parte («-agenzie»): ogni prenotazione si conta nel prodotto che ha davvero comprato
+  assert.deepEqual(rows(r.tours), [['shared', 4, 10, 34300], ['half-day-agenzie', 1, 6, 19000], ['private', 1, 4, 14500], ['shared-agenzie', 1, 4, 10080]], 'ordinati per venduto');
+  assert.deepEqual(r.tours.map((t) => [t.label, t.avg]), [['Tour condiviso', 8575], ['Mezza giornata (agenzie)', 19000], ['Tour privato', 14500], ['Tour condiviso (agenzie)', 10080]]);
+  assert.equal(Math.round(r.tours[0].share * 1000) / 10, 44, '343,00 / 778,80');
   assert.deepEqual(rows(r.channels), [['b2c', 5, 14, 48800], ['b2b', 2, 10, 29080]]);
   assert.deepEqual(r.channels.map((x) => x.label), ['Privati', 'Partner']);
   assert.deepEqual(rows(r.payments), [['onsite', 3, 10, 35500], ['card', 3, 8, 23380], ['invoice', 1, 6, 19000]]);
@@ -373,15 +374,17 @@ test('filtri su canale, partner e tour: cifre e dettagli seguono sempre lo stess
   const al = feb({ partner: String(alpha.id) });
   assert.equal(al.filters.channel, 'b2b');
   assert.deepEqual([al.kpi.bookings, al.kpi.sold, al.kpi.cancelled, al.kpi.refunds, al.kpi.penalties], [1, 19000, 1, 6000, 6000]);
-  assert.deepEqual(rows(al.tours), [['half-day', 1, 6, 19000]]);
+  assert.deepEqual(rows(al.tours), [['half-day-agenzie', 1, 6, 19000]]);
   const br = feb({ partner: String(bravo.id) });
   assert.deepEqual([br.kpi.bookings, br.kpi.sold, br.kpi.cancelled], [1, 10080, 0]);
 
   const priv = feb({ tour: 'private' });
-  assert.deepEqual([priv.kpi.bookings, priv.kpi.sold, priv.kpi.cancelled, priv.kpi.refunds], [1, 14500, 1, 6000]);
+  assert.deepEqual([priv.kpi.bookings, priv.kpi.sold, priv.kpi.cancelled, priv.kpi.refunds], [1, 14500, 0, 0]);
+  const privB2b = feb({ tour: 'private-agenzie' });
+  assert.deepEqual([privB2b.kpi.bookings, privB2b.kpi.sold, privB2b.kpi.cancelled, privB2b.kpi.refunds], [0, 0, 1, 6000], 'c8, annullata con trattenuta');
   const shared = feb({ tour: 'shared' });
-  assert.deepEqual([shared.kpi.bookings, shared.kpi.sold, shared.kpi.discount, shared.kpi.gift, shared.kpi.cancelled], [5, 44380, 700, 5000, 3]);
-  const both = feb({ tour: 'shared', channel: 'b2b' });
+  assert.deepEqual([shared.kpi.bookings, shared.kpi.sold, shared.kpi.discount, shared.kpi.gift, shared.kpi.cancelled], [4, 34300, 700, 5000, 3]);
+  const both = feb({ tour: 'shared-agenzie', channel: 'b2b' });
   assert.deepEqual([both.kpi.bookings, both.kpi.sold], [1, 10080], 'solo c7: condiviso venduto a un partner');
   assert.deepEqual(rows(feb({ tour: 'half-day', channel: 'b2c' }).tours), [], 'combinazione senza prenotazioni');
 
@@ -574,13 +577,13 @@ test('fatturato emesso: fatture meno note di credito per data di emissione; bozz
   assert.equal(report({ from: '2027-01-01', to: '2027-01-31' }).kpi.invoiced, 8000);
   assert.equal(report({ from: '2027-03-01', to: '2027-03-31' }).kpi.invoiced, 12345);
   assert.equal(report({ p: 'all' }).kpi.invoiced, 34000 + 8000 + 12345);
-  assert.equal(feb({ channel: 'b2b', tour: 'private' }).kpi.invoiced, 34000, 'non segue canale, partner e tour');
+  assert.equal(feb({ channel: 'b2b', tour: 'private-agenzie' }).kpi.invoiced, 34000, 'non segue canale, partner e tour');
   assert.equal(feb({ basis: 'booking' }).kpi.invoiced, 34000, 'né la base');
 });
 
 test('l’elenco dei filtri: tour del sito più quelli rimasti solo nelle prenotazioni; partner in ordine', () => {
   const o = filterOptions(db, [{ slug: 'shared', title: 'Tour condiviso' }, { slug: 'zeta', title: 'Zeta' }]);
-  assert.deepEqual(o.tours.map((t) => t.slug).sort(), ['half-day', 'private', 'shared', 'zeta']);
+  assert.deepEqual(o.tours.map((t) => t.slug).sort(), ['half-day-agenzie', 'private', 'private-agenzie', 'shared', 'shared-agenzie', 'zeta']);
   assert.equal(o.tours.find((t) => t.slug === 'private').title, 'private', 'tour non più nel sito: lo slug');
   assert.deepEqual(o.partners.map((p) => p.company), ['Alpha Viaggi', 'Bravo Tours']);
 });
@@ -622,7 +625,7 @@ test('CSV: BOM, a capo \\r\\n, «;» e virgola decimale, una riga per prenotazio
   const c3 = byRef[b.c3.ref];
   assert.deepEqual([c3[7], c3[8], c3[10], c3[11], c3[12], c3[13], c3[17]], ['70,00', '7,00', '63,00', '63,00', 'Carta', 'Pagata', 'Español']);
   const c8 = byRef[b.c8.ref];
-  assert.deepEqual([c8[3], c8[4], c8[5], c8[10], c8[13], c8[14], c8[15], c8[16]], ['Tour privato', 'Partner', 'Alpha Viaggi', '120,00', 'Rimborsata', 'Annullata', '60,00', '60,00']);
+  assert.deepEqual([c8[3], c8[4], c8[5], c8[10], c8[13], c8[14], c8[15], c8[16]], ['Tour privato (agenzie)', 'Partner', 'Alpha Viaggi', '120,00', 'Rimborsata', 'Annullata', '60,00', '60,00']);
   assert.deepEqual([byRef[b.c12.ref][14], byRef[b.c13.ref][14]], ['In attesa di pagamento', 'Scaduta']);
   assert.deepEqual([byRef[b.c10.ref][13], byRef[b.c10.ref][16]], ['Da incassare', '70,00'], 'penale da fatturare');
 
@@ -643,7 +646,8 @@ test('CSV: BOM, a capo \\r\\n, «;» e virgola decimale, una riga per prenotazio
   const csvOf = (q) => parseCsv(bookingsCsv(db, filters(q), { nowMs: NOW, tourTitle })).slice(1);
   assert.deepEqual(csvOf({ ...FEB, channel: 'b2b' }).map((row) => row[0]).sort(), [b.c6.ref, b.c7.ref, b.c8.ref].sort());
   assert.deepEqual(csvOf({ ...FEB, partner: String(bravo.id) }).map((row) => row[0]), [b.c7.ref]);
-  assert.deepEqual(csvOf({ ...FEB, tour: 'private' }).map((row) => row[0]).sort(), [b.c5.ref, b.c8.ref].sort());
+  assert.deepEqual(csvOf({ ...FEB, tour: 'private' }).map((row) => row[0]).sort(), [b.c5.ref]);
+  assert.deepEqual(csvOf({ ...FEB, tour: 'private-agenzie' }).map((row) => row[0]).sort(), [b.c8.ref]);
   assert.equal(csvOf({ from: '2027-01-01', to: '2027-01-31' }).length, 4, 'gennaio: p1–p4');
   assert.deepEqual(csvOf({ from: '2027-01-05', to: '2027-01-05', basis: 'booking' }).map((row) => [row[0], row[18]]), [[b.l2.ref, '2027-01-05']], 'data di prenotazione in ora di Venezia');
   assert.equal(csvOf({ p: 'all' }).length, 13 + 4 + 2);
@@ -805,7 +809,7 @@ test('HTTP: pagina e CSV solo per l’admin; con dati veri rispondono 200 senza 
     const a = createBooking(s.app, tourBooking({ date: day(10), pax: 3, paymentMethod: 'card', promoCode: 'WEB10' }));
     confirmPaid(s.app, a.id, 'pi_1');
     createBooking(s.app, tourBooking({ date: day(12), time: '14:30', pax: 2, email: 'b@example.com', lang: 'en' }));
-    createBooking(s.app, tourBooking({ tourSlug: 'passeggiata-privata-2h', date: day(14), time: '10:00', pax: 4, channel: 'b2b', account: acct, paymentMethod: 'invoice', email: 'c@example.com' }));
+    createBooking(s.app, tourBooking({ tourSlug: 'passeggiata-privata-2h-agenzie', date: day(14), time: '10:00', pax: 4, channel: 'b2b', account: acct, paymentMethod: 'invoice', email: 'c@example.com' }));
     const cx = createBooking(s.app, tourBooking({ date: day(15), pax: 2, email: 'd@example.com', paymentMethod: 'card' }));
     confirmPaid(s.app, cx.id, 'pi_2');
     await s.app.services.cancel(cx.id, { by: 'admin', refund: 'none' });

@@ -38,7 +38,7 @@ export const DISCOUNT_STEP_CENTS = 500;
  * Prezzo (centesimi) dopo lo sconto percentuale di un partner: arrotondato per eccesso al multiplo di 5 €, senza mai superare il prezzo non scontato
  * (su un prezzo piccolo, per esempio 28 € a persona, con uno sconto del 10% si resta a 28 €: 25,20 € salirebbe a 30 €).
  * Senza sconto il prezzo resta com'è scritto nel listino.
- * Lo sconto di un partner si calcola sul PREZZO AL PUBBLICO (B2C), non sulla tariffa agenzie: vedi partnerRate e unitPriceFor.
+ * Lo sconto di un partner si calcola sulle TARIFFE B2B (i tour B2B hanno un solo prezzo, quello per le agenzie): vedi partnerRate e unitPriceFor.
  */
 export function applyPartnerDiscount(cents, discountPercent) {
   const d = Math.min(100, Math.max(0, Number(discountPercent) || 0));
@@ -123,12 +123,12 @@ export function basePrice(service, rate, hours) {
 export const hasRates = (rates, service, channel) => !!rates.services[service]?.[channel];
 
 /**
- * Il tour è aperto a questo canale? Un servizio a ore dipende dalle tariffe (senza tariffa al pubblico è solo per le agenzie);
- * in più, l'impostazione «solo agenzie» del tour lo chiude ai privati.
+ * Il tour è aperto a questo canale? Un tour è B2C (solo privati) oppure B2B (solo partner approvati). Un servizio a ore dipende anche dalle tariffe
+ * del suo canale: senza la tariffa corrispondente non si può prenotare.
  */
 export function openTo(rates, tour, channel) {
   const key = channel === 'b2b' ? 'b2b' : 'public';
-  if (tour.audience === 'b2b' && key !== 'b2b') return false;
+  if ((tour.audience === 'b2b') !== (key === 'b2b')) return false;
   return tour.pricing === 'hourly' ? hasRates(rates, tour.service, key) : true;
 }
 export const minHours = (service) => BRACKETS[service][0];
@@ -141,17 +141,15 @@ export function hourOptions(service) {
 }
 
 /**
- * Le tariffe che paga un partner per un servizio (scaglioni e ora extra). Senza sconto: la tariffa agenzie. Con uno sconto %: il prezzo al pubblico
- * meno lo sconto (arrotondato ai 5 € successivi), al posto della tariffa agenzie. Se il servizio non ha un prezzo al pubblico (assistente,
- * tour leader, meet & greet: sono solo per le agenzie) non c'è da dove partire, e lo sconto si applica alla tariffa agenzie.
+ * Le tariffe che paga un partner per un servizio (scaglioni e ora extra): la tariffa agenzie, meno lo sconto % del partner se ce l'ha
+ * (ogni cifra arrotondata ai 5 € successivi, mai oltre la tariffa agenzie).
  */
 export function partnerRate(rates, service, discountPercent = 0) {
   const b2b = rates.services[service]?.b2b;
   if (!b2b) return null;
   const d = Math.min(100, Math.max(0, Number(discountPercent) || 0));
   if (!(d > 0)) return b2b;
-  const from = rates.services[service].public ?? b2b;
-  return { prices: from.prices.map((p) => applyPartnerDiscount(p, d)), extra: applyPartnerDiscount(from.extra, d) };
+  return { prices: b2b.prices.map((p) => applyPartnerDiscount(p, d)), extra: applyPartnerDiscount(b2b.extra, d) };
 }
 
 /** La tariffa di un canale: per i privati quella al pubblico, per i partner quella con le loro condizioni (partnerRate). */

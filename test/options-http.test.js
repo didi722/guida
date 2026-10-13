@@ -54,7 +54,7 @@ async function start(over = {}) {
   return { app, cfg, base, admin, partner, anon: jar(), jar, agency, close: () => { app.close(); http.close(); fs.rmSync(cfg.dataDir, { recursive: true, force: true }); } };
 }
 
-const checkout = (over = {}) => ({ tour: 'cannaregio-ghetto', date: day(40), time: '10:00', pax: '4', name: 'Giulia Bianchi', email: 'giulia@lagoon.example', lang: 'it', clientRef: 'Preventivo Conti', consent: '1', ...over });
+const checkout = (over = {}) => ({ tour: 'cannaregio-ghetto-agenzie', date: day(40), time: '10:00', pax: '4', name: 'Giulia Bianchi', email: 'giulia@lagoon.example', lang: 'it', clientRef: 'Preventivo Conti', consent: '1', ...over });
 const row = (s, ref) => s.app.db.prepare('SELECT * FROM bookings WHERE ref = ?').get(ref);
 const refOf = (res) => loc(res).match(/\/(?:booking|pay\/demo|pay\/resume)\/([A-Z0-9-]+)/)[1];
 
@@ -62,7 +62,7 @@ test('opzione dal checkout: l’agenzia tiene la data senza pagare; la guida e l
   const s = await start();
   try {
     const { partner, anon } = s;
-    const url = `/it/book/checkout?tour=cannaregio-ghetto&date=${day(40)}&time=10:00&pax=4`;
+    const url = `/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(40)}&time=10:00&pax=4`;
     const page = nb(await (await partner(url)).text());
     assert.match(page, /id="option-submit"/, 'il pulsante «Opziona» c’è per l’agenzia');
     assert.match(page, /Il tuo cliente non ha ancora confermato\?/);
@@ -108,7 +108,7 @@ test('opzione: le regole si fanno rispettare (troppo vicino, limite, spenta per 
     const { partner, agency } = s;
     const opt = (over = {}) => partner('/it/book/checkout', form({ ...checkout(over), action: 'option' }));
     // a 2 giorni dal tour l'opzione non c'è: si prenota direttamente
-    const near = `/it/book/checkout?tour=cannaregio-ghetto&date=${day(3)}&time=10:00&pax=2`;
+    const near = `/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(3)}&time=10:00&pax=2`;
     const nearPage = nb(await (await partner(near)).text());
     assert.ok(!nearPage.includes('option-submit'));
     assert.match(nearPage, /Per una data così vicina non si può opzionare/);
@@ -126,18 +126,18 @@ test('opzione: le regole si fanno rispettare (troppo vicino, limite, spenta per 
     const third = await opt({ date: day(42), time: '10:00' });
     assert.equal(third.status, 400);
     assert.match(nb(await third.text()), /Hai già troppe opzioni aperte/);
-    assert.ok(!nb(await (await partner(`/it/book/checkout?tour=cannaregio-ghetto&date=${day(42)}&time=10:00&pax=2`)).text()).includes('option-submit'));
+    assert.ok(!nb(await (await partner(`/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(42)}&time=10:00&pax=2`)).text()).includes('option-submit'));
 
     // spenta per questo partner dal pannello: la strada non c'è più (si prenota direttamente)
     s.app.db.prepare('UPDATE accounts SET options_enabled = 0 WHERE id = ?').run(agency.id);
-    const off = await (await partner(`/it/book/checkout?tour=cannaregio-ghetto&date=${day(43)}&time=10:00&pax=2`)).text();
+    const off = await (await partner(`/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(43)}&time=10:00&pax=2`)).text();
     assert.ok(!off.includes('option-submit') && !off.includes('Il tuo cliente non ha ancora confermato'));
     assert.equal((await opt({ date: day(43) })).status, 400);
     s.app.db.prepare('UPDATE accounts SET options_enabled = 1 WHERE id = ?').run(agency.id);
     // spente per tutto il sito
     s.cfg.options.enabled = false;
     assert.equal((await opt({ date: day(44) })).status, 400);
-    assert.ok(!(await (await partner(`/it/book/checkout?tour=cannaregio-ghetto&date=${day(44)}&time=10:00&pax=2`)).text()).includes('option-submit'));
+    assert.ok(!(await (await partner(`/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(44)}&time=10:00&pax=2`)).text()).includes('option-submit'));
   } finally {
     s.close();
   }
@@ -147,7 +147,7 @@ test('opzione dalla pagina della pratica: conferma (a fattura o con carta) e ril
   const s = await start();
   try {
     const { partner, anon, app, agency } = s;
-    const make = (date) => createBooking(app, { tourSlug: 'cannaregio-ghetto', date, time: '10:00', pax: 3, channel: 'b2b', account: agency, option: true, name: 'Giulia Bianchi', email: agency.email, lang: 'it' });
+    const make = (date) => createBooking(app, { tourSlug: 'cannaregio-ghetto-agenzie', date, time: '10:00', pax: 3, channel: 'b2b', account: agency, option: true, name: 'Giulia Bianchi', email: agency.email, lang: 'it' });
     const a = make(day(30));
     const page = nb(await (await anon(`/it/booking/${a.ref}?t=${a.token}`)).text());
     assert.match(page, /Data trattenuta \(opzione\)/);
@@ -192,7 +192,7 @@ test('opzioni dal pannello: elenco, prolunga, rilascio, durata per partner e tab
   const s = await start();
   try {
     const { admin, app, agency } = s;
-    const o = createBooking(app, { tourSlug: 'cannaregio-ghetto', date: day(30), time: '10:00', pax: 3, channel: 'b2b', account: agency, option: true, name: 'Giulia Bianchi', email: agency.email, lang: 'it', clientRef: 'Gruppo Conti' });
+    const o = createBooking(app, { tourSlug: 'cannaregio-ghetto-agenzie', date: day(30), time: '10:00', pax: 3, channel: 'b2b', account: agency, option: true, name: 'Giulia Bianchi', email: agency.email, lang: 'it', clientRef: 'Gruppo Conti' });
     const before = Date.parse(row(s, o.ref).option_expires_at);
     // elenco e scheda
     const list = nb(await (await admin('/admin/bookings?f=options')).text());
@@ -261,7 +261,7 @@ test('agenda del pannello: prima il calendario, si può passare all’elenco e l
     const { admin, app, agency } = s;
     const mine = createBooking(app, { tourSlug: 'san-marco-rialto', date: day(5), time: '14:30', pax: 2, name: 'Mario Rossi', email: 'mario@example.com', lang: 'it', paymentMethod: 'card' });
     app.db.prepare("UPDATE bookings SET status = 'confirmed', payment_status = 'paid' WHERE id = ?").run(mine.id);
-    const opt = createBooking(app, { tourSlug: 'cannaregio-ghetto', date: day(5), time: '10:00', pax: 2, channel: 'b2b', account: agency, option: true, name: 'Giulia Bianchi', email: agency.email, lang: 'it', clientRef: 'Gruppo Conti' });
+    const opt = createBooking(app, { tourSlug: 'cannaregio-ghetto-agenzie', date: day(5), time: '10:00', pax: 2, channel: 'b2b', account: agency, option: true, name: 'Giulia Bianchi', email: agency.email, lang: 'it', clientRef: 'Gruppo Conti' });
 
     // senza scelta: calendario
     const first = nb(await (await admin('/admin')).text());
@@ -340,7 +340,7 @@ test('pre-apertura (prima della partita IVA): si prenota per le date da quel gio
     assert.ok(!mine.includes('/pay/resume'), 'prima dell’apertura non si può pagare online');
 
     // agenzie: solo a fattura (mai la carta); l'opzione resta
-    const ag = nb(await (await partner(`/it/book/checkout?tour=cannaregio-ghetto&date=${day(45)}&time=10:00&pax=2`)).text());
+    const ag = nb(await (await partner(`/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(45)}&time=10:00&pax=2`)).text());
     assert.match(ag, /value="invoice"/);
     assert.ok(!/value="card"/.test(ag));
     assert.match(ag, /option-submit/);

@@ -35,9 +35,9 @@ Per provare anche le **fatture** aggiungi dati fiscali finti: `VAT_NUMBER=IT1234
 2. **Tu ricevi la richiesta.** In **Admin → Email** compaiono «Nuova richiesta partner» (per te) e «Richiesta di accesso partner ricevuta» (per l'azienda). In **Admin → Partner** l'azienda è «Da approvare».
 3. **Approvi e imposti le condizioni dedicate.** Apri l'azienda; la scheda ha tre blocchi:
    - **Stato e pagamento**: *Approvato*; **sconto su tutto il listino (%)**; se può pagare a fattura/bonifico o solo con carta. Salva: all'azienda parte «Il tuo account partner è attivo» (la leggi in Admin → Email).
-   - **Listino dedicato**: per ogni tour puoi scrivere il **prezzo che paga questo partner**; se lo lasci vuoto vale il prezzo al pubblico meno lo sconto (se c'è lo sconto; altrimenti la tariffa B2B). La colonna «Applicato» mostra cosa vedrà il partner.
+   - **Listino dedicato**: per ogni **tour B2B** puoi scrivere il **prezzo che paga questo partner**; se lo lasci vuoto vale la tariffa del tour, meno lo sconto del partner se c'è. La colonna «Applicato» mostra cosa vedrà il partner.
    - **Politica di annullo**: fino a 3 scaglioni «fino a N giorni/ore prima → rimborso X%» (per esempio 7 giorni 100%, 3 giorni 50%); dopo l'ultimo non si rimborsa nulla. I pulsanti «Modelli» compilano i casi più comuni e sotto vedi un esempio con le date. Vuoto = politica standard del sito (72 ore).
-4. **Il partner prenota.** Accede da `/it/b2b/login` (la registrazione apre già la sessione), apre un tour: vede **«Tariffa partner»** con lo sconto applicato; nel riepilogo trova le **sue** condizioni di annullo (gli scaglioni, con le date). Sceglie fattura o carta; con la carta il pagamento è simulato.
+4. **Il partner prenota.** Accede da `/it/b2b/login` (la registrazione apre già la sessione), apre un tour B2B (le agenzie vedono solo quelli): vede **«Tariffa partner»** con lo sconto applicato; nel riepilogo trova le **sue** condizioni di annullo (gli scaglioni, con le date). Sceglie fattura o carta; con la carta il pagamento è simulato.
 5. **Controlli tu.** In **Admin → Prenotazioni** la prenotazione compare come «B2B», con la scadenza di cancellazione («scaduta» se è già passata).
 
 ## 3. Provare le scadenze di rimborso
@@ -81,7 +81,7 @@ La prova ha già due agenzie (`giulia@lagoon-dmc.example` con fattura e sconto d
 
 Tutto questo è nel pannello della prova (`/admin`, password `admin`) e, come sul sito vero, **vale subito**:
 
-- **Tour e prezzi**: **Sito › Tour** → *Duplica* un tour, cambia titolo e prezzo, salva e guarda `/it/tours`; **Sito › Listino** per cambiare più prezzi insieme (vale per le nuove prenotazioni).
+- **Tour e prezzi**: **Sito › Tour B2C** → *Duplica* un tour, cambia titolo e prezzo, salva e guarda `/it/tours`; in **Sito › Tour B2B** ci sono i tour delle agenzie (*Duplica come tour B2B* ne crea uno a partire da un tour B2C); **Sito › Listino** per cambiare più prezzi insieme (vale per le nuove prenotazioni).
 - **Un'agenzia con prezzi suoi**: la scheda del partner → *Listino dedicato* (vedi la sezione 2).
 - **Foto**: **Sito › Immagini** → carica una foto dal telefono o dal computer, poi usala come copertina di un tour o come foto della home (*Usa qui*); l'anteprima social si controlla guardando il sorgente della pagina (`og:image`).
 - **Blog**: **Sito › Blog › Nuovo articolo**, prova i pulsanti *Grassetto / Titolo / Foto* e *Anteprima*; lascia *Pubblicato* spento per vedere una bozza.

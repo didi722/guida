@@ -386,6 +386,7 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /partner/i.test(m.subject)));
 
     // finché è "pending" paga la tariffa pubblica e non può usare la fattura
+    assert.equal((await partner(`/api/slots?tour=servizio-mezza-giornata-agenzie&date=${date}&pax=10`)).status, 400, 'i tour B2B non sono per chi non è approvato');
     const pending = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
     assert.equal(pending.slots[0].totalCents, 24000);
     const denied = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata', date, time: '09:00', pax: '10', name: 'G', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', consent: '1' }));
@@ -402,14 +403,14 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     assert.ok(s.app.mail.sent.some((m) => m.to === 'dmc@example.com' && /attivo|active/i.test(m.subject)));
 
     // partner approvato
-    const now = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
-    assert.equal(now.slots[0].totalCents, 23000, 'lo sconto parte dal prezzo al pubblico: 240 € − 5% = 228 → 230 (e non 190 € − 5%)');
-    const ok = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata', date, time: '09:00', pax: '10', name: 'Giulia', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 42', consent: '1' }));
+    const now = await (await partner(`/api/slots?tour=servizio-mezza-giornata-agenzie&date=${date}&pax=10`)).json();
+    assert.equal(now.slots[0].totalCents, 18500, '190 € − 5% = 180,50 → 185');
+    const ok = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata-agenzie', date, time: '09:00', pax: '10', name: 'Giulia', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 42', consent: '1' }));
     assert.equal(ok.status, 303);
     const b = s.app.db.prepare('SELECT * FROM bookings WHERE client_ref = ?').get('PRATICA 42');
     assert.equal(b.channel, 'b2b');
     assert.equal(b.status, 'confirmed');
-    assert.equal(b.total_cents, 23000);
+    assert.equal(b.total_cents, 18500);
     assert.equal(b.payment_method, 'invoice');
     assert.equal(Date.parse(b.free_cancel_until), localToInstant(date, '09:00') - 120 * 3600_000, 'partner con 120 h di cancellazione gratuita');
     assert.match(await (await partner('/it/b2b/account')).text(), /PRATICA 42|VE-/);
@@ -428,8 +429,9 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
 
     // sospendere il partner blocca la tariffa B2B
     await admin(`/admin/partners/${id}`, form({ status: 'suspended', discount_percent: '5' }));
+    assert.equal((await partner(`/api/slots?tour=servizio-mezza-giornata-agenzie&date=${date}&pax=10`)).status, 400, 'sospeso: niente più tour B2B');
     const susp = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
-    assert.equal(susp.slots[0].totalCents, 24000);
+    assert.equal(susp.slots[0].totalCents, 24000, 'solo i tour e il prezzo dei privati');
   } finally {
     s.close();
   }
@@ -449,23 +451,23 @@ test('partner: listino dedicato e politica di annullo gestiti dall’admin (vali
     const page = await (await admin(`/admin/partners/${a1.id}`)).text();
     assert.match(page, /Listino dedicato/);
     assert.match(page, /Politica di annullo/);
-    assert.match(page, /name="price_servizio-mezza-giornata"/);
+    assert.match(page, /name="price_servizio-mezza-giornata-agenzie"/);
     assert.match(page, /Ora vale quella predefinita del sito/);
 
     // listino: un valore sbagliato blocca tutto; i vuoti usano la tariffa standard
-    assert.match(loc(await admin(`/admin/partners/${a1.id}/prices`, form({ 'price_servizio-mezza-giornata': 'abc' }))), /err=price/);
+    assert.match(loc(await admin(`/admin/partners/${a1.id}/prices`, form({ 'price_servizio-mezza-giornata-agenzie': 'abc' }))), /err=price/);
     assert.equal(row(a1.id).prices_json, null, 'nulla salvato');
-    assert.match(loc(await admin(`/admin/partners/${a1.id}/prices`, form({ 'price_servizio-mezza-giornata': '150,50', 'price_cannaregio-ghetto': '' }))), /ok=prices/);
-    assert.deepEqual(JSON.parse(row(a1.id).prices_json), { 'servizio-mezza-giornata': 15050 });
+    assert.match(loc(await admin(`/admin/partners/${a1.id}/prices`, form({ 'price_servizio-mezza-giornata-agenzie': '150,50', 'price_cannaregio-ghetto-agenzie': '' }))), /ok=prices/);
+    assert.deepEqual(JSON.parse(row(a1.id).prices_json), { 'servizio-mezza-giornata-agenzie': 15050 });
     assert.match(await (await admin(`/admin/partners/${a1.id}`)).text(), /150,50/);
 
     // il partner vede il prezzo dedicato e, per gli altri tour, tariffa B2B meno sconto
     assert.equal((await partner('/it/b2b/login', form({ email: 'uno@example.com', password: 'password-lunga-1' }))).status, 303);
     const date = day(40);
-    const dedicated = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
+    const dedicated = await (await partner(`/api/slots?tour=servizio-mezza-giornata-agenzie&date=${date}&pax=10`)).json();
     assert.equal(dedicated.slots[0].totalCents, 15050);
-    const discounted = await (await partner(`/api/slots?tour=cannaregio-ghetto&date=${date}&pax=2`)).json();
-    assert.equal(discounted.slots[0].totalCents, 7000, '2 × 35 €: 35 € al pubblico − 10% = 31,50 € → 35 € (multiplo di 5 € successivo, mai oltre il prezzo al pubblico)');
+    const discounted = await (await partner(`/api/slots?tour=cannaregio-ghetto-agenzie&date=${date}&pax=2`)).json();
+    assert.equal(discounted.slots[0].totalCents, 5600, '2 × 28 €: 28 € − 10% = 25,20 € salirebbe a 30 €, oltre il listino, quindi resta 28 €');
     assert.match(await (await partner('/it/b2b/rates')).text(), /150,50/);
 
     // politica: validazioni, poi salvataggio (giorni → ore)
@@ -487,9 +489,9 @@ test('partner: listino dedicato e politica di annullo gestiti dall’admin (vali
     assert.match(edited, /Rimborso del 50% fino al/);
 
     // il riepilogo del partner mostra gli scaglioni; la prenotazione li conserva; la pagina della prenotazione li spiega
-    const q = `tour=servizio-mezza-giornata&date=${date}&time=09:00&pax=10`;
+    const q = `tour=servizio-mezza-giornata-agenzie&date=${date}&time=09:00&pax=10`;
     assert.match(await (await partner(`/it/book/checkout?${q}`)).text(), /Rimborso del 50% fino al/);
-    const booked = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata', date, time: '09:00', pax: '10', name: 'Anna', email: 'uno@example.com', lang: 'it', paymentMethod: 'invoice', consent: '1' }));
+    const booked = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata-agenzie', date, time: '09:00', pax: '10', name: 'Anna', email: 'uno@example.com', lang: 'it', paymentMethod: 'invoice', consent: '1' }));
     assert.equal(booked.status, 303);
     const b = s.app.db.prepare('SELECT * FROM bookings WHERE account_id = ?').get(a1.id);
     assert.equal(JSON.parse(b.cancel_policy_json).length, 2);
@@ -512,7 +514,7 @@ test('partner: listino dedicato e politica di annullo gestiti dall’admin (vali
     assert.equal(row(a2.id).cancel_policy_json, null);
     // i partner non vedono né modificano nulla
     assert.equal(loc(await partner(`/admin/partners/${a1.id}`)), '/admin/login');
-    assert.equal(loc(await partner(`/admin/partners/${a1.id}/prices`, form({ 'price_cannaregio-ghetto': '1' }))), '/admin/login');
+    assert.equal(loc(await partner(`/admin/partners/${a1.id}/prices`, form({ 'price_cannaregio-ghetto-agenzie': '1' }))), '/admin/login');
   } finally {
     s.close();
   }
@@ -984,7 +986,7 @@ test('fatture nel pannello: dati fiscali mancanti, coda, bozza, emissione, XML v
     const mine = createBooking(s.app, bookingBase({ channel: 'b2c', tourSlug: 'san-marco-rialto', date: day(20), time: '09:30', pax: 3, name: 'Matteo Moretti', email: 'matteo@example.com', paymentMethod: 'card', consent: '1' }), Date.now());
     confirmPaid(s.app, mine.id, 'pi_http', Date.now());
     const acct = s.app.db.prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, country, address, contact_name, status, allow_invoice, created_at) VALUES('dmc@example.com','x','Venice DMC S.r.l.','00743110157','ABCDEFG','IT','Fondamenta Nuove 10','Anna','approved',1,?)`).run(new Date().toISOString());
-    const b2b = createBooking(s.app, { tourSlug: 'servizio-mezza-giornata', date: day(21), time: '09:00', pax: 5, channel: 'b2b', account: s.app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(acct.lastInsertRowid)), name: 'Anna', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 42' }, Date.now());
+    const b2b = createBooking(s.app, { tourSlug: 'servizio-mezza-giornata-agenzie', date: day(21), time: '09:00', pax: 5, channel: 'b2b', account: s.app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(acct.lastInsertRowid)), name: 'Anna', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 42' }, Date.now());
 
     s.app.db.prepare('UPDATE bookings SET date = ? WHERE id = ?').run(day(-2), b2b.id); // il servizio al partner è stato svolto
     // elenco: coda con le due voci, nessun problema fiscale

@@ -40,8 +40,8 @@ ${items.length
 export function partnerDetailPage(ctx, a, { bookings, others, openOptions = 0, flash = '', error = '' }) {
   const { app } = ctx;
   const { cfg, content } = app;
-  const tours = content.tours.filter((x) => x.pricing !== 'hourly');
-  const hourlyServices = content.tours.some((x) => x.pricing === 'hourly');
+  const tours = content.tours.filter((x) => x.pricing !== 'hourly' && x.audience === 'b2b'); // il listino dedicato riguarda i tour B2B
+  const hourlyServices = content.tours.some((x) => x.pricing === 'hourly' && x.audience === 'b2b');
   const dedicated = accountPrices(a);
   const custom = !!(a.cancel_policy_json || a.cancel_hours != null);
   const tiers = accountTiers(cfg, a);
@@ -66,7 +66,7 @@ export function partnerDetailPage(ctx, a, { bookings, others, openOptions = 0, f
   <form class="card pad form" method="post" action="/admin/partners/${a.id}">
     <h2>Stato e pagamento</h2>
     <label class="field"><span class="label">Stato</span><select name="status">${[['pending', 'Da approvare'], ['approved', 'Approvato'], ['rejected', 'Rifiutato'], ['suspended', 'Sospeso']].map(([v, l]) => html`<option value="${v}" ${a.status === v ? raw('selected') : ''}>${l}</option>`)}</select></label>
-    <label class="field"><span class="label">Sconto su tutto il listino (%) <em>— si calcola sul prezzo al pubblico, al posto della tariffa agenzie; vale per i tour senza prezzo dedicato</em></span><input type="number" name="discount_percent" min="0" max="60" step="0.5" value="${a.discount_percent}"></label>
+    <label class="field"><span class="label">Sconto su tutto il listino (%) <em>— si toglie dalle tariffe B2B (tour e tariffe a ore) e si arrotonda ai 5 € successivi; i tour con prezzo dedicato non lo usano</em></span><input type="number" name="discount_percent" min="0" max="60" step="0.5" value="${a.discount_percent}"></label>
     <label class="check"><input type="checkbox" name="allow_invoice" value="1" ${a.allow_invoice ? raw('checked') : ''}> Può pagare a fattura / bonifico</label>
     <label class="field"><span class="label">Note interne</span><textarea name="admin_notes" rows="3" maxlength="2000">${a.admin_notes ?? ''}</textarea></label>
     <button class="btn btn-gold" type="submit">Salva${a.status === 'pending' ? ' (e approva se imposti "Approvato")' : ''}</button>
@@ -75,20 +75,20 @@ export function partnerDetailPage(ctx, a, { bookings, others, openOptions = 0, f
 
 <h2 class="h-sub spaced" id="listino">Listino dedicato</h2>
 <form class="card pad form" method="post" action="/admin/partners/${a.id}/prices">
-  <p class="muted">Scrivi il prezzo che questo partner paga per ogni tour. <strong>Lascia vuoto</strong> per applicare ${a.discount_percent ? `il prezzo al pubblico meno lo sconto del ${a.discount_percent}%` : 'la tariffa B2B'}. Il prezzo è «a persona» o «a gruppo» come nel tour.</p>
-  <div class="table-wrap"><table class="table price-table"><thead><tr><th>Tour</th><th class="num">Pubblico</th><th class="num">Tariffa B2B</th><th class="num">Prezzo dedicato (€)</th><th class="num">Applicato</th></tr></thead><tbody>
+  <p class="muted">Scrivi il prezzo che questo partner paga per ogni tour. <strong>Lascia vuoto</strong> per applicare ${a.discount_percent ? `la tariffa del tour meno lo sconto del ${a.discount_percent}%` : 'la tariffa del tour'}. Il prezzo è «a persona» o «a gruppo» come nel tour. Qui compaiono i tour della sezione <a href="/admin/tours/b2b">Tour B2B</a>.</p>
+  <div class="table-wrap"><table class="table price-table"><thead><tr><th>Tour B2B</th><th class="num">Tariffa B2B</th><th class="num">Prezzo dedicato (€)</th><th class="num">Applicato</th></tr></thead><tbody>
     ${tours.map((x) => {
       const applied = unitPriceFor(x, 'b2b', a);
       const own = dedicated[x.slug] != null;
       return html`<tr><td><strong>${x.i18n.it.title}</strong><br><small class="muted">${x.model === 'person' ? 'a persona' : 'a gruppo'}</small></td>
-        <td class="num muted">${eur(x.priceCents)}</td><td class="num muted">${eur(x.b2bPriceCents)}</td>
+        <td class="num muted">${eur(x.priceCents)}</td>
         <td class="num"><input class="price-input" name="price_${x.slug}" inputmode="decimal" autocomplete="off" value="${euroInput(dedicated[x.slug])}" placeholder="${euroInput(own ? unitPriceFor(x, 'b2b', { ...a, prices_json: null }) : applied)}" aria-label="Prezzo dedicato per ${x.i18n.it.title}"></td>
         <td class="num"><strong>${eur(applied)}</strong>${own ? html` <span class="chip chip-accent">dedicato</span>` : ''}</td></tr>`;
     })}
   </tbody></table></div>
   <div class="btn-row"><button class="btn btn-gold" type="submit">Salva il listino</button></div>
 </form>
-${hourlyServices ? html`<p class="muted small">I servizi a ore (guida, assistente, tour leader, meet &amp; greet) non hanno un prezzo per tour: per questo partner valgono le <a href="/admin/rates">Tariffe a ore</a> con lo <strong>sconto su tutto il listino</strong>${a.discount_percent ? ` del ${a.discount_percent}%` : ' (oggi nessuno)'} indicato sopra: lo sconto parte dal <strong>prezzo al pubblico</strong> di ogni scaglione e sostituisce la tariffa agenzie; per assistente, tour leader e meet &amp; greet, che non hanno un prezzo al pubblico, parte dalla tariffa agenzie.</p>` : ''}
+${hourlyServices ? html`<p class="muted small">I servizi a ore (guida, assistente, tour leader, meet &amp; greet) non hanno un prezzo per tour: per questo partner valgono le <a href="/admin/rates">Tariffe a ore</a> con lo <strong>sconto su tutto il listino</strong>${a.discount_percent ? ` del ${a.discount_percent}%` : ' (oggi nessuno)'} indicato sopra, applicato alle tariffe agenzie di ogni scaglione (arrotondato ai 5 € successivi).</p>` : ''}
 ${others.length
   ? html`<form class="inline-form copy-form" method="post" action="/admin/partners/${a.id}/prices"><input type="hidden" name="action" value="copy"><label class="small muted">Copia il listino da</label> <select name="copy_from">${copyOptions}</select> <button class="btn btn-outline btn-sm" type="submit" data-confirm="Sostituire il listino di ${a.company} con quello scelto?">Copia</button></form>`
   : ''}

@@ -8,7 +8,7 @@ const key = (d) => `${d.date} ${d.time}`;
 test('prossime partenze: solo tour a partenza fissa, in ordine, con i posti rimasti', async () => {
   const app = makeApp();
   try {
-    const list = nextDepartures(app.db, app.cfg, FIXTURE_TOURS, '2027-01-04', { nowMs: NOW, limit: 5 });
+    const list = nextDepartures(app.db, app.cfg, FIXTURE_TOURS.filter((t) => t.audience === 'b2c'), '2027-01-04', { nowMs: NOW, limit: 5 }); // il sito pubblico passa solo i tour B2C
     assert.equal(list.length, 5);
     assert.ok(list.every((d) => d.tour.slug === 'shared'), 'i servizi privati a orario libero non compaiono');
     assert.deepEqual(list.map(key), list.map(key).sort(), 'in ordine di data e ora');

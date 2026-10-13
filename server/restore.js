@@ -9,6 +9,7 @@ import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { DatabaseSync } from 'node:sqlite';
 import { getSetting, setSetting } from './db.js';
+import { splitLegacyAudiences } from './contentStore.js';
 import { MAX_LARGE_BYTES, MAX_SMALL_BYTES, MEDIA_NAME, detectImage } from './media.js';
 import { MIGRATIONS, migrate } from './migrations.js';
 import { ZipError, openZip } from './zipread.js';
@@ -421,6 +422,7 @@ export function createRestoreServices(app) {
         // 4. il sito rilegge i dati
         setSetting(db, 'last_restore', { at: new Date(nowMs).toISOString(), mode, backupAt: meta.backupAt, source: meta.source, snapshot: id });
         app.settings.reload();
+        splitLegacyAudiences(db); // un backup di prima della divisione B2C/B2B ha tour con due tariffe
         app.content.reload?.();
         pruneSnapshots();
         fs.rmSync(dir, { recursive: true, force: true });

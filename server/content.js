@@ -83,9 +83,45 @@ const tourBlock = (d, lang) => {
 };
 
 /**
+ * Un tour salvato prima della divisione B2C/B2B (senza «audience»), che aveva due tariffe: diventa B2C con il prezzo al pubblico, e (se le agenzie
+ * potevano prenotarlo: tutto tranne i servizi nati solo per loro) ne nasce una copia B2B «<indirizzo>-agenzie» con la vecchia tariffa agenzie.
+ * @returns {{ def: object, twin: { slug: string, def: object } | null }} il tour aggiornato e l'eventuale copia; null se il tour ha già un'«audience»
+ */
+export function splitLegacyTour(slug, d) {
+  if (d.audience === 'b2b' || d.audience === 'b2c') return null;
+  const hourly = d.pricing === 'hourly';
+  const def = { ...d, audience: audienceOf(d) };
+  delete def.b2bPrice;
+  if (def.audience === 'b2b') return { def, twin: null };
+  const twin = structuredClone(def);
+  twin.audience = 'b2b';
+  twin.featured = false;
+  if (!hourly) twin.price = d.b2bPrice ?? d.price;
+  return { def, twin: { slug: `${slug}-agenzie`, def: twin } };
+}
+
+/** Come splitLegacyTour, su tutti i tour di un contenuto in forma «grezza» ({ slug: definizione }); gli indirizzi già presi non si sovrascrivono. */
+export function splitRawTours(tours) {
+  const out = { ...tours };
+  for (const [slug, d] of Object.entries(tours)) {
+    const r = splitLegacyTour(slug, d);
+    if (!r) continue;
+    out[slug] = r.def;
+    if (r.twin && !(r.twin.slug in out)) out[r.twin.slug] = r.twin.def;
+  }
+  return out;
+}
+
+/**
  * `d` ha la forma dei file .yml (e di ciò che si salva nel database): dati generali + un blocco per lingua (it, en, es…).
  * Restituisce il tour pronto per il sito; se qualcosa non va lancia ContentError (il messaggio è in italiano, leggibile nel pannello).
  */
+export function audienceOf(d) {
+  if (d.audience === 'b2b' || d.audience === 'b2c') return d.audience;
+  // tour salvati prima della divisione B2C/B2B («all» o assente): privati, tranne i servizi che esistevano solo per le agenzie
+  return d.pricing === 'hourly' && d.service !== 'guide' ? 'b2b' : 'b2c';
+}
+
 export function normalizeTour(slug, d, where = slug) {
   if (!SLUG.test(slug)) fail(where, 'l’indirizzo (slug) può contenere solo lettere minuscole, numeri e trattini');
   if (!['person', 'group'].includes(d.model)) fail(where, 'scegli il tipo: a persona (partenze fisse) o a gruppo (servizio privato)');
@@ -103,8 +139,7 @@ export function normalizeTour(slug, d, where = slug) {
     if (!(hours >= minHours(d.service) && hours <= MAX_HOURS && Number.isInteger(hours * 2))) fail(where, `la durata di un servizio a ore va da ${minHours(d.service)} a ${MAX_HOURS} ore, di mezz’ora in mezz’ora`);
   }
   if (!(Number.isInteger(Number(d.maxParticipants)) && Number(d.maxParticipants) > 0)) fail(where, 'il numero massimo di persone deve essere un intero maggiore di zero');
-  if (!hourly && (!(Number(d.price) >= 0) || d.price === '' || d.price == null)) fail(where, 'il prezzo al pubblico non è valido');
-  if (!hourly && d.b2bPrice != null && d.b2bPrice !== '' && !(Number(d.b2bPrice) >= 0)) fail(where, 'la tariffa B2B non è valida');
+  if (!hourly && (!(Number(d.price) >= 0) || d.price === '' || d.price == null)) fail(where, 'il prezzo non è valido');
   if (d.cancelHours != null && d.cancelHours !== '' && !(Number(d.cancelHours) >= 0)) fail(where, 'le ore di cancellazione non sono valide');
   if (!d.it?.title || !d.it?.summary) fail(where, 'servono almeno titolo e riassunto in italiano');
   const i18n = {};
@@ -148,10 +183,9 @@ export function normalizeTour(slug, d, where = slug) {
     maxParticipants: Number(d.maxParticipants),
     pricing: hourly ? 'hourly' : 'fixed', // 'hourly': il prezzo viene dalle tariffe a ore
     service: hourly ? d.service : null, // guide | assistant | leader | meetgreet
-    audience: d.audience === 'b2b' ? 'b2b' : 'all', // 'b2b': solo per i partner approvati
+    audience: audienceOf(d), // 'b2c' (privati) oppure 'b2b' (solo partner approvati): un tour è dell'uno o dell'altro, con un solo prezzo
     chooseHours: hourly && !!d.chooseHours, // il cliente sceglie quante ore; altrimenti la durata è quella del tour
-    priceCents: hourly ? 0 : cents(d.price),
-    b2bPriceCents: hourly ? 0 : cents(d.b2bPrice ?? d.price) ?? cents(d.price),
+    priceCents: hourly ? 0 : cents(d.price), // dei privati se il tour è B2C; la tariffa agenzie (prima dello sconto del partner) se è B2B
     cancelHours: d.cancelHours == null || d.cancelHours === '' ? null : Number(d.cancelHours),
     payOnSite: d.payOnSite !== false,
     art: d.art ?? 'dome',

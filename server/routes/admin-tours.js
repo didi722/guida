@@ -1,11 +1,11 @@
 // Tour e listino prezzi modificabili dal pannello (si salvano nel database; vedi contentStore.js).
 import express from 'express';
-import { ContentError, SLUG, md } from '../content.js';
+import { ContentError, SLUG, audienceOf, md } from '../content.js';
 import { LANGS } from '../langs.js';
 import { nowRome } from '../time.js';
 import { parseEuros } from '../util.js';
 import { send } from '../http.js';
-import { LIST_FIELDS, TEXT_FIELDS, defToValues, pricesPage, toursPage, tourFormPage } from '../views/admin-tours.js';
+import { LIST_FIELDS, TEXT_FIELDS, defToValues, pricesPage, sectionOf, toursPage, tourFormPage } from '../views/admin-tours.js';
 
 const FLASH = { saved: 'Tour salvato.', created: 'Tour creato.', toggled: 'Visibilità aggiornata.', deleted: 'Tour eliminato.', prices: 'Prezzi aggiornati.' };
 
@@ -48,8 +48,8 @@ export function bodyToDef(body, existing = {}, { nextOrder = 100 } = {}) {
     weekdays: wd,
     duration: (int('durH') ?? 0) * 60 + (int('durM') ?? 0),
     maxParticipants: int('maxParticipants'),
-    price: euros('price', 'Prezzo al pubblico', { required: !hourly }),
-    b2bPrice: euros('b2bPrice', 'Tariffa partner'),
+    price: euros('price', body.audience === 'b2b' ? 'Tariffa agenzie' : 'Prezzo al pubblico', { required: !hourly }),
+    audience: body.audience === 'b2b' ? 'b2b' : 'b2c', // un tour è dei privati o delle agenzie, con un solo prezzo
     cancelHours: int('cancelHours'),
     payOnSite: !!body.payOnSite,
     art: String(body.art ?? 'dome'),
@@ -61,9 +61,7 @@ export function bodyToDef(body, existing = {}, { nextOrder = 100 } = {}) {
     def.service = String(body.service ?? 'guide');
     def.chooseHours = !!body.chooseHours;
     delete def.price;
-    delete def.b2bPrice;
   }
-  if (body.audience === 'b2b') def.audience = 'b2b';
   if (existing.category) def.category = existing.category;
   for (const l of LANGS) {
     const block = {};
@@ -90,7 +88,10 @@ export function adminToursRouter(app) {
   };
   const store = () => app.content;
 
-  r.get('/tours', (req, res) => send(res, toursPage(ctxOf(req), { tours: store().allTours, upcoming: upcomingFor(), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: req.query.err ? String(req.query.err).slice(0, 300) : '' })));
+  // due sezioni: i tour dei privati (B2C) e quelli delle agenzie (B2B)
+  for (const audience of ['b2c', 'b2b']) {
+    r.get(sectionOf(audience).path.replace('/admin', ''), (req, res) => send(res, toursPage(ctxOf(req), { tours: store().allTours, audience, upcoming: upcomingFor(), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: req.query.err ? String(req.query.err).slice(0, 300) : '' })));
+  }
 
   // ordine dei tour (prima di /tours/:slug, che altrimenti prenderebbe «order» per un indirizzo): l'elenco si trascina (public/js/admin-tours-order.js) e qui si salva la sequenza
   r.post('/tours/order', express.json({ limit: '20kb' }), (req, res) => {
@@ -102,7 +103,9 @@ export function adminToursRouter(app) {
 
   r.get('/tours/new', (req, res) => {
     const from = req.query.from ? store().rawTour(String(req.query.from)) : null;
+    const audience = req.query.audience === 'b2b' ? 'b2b' : req.query.audience === 'b2c' ? 'b2c' : null;
     const v = defToValues(from ?? { duration: 120, maxParticipants: 10, order: 100, times: ['10:00'] }, '');
+    if (audience) v.audience = audience; // «Nuovo tour B2B», «Duplica come tour B2B»
     if (from) for (const l of LANGS) if (v[`title_${l}`]) v[`title_${l}`] += l === 'it' ? ' (copia)' : ' (copy)';
     send(res, tourFormPage(ctxOf(req), { v, isNew: true, media: app.media.list() }));
   });
@@ -167,17 +170,19 @@ export function adminToursRouter(app) {
     const def = store().rawTour(req.params.slug);
     if (!def) return next();
     store().saveTour(req.params.slug, { ...def, active: def.active === false });
-    res.redirect(303, '/admin/tours?ok=toggled');
+    res.redirect(303, `${sectionOf(audienceOf(def)).path}?ok=toggled`);
   });
 
   r.post('/tours/:slug/delete', form, (req, res, next) => {
-    if (!store().rawTour(req.params.slug)) return next();
+    const def = store().rawTour(req.params.slug);
+    if (!def) return next();
+    const back = sectionOf(audienceOf(def)).path;
     try {
       store().deleteTour(req.params.slug);
-      res.redirect(303, '/admin/tours?ok=deleted');
+      res.redirect(303, `${back}?ok=deleted`);
     } catch (err) {
       if (!(err instanceof ContentError)) throw err;
-      res.redirect(303, `/admin/tours?err=${encodeURIComponent(err.detail)}`);
+      res.redirect(303, `${back}?err=${encodeURIComponent(err.detail)}`);
     }
   });
 
@@ -188,15 +193,13 @@ export function adminToursRouter(app) {
     const next = [];
     for (const t of store().allTours.filter((x) => x.pricing !== 'hourly')) {
       const price = parseEuros(req.body[`price_${t.slug}`]);
-      const b2b = parseEuros(req.body[`b2b_${t.slug}`]);
-      if (price == null || price < 0) errors.push(`${t.i18n.it.title}: prezzo al pubblico non valido`);
-      if (b2b == null || b2b < 0) errors.push(`${t.i18n.it.title}: tariffa partner non valida`);
-      if (price != null && b2b != null) next.push([t.slug, price / 100, b2b / 100]);
+      if (price == null || price < 0) errors.push(`${t.i18n.it.title}: prezzo non valido`);
+      else next.push([t.slug, price / 100]);
     }
     if (errors.length) return send(res, pricesPage(ctxOf(req), { tours: store().allTours, values: req.body, error: errors.join(' · ') }), 400);
-    for (const [slug, price, b2bPrice] of next) {
+    for (const [slug, price] of next) {
       const def = store().rawTour(slug);
-      if (def && (def.price !== price || def.b2bPrice !== b2bPrice)) store().saveTour(slug, { ...def, price, b2bPrice });
+      if (def && def.price !== price) store().saveTour(slug, { ...def, price });
     }
     res.redirect(303, '/admin/prices?ok=prices');
   });

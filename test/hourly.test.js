@@ -128,9 +128,9 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
     const page = await (await partner('/it/hourly')).text().then(nb);
     assert.match(page, /Servizi a ore per agenzie/);
     for (const name of ['Servizio guida', 'Assistente in loco', 'Tour leader', 'Meet &amp; greet']) assert.ok(page.includes(name), name);
-    // lo sconto parte dal prezzo al pubblico: guida 4 ore: 380 − 15% = 323 → 325; guida 2 ore: 200 − 15% = 170; assistente (solo agenzie) 2 ore: 80 − 15% = 68 → 70
-    assert.match(page, /Mezza giornata · 4 ore[^]*?325 €/);
-    assert.match(page, /Servizio guida[^]*?170 €/, '200 − 15% = 170');
+    // guida 4 ore: 300 − 15% = 255; guida 2 ore: 160 − 15% = 136 → 140; assistente 2 ore: 80 − 15% = 68 → 70 (sempre al multiplo di 5 € successivo)
+    assert.match(page, /Mezza giornata · 4 ore[^]*?255 €/);
+    assert.match(page, /Servizio guida[^]*?140 €/, '160 − 15% = 136 → 140');
     assert.match(page, /Assistente in loco[^]*?70 €/);
     assert.match(page, /Nelle fatture alle imprese|Operazione senza IVA/);
     // il menu dei servizi
@@ -195,10 +195,10 @@ test('home e pagine Tour: due categorie (guida privata a ore e tour di gruppo), 
     assert.match(await (await anon('/en/')).text(), /How would you like to discover Venice\?[^]*?Private guide by the hour[^]*?Group tours/);
     assert.match(await (await anon('/es/')).text(), /¿Cómo quieres descubrir Venecia\?[^]*?Guía privado por horas[^]*?Tours en grupo/);
 
-    // un partner con lo sconto del 15% vede le sue tariffe, calcolate sul prezzo al pubblico: 200 → 170, 380 → 323 → 325, 700 → 595
+    // un partner con lo sconto del 15% vede le sue tariffe: 160 → 136 → 140, 300 → 255, 560 → 476 → 480
     const ph = await (await partner('/it/')).text().then(nb);
     const ppriv = /id="private">([^]*?)<\/article>/.exec(ph)?.[1] ?? '';
-    for (const price of ['170 €', '325 €', '595 €']) assert.ok(ppriv.includes(price), price);
+    for (const price of ['140 €', '255 €', '480 €']) assert.ok(ppriv.includes(price), price);
     assert.ok(!ppriv.includes('200 €'));
 
     // pagina Tour: prima la guida privata, poi i gruppi
@@ -304,16 +304,17 @@ test('servizi a ore: prenotazione di un partner a fattura con sconto, itinerari 
     assert.match(detail, /Servizio a ore<\/dt><dd>4 ore<\/dd>/);
     assert.match(detail, /Servizio, 4 ore<\/dt><dd>95 €/);
 
-    // itinerario a durata fissa (3 ore): non si sceglie la durata; 290 € al pubblico, meno il 15% = 246,5 → 250 €
-    const fixed = await (await partner(`/it/book/checkout?tour=venezia-oriente-occidente&date=${date}&time=15:00&pax=6`)).text().then(nb);
+    // itinerario a durata fissa (3 ore): non si sceglie la durata; 230 € per le agenzie, meno il 15% = 195,5 → 200 €
+    const fixed = await (await partner(`/it/book/checkout?tour=venezia-oriente-occidente-agenzie&date=${date}&time=15:00&pax=6`)).text().then(nb);
     assert.match(fixed, /15:00–18:00 <span class="muted">\(3 ore\)<\/span>/);
-    assert.match(fixed, /Totale<\/dt><dd>250 €/);
+    assert.match(fixed, /Totale<\/dt><dd>200 €/);
     assert.ok(!fixed.includes('name="hours"'), 'durata fissa: nessun campo');
+    assert.equal((await partner(`/it/book/checkout?tour=venezia-oriente-occidente&date=${date}&time=15:00&pax=6`)).status, 400, 'il tour B2C non è per le agenzie');
     // la stessa cosa al pubblico: 200 + 90 = 290 €
     const publicFixed = await (await s.anon(`/it/book/checkout?tour=venezia-oriente-occidente&date=${date}&time=15:00&pax=6`)).text().then(nb);
     assert.match(publicFixed, /Totale<\/dt><dd>290 €/);
     // un parametro «hours» su un itinerario fisso è ignorato
-    assert.match(await (await partner(`/it/book/checkout?tour=venezia-oriente-occidente&date=${date}&time=15:00&pax=6&hours=8`)).text().then(nb), /\(3 ore\)/);
+    assert.match(await (await partner(`/it/book/checkout?tour=venezia-oriente-occidente-agenzie&date=${date}&time=15:00&pax=6&hours=8`)).text().then(nb), /\(3 ore\)/);
     // l'itinerario ha la sua scheda con «Calcola e prenota»
     const tourPage = await (await s.anon('/it/tours/venezia-oriente-occidente')).text().then(nb);
     assert.match(tourPage, /Calcola e prenota/);
@@ -401,10 +402,15 @@ test('tariffe a ore nel pannello: modulo, salvataggio, errori, ripristino, e eff
     // il tour a durata fissa segue le nuove tariffe
     assert.match(await (await anon('/it/tours')).text().then(nb), /da 210 €<small> \/ 2 ore<\/small>/);
 
-    // una tariffa al pubblico per un servizio per agenzie lo apre ai privati
+    // una tariffa al pubblico non apre ai privati un tour B2B: serve un tour B2C (un tour è dell'uno o dell'altro)
     const open = await admin('/admin/rates', post(form({ 'meetgreet.public.p0': '60', 'meetgreet.public.extra': '35' })));
     assert.equal(loc(open), '/admin/rates?ok=saved');
-    assert.match(await (await anon('/it/hourly')).text().then(nb), /<option value="meet-and-greet"/, 'ora il meet &amp; greet è disponibile ai privati? solo se il tour non è riservato');
+    assert.ok(!(await (await anon('/it/hourly')).text().then(nb)).includes('<option value="meet-and-greet"'), 'il tour meet & greet resta per le agenzie');
+    const dup = await (await admin('/admin/tours/new?from=meet-and-greet&audience=b2c')).text().then(nb);
+    assert.match(dup, /<option value="b2c" selected>/, 'duplicato come tour B2C');
+    const copy = await admin('/admin/tours', post({ slug: 'meet-and-greet-privati', title_it: 'Meet & greet', summary_it: 'Ti aspetto all’arrivo.', audience: 'b2c', model: 'group', pricing: 'hourly', service: 'meetgreet', flexible: '1', wd: ['0', '1', '2', '3', '4', '5', '6'], durH: '1', durM: '0', maxParticipants: '10', active: '1', payOnSite: '1', langs: ['it'] }));
+    assert.equal(copy.status, 303);
+    assert.match(await (await anon('/it/hourly')).text().then(nb), /<option value="meet-and-greet-privati"/, 'ora il meet & greet è disponibile ai privati');
   } finally {
     s.close();
   }
@@ -432,13 +438,15 @@ test('tour dal pannello: servizio a ore (prezzo dalle tariffe) e prezzo fisso, l
     const { admin } = s;
     const list = await (await admin('/admin/tours')).text().then(nb);
     assert.match(list, /Servizio guida · a ore \(il cliente sceglie le ore\)/);
-    assert.match(list, /Assistente in loco · a ore[^]*?solo agenzie/);
     assert.match(list, /href="\/admin\/rates">tariffe a ore/);
+    const listB2b = await (await admin('/admin/tours-b2b')).text().then(nb);
+    assert.match(listB2b, /Assistente in loco · a ore/);
+    assert.ok(!list.includes('Assistente in loco'), 'sono in sezioni diverse');
     const prices = await (await admin('/admin/prices')).text().then(nb);
     assert.ok(!prices.includes('name="price_guida-a-ore"'), 'i servizi a ore non hanno un prezzo fisso');
     assert.match(prices, /name="price_san-marco-rialto"/);
     assert.match(prices, /Tariffe a ore/);
-    assert.equal((await admin('/admin/prices', post({ 'price_san-marco-rialto': '36', 'b2b_san-marco-rialto': '29', 'price_cannaregio-ghetto': '35', 'b2b_cannaregio-ghetto': '28' }))).status, 303, 'il listino si salva senza i servizi a ore');
+    assert.equal((await admin('/admin/prices', post({ 'price_san-marco-rialto': '36', 'price_san-marco-rialto-agenzie': '29', 'price_cannaregio-ghetto': '35', 'price_cannaregio-ghetto-agenzie': '28' }))).status, 303, 'il listino si salva senza i servizi a ore');
 
     const form = await (await admin('/admin/tours/guida-a-ore')).text().then(nb);
     assert.match(form, /name="pricing" value="hourly" checked/);

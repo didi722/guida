@@ -1,7 +1,7 @@
 // Contenuti nel database: tour, articoli, pagine e testi del sito si modificano dal pannello admin.
 // Al primo avvio si importano i file di `content/` (contenuto iniziale); da quel momento vale ciò che è nel database.
 import { getSetting, setSetting, tx } from './db.js';
-import { ContentError, PAGE_NAMES, SLUG, buildContent, makeContent, normalizePage, normalizePost, normalizeTour, readContentFiles } from './content.js';
+import { ContentError, PAGE_NAMES, SLUG, buildContent, makeContent, normalizePage, normalizePost, normalizeTour, readContentFiles, splitLegacyTour } from './content.js';
 import { defaultText, setTextOverrides, textOverrideKey } from './i18n.js';
 import { LANGS } from './langs.js';
 
@@ -93,11 +93,54 @@ export function catchUpContent(db, root) {
   return added;
 }
 
+/**
+ * Prima ogni tour aveva due tariffe (privati e agenzie); ora un tour è B2C oppure B2B, con un solo prezzo. Una volta sola, per i tour salvati
+ * prima della divisione (senza «audience»), SENZA toccare nient'altro:
+ *  - i servizi che esistevano solo per le agenzie (assistente, tour leader, meet & greet) diventano B2B;
+ *  - ogni altro tour diventa B2C (con il prezzo al pubblico) e ne nasce una copia B2B «<indirizzo>-agenzie» con la vecchia tariffa agenzie:
+ *    le agenzie continuano a trovare gli stessi servizi agli stessi prezzi, e si modificano nella nuova sezione «Tour B2B»;
+ *  - il listino dedicato di un partner (prezzi per tour) passa all'indirizzo della copia B2B.
+ * Ritorna gli indirizzi delle copie create.
+ */
+export function splitLegacyAudiences(db) {
+  const created = [];
+  tx(db, () => {
+    const at = nowIso();
+    const rows = db.prepare('SELECT slug, data_json FROM content_tours').all();
+    const taken = new Set(rows.map((r) => r.slug));
+    const moved = {};
+    for (const r of rows) {
+      const split = splitLegacyTour(r.slug, JSON.parse(r.data_json));
+      if (!split) continue;
+      if (split.twin && !taken.has(split.twin.slug)) {
+        db.prepare('INSERT INTO content_tours(slug, data_json, updated_at) VALUES(?,?,?)').run(split.twin.slug, JSON.stringify(split.twin.def), at);
+        taken.add(split.twin.slug);
+        created.push(split.twin.slug);
+        moved[r.slug] = split.twin.slug;
+      }
+      db.prepare('UPDATE content_tours SET data_json = ?, updated_at = ? WHERE slug = ?').run(JSON.stringify(split.def), at, r.slug);
+    }
+    if (Object.keys(moved).length) {
+      for (const a of db.prepare('SELECT id, prices_json FROM accounts WHERE prices_json IS NOT NULL').all()) {
+        let list;
+        try { list = JSON.parse(a.prices_json); } catch { continue; }
+        if (!list || typeof list !== 'object') continue;
+        let changed = false;
+        for (const [slug, twin] of Object.entries(moved)) if (slug in list) { list[twin] = list[slug]; delete list[slug]; changed = true; }
+        if (changed) db.prepare('UPDATE accounts SET prices_json = ? WHERE id = ?').run(JSON.stringify(list), a.id);
+      }
+    }
+  });
+  return created;
+}
+
 const parse = (rows, key) => Object.fromEntries(rows.map((r) => [r[key], JSON.parse(r.data_json)]));
 
 export function createContentStore({ db, root }) {
   seedContent(db, root);
   const caught = catchUpContent(db, root);
+  const split = splitLegacyAudiences(db);
+  if (split.length) console.log(`[contenuti] tour divisi in B2C e B2B: create le copie per le agenzie (${split.join(', ')})`);
   if (caught.tours.length || caught.translations.length) console.log(`[contenuti] aggiunti dal contenuto iniziale: ${[...caught.tours.map((t) => `servizio ${t}`), ...(caught.translations.length ? [`${caught.translations.length} traduzioni`] : [])].join(', ')}`);
   let current = makeContent({ tours: [], posts: [], pages: {} });
   let problems = [];

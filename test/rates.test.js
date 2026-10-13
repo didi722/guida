@@ -23,17 +23,16 @@ test('tariffe: scaglioni 2 / 4 / 8 ore e ore extra, mai più dello scaglione suc
   }
 });
 
-test('tariffe: lo sconto del partner parte dal prezzo al pubblico e sostituisce la tariffa agenzie; sempre arrotondato al multiplo di 5 € successivo', () => {
-  assert.equal(eur(b2b(4, { discountPercent: 15 }).totalCents), 325, '380 € al pubblico − 15% = 323 → 325 (non 300 − 15%)');
-  assert.equal(eur(b2b(2, { discountPercent: 15 }).totalCents), 170, '200 − 15% = 170: un prezzo già multiplo di 5 resta com’è');
+test('tariffe: lo sconto del partner si toglie dalla tariffa agenzie; sempre arrotondato al multiplo di 5 € successivo', () => {
+  assert.equal(eur(b2b(4, { discountPercent: 15 }).totalCents), 255, '300 € agenzie − 15% = 255');
+  assert.equal(eur(b2b(2, { discountPercent: 15 }).totalCents), 140, '160 − 15% = 136 → 140 (multiplo di 5 € successivo)');
   assert.equal(eur(pub(4, { discountPercent: 15 }).totalCents), 380, 'ai privati lo sconto dei partner non si applica');
-  assert.equal(eur(b2b(3, { discountPercent: 7 }).totalCents), 275, '2 ore: 200 − 7% = 186 → 190; ora in più: 90 − 7% = 83,70 → 85');
-  assert.equal(eur(b2b(4, { discountPercent: 15 }).baseCents), 325);
+  assert.equal(eur(b2b(3, { discountPercent: 7 }).totalCents), 220, '2 ore: 160 − 7% = 148,80 → 150; ora in più: 70 − 7% = 65,10 → 70');
+  assert.equal(eur(b2b(4, { discountPercent: 15 }).baseCents), 255);
   assert.equal(eur(b2b(4, { discountPercent: 0 }).totalCents), 300, 'senza sconto vale la tariffa agenzie');
-  assert.equal(eur(b2b(4, { discountPercent: 30 }).totalCents), 270, '380 − 30% = 266 → 270, sotto la tariffa agenzie');
-  // senza un prezzo al pubblico (servizi solo per agenzie) lo sconto parte dalla tariffa agenzie
+  assert.equal(eur(b2b(4, { discountPercent: 100 }).totalCents), 0);
   assert.equal(eur(quote(R, { service: 'assistant', channel: 'b2b', hours: 2, discountPercent: 15 }).totalCents), 70, '80 − 15% = 68 → 70');
-  assert.deepEqual(partnerRate(R, 'guide', 15).prices.map(eur), [170, 325, 595], '200, 380, 700 al pubblico − 15%: 595 è già multiplo di 5');
+  assert.deepEqual(partnerRate(R, 'guide', 15).prices.map(eur), [140, 255, 480], '160, 300, 560 agenzie − 15%');
   assert.equal(partnerRate(R, 'guide', 0), R.services.guide.b2b);
   assert.equal(partnerRate(R, 'driver', 15), null);
   for (const q of [b2b(3, { discountPercent: 7, date: '2027-05-01', time: '19:00' }), b2b(5, { date: '2027-12-25', pax: 11, earpieces: true })]) assert.ok(q.lines.every((l) => l.cents % 100 === 0), JSON.stringify(q.lines));
@@ -102,7 +101,7 @@ test('tariffe: assistente, tour leader e meet & greet esistono solo per le agenz
   assert.deepEqual(quote(R, { service: 'guide', channel: 'b2b', hours: 13 }), { ok: false, reason: 'hours' });
   assert.deepEqual(quote(R, { service: 'driver', channel: 'b2b', hours: 4 }), { ok: false, reason: 'service' });
   assert.equal(fromPrice(R, 'guide', 'b2c').cents, 20000);
-  assert.deepEqual(fromPrice(R, 'guide', 'b2b', 15), { hours: 2, cents: 17000 });
+  assert.deepEqual(fromPrice(R, 'guide', 'b2b', 15), { hours: 2, cents: 14000 });
   assert.equal(fromPrice(R, 'assistant', 'b2c'), null);
   assert.deepEqual(hourOptions('meetgreet').slice(0, 3), [1, 1.5, 2]);
   assert.equal(hourOptions('guide').at(-1), 12);

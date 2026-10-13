@@ -75,9 +75,9 @@ test('promemoria: non serve per prenotazioni a ridosso, partner, annullate, o se
     const late = book(app, { name: 'Last Minute', email: 'late@example.com' }, localToInstant('2027-01-11', '12:00'));
     // partner (B2B): niente promemoria al partner
     const acct = addAccount(app.db);
-    const b2b = book(app, { channel: 'b2b', account: acct, paymentMethod: 'invoice', email: 'dmc@example.com', time: '14:30' });
+    const b2b = book(app, { tourSlug: 'private', channel: 'b2b', account: acct, paymentMethod: 'invoice', email: 'dmc@example.com', time: '14:30' });
     // annullata
-    const gone = book(app, { name: 'Annullata', email: 'gone@example.com', time: '14:30' });
+    const gone = book(app, { name: 'Annullata', email: 'gone@example.com' });
     cancelBooking(app, gone.id, { by: 'customer', refund: 'full' }, NOW);
     // una normale, per confronto
     const ok = book(app, { name: 'Normale', email: 'ok@example.com' });

@@ -26,7 +26,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - Tu **approvi** dal pannello e puoi impostare per ogni partner: **sconto extra**, **finestra di cancellazione** (es. 7 giorni), pagamento **a fattura**.
 - La pagina pubblica *Per agenzie* **non mostra le tariffe**: le tariffe a ore (guida, **assistente in loco**, **tour leader**, **meet & greet**) sono riservate e le vede solo l'agenzia approvata, **in cima alla home della sua area**: mezza giornata, giornata intera, ora supplementare, supplemento festivo e auricolari.
 - **Login agenzie** sempre visibile in alto, accanto a *Prenota*. Dopo il login l'**area riservata è pulita** (niente blog, tour o prezzi al pubblico): **riepilogo**, **elenco** (o **calendario** del mese) **delle prenotazioni** con schede, **ricerca** per cliente o pratica, **filtri per data di partenza e di prenotazione**, **voucher PDF senza prezzi**, **fatture** in PDF, **modifica del nominativo** e delle note, annullo, **CSV** per la contabilità, tariffe e condizioni, **Esci** verso la home pubblica.
-- Il partner vede le **tariffe riservate** (lo sconto % si calcola sul prezzo al pubblico e sostituisce la tariffa agenzie; arrotondato ai 5 € successivi), cerca la disponibilità tra **tour privati** (predefinito) e **condivisi**, prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica** e richiede **programmi di più giorni**.
+- Il partner vede le **tariffe riservate** (lo sconto % si toglie dalle tariffe B2B, arrotondato ai 5 € successivi), cerca la disponibilità tra **tour privati** (predefinito) e **condivisi**, prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica** e richiede **programmi di più giorni**.
 - **Opzioni**: l'agenzia può **tenere una data senza pagare** mentre il suo cliente decide; la durata dipende da quanto manca al tour (tabella e limiti modificabili, anche per singolo partner), arriva un promemoria e, se non conferma, la data **si libera da sola**. Nessun addebito automatico: se paga a fattura il servizio si fattura dopo.
 
 **Per te (pannello `/admin`, ottimizzato per telefono)** — quasi tutto si cambia da qui, senza toccare il codice ([guida](docs/GUIDA.md))
@@ -86,8 +86,8 @@ Il sito è in **italiano, inglese, spagnolo e giapponese** (`/it`, `/en`, `/es`,
 
 | Cosa | Dove |
 |---|---|
-| **Tour e servizi** (testi, prezzi, durata, orari, capienza, lingue, copertina) | Sito › Tour |
-| **Prezzi** (pubblico e tariffa partner) | Sito › Listino; prezzi per singolo partner: Clienti › Partner |
+| **Tour e servizi** (testi, prezzi, durata, orari, capienza, lingue, copertina): due sezioni separate, i tour dei privati e quelli delle agenzie | Sito › Tour B2C · Sito › Tour B2B |
+| **Prezzi** (tour B2C: prezzo al pubblico; tour B2B: tariffa agenzie) | Sito › Listino; prezzi per singolo partner: Clienti › Partner |
 | **Tariffe a ore** (guida, assistente, tour leader, meet & greet; supplementi; giorni festivi) | Sito › Tariffe a ore |
 | **Articoli del blog**, **pagine** (Chi sono, privacy, condizioni, cookie) | Sito › Blog, Sito › Pagine |
 | **Testi dell'interfaccia** (home, pulsanti, domande frequenti…) | Sito › Testi |
@@ -102,7 +102,7 @@ Il sito è in **italiano, inglese, spagnolo e giapponese** (`/it`, `/en`, `/es`,
 
 **I file di `content/`** (tour in `content/tours/*.yml`, articoli in `content/blog/`, pagine in `content/pages/`) sono solo il **contenuto iniziale**: vengono importati nel database **una volta**, la prima volta che il sito parte con un database vuoto. Dopo, si lavora dal pannello e modificarli non cambia più nulla. Il database (`data/guida.sqlite`) e le foto (`data/media/`) vanno quindi su un **disco persistente** e nel **backup**.
 
-Nel contenuto iniziale di un tour: `model: person` = **a persona**, partenze fisse (`times: ["09:30", "14:30"]`); `model: group` = **privato**, prezzo per gruppo, con `flexible: true` il cliente sceglie l'orario ogni 30′. `price` è il prezzo pubblico, `b2bPrice` la tariffa per i partner, `cancelHours` (facoltativo) la cancellazione gratuita di quel tour. I servizi **a ore** hanno invece `pricing: hourly` e `service: guide|assistant|leader|meetgreet` (e niente `price`): il prezzo viene dalle tariffe a ore. `audience: b2b` li riserva alle agenzie, `chooseHours: true` lascia scegliere la durata.
+Nel contenuto iniziale di un tour: `model: person` = **a persona**, partenze fisse (`times: ["09:30", "14:30"]`); `model: group` = **privato**, prezzo per gruppo, con `flexible: true` il cliente sceglie l'orario ogni 30′. `price` è il prezzo, `audience: b2c|b2b` dice a chi è rivolto (un tour è dei privati **oppure** delle agenzie, con un solo prezzo; senza `audience`, un file con `b2bPrice` diventa un tour B2C più la copia B2B «…-agenzie» con quella tariffa), `cancelHours` (facoltativo) la cancellazione gratuita di quel tour. I servizi **a ore** hanno invece `pricing: hourly` e `service: guide|assistant|leader|meetgreet` (e niente `price`): il prezzo viene dalle tariffe a ore. `audience: b2b` li riserva alle agenzie (usano le tariffe «Agenzie»), `chooseHours: true` lascia scegliere la durata.
 
 ## Pagamento in contanti il giorno del tour
 
@@ -221,7 +221,7 @@ Passo per passo, con i percorsi del pannello, nella [guida](docs/GUIDA.md#20-da-
 
 - [ ] **Dati d'impresa** (Sito › Impostazioni › Attività e contatti): Partita IVA, abilitazione, indirizzo, email e telefono veri (compaiono nel footer, nelle pagine legali, nelle email e sui PDF).
 - [ ] **Dati fiscali per le fatture** (Sito › Impostazioni › Fatturazione) **confermati dal commercialista**; non emettere una fattura «di prova» su SdI (consumerebbe il numero 1/2027): chiedi al commercialista come verificare il file prima dell'avvio.
-- [ ] **Tour e prezzi veri** (Sito › Tour e Listino): quelli iniziali sono esempi. Controlla anche lingue, punti d'incontro e durate.
+- [ ] **Tour e prezzi veri** (Sito › Tour B2C, Tour B2B e Listino): quelli iniziali sono esempi. Controlla anche lingue, punti d'incontro e durate.
 - [ ] **Tariffe a ore** (Sito › Tariffe a ore): le cifre iniziali sono un punto di partenza; **confermale col commercialista** (regime forfettario, contributi, rivalsa).
 - [ ] **Testi**: rileggi Chi sono, articoli del blog e domande frequenti (sono bozze da rivedere e firmare, soprattutto i dettagli storici).
 - [ ] **Pagine legali** (privacy, condizioni, cookie): sono bozze, **falle rivedere da commercialista/consulente**. In particolare buoni regalo (validità, recesso), acconti dei programmi, recensioni, conservazione delle fatture.

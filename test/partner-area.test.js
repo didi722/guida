@@ -66,7 +66,7 @@ async function start() {
 
 /** Prenotazione di un'agenzia: `kind` = 'invoice' (confermata, a fattura), 'card' (pagata), 'option' (data trattenuta). */
 function book(app, account, { tour = 'cannaregio-ghetto', time = '10:00', date = day(10), pax = 2, kind = 'invoice', ref = null, name = null, nowMs = Date.now(), hours } = {}) {
-  const b = createBooking(app, { tourSlug: tour, date, time, pax, channel: 'b2b', account, name: name ?? account.contact_name, email: account.email, lang: 'it', clientRef: ref, ...(hours ? { hours } : {}), ...(kind === 'option' ? { option: true } : { paymentMethod: kind === 'card' ? 'card' : 'invoice' }) }, nowMs);
+  const b = createBooking(app, { tourSlug: app.content.tour(`${tour}-agenzie`) ? `${tour}-agenzie` : tour, date, time, pax, channel: 'b2b', account, name: name ?? account.contact_name, email: account.email, lang: 'it', clientRef: ref, ...(hours ? { hours } : {}), ...(kind === 'option' ? { option: true } : { paymentMethod: kind === 'card' ? 'card' : 'invoice' }) }, nowMs);
   if (kind === 'card') confirmPaid(app, b.id, `pi_${b.ref}`, nowMs);
   return app.db.prepare('SELECT * FROM bookings WHERE id = ?').get(b.id);
 }
@@ -472,13 +472,14 @@ test('prenotare da agenzia: «Cerca» ha tour privati (attivo) e condivisi (spen
     const page = nb(await (await f(`/it/book?date=${date}&pax=4`)).text());
     assert.match(page, /name="kind" value="private" checked/);
     assert.ok(!/name="kind" value="shared" checked/.test(page), 'condivisi spenti di default');
-    assert.ok(titles(page).includes('guida-a-ore') && !titles(page).includes('cannaregio-ghetto'), `privati: ${titles(page)}`);
+    // l'agenzia vede solo i tour B2B (con il suo indirizzo «-agenzie»), mai quelli dei privati
+    assert.ok(titles(page).includes('guida-a-ore-agenzie') && !titles(page).includes('cannaregio-ghetto-agenzie') && !titles(page).includes('guida-a-ore'), `privati: ${titles(page)}`);
     const shared = nb(await (await f(`/it/book?date=${date}&pax=4&kinds=1&kind=shared`)).text());
-    assert.ok(titles(shared).includes('cannaregio-ghetto') && !titles(shared).includes('guida-a-ore'), `condivisi: ${titles(shared)}`);
+    assert.ok(titles(shared).includes('cannaregio-ghetto-agenzie') && !titles(shared).includes('guida-a-ore-agenzie') && !titles(shared).includes('cannaregio-ghetto'), `condivisi: ${titles(shared)}`);
     const both = nb(await (await f(`/it/book?date=${date}&pax=4&kinds=1&kind=shared&kind=private`)).text());
-    assert.ok(titles(both).includes('cannaregio-ghetto') && titles(both).includes('guida-a-ore'));
+    assert.ok(titles(both).includes('cannaregio-ghetto-agenzie') && titles(both).includes('guida-a-ore-agenzie'));
     // pagina di checkout: stessa barra
-    const checkout = await (await f(`/it/book/checkout?tour=cannaregio-ghetto&date=${date}&time=10:00&pax=2`)).text();
+    const checkout = await (await f(`/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${date}&time=10:00&pax=2`)).text();
     assert.match(checkout, /partner-area/);
     assert.match(checkout, /Area agenzia<\/a><span aria-hidden="true">›<\/span>/);
     // il pubblico (e chi non è dentro) non vede le spunte: sono solo per le agenzie

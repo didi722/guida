@@ -51,7 +51,7 @@ const dataUrl = (buf = JPEG, mime = 'image/jpeg') => `data:${mime};base64,${buf.
 const TOUR = {
   slug: 'gondola-al-tramonto', title_it: 'Gondola al tramonto', summary_it: 'Un’ora in gondola nel canale.', description_it: 'Una **bella** esperienza.\n\nCon vista sul Canal Grande.',
   title_en: 'Gondola at sunset', summary_en: 'An hour by gondola.',
-  model: 'group', times: '', flexible: '1', wd: ['0', '1', '2', '3', '4', '5', '6'], durH: '1', durM: '0', maxParticipants: '5', price: '120', b2bPrice: '90', active: '1', payOnSite: '1', langs: ['it', 'en'], art: 'bridge', image: '', order: '3',
+  model: 'group', times: '', flexible: '1', wd: ['0', '1', '2', '3', '4', '5', '6'], durH: '1', durM: '0', maxParticipants: '5', audience: 'b2c', price: '120', active: '1', payOnSite: '1', langs: ['it', 'en'], art: 'bridge', image: '', order: '3',
   highlights_it: 'Canali stretti\nPonte dei Sospiri', includes_it: 'Gondoliere',
 };
 
@@ -64,8 +64,19 @@ test('primo avvio: i file di content/ finiscono nel database e il sito li legge 
   assert.equal(db.prepare('SELECT COUNT(*) n FROM content_pages').get().n, 4);
   const store = createContentStore({ db, root: ROOT });
   const files = loadContent(ROOT);
-  assert.deepEqual(store.tours.map((x) => x.slug), files.tours.map((x) => x.slug), 'stessi tour, stesso ordine');
+  // i tour dei file (con due tariffe) diventano B2C; i servizi che le agenzie potevano prenotare hanno anche la loro copia B2B, «<indirizzo>-agenzie»
+  const own = store.tours.filter((x) => !x.slug.endsWith('-agenzie'));
+  assert.deepEqual(own.map((x) => x.slug), files.tours.map((x) => x.slug), 'stessi tour, stesso ordine');
   assert.equal(store.tour('cannaregio-ghetto').priceCents, 3500);
+  assert.equal(store.tour('cannaregio-ghetto').audience, 'b2c');
+  assert.equal(store.tour('cannaregio-ghetto-agenzie').audience, 'b2b');
+  assert.equal(store.tour('cannaregio-ghetto-agenzie').priceCents, 2800, 'la vecchia tariffa agenzie');
+  assert.equal(store.tour('guida-a-ore').audience, 'b2c');
+  assert.equal(store.tour('guida-a-ore-agenzie').audience, 'b2b');
+  assert.equal(store.tour('assistente-a-ore').audience, 'b2b', 'nato solo per le agenzie');
+  assert.equal(store.tour('assistente-a-ore-agenzie'), undefined);
+  assert.equal(store.tours.length, 13);
+  assert.ok(store.tours.every((x) => x.audience === 'b2c' || x.audience === 'b2b') && store.tours.every((x) => !('b2bPriceCents' in x)));
   assert.equal(store.page('about', 'es').title, files.page('about', 'es').title);
   assert.equal(store.problems.length, 0);
   // se si eliminano tutti i contenuti, non si reimportano al riavvio (è una scelta di chi gestisce il sito)
@@ -85,7 +96,13 @@ test('tour dal pannello: creare, modificare, nascondere, duplicare, eliminare; i
     const { admin } = s;
     const list = await (await admin('/admin/tours')).text();
     assert.match(list, /Cannaregio e il Ghetto/);
-    assert.match(list, /Nuovo tour/);
+    assert.match(list, /Nuovo tour B2C/);
+    assert.ok(!list.includes('/admin/tours/assistente-a-ore"'), 'i tour B2B non sono in questa sezione');
+    const listB2b = await (await admin('/admin/tours-b2b')).text();
+    assert.match(listB2b, /Nuovo tour B2B/);
+    assert.match(listB2b, /\/admin\/tours\/assistente-a-ore"/);
+    assert.match(listB2b, /\/admin\/tours\/cannaregio-ghetto-agenzie"/);
+    assert.ok(!listB2b.includes('/admin/tours/cannaregio-ghetto"'), 'e quelli B2C non sono in questa');
 
     // creazione: errori mostrati senza perdere ciò che si è scritto
     const bad = await admin('/admin/tours', form({ ...TOUR, price: 'abc' }));
@@ -113,7 +130,8 @@ test('tour dal pannello: creare, modificare, nascondere, duplicare, eliminare; i
     assert.match(await (await anon('/it/tours')).text(), /Gondola al tramonto/);
     const tour = s.app.content.tour('gondola-al-tramonto');
     assert.equal(tour.priceCents, 12000);
-    assert.equal(tour.b2bPriceCents, 9000);
+    assert.equal(tour.audience, 'b2c');
+    assert.ok(!(await (await s.jar()('/it/b2b')).text()).includes('Gondola al tramonto'));
     assert.equal(tour.durationMin, 60);
     assert.equal(tour.i18n.es.fallback, true);
     // si può prenotare
@@ -168,8 +186,9 @@ test('ordine dei tour: si trascina nell’elenco e si salva; un tour nuovo va in
     const list = await (await admin('/admin/tours')).text();
     assert.match(list, /data-sortable/);
     assert.match(list, /admin-tours-order\.js/);
-    assert.equal((list.match(/class="drag-handle"/g) ?? []).length, before.length, 'una maniglia per ogni tour');
-    assert.equal((list.match(/data-move="-1"/g) ?? []).length, before.length, 'e le frecce');
+    const b2cCount = s.app.content.allTours.filter((t) => t.audience === 'b2c').length;
+    assert.equal((list.match(/class="drag-handle"/g) ?? []).length, b2cCount, 'una maniglia per ogni tour B2C (i B2B sono nell’altra sezione)');
+    assert.equal((list.match(/data-move="-1"/g) ?? []).length, b2cCount, 'e le frecce');
 
     // l'ultimo passa in cima: lo salva il pannello, lo vede subito il sito
     const next = [before.at(-1), ...before.slice(0, -1)];
@@ -178,7 +197,9 @@ test('ordine dei tour: si trascina nell’elenco e si salva; un tour nuovo va in
     assert.deepEqual((await res.json()).order, next);
     assert.deepEqual(s.app.content.allTours.map((t) => t.slug), next);
     const tours = await (await s.jar()('/it/tours')).text();
-    assert.ok(tours.indexOf(`/it/tours/${next[0]}"`) < tours.indexOf(`/it/tours/${next[1]}"`) || next[0] === 'meet-and-greet', 'la pagina Tour segue l’ordine');
+    const shown = next.filter((slug) => tours.includes(`/it/tours/${slug}"`) && s.app.content.tour(slug).model === 'person'); // i tour di gruppo, nella loro categoria
+    assert.ok(shown.length >= 2, 'la pagina Tour mostra i tour di gruppo B2C');
+    assert.deepEqual(shown, [...shown].sort((a, b) => tours.indexOf(`/it/tours/${a}"`) - tours.indexOf(`/it/tours/${b}"`)), 'la pagina Tour segue l’ordine');
     assert.deepEqual(s.app.content.allTours.map((t) => t.order), next.map((_, i) => (i + 1) * 10), 'numerati di 10 in 10');
 
     // una lista parziale e indirizzi sconosciuti: quelli citati vanno in cima, gli altri seguono nel loro ordine
@@ -273,13 +294,15 @@ test('listino prezzi: tutti i prezzi insieme, validazione, effetto sulle nuove p
     const { admin } = s;
     const page = await (await admin('/admin/prices')).text();
     assert.match(page, /name="price_cannaregio-ghetto" inputmode="decimal" value="35"/);
-    const all = Object.fromEntries(s.app.content.allTours.flatMap((t) => [[`price_${t.slug}`, String(t.priceCents / 100)], [`b2b_${t.slug}`, String(t.b2bPriceCents / 100)]]));
+    assert.match(page, /Tour B2C/);
+    assert.match(page, /name="price_cannaregio-ghetto-agenzie" inputmode="decimal" value="28"/, 'anche i tour B2B, con la loro tariffa');
+    assert.ok(!page.includes('name="b2b_'), 'un solo prezzo per tour');
+    const all = Object.fromEntries(s.app.content.allTours.filter((t) => t.pricing !== 'hourly').map((t) => [`price_${t.slug}`, String(t.priceCents / 100)]));
     assert.equal((await admin('/admin/prices', form({ ...all, 'price_cannaregio-ghetto': 'x' }))).status, 400);
     assert.equal(s.app.content.tour('cannaregio-ghetto').priceCents, 3500, 'un errore non salva nulla');
-    assert.equal(loc(await admin('/admin/prices', form({ ...all, 'price_cannaregio-ghetto': '38', 'b2b_cannaregio-ghetto': '30,5' }))), '/admin/prices?ok=prices');
-    const t = s.app.content.tour('cannaregio-ghetto');
-    assert.equal(t.priceCents, 3800);
-    assert.equal(t.b2bPriceCents, 3050);
+    assert.equal(loc(await admin('/admin/prices', form({ ...all, 'price_cannaregio-ghetto': '38', 'price_cannaregio-ghetto-agenzie': '30,5' }))), '/admin/prices?ok=prices');
+    assert.equal(s.app.content.tour('cannaregio-ghetto').priceCents, 3800);
+    assert.equal(s.app.content.tour('cannaregio-ghetto-agenzie').priceCents, 3050);
     assert.match(await (await s.jar()('/it/tours/cannaregio-ghetto')).text(), /38\s*€/);
   } finally {
     s.close();
@@ -538,4 +561,84 @@ test('testi dell’interfaccia dal pannello: modifica per lingua, segnaposto pro
   } finally {
     s.close();
   }
+});
+
+test('tour dei privati e tour delle agenzie: due sezioni, un solo prezzo, ognuno visibile solo al suo pubblico', async () => {
+  const s = await start();
+  try {
+    const { admin } = s;
+    const anon = s.jar();
+    // «Nuovo tour B2B» parte già come B2B; il modulo non ha più due tariffe
+    const form0 = await (await admin('/admin/tours/new?audience=b2b')).text();
+    assert.match(form0, /<option value="b2b" selected>/);
+    assert.match(form0, /Tariffa agenzie \(€ a persona\)/);
+    assert.ok(!form0.includes('name="b2bPrice"') && !form0.includes('Tariffa partner B2B'));
+    const B2B = { ...TOUR, slug: 'gondola-agenzie', title_it: 'Gondola per gruppi', audience: 'b2b', price: '90' };
+    assert.equal(loc(await admin('/admin/tours', form(B2B))), '/admin/tours/gondola-agenzie?ok=created');
+    const t = s.app.content.tour('gondola-agenzie');
+    assert.equal(t.audience, 'b2b');
+    assert.equal(t.priceCents, 9000);
+    // sta nella sua sezione, non nell'altra; ai privati non si vede da nessuna parte
+    assert.match(await (await admin('/admin/tours-b2b')).text(), /Gondola per gruppi/);
+    assert.ok(!(await (await admin('/admin/tours')).text()).includes('Gondola per gruppi'));
+    assert.equal((await anon('/it/tours/gondola-agenzie')).status, 404);
+    assert.ok(!(await (await anon('/it/tours')).text()).includes('Gondola per gruppi'));
+    assert.ok(!(await (await anon('/sitemap.xml')).text()).includes('gondola-agenzie'));
+    assert.equal((await anon(`/api/slots?tour=gondola-agenzie&date=${new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10)}&pax=2`)).status, 400);
+    // e un tour B2C non è un tour B2B: cambiare il pubblico lo sposta nell'altra sezione
+    assert.equal(loc(await admin('/admin/tours/gondola-agenzie', form({ ...B2B, audience: 'b2c' }))), '/admin/tours/gondola-agenzie?ok=saved');
+    assert.equal(s.app.content.tour('gondola-agenzie').audience, 'b2c');
+    assert.match(await (await admin('/admin/tours')).text(), /Gondola per gruppi/);
+    assert.equal((await anon('/it/tours/gondola-agenzie')).status, 200);
+    // «Duplica come tour B2B» parte dall'altro pubblico
+    const dup = await (await admin('/admin/tours/new?from=gondola-agenzie&audience=b2b')).text();
+    assert.match(dup, /<option value="b2b" selected>/);
+    assert.match(dup, /Gondola per gruppi \(copia\)/);
+    assert.match(await (await admin('/admin/tours/gondola-agenzie')).text(), /Duplica come tour B2B/);
+    // nascondere e eliminare riportano alla sezione giusta
+    await admin('/admin/tours/gondola-agenzie', form({ ...B2B, audience: 'b2b' }));
+    assert.equal(loc(await admin('/admin/tours/gondola-agenzie/toggle', form({}))), '/admin/tours-b2b?ok=toggled');
+    assert.equal(loc(await admin('/admin/tours/gondola-agenzie/delete', form({}))), '/admin/tours-b2b?ok=deleted');
+    // la scheda del partner propone il listino dedicato solo per i tour B2B
+    s.app.db.prepare("INSERT INTO accounts(email, password_hash, company, contact_name, status, created_at) VALUES('x@example.com','x','X','X','approved','2027-01-01')").run();
+    const id = s.app.db.prepare("SELECT id FROM accounts WHERE email = 'x@example.com'").get().id;
+    const partnerPage = await (await admin(`/admin/partners/${id}`)).text();
+    assert.match(partnerPage, /name="price_cannaregio-ghetto-agenzie"/);
+    assert.ok(!partnerPage.includes('name="price_cannaregio-ghetto"'));
+  } finally {
+    s.close();
+  }
+});
+
+test('migrazione: i tour di prima (due tariffe) diventano B2C più una copia B2B; il listino dedicato dei partner la segue; si fa una volta sola', () => {
+  const db = openDb(':memory:');
+  const at = '2027-01-01T00:00:00.000Z';
+  const put = (slug, d) => db.prepare('INSERT INTO content_tours(slug, data_json, updated_at) VALUES(?,?,?)').run(slug, JSON.stringify(d), at);
+  const base = (over) => ({ order: 10, model: 'person', times: ['10:00'], duration: 120, maxParticipants: 8, price: 35, b2bPrice: 28, it: { title: 'Prova', summary: 'Una prova.' }, ...over });
+  put('vecchio', base({}));
+  put('guida', base({ model: 'group', pricing: 'hourly', service: 'guide', chooseHours: true, price: undefined, b2bPrice: undefined }));
+  put('assistente', base({ model: 'group', pricing: 'hourly', service: 'assistant', price: undefined, b2bPrice: undefined }));
+  put('nuovo', base({ audience: 'b2c', b2bPrice: undefined }));
+  put('occupato', base({}));
+  put('occupato-agenzie', base({ audience: 'b2c' }));
+  db.prepare("INSERT INTO accounts(email, password_hash, company, contact_name, status, created_at, prices_json) VALUES('a@example.com','x','A','A','approved',?,?)").run(at, JSON.stringify({ vecchio: 2250, nuovo: 3000 }));
+  const store = createContentStore({ db, root: ROOT });
+  assert.equal(store.tour('vecchio').audience, 'b2c');
+  assert.equal(store.tour('vecchio').priceCents, 3500);
+  assert.equal(store.tour('vecchio-agenzie').audience, 'b2b');
+  assert.equal(store.tour('vecchio-agenzie').priceCents, 2800, 'la vecchia tariffa agenzie');
+  assert.equal(store.tour('vecchio-agenzie').featured, false);
+  assert.equal(store.tour('guida').audience, 'b2c');
+  assert.equal(store.tour('guida-agenzie').audience, 'b2b');
+  assert.equal(store.tour('guida-agenzie').pricing, 'hourly');
+  assert.equal(store.tour('assistente').audience, 'b2b', 'nato solo per le agenzie');
+  assert.equal(store.tour('assistente-agenzie'), undefined);
+  assert.equal(store.tour('nuovo').audience, 'b2c');
+  assert.equal(store.tour('nuovo-agenzie'), undefined, 'un tour già B2C non si tocca');
+  assert.equal(store.tour('occupato-agenzie').audience, 'b2c', 'un indirizzo già usato non si sovrascrive');
+  assert.deepEqual(JSON.parse(db.prepare("SELECT prices_json FROM accounts WHERE email = 'a@example.com'").get().prices_json), { 'vecchio-agenzie': 2250, nuovo: 3000 }, 'il prezzo dedicato passa alla copia B2B');
+  assert.ok(!('b2bPrice' in JSON.parse(db.prepare("SELECT data_json FROM content_tours WHERE slug = 'vecchio'").get().data_json)));
+  const n = db.prepare('SELECT COUNT(*) n FROM content_tours').get().n;
+  createContentStore({ db, root: ROOT });
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM content_tours').get().n, n, 'al riavvio non si crea altro');
 });

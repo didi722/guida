@@ -2,7 +2,7 @@
 
 Questa guida è per te, che gestisci il sito: spiega **come fare ogni cosa dal pannello**, passo per passo, senza toccare il codice. È pensata per essere letta anche dal telefono: nel pannello la trovi in **Aiuto › Guida**.
 
-Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca *Sito* nel menu in alto, poi la scheda *Tour*».
+Le indicazioni di percorso si leggono così: **Sito › Tour B2C** vuol dire «tocca *Sito* nel menu in alto, poi la scheda *Tour B2C*».
 
 > **Fisco e testi legali.** Il sito non sostituisce il commercialista: regime, IVA, bollo, ritenuta, trattamento dei buoni regalo e testi di privacy e condizioni vanno **confermati da lui** prima di usarli (vedi [Fatture](#13-fatture) e [Pagine](#7-pagine-chi-sono-privacy-condizioni-cookie)).
 
@@ -53,7 +53,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 | **Agenda** | Agenda · Prenotazioni · Programmi · Disponibilità |
 | **Clienti** | Partner · Sconti · Feedback |
 | **Conti** | Fatture · Statistiche |
-| **Sito** | Tour · Listino · Tariffe a ore · Blog · Pagine · Testi · Immagini · Impostazioni |
+| **Sito** | Tour B2C · Tour B2B · Listino · Tariffe a ore · Blog · Pagine · Testi · Immagini · Impostazioni |
 | **Aiuto** | Guida · Backup · Email |
 
 **Cambiare la password del pannello.** La password non si cambia dal pannello (per sicurezza): sta nella configurazione del server, nella variabile `ADMIN_PASSWORD`. Cambiala nel pannello del tuo hosting (sezione *Environment* / *Variables*), scrivila **senza virgolette** e riavvia il servizio. Usa una password lunga e unica.
@@ -62,12 +62,12 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 
 | Voglio… | Vado in… |
 |---|---|
-| **Cambiare il prezzo** di un tour a prezzo fisso | **Sito › Listino** |
+| **Cambiare il prezzo** di un tour a prezzo fisso | **Sito › Listino** (tutti insieme) oppure il tour in **Sito › Tour B2C** / **Sito › Tour B2B** |
 | Cambiare le **tariffe a ore** (mezza giornata, giornata, ora extra), i **supplementi** (festivo, notturno, auricolari) o i **giorni festivi** | **Sito › Tariffe a ore** |
-| Offrire alle agenzie **assistente, tour leader o meet & greet** | **Sito › Tariffe a ore** (le cifre) e **Sito › Tour** (i servizi) |
-| **Aggiungere un tour** | **Sito › Tour › Nuovo tour** |
-| Cambiare orari, durata, capienza o testi di un tour | **Sito › Tour** › tocca il tour |
-| **Nascondere** un tour (pausa, stagione) | **Sito › Tour › Nascondi** |
+| Offrire alle agenzie **assistente, tour leader o meet & greet** | **Sito › Tariffe a ore** (le cifre) e **Sito › Tour B2B** (i servizi) |
+| **Aggiungere un tour** per i privati o per le agenzie | **Sito › Tour B2C › Nuovo tour B2C** oppure **Sito › Tour B2B › Nuovo tour B2B** |
+| Cambiare orari, durata, capienza, prezzo o testi di un tour | **Sito › Tour B2C** o **Sito › Tour B2B** › tocca il tour |
+| **Nascondere** un tour (pausa, stagione) | **Sito › Tour B2C** o **Tour B2B** › **Nascondi** |
 | **Scrivere un articolo** | **Sito › Blog › Nuovo articolo** |
 | Cambiare la **foto** di un tour o di un articolo | nel tour o nell'articolo: **Immagine di copertina** |
 | Cambiare la foto della **home**, il **mio ritratto**, l'anteprima sui social | **Sito › Immagini › Immagini del sito** |
@@ -77,7 +77,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 | Cambiare **ore di cancellazione, preavviso**, pausa fra i servizi | **Sito › Impostazioni › Regole di prenotazione** |
 | Inserire i **dati per fatturare** | **Sito › Impostazioni › Fatturazione elettronica** |
 | **Approvare** un'agenzia, dare **sconti, prezzi e cancellazione** dedicati | **Clienti › Partner** › tocca l'agenzia |
-| **Riordinare** i tour nell'elenco del sito | **Sito › Tour**: trascina le righe dalla maniglia ⠿ |
+| **Riordinare** i tour nell'elenco del sito (o dell'area agenzie) | **Sito › Tour B2C** (o **Tour B2B**): trascina le righe dalla maniglia ⠿ |
 | Decidere **quanto dura un'opzione** per le agenzie (e quante ne possono tenere) | **Sito › Impostazioni › Opzioni per le agenzie**; per una sola agenzia **Clienti › Partner › Opzioni** |
 | **Prolungare o rilasciare** l'opzione di un'agenzia | **Agenda › Prenotazioni › Opzioni** › tocca l'opzione |
 | **Prendere prenotazioni prima di aprire la Partita IVA**, senza incassare | **Sito › Impostazioni › Regole di prenotazione › Incassi dal** ([sezione 20](#20-da-fare-prima-del-lancio-e-a-gennaio)) |
@@ -105,15 +105,23 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 
 ## 5. Tour e servizi
 
-**Sito › Tour** elenca tutti i tour con prezzo al pubblico, tariffa partner e stato (*visibile* / *nascosto*). Il sito mostra solo quelli visibili.
+Ogni tour è **dei clienti privati (B2C)** oppure **delle agenzie (B2B)**, mai dei due insieme, con **un solo prezzo**. Per questo il pannello ha due sezioni separate, così vedi subito quali sono gli uni e quali gli altri:
+
+- **Sito › Tour B2C**: i tour che vede e prenota il pubblico, con il **prezzo al pubblico**. Le agenzie non li vedono.
+- **Sito › Tour B2B**: i tour che vedono e prenotano solo le **agenzie approvate** (nella loro area riservata), con la **tariffa agenzie**. I privati non li vedono. Lo **sconto %** di un partner si toglie da questa tariffa.
+
+Ogni elenco mostra il prezzo (o il rimando alle tariffe a ore) e lo stato (*visibile* / *nascosto*). Il sito mostra solo i tour visibili. Se vuoi offrire lo stesso servizio ai due pubblici, apri il tour e tocca **Duplica come tour B2B** (o **Duplica come tour B2C**): ottieni una copia nell'altra sezione, da ritoccare (soprattutto il prezzo).
+
+**Dopo l'aggiornamento.** I tour che avevi con due tariffe sono diventati tour B2C (con il prezzo al pubblico) e per ciascuno è nata la copia **B2B «…-agenzie»** con la vecchia tariffa partner: le agenzie trovano gli stessi servizi agli stessi prezzi. Assistente, tour leader e meet & greet, nati solo per le agenzie, sono tour B2B. Il listino dedicato di un partner è passato alle copie B2B. Cancella le copie che non ti servono.
 
 ### Aggiungere un tour nuovo
 
-1. **Sito › Tour › Nuovo tour**. (Per partire da un tour simile apri quello esistente e tocca **Duplica**: ottieni una copia da ritoccare.)
+1. **Sito › Tour B2C › Nuovo tour B2C** (o **Sito › Tour B2B › Nuovo tour B2B**). (Per partire da un tour simile apri quello esistente e tocca **Duplica**, oppure **Duplica come tour B2B/B2C**: ottieni una copia da ritoccare.)
 2. **Informazioni generali**
    - **Indirizzo web (slug)**: come compare nell'indirizzo, per esempio `gondola-al-tramonto` → `…/tours/gondola-al-tramonto`. Solo lettere minuscole, numeri e trattini; **dopo la creazione non si cambia**.
-   - **Ordine nell'elenco**: non c'è nessun numero da scrivere. Un tour nuovo va **in fondo**; per spostarlo apri **Sito › Tour** e **trascinalo** dalla maniglia ⠿ a sinistra (con il dito o il mouse; con la tastiera o le frecce ▲ ▼ se preferisci). L'ordine si salva da solo e vale subito anche sul sito.
-   - **Visibile sul sito e prenotabile**: se lo togli il tour sparisce dal sito (le prenotazioni già fatte restano).
+   - **Ordine nell'elenco**: non c'è nessun numero da scrivere. Un tour nuovo va **in fondo**; per spostarlo apri la sua sezione (**Sito › Tour B2C** o **Tour B2B**) e **trascinalo** dalla maniglia ⠿ a sinistra (con il dito o il mouse; con la tastiera o le frecce ▲ ▼ se preferisci). L'ordine si salva da solo e vale subito anche sul sito.
+   - **A chi è rivolto**: *Clienti privati (B2C)* oppure *Agenzie (B2B)*. Un tour è dell'uno o dell'altro, con un solo prezzo; cambiarlo lo sposta nell'altra sezione.
+   - **Visibile sul sito e prenotabile**: se lo togli il tour sparisce dal sito (per un tour B2B: dall'area delle agenzie); le prenotazioni già fatte restano.
    - **In evidenza**: la home ha due schede, *Guida privata a ore* e *Tour di gruppo*; per ciascuna mostra la foto del tour «in evidenza» (se ce ne sono più d'uno, il primo; se nessuno, il primo dell'elenco).
    - **Tipo di servizio**:
      - *Partenze fisse, prezzo a persona*: tour in piccolo gruppo con orari stabiliti (per esempio 09:30 e 14:30). Più clienti possono prenotare la stessa partenza fino alla **capienza massima**.
@@ -123,8 +131,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
    - **Durata** (ore e minuti) e **Persone al massimo**.
 3. **Prezzi e regole**
    - **Prezzo**: *Prezzo fisso* (lo scrivi qui sotto) oppure **A ore**, per i servizi privati: il prezzo viene allora da **Sito › Tariffe a ore** ([sezione 6](#6-prezzi-tariffe-a-ore-sconti-e-buoni-regalo)) e non c'è nulla da scrivere in questa scheda.
-   - **Prezzo al pubblico**: a persona o a gruppo, secondo il tipo. Scrivi `35` o `35,50`.
-   - **Tariffa partner B2B**: quello che paga un'agenzia (vuoto = uguale al pubblico). I prezzi **dedicati a un singolo partner** si impostano nella sua scheda ([sezione 14](#14-partner-agenzie-dmc-tour-operator)).
+   - **Prezzo al pubblico** (tour B2C) o **Tariffa agenzie** (tour B2B): a persona o a gruppo, secondo il tipo. Scrivi `35` o `35,50`. Il prezzo è **uno solo**. Per un tour B2B, i prezzi **dedicati a un singolo partner** si impostano nella sua scheda ([sezione 14](#14-partner-agenzie-dmc-tour-operator)).
    - **Cancellazione gratuita (ore prima)**: vale solo per questo tour; vuoto = la regola generale (**Sito › Impostazioni › Regole di prenotazione**).
    - **Si può pagare sul posto**: conta solo se il pagamento sul posto è consentito nelle Impostazioni (di default non lo è).
    - **Lingue in cui offri questo servizio**: compaiono nella scheda del tour.
@@ -159,7 +166,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 ## 6. Prezzi, tariffe a ore, sconti e buoni regalo
 
 ### Il listino: tutti i prezzi in una pagina
-**Sito › Listino** mostra ogni tour con due colonne modificabili: **Pubblico (€)** e **Partner B2B (€)**. Cambia gli importi e tocca **Salva i prezzi**. Vale per le **nuove** prenotazioni.
+**Sito › Listino** mostra tutti i tour a prezzo fisso in due tabelle, **Tour B2C** (prezzo al pubblico) e **Tour B2B** (tariffa agenzie), con un solo importo modificabile per tour. Cambia gli importi e tocca **Salva i prezzi**. Vale per le **nuove** prenotazioni.
 
 ### Tariffe a ore: guida, assistente, tour leader, meet & greet
 
@@ -195,11 +202,11 @@ Le percentuali dei supplementi si calcolano sul prezzo base (già scontato, per 
 | **Meet & greet**: 1 ora · ora extra | — | 50 · 30 € |
 
 **Chi vede cosa**
-- Il pubblico vede **solo il servizio guida**, colonna *Pubblico*: nella pagina **Guida privata a ore** (voce *Guida a ore* del menu) con il calcolatore.
-- Le tariffe **Agenzie** non sono mai pubbliche: la pagina *Per agenzie* non le mostra (la vedono tutti, anche i clienti privati). Le agenzie le vedono **solo nella loro area riservata, dopo l'approvazione**: sono la **prima cosa** che compare nella home dell'area (vedi la [sezione 14](#14-partner-agenzie-dmc-tour-operator)).
-- Lo **sconto %** del partner (**Clienti › Partner**) si calcola **sul prezzo al pubblico** (B2C) e **sostituisce** la tariffa Agenzie: non si somma. Il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (per eccesso) e non supera mai il prezzo al pubblico. Esempi con il 15%: guida 2 ore 200 € → **170 €**; 4 ore 380 € → 323 € → **325 €**; 8 ore 700 € → **595 €**. Per i servizi che non hanno un prezzo al pubblico (assistente, tour leader, meet & greet) lo sconto parte dalla tariffa Agenzie: 110 € → 93,50 € → **95 €**. Attenzione: se lo sconto è basso, il risultato può essere **più alto** della tariffa Agenzie (guida 4 ore con il 15%: 325 € contro 300 €). Per un partner che deve pagare la tariffa Agenzie lascia lo sconto a 0. Il [listino dedicato](#prezzi-dedicati-a-un-partner) per singolo tour non riguarda i servizi a ore.
+- Il pubblico vede i **tour B2C**: per i servizi a ore, solo il servizio guida con la colonna *Pubblico*, nella pagina **Guida privata a ore** (voce *Guida a ore* del menu) con il calcolatore.
+- Le tariffe **Agenzie** non sono mai pubbliche: la pagina *Per agenzie* non le mostra (la vedono tutti, anche i clienti privati). Le agenzie le vedono **solo nella loro area riservata, dopo l'approvazione**: sono la **prima cosa** che compare nella home dell'area (vedi la [sezione 14](#14-partner-agenzie-dmc-tour-operator)), e prenotano solo i **tour B2B**.
+- Lo **sconto %** del partner (**Clienti › Partner**) si toglie dalle **tariffe Agenzie** (le tariffe a ore e i tour B2B) e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (per eccesso), senza mai superare la tariffa senza sconto. Esempi con il 15%: guida 2 ore 160 € → 136 € → **140 €**; 4 ore 300 € → **255 €**; 8 ore 560 € → 476 € → **480 €**. Lo sconto non si applica ai privati. Il [listino dedicato](#prezzi-dedicati-a-un-partner) per singolo tour non riguarda i servizi a ore.
 
-**I servizi sono «tour» a ore.** In **Sito › Tour**, nel campo *Prezzo* scegli *Prezzo fisso* oppure *A ore*; per quelli a ore indichi il servizio (guida, assistente…), se *Il cliente sceglie quante ore* (altrimenti la durata è fissa, come per un itinerario di tre ore) e *Chi può prenotarlo* (tutti, oppure solo agenzie con account partner). Un itinerario a durata fissa usa le tariffe della guida per quella durata.
+**I servizi sono «tour» a ore.** In **Sito › Tour B2C** o **Tour B2B**, nel campo *Prezzo* scegli *Prezzo fisso* oppure *A ore*; per quelli a ore indichi il servizio (guida, assistente…), se *Il cliente sceglie quante ore* (altrimenti la durata è fissa, come per un itinerario di tre ore) e *A chi è rivolto* (B2C: i privati con le tariffe *Pubblico*; B2B: le agenzie con le tariffe *Agenzie*). Un servizio a ore per i privati e uno per le agenzie sono due tour distinti: usa **Duplica come tour B2B**. Un itinerario a durata fissa usa le tariffe della guida per quella durata.
 
 **Dopo la prenotazione.** Il calendario blocca la fascia (le ore più la pausa); email, voucher, fattura e scheda della prenotazione riportano ore e supplementi (per esempio «4 ore, festivo +20%, auricolari»). Per i servizi lunghi conviene una **politica di annullo** dedicata alle agenzie (**Clienti › Partner › Politica di annullo**): un blocco di otto ore è difficile da riempire all'ultimo minuto.
 
@@ -212,9 +219,9 @@ Le percentuali dei supplementi si calcolano sul prezzo base (già scontato, per 
 > - Oltre gli 85.000 € l'anno si esce dal forfettario l'anno dopo (oltre 100.000 € subito). Se hai anche un lavoro dipendente c'è un limite sul reddito da lavoro dipendente: chiedi.
 
 ### Prezzi dedicati a un partner
-**Clienti › Partner** › il partner › **Listino dedicato**: per ogni tour puoi scrivere il prezzo che **solo quel partner** paga. Lascia vuoto per applicare lo sconto percentuale del partner sul prezzo al pubblico, se c'è; altrimenti la tariffa B2B. Puoi **copiare il listino da un altro partner**.
+**Clienti › Partner** › il partner › **Listino dedicato**: per ogni tour puoi scrivere il prezzo che **solo quel partner** paga. Lascia vuoto per applicare la tariffa del tour meno lo sconto percentuale del partner, se c'è. Qui compaiono solo i **tour B2B**. Puoi **copiare il listino da un altro partner**.
 
-**Quale prezzo vale per un partner?** In quest'ordine: 1) il **prezzo dedicato** per quel tour (così com'è scritto); 2) altrimenti, se il partner ha uno **sconto %**, il **prezzo al pubblico** del tour meno lo sconto, arrotondato al multiplo di 5 € successivo (mai oltre il prezzo al pubblico); 3) senza sconto, la **tariffa B2B** del tour. Nella colonna *Applicato* vedi sempre il prezzo che il partner vedrà.
+**Quale prezzo vale per un partner?** In quest'ordine: 1) il **prezzo dedicato** per quel tour B2B (così com'è scritto); 2) altrimenti la **tariffa** del tour B2B meno lo **sconto %** del partner (se c'è), arrotondato al multiplo di 5 € successivo e mai oltre la tariffa. Nella colonna *Applicato* vedi sempre il prezzo che il partner vedrà.
 
 ### Codici sconto e buoni regalo
 **Clienti › Sconti**:
@@ -356,7 +363,7 @@ In Europa chi mostra recensioni deve poter dire che vengono da clienti reali: il
 ### Approvare un partner
 1. Apri la richiesta: vedi dati aziendali (Partita IVA, SDI/PEC), referente e messaggio.
 2. In **Stato e pagamento** scegli **Stato**: *Approvato*, *Rifiutato* o *Sospeso*; imposta lo **Sconto su tutto il listino (%)** (vale per i tour senza prezzo dedicato) e se **può pagare a fattura / bonifico**; aggiungi **Note interne**. **Salva**.
-3. Il partner riceve un'email e può entrare nella sua area (vedi sotto). Se scegli **Sconto %**, lo sconto si calcola **sul prezzo al pubblico** (non sulla tariffa agenzie) e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (mai oltre il prezzo al pubblico).
+3. Il partner riceve un'email e può entrare nella sua area (vedi sotto). Se scegli **Sconto %**, lo sconto si toglie dalle **tariffe agenzie** (tour B2B e tariffe a ore) e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (mai oltre la tariffa).
 
 ### L'area riservata dell'agenzia
 L'agenzia entra da **Login agenzie** (il pulsante in alto, accanto a *Prenota*; sul telefono è l'icona della persona): da lì può anche **chiedere la registrazione**. Una volta dentro trova un'area **pulita**, pensata per lavorare in fretta: niente blog, *Chi sono*, tour o prezzi al pubblico.
@@ -389,7 +396,7 @@ Per ogni partner decidi in **Clienti › Partner › Stato e pagamento** se **pu
 - Se un'agenzia annulla oltre il termine gratuito, la **penale** (la parte non rimborsata) si fattura allo stesso modo.
 
 ### Listino dedicato
-Nella stessa pagina, **Listino dedicato**: scrivi il prezzo per ogni tour (vuoto = prezzo al pubblico meno lo sconto %, oppure la tariffa B2B se non c'è sconto). **Salva il listino**. I servizi **a ore** non compaiono qui: il loro prezzo viene da **Sito › Tariffe a ore**, con lo sconto % del partner. *Copia il listino da…* parte da un altro partner.
+Nella stessa pagina, **Listino dedicato**: scrivi il prezzo per ogni **tour B2B** (vuoto = la tariffa del tour, meno lo sconto % se c'è). **Salva il listino**. I servizi **a ore** non compaiono qui: il loro prezzo viene da **Sito › Tariffe a ore**, con lo sconto % del partner. *Copia il listino da…* parte da un altro partner.
 
 ### Politica di annullo per ogni partner
 Sotto **Politica di annullo** decidi fino a **3 scaglioni**: «fino a *N giorni/ore* prima dell'inizio: rimborso *X*%». Esempio: *fino a 7 giorni prima 100%; fino a 3 giorni prima 50%*; dopo l'ultimo scaglione **non si rimborsa nulla**.
@@ -569,7 +576,7 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 > Questa è una funzione tecnica, **non un parere fiscale**: cosa si può fare prima dell'apertura (per esempio prendere prenotazioni per le date successive, senza anticipi) va **confermato dal commercialista**. Per le prenotazioni già prese prima dell'apertura, le fatture si emettono **dopo** la data di apertura: imposta anche **Prima data fatturabile** in *Fatturazione elettronica*.
 
 **Prima del lancio**
-- [ ] **Tour e prezzi veri** (Sito › Tour e Listino): i tour d'esempio sono segnaposto. Controlla orari, durate, punti d'incontro, lingue.
+- [ ] **Tour e prezzi veri** (Sito › Tour B2C, Tour B2B e Listino): i tour d'esempio sono segnaposto. Controlla orari, durate, punti d'incontro, lingue.
 - [ ] **Tariffe a ore** (Sito › Tariffe a ore): le cifre iniziali sono un punto di partenza. Rivedi prezzi, supplementi e giorni festivi, **confermali col commercialista** e fai una prova col calcolatore (*Prova il calcolatore*).
 - [ ] **Foto vere**: copertine dei tour, foto della home, il tuo ritratto in *Chi sono*, anteprima social (Sito › Immagini).
 - [ ] **Testi**: rileggi *Chi sono*, gli articoli, le domande frequenti (Sito › Pagine, Blog, Testi).

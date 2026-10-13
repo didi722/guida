@@ -4,6 +4,7 @@ import { daySlots, monthAvailability } from '../server/availability.js';
 import { BookingError, cancelBooking, cancellationState, confirmPaid, createBooking, expireHolds, paymentOptions, priceFor } from '../server/bookings.js';
 import { setSetting } from '../server/db.js';
 import { addAccount, base, makeApp, NOW } from './helpers.js';
+import { openTo } from '../server/rates.js';
 
 const times = (slots) => slots.map((s) => s.time);
 
@@ -94,11 +95,19 @@ test('prezzi: a persona, a gruppo, tariffa B2B e sconto partner', (t) => {
   const priv = app.content.tour('private');
   assert.equal(priceFor(shared, 3, 'b2c'), 10500);
   assert.equal(priceFor(priv, 7, 'b2c'), 15000);
-  assert.equal(priceFor(shared, 3, 'b2b'), 8400);
-  // lo sconto del partner parte dal prezzo al pubblico (non dalla tariffa agenzie) e sostituisce quest'ultima
-  assert.equal(priceFor(priv, 7, 'b2b', { discount_percent: 10 }), 13500, '150 € al pubblico − 10% = 135 €');
-  assert.equal(priceFor(priv, 7, 'b2b', { discount_percent: 25 }), 11500, '150 € − 25% = 112,50 €: si arrotonda al multiplo di 5 € successivo');
-  assert.equal(priceFor(shared, 3, 'b2b', { discount_percent: 0 }), 8400, 'senza sconto vale la tariffa agenzie');
+  // un tour è B2C oppure B2B: il B2B ha una sola tariffa (quella delle agenzie), e lo sconto del partner si toglie da quella
+  const sharedB2b = app.content.tour('shared-agenzie');
+  const privB2b = app.content.tour('private-agenzie');
+  assert.equal(priceFor(sharedB2b, 3, 'b2b'), 8400);
+  assert.equal(priceFor(privB2b, 7, 'b2b', { discount_percent: 10 }), 11000, '120 € − 10% = 108 €: si arrotonda al multiplo di 5 € successivo');
+  assert.equal(priceFor(privB2b, 7, 'b2b', { discount_percent: 0 }), 12000);
+  assert.equal(priceFor(sharedB2b, 3, 'b2b', { discount_percent: 10 }), 8400, '28 € − 10% = 25,20 € → 30 € supera la tariffa: si resta a 28 €');
+  assert.equal(priceFor(sharedB2b, 3, 'b2b', { discount_percent: 20 }), 7500, '28 € − 20% = 22,40 € → 25 €');
+  // i privati non vedono i tour B2B, le agenzie non vedono quelli B2C
+  assert.equal(openTo(app.rates.get(), shared, 'b2c'), true);
+  assert.equal(openTo(app.rates.get(), shared, 'b2b'), false);
+  assert.equal(openTo(app.rates.get(), sharedB2b, 'b2c'), false);
+  assert.equal(openTo(app.rates.get(), sharedB2b, 'b2b'), true);
 });
 
 test('metodi di pagamento: fattura solo ai partner approvati, in sede solo B2C', (t) => {
@@ -106,13 +115,13 @@ test('metodi di pagamento: fattura solo ai partner approvati, in sede solo B2C',
   t.after(app.cleanup);
   const acct = addAccount(app.db);
   assert.throws(() => createBooking(app, base({ paymentMethod: 'invoice' }), NOW), (e) => e.code === 'payment');
-  assert.throws(() => createBooking(app, base({ channel: 'b2b', account: acct, paymentMethod: 'onsite' }), NOW), (e) => e.code === 'payment');
-  const ok = createBooking(app, base({ tourSlug: 'half-day', time: '09:00', channel: 'b2b', account: acct, paymentMethod: 'invoice', pax: 20, clientRef: 'PRATICA 123' }), NOW);
+  assert.throws(() => createBooking(app, base({ tourSlug: 'shared-agenzie', channel: 'b2b', account: acct, paymentMethod: 'onsite' }), NOW), (e) => e.code === 'payment');
+  const ok = createBooking(app, base({ tourSlug: 'half-day-agenzie', time: '09:00', channel: 'b2b', account: acct, paymentMethod: 'invoice', pax: 20, clientRef: 'PRATICA 123' }), NOW);
   assert.equal(ok.status, 'confirmed');
   assert.equal(ok.total_cents, 19000);
   assert.equal(ok.client_ref, 'PRATICA 123');
   const pending = addAccount(app.db, { email: 'p@example.com', status: 'pending' });
-  assert.throws(() => createBooking(app, base({ channel: 'b2b', account: pending, paymentMethod: 'invoice' }), NOW), (e) => e.code === 'account');
+  assert.throws(() => createBooking(app, base({ tourSlug: 'shared-agenzie', channel: 'b2b', account: pending, paymentMethod: 'invoice' }), NOW), (e) => e.code === 'account');
 });
 
 test('validazione input', (t) => {
@@ -130,7 +139,7 @@ test('politica di cancellazione: B2C 48h, B2B 72h, override per partner', (t) =>
   const acct = addAccount(app.db, { cancel_hours: 168 });
   const c = createBooking(app, base({ date: '2027-01-12' }), NOW);
   assert.equal(c.free_cancel_until, new Date(Date.parse('2027-01-12T08:30:00Z') - 48 * 3600_000).toISOString());
-  const b = createBooking(app, base({ tourSlug: 'private', time: '15:00', date: '2027-01-12', channel: 'b2b', account: acct, paymentMethod: 'invoice' }), NOW);
+  const b = createBooking(app, base({ tourSlug: 'private-agenzie', time: '15:00', date: '2027-01-12', channel: 'b2b', account: acct, paymentMethod: 'invoice' }), NOW);
   assert.equal(b.free_cancel_until, new Date(Date.parse('2027-01-12T14:00:00Z') - 168 * 3600_000).toISOString());
   const half = createBooking(app, base({ tourSlug: 'half-day', time: '09:00', date: '2027-01-14' }), NOW);
   assert.equal(half.free_cancel_until, new Date(Date.parse('2027-01-14T08:00:00Z') - 72 * 3600_000).toISOString(), 'override per tour');

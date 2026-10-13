@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import YAML from 'yaml';
 import { createConfig, ROOT } from '../server/config.js';
-import { buildContent, readContentFiles } from '../server/content.js';
+import { buildContent, readContentFiles, splitRawTours } from '../server/content.js';
 import { openDb } from '../server/db.js';
 import { localToInstant } from '../server/time.js';
 import { createContext } from '../server/context.js';
@@ -23,8 +23,8 @@ export const tour = (over = {}) => ({
   weekdays: [0, 1, 2, 3, 4, 5, 6],
   durationMin: 150,
   maxParticipants: 10,
+  audience: 'b2c',
   priceCents: 3500,
-  b2bPriceCents: 2800,
   cancelHours: null,
   payOnSite: true,
   art: 'dome',
@@ -33,10 +33,14 @@ export const tour = (over = {}) => ({
   ...over,
 });
 
+// Ogni tour è B2C (prezzo dei privati) oppure B2B (tariffa agenzie): per ciascuno dei tre tour c'è la sua versione per le agenzie, «<indirizzo>-agenzie».
 export const FIXTURE_TOURS = [
   tour(),
-  tour({ slug: 'private', model: 'group', flexible: true, times: [], durationMin: 120, maxParticipants: 20, priceCents: 15000, b2bPriceCents: 12000 }),
-  tour({ slug: 'half-day', model: 'group', flexible: true, times: [], durationMin: 240, maxParticipants: 25, priceCents: 24000, b2bPriceCents: 19000, cancelHours: 72 }),
+  tour({ slug: 'private', model: 'group', flexible: true, times: [], durationMin: 120, maxParticipants: 20, priceCents: 15000 }),
+  tour({ slug: 'half-day', model: 'group', flexible: true, times: [], durationMin: 240, maxParticipants: 25, priceCents: 24000, cancelHours: 72 }),
+  tour({ slug: 'shared-agenzie', audience: 'b2b', order: 11, priceCents: 2800 }),
+  tour({ slug: 'private-agenzie', audience: 'b2b', order: 12, model: 'group', flexible: true, times: [], durationMin: 120, maxParticipants: 20, priceCents: 12000 }),
+  tour({ slug: 'half-day-agenzie', audience: 'b2b', order: 13, model: 'group', flexible: true, times: [], durationMin: 240, maxParticipants: 25, priceCents: 19000, cancelHours: 72 }),
 ];
 
 // "Adesso" di riferimento nei test: lunedì 4 gennaio 2027, 10:00 a Venezia
@@ -70,18 +74,23 @@ export function addAccount(db, over = {}) {
   return db.prepare('SELECT * FROM accounts WHERE email = ?').get(row.email);
 }
 
-export const base = (over = {}) => ({
-  tourSlug: 'shared',
-  date: '2027-01-12',
-  time: '09:30',
-  pax: 2,
-  channel: 'b2c',
-  name: 'Mario Rossi',
-  email: 'mario@example.com',
-  lang: 'it',
-  paymentMethod: 'onsite',
-  ...over,
-});
+/** Una prenotazione di prova. Ai partner (`channel: 'b2b'`) servono i tour B2B: se non si dice altro, si usa la versione «-agenzie» del tour. */
+export const base = (over = {}) => {
+  const b = {
+    tourSlug: 'shared',
+    date: '2027-01-12',
+    time: '09:30',
+    pax: 2,
+    channel: 'b2c',
+    name: 'Mario Rossi',
+    email: 'mario@example.com',
+    lang: 'it',
+    paymentMethod: 'onsite',
+    ...over,
+  };
+  if (b.channel === 'b2b' && !b.tourSlug.endsWith('-agenzie') && FIXTURE_TOURS.some((t) => t.slug === `${b.tourSlug}-agenzie`)) b.tourSlug += '-agenzie';
+  return b;
+};
 
 export function addPromo(db, over = {}) {
   const row = { code: 'ESTATE10', kind: 'percent', value: 10, active: 1, created_at: new Date(NOW).toISOString(), ...over };
@@ -134,5 +143,6 @@ export function loadContentWithFixedServices(root = ROOT) {
   const raw = readContentFiles(root);
   const dir = path.join(root, 'test', 'fixtures', 'tours');
   for (const f of fs.readdirSync(dir)) raw.tours[f.replace(/\.yml$/, '')] = YAML.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+  raw.tours = splitRawTours(raw.tours); // come fa il sito con i tour di prima della divisione B2C/B2B: B2C + una copia per le agenzie («<indirizzo>-agenzie»)
   return buildContent(raw);
 }

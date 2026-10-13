@@ -2136,10 +2136,10 @@
   "無料キャンセルの期限（開始前）"
  ],
  "b2b.discount": [
-  "Sconto sul prezzo al pubblico",
-  "Discount on the public price",
-  "Descuento sobre el precio al público",
-  "一般料金からの割引"
+  "Sconto sulla tariffa partner",
+  "Discount on partner rate",
+  "Descuento sobre la tarifa de socio",
+  "パートナー料金からの割引"
  ],
  "b2b.baseRate": [
   "tariffa base",
