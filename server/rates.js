@@ -187,12 +187,12 @@ export function parseServiceRecord(json) {
 }
 
 // ───────────── testi brevi per email, voucher e fatture ─────────────
-const HOURS_WORD = { it: ['ora', 'ore'], en: ['hour', 'hours'], es: ['hora', 'horas'] };
+const HOURS_WORD = { it: ['ora', 'ore'], en: ['hour', 'hours'], es: ['hora', 'horas'], ja: ['時間', '時間'] };
 /** «4 ore», «2,5 ore», «1 hour». */
 export function hoursText(lang, hours) {
   const n = new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 1 }).format(hours);
   const [one, many] = HOURS_WORD[lang] ?? HOURS_WORD.en;
-  return `${n} ${hours === 1 ? one : many}`;
+  return `${n}${lang === 'ja' ? '' : ' '}${hours === 1 ? one : many}`;
 }
 /** «09:00–13:00 (4 ore)»: l'orario di una prenotazione, con le ore se è un servizio a ore. */
 export function timeRange(b, lang) {

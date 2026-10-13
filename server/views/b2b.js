@@ -104,7 +104,7 @@ export function accountPage(ctx, { acct, bookings, flash = '' }) {
     ${approved && fixedTours.length
       ? html`<div class="card pad"><h2>${t('b2b.rates')}</h2>
         <div class="table-wrap"><table class="table"><thead><tr><th>${t('s.service')}</th><th class="num">${t('b2b.public')}</th><th class="num">${t('b2b.yours')}</th></tr></thead><tbody>
-          ${fixedTours.map((x) => html`<tr><td><a href="${u('/tours/' + x.slug)}">${x.i18n[lang].title}</a><br><small class="muted">${fmtDuration(x.durationMin)} · ${x.model === 'person' ? t('price.perPerson') : t('price.perGroup')}</small></td><td class="num muted">${formatMoney(x.priceCents, lang)}</td><td class="num"><strong>${formatMoney(unitPriceFor(x, 'b2b', acct), lang)}</strong></td></tr>`)}
+          ${fixedTours.map((x) => html`<tr><td><a href="${u('/tours/' + x.slug)}">${x.i18n[lang].title}</a><br><small class="muted">${fmtDuration(x.durationMin, lang)} · ${x.model === 'person' ? t('price.perPerson') : t('price.perGroup')}</small></td><td class="num muted">${formatMoney(x.priceCents, lang)}</td><td class="num"><strong>${formatMoney(unitPriceFor(x, 'b2b', acct), lang)}</strong></td></tr>`)}
         </tbody></table></div></div>`
       : ''}
   </div>

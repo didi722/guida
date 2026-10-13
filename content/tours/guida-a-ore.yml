@@ -10,7 +10,7 @@ duration: 120            # durata minima (minuti)
 maxParticipants: 25
 cancelHours: 48
 art: walk
-languages: [it, en, es]
+languages: [it, en, es, ja]
 
 it:
   title: Guida privata a ore
@@ -77,3 +77,25 @@ es:
   excludes:
     - Entradas, transporte, propinas
   notes: Precio para todo el grupo, por horas. Festivos y horario nocturno o de tarde-noche tienen suplemento; auriculares bajo petición para grupos.
+
+ja:
+  title: 時間制プライベートガイド
+  subtitle: 日付・開始時間・時間数をお選びいただけます
+  summary: "お客様のグループだけのために、公認ガイドが必要な時間だけご案内します。2時間から1日（8時間）までお選びいただけます。"
+  meetingPoint: ご相談のうえ決定（ホテル、桟橋、ターミナル）
+  meetingUrl: ''
+  description: |
+    ご希望の時刻に開始し、お選びいただいた時間だけ、公認ガイドが専属でご案内します。ご家族や少人数のグループはもちろん、旅行会社様、DMC（現地手配会社）、ツアーオペレーターの皆様にもご利用いただけます。
+
+    ルートは、ご興味やお時間、当日の段取り（ホテル、クルーズ船、桟橋、ターミナルからの合流）に合わせて、事前にご相談のうえ決めます。サン・マルコとリアルトの定番から観光客の少ない地区まで、宗教史からチケッティ（ヴェネツィア風の小皿料理）まで、幅広く対応します。
+  highlights:
+    - お客様専属の公認ガイド
+    - 2時間から1日（8時間）まで、時間数をお選びいただけます
+    - ルートは事前にご相談のうえ決定
+    - 最大25名様のグループ（ヴェネツィア市の定める人数制限の範囲内）
+  includes:
+    - 公認ガイド
+    - グループのご担当者様との事前の打ち合わせ
+  excludes:
+    - 入場料、交通費、チップ
+  notes: グループ全体に対する時間料金です。日曜・祝祭日および夜間の時間帯は割増料金が適用されます。グループ向けに、ご希望に応じてイヤホン（受信機）をご用意します。

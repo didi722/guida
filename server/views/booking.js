@@ -42,7 +42,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
               <div class="result-media">${tourMedia(ctx, tour, '')}</div>
               <div class="result-body">
                 <h3><a href="${u('/tours/' + tour.slug)}">${ti.title}</a></h3>
-                <p class="muted small">${fmtDuration(tour.durationMin)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>
+                <p class="muted small">${fmtDuration(tour.durationMin, lang)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>
                 <div class="slot-list">${slots.map((s) => html`<a class="slot" href="${slotUrl(u, tour.slug, date, s.time, pax)}"><strong>${s.time}</strong>${tour.model === 'person' ? html`<small>${s.joined ? t('book.confirmedDeparture') : t('book.newDeparture')}${s.left <= 4 ? html` · ${t('w.left', { n: s.left })}` : ''}</small>` : ''}</a>`)}</div>
               </div>
             </article>`;
@@ -139,7 +139,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       <h2>${ti.title}</h2>
       <dl class="summary-list">
         <div><dt>${t('s.date')}</dt><dd>${fmtDate(date, lang)}</dd></div>
-        <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${hourly ? hoursLabel(t, lang, serviceHours) : fmtDuration(duration)})</span></dd></div>
+        <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${hourly ? hoursLabel(t, lang, serviceHours) : fmtDuration(duration, lang)})</span></dd></div>
         <div><dt><label for="pax-select">${t('s.guests')}</label></dt><dd><select name="pax" id="pax-select" form="checkout-form" class="pax-select">${Array.from({ length: Math.max(pax, Math.min(25, tour.maxParticipants, slot.left ?? tour.maxParticipants)) }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select><noscript> <button class="btn btn-outline btn-sm" type="submit" name="apply" value="1" form="checkout-form" formnovalidate>${t('checkout.update')}</button></noscript></dd></div>
         ${hourly && tour.service === 'guide' && rates.surcharges.earpieceCents > 0 && pax >= rates.surcharges.earpieceFromPax
           ? html`<div><dt>${t('hourly.f.earpieces')}</dt><dd><label class="check"><input type="checkbox" name="earpieces" value="1" form="checkout-form" data-apply ${earpieces ? raw('checked') : ''}> ${formatMoney(rates.surcharges.earpieceCents, lang)} × ${pax}</label></dd></div>`

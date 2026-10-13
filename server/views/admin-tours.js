@@ -141,7 +141,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
   </div>
 
   ${LANGS.map((l) => html`<details class="card pad lang-block" ${l === 'it' || has(l) || error ? raw('open') : ''}>
-    <summary><h2>Testi · ${LANG_META[l].name}${l === 'it' ? '' : html` <small class="muted">(se vuoti, il sito mostra l’${l === 'es' ? 'inglese' : 'italiano'})</small>`}</h2></summary>
+    <summary><h2>Testi · ${LANG_META[l].name}${l === 'it' ? '' : html` <small class="muted">(se vuoti, il sito mostra l’${l === 'en' ? 'italiano' : 'inglese'})</small>`}</h2></summary>
     ${field('Titolo', `title_${l}`, v[`title_${l}`], { attrs: l === 'it' ? 'required maxlength="120"' : 'maxlength="120"' })}
     ${field('Sottotitolo', `subtitle_${l}`, v[`subtitle_${l}`], { attrs: 'maxlength="160"' })}
     ${field('Riassunto', `summary_${l}`, v[`summary_${l}`], { hint: 'una o due frasi: compare negli elenchi e nei risultati di Google', rows: 3, attrs: l === 'it' ? 'required maxlength="400"' : 'maxlength="400"' })}

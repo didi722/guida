@@ -9,7 +9,7 @@ flexible: true
 duration: 240
 maxParticipants: 25
 art: walk
-languages: [it, en, es]
+languages: [it, en, es, ja]
 
 it:
   title: Tour leader
@@ -64,3 +64,21 @@ es:
   excludes:
     - Entradas, transporte, propinas
   notes: Tarifa por horas para todo el grupo. Festivos y horario nocturno o de tarde-noche tienen suplemento.
+
+ja:
+  title: ツアーリーダー（添乗員）
+  subtitle: 時間制のグループ同行サービス
+  summary: "サービスの全行程でグループに同行し、時間管理、ロジスティクス、手配先との調整を取りまとめる添乗員です。"
+  meetingPoint: ご相談のうえ決定（駅、空港、ローマ広場、ホテル）
+  meetingUrl: ''
+  description: |
+    サービス時間中、グループに同行して全体を取りまとめるツアーリーダーです。時間管理、ロジスティクス、手配先とのやり取り、参加者へのサポートを行います。半日（4時間）から1日（8時間）までご利用いただけます。ガイドサービスとの併用も可能です。
+  highlights:
+    - 時間制のサービスで、時間数をお選びいただけます
+    - パートナーエリアから、ご自身でご予約いただけます
+    - 電子請求書の発行
+  includes:
+    - ご指定の時間分のサービス
+  excludes:
+    - 入場料、交通費、チップ
+  notes: 時間料金はグループ全体に対するものです。日曜・祝祭日および夜間の時間帯は割増料金が適用されます。

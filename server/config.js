@@ -57,7 +57,7 @@ export function createConfig(overrides = {}) {
 
     site: {
       name: e.SITE_NAME || 'Davide Tomio',
-      tagline: { it: 'Guida turistica · Venezia', en: 'Tour guide · Venice', es: 'Guía turístico · Venecia' },
+      tagline: { it: 'Guida turistica · Venezia', en: 'Tour guide · Venice', es: 'Guía turístico · Venecia', ja: 'ガイド · ヴェネツィア' },
       email: e.CONTACT_EMAIL || 'info@example.com',
       phone: e.CONTACT_PHONE || '',
       whatsapp: e.CONTACT_WHATSAPP || '', // solo cifre con prefisso, es. 393331234567

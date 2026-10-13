@@ -13,8 +13,8 @@ import { parseServiceRecord, serviceNote, timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
-const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,' }, lang);
-const bye = (lang) => pick({ it: 'A presto,', en: 'See you soon,', es: 'Hasta pronto,' }, lang);
+const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,', ja: name ? `${name} 様` : 'お客様' }, lang);
+const bye = (lang) => pick({ it: 'A presto,', en: 'See you soon,', es: 'Hasta pronto,', ja: 'どうぞよろしくお願いいたします。' }, lang);
 
 /** I testi del tour nella lingua richiesta; se il tour non ha quel blocco (fixture, contenuti incompleti) ripiega sull'inglese, poi sull'italiano. */
 const tourText = (app, slug, lang) => pick(app.content.tour(slug).i18n, lang);
@@ -118,6 +118,39 @@ const T = {
     addCal: 'El archivo adjunto añade el servicio a tu calendario.',
     bye: 'Hasta pronto,',
     contactLine: 'Para cualquier cosa, responde a este correo.',
+  },
+  ja: {
+    hello: (n) => `${n} 様`,
+    confirmedSubject: (ref, title, d) => `ご予約確定のお知らせ ${ref} — ${title}（${d}）`,
+    confirmedIntro: 'ご予約が確定しました。内容は以下のとおりです。',
+    cancelledSubject: (ref) => `ご予約をキャンセルしました ${ref}`,
+    cancelledIntro: 'ご予約をキャンセルしました。',
+    refundLine: (m) => `返金額：${m}（元のお支払い方法に返金されます。通常、5〜10営業日かかります）。`,
+    noRefundLine: 'このキャンセルでは、返金はありません。',
+    refundPartialLine: (m, p) => `一部返金（${p}%）：${m}（元のお支払い方法に返金されます。通常、5〜10営業日かかります）。`,
+    penaltyLine: (m) => `規定により、このキャンセルには${m}のキャンセル料がかかります。請求書に含めてご請求します。`,
+    retainedLine: (m) => `キャンセル料として差し引かれた金額：${m}。`,
+    conflictSubject: (ref) => `ご予約 ${ref}：枠を確保できなかったため、返金手続き中です`,
+    conflictBody: '誠に申し訳ありませんが、枠の確保期限を過ぎてからお支払いが届き、その間に同じ枠が他のお客様に割り当てられました。お支払い金額は全額返金いたしました。お手数ですが、サイトで別の枠をお選びいただくか、ご連絡ください。',
+    tour: 'サービス',
+    date: '日付',
+    time: '時間',
+    people: '参加者',
+    meeting: '集合場所',
+    total: '合計',
+    ref: '予約番号',
+    clientRef: '案件番号',
+    pay: { card: 'オンライン支払い済み', onsite: 'サービス当日にお支払い', invoice: '請求書払い／銀行振込（ご契約のとおり）', giftcard: 'ギフトカードで支払い済み', free: 'お支払いは不要です' },
+    discount: (code) => `割引${code ? ' ' + code : ''}`,
+    giftUsed: 'ギフトカード',
+    due: 'お支払い額',
+    policyFree: (dt) => `${dt}まで無料でキャンセルできます。`,
+    policyNone: 'このご予約は、サービス直前のお申し込みのため、返金できません。',
+    policyAfter: 'それ以降は返金できません。',
+    manage: 'ご予約の確認・キャンセル',
+    addCal: '添付のファイルで、サービスをカレンダーに追加できます。',
+    bye: 'どうぞよろしくお願いいたします。',
+    contactLine: 'ご不明な点は、このメールにご返信ください。',
   },
 };
 
@@ -306,6 +339,13 @@ const P = {
     approvedBody: (n, url) => `Hola ${n},\ntu cuenta de partner ha sido aprobada: a partir de ahora puedes acceder, consultar las tarifas reservadas y reservar servicios para tus clientes.\n\nAccede aquí: ${url}\n`,
     sign: 'Hasta pronto,',
   },
+  ja: {
+    receivedSubject: 'パートナーアクセスの申請を受け付けました',
+    receivedBody: (n) => `${n} 様\nパートナーエリアへのアクセス申請を受け付けました。内容を確認のうえ、通常1〜2営業日以内にご連絡いたします。\n`,
+    approvedSubject: 'パートナーアカウントが有効になりました',
+    approvedBody: (n, url) => `${n} 様\nパートナーアカウントが承認されました。今後は、ログインして専用料金をご確認いただき、お客様のためのサービスをご予約いただけます。\n\nログインはこちら：${url}\n`,
+    sign: 'どうぞよろしくお願いいたします。',
+  },
 };
 
 export async function sendPartnerRegistered(app, a) {
@@ -382,6 +422,22 @@ const G = {
     cta: 'Elige tu tour',
     sign: 'Hasta pronto,',
   },
+  ja: {
+    buyerSubject: (amount) => `ギフトカード（${amount}）のご案内`,
+    buyerIntro: 'ご購入ありがとうございます。ギフトカードのご用意ができました。',
+    buyerScheduled: (name, email, date) => `${name ? name + ' 様' : ''}（${email}）へ、${date}の9:00に送信いたします。コードは、以下にも記載しています。`,
+    buyerSent: (email) => `${email}宛てに送信しました。`,
+    buyerSelf: '印刷して、またはそのまま転送して、贈りたい方にお渡しいただけます。',
+    recipientSubject: (from) => (from ? `${from}様から、ヴェネツィアでの体験のプレゼントが届きました` : 'ヴェネツィアのギフトカードが届きました'),
+    recipientIntro: (name) => `${name ? `${name} 様、` : ''}公認ガイドと一緒にヴェネツィアを巡る、ギフトカードが届きました。`,
+    from: (name) => `贈り主：${name}`,
+    amount: '金額',
+    code: 'コード',
+    valid: '有効期限',
+    how: 'ご利用方法：サイトでツアーを選び、確認画面で「ギフトカード」欄にコードを入力してください。残高がなくなるまで、複数回に分けてご利用いただけます。',
+    cta: 'ツアーを選ぶ',
+    sign: 'どうぞよろしくお願いいたします。',
+  },
 };
 
 function giftBlock(app, card, lang) {
@@ -439,7 +495,7 @@ export async function sendGiftToRecipient(app, card) {
   const tr = G[lang];
   const intro = tr.recipientIntro(card.recipient_name);
   const from = card.buyer_name ? tr.from(card.buyer_name) : '';
-  const lines = [intro, from, card.message ? `«${card.message}»` : '', '', ...giftBlock(app, card, lang).map(([k, v]) => `${k}: ${v}`), '', tr.how, `${app.cfg.baseUrl}/${lang}/tours`, '', `${tr.sign} ${app.cfg.site.name}`].filter((l, i) => l !== '' || i > 2);
+  const lines = [intro, from, card.message ? (lang === 'ja' ? `「${card.message}」` : `«${card.message}»`) : '', '', ...giftBlock(app, card, lang).map(([k, v]) => `${k}: ${v}`), '', tr.how, `${app.cfg.baseUrl}/${lang}/tours`, '', `${tr.sign} ${app.cfg.site.name}`].filter((l, i) => l !== '' || i > 2);
   return app.mail.send({
     to: card.recipient_email,
     subject: tr.recipientSubject(card.buyer_name),
@@ -497,6 +553,18 @@ const R = {
     privateCta: 'Deja un comentario privado',
     thanks: 'Gracias de nuevo y hasta pronto en Venecia,',
     once: 'Este es el único correo que te envío después del tour.',
+  },
+  ja: {
+    subject: (site) => `ツアーはいかがでしたか？ ${site}とめぐるヴェネツィア`,
+    hello: (n) => `${n} 様`,
+    intro: (title, date) => `「${title}」（${date}）にご参加いただき、ありがとうございました。お楽しみいただけたでしょうか。`,
+    ask: 'よろしければ、レビューを書いていただけませんか。ガイドを探している方にとっても、私のような小さな事業にとっても、大きな助けになります。1分ほど、2〜3行で十分です。',
+    google: 'Googleでレビューを書く',
+    tripadvisor: 'Tripadvisorでレビューを書く',
+    privateAsk: '直接お伝えいただく方がよろしければ（良かった点、改善できる点など）、こちらから。',
+    privateCta: 'フィードバックを送る',
+    thanks: 'あらためて、ありがとうございました。またヴェネツィアでお会いできますように。',
+    once: 'ツアー後にお送りするメールは、これ1通だけです。',
   },
 };
 
@@ -581,6 +649,22 @@ const RM = {
     contactMail: 'Si surge algún imprevisto o no me encuentras, responde a este correo.',
     manage: 'Ver la reserva y descargar el voucher',
     bye: '¡Hasta mañana!',
+  },
+  ja: {
+    subject: (title) => `明日：ヴェネツィアで「${title}」`,
+    intro: '明日のツアーのご案内です。詳細は以下のとおりです。',
+    ref: '予約番号',
+    tour: 'サービス',
+    date: '日付',
+    time: '時間',
+    people: '参加者',
+    meeting: '集合場所',
+    map: '地図を開く',
+    know: 'ご参考までに',
+    contact: '急なご都合や、集合場所で合流できない場合は、メールまたはお電話でご連絡ください：',
+    contactMail: '急なご都合や、集合場所で合流できない場合は、このメールにご返信ください。',
+    manage: 'ご予約内容の確認とバウチャーのダウンロード',
+    bye: '明日、お会いできるのを楽しみにしております。',
   },
 };
 
@@ -723,6 +807,29 @@ const PG = {
     sign: 'Hasta pronto,',
     reply: 'Para cualquier cosa, responde a este correo.',
   },
+  ja: {
+    receivedSubject: (ref) => `リクエストを受け付けました ${ref}：ヴェネツィアのプログラム`,
+    receivedIntro: '複数日プログラムのご依頼を受け付けました。通常2営業日以内に、ご提案をお送りします。',
+    proposalSubject: (ref) => `ヴェネツィアのプログラムのご提案（${ref}）`,
+    proposalIntro: 'ご依頼をもとに作成した、プログラムのご提案をお送りします。',
+    acceptedSubject: (ref) => `ご提案を承諾いただきました ${ref}：あとは手付金のみです`,
+    acceptedIntro: (amount) => `ご提案を承諾いただき、ありがとうございます。プログラムを確定するには、${amount}の手付金が必要です。`,
+    acceptedNoOnline: 'お支払い方法について、まもなくご連絡します。',
+    confirmedSubject: (ref) => `プログラム確定 ${ref}`,
+    confirmedIntro: 'プログラムが確定しました。日程はお客様のために確保されています。各日のカレンダーを添付しました。',
+    cta: 'ご提案を見て承諾する',
+    pay: '手付金を支払う',
+    view: 'プログラムのページを開く',
+    total: '合計',
+    deposit: (p) => `手付金（${p}%）`,
+    valid: '有効期限',
+    participants: '人数',
+    dates: '日程',
+    flexible: '調整可能',
+    tbd: '未定',
+    sign: 'どうぞよろしくお願いいたします。',
+    reply: 'ご不明な点は、このメールにご返信ください。',
+  },
 };
 
 export const programUrl = (app, p, lang = normLang(p.lang)) => `${app.cfg.baseUrl}/${lang}/programs/${p.ref}?t=${p.token}`;
@@ -740,7 +847,7 @@ function programDaysRows(app, p, lang) {
 export function programIcs(app, p, lang = normLang(p.lang)) {
   const days = programDaysRows(app, p, lang);
   const host = new URL(app.cfg.baseUrl).hostname;
-  return calendar(`${app.cfg.site.name} — ${p.proposal_title ?? p.ref}`, days.map((d) => eventLines({ uid: `${p.ref}-${d.id}@${host}`, date: d.date, start: d.start_time, end: d.end_time, summary: `${p.proposal_title ?? pick({ it: 'Venezia', en: 'Venice', es: 'Venecia' }, lang)}: ${d.title}`, description: d.description ?? '', url: programUrl(app, p, lang) })));
+  return calendar(`${app.cfg.site.name} — ${p.proposal_title ?? p.ref}`, days.map((d) => eventLines({ uid: `${p.ref}-${d.id}@${host}`, date: d.date, start: d.start_time, end: d.end_time, summary: `${p.proposal_title ?? pick({ it: 'Venezia', en: 'Venice', es: 'Venecia', ja: 'ヴェネツィア' }, lang)}: ${d.title}`, description: d.description ?? '', url: programUrl(app, p, lang) })));
 }
 
 const proposalAttachments = (app, p, lang) => pdfAttachment(`proposta-${p.ref}.pdf`, (pdf) => pdf.renderProposalPdf(app, p, lang), 'proposta');

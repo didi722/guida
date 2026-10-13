@@ -8,7 +8,7 @@ duration: 180            # 3 ore, fisse
 maxParticipants: 15
 cancelHours: 48
 art: eastwest
-languages: [it, en, es]
+languages: [it, en, es, ja]
 
 it:
   title: Venezia tra Oriente e Occidente
@@ -29,7 +29,7 @@ it:
     - San Giorgio dei Greci e il mondo ortodosso a Venezia
     - "Il Giappone a Venezia: l'ambasceria Tenshō del 1585"
   includes:
-    - Guida abilitata e storico delle religioni, in italiano, inglese o spagnolo
+    - Guida abilitata e storico delle religioni, in italiano, inglese, spagnolo o giapponese
     - Itinerario costruito sui vostri interessi
     - Orario a vostra scelta
   excludes:
@@ -56,7 +56,7 @@ en:
     - San Giorgio dei Greci and the Orthodox world in Venice
     - "Japan in Venice: the 1585 Tenshō embassy"
   includes:
-    - Licensed guide and historian of religions, in Italian, English or Spanish
+    - Licensed guide and historian of religions, in Italian, English, Spanish or Japanese
     - Itinerary built around your interests
     - Start time of your choice
   excludes:
@@ -83,10 +83,37 @@ es:
     - San Giorgio dei Greci y el mundo ortodoxo en Venecia
     - "Japón en Venecia: la embajada Tenshō de 1585"
   includes:
-    - Guía turístico habilitado e historiador de las religiones, en italiano, inglés o español
+    - Guía turístico habilitado e historiador de las religiones, en italiano, inglés, español o japonés
     - Itinerario construido según tus intereses
     - Horario a tu elección
   excludes:
     - Entradas a monumentos y museos
     - Propinas y consumiciones
   notes: Tarifa por horas para todo el grupo, hasta 15 personas; festivos y horario nocturno tienen suplemento.
+
+ja:
+  title: 東西が出会うヴェネツィア
+  subtitle: 宗教史家がご案内する、テーマ型のプライベートツアー
+  summary: "ビザンツ、イスラーム、ギリシャ人やアルメニア人の共同体、そして日本まで。東西の架け橋となった街ヴェネツィアを、宗教を通して語ります。"
+  meetingPoint: ホテルの場所に合わせてご相談のうえ決定（通常はサン・マルコ付近）
+  meetingUrl: ''
+  description: |
+    ヴェネツィアは昔から、コンスタンティノープルへ、イスラーム世界へ、そしてアジアへと通じる玄関口でした。そのため街には、思いがけない痕跡があふれています。ビザンティン様式のモザイク、東方の影響を映すアーチ、オスマン帝国の商人たちの倉庫、ギリシャ人やアルメニア人の共同体の教会がその例です。
+
+    このプライベートツアーでは、宗教と文化交流の糸を追いながら、サン・マルコ寺院から商人たちの路地まで歩き、あまり知られていない物語にたどり着きます。1585年、イエズス会の教育を受けたキリスト教徒の日本人の若者たち（天正遣欧少年使節）が、ヴェネツィア共和国から大きな栄誉をもって迎えられました。
+
+    ご興味や年齢、お時間に合わせて内容を調整できます。カップル、10代のお子様連れのご家族、ご友人同士のグループ、そしてすでに「定番」の名所を訪れたことのある方に向いています。
+  highlights:
+    - ビザンツ帝国との架け橋としてのサン・マルコ寺院
+    - ヴェネツィアの建築に残るイスラームと東方の痕跡
+    - フォンダコ・デイ・トゥルキ（トルコ人商館）と、外国人商人の共同体
+    - サン・ジョルジョ・デイ・グレーチ教会と、ヴェネツィアの正教会の世界
+    - "ヴェネツィアの中の日本：1585年の天正遣欧少年使節"
+  includes:
+    - 公認ガイド兼宗教史家によるご案内（イタリア語・英語・スペイン語・日本語）
+    - ご興味に合わせて組み立てるルート
+    - 開始時間はお好みでお選びいただけます
+  excludes:
+    - 歴史的建造物や博物館の入場料
+    - チップ、飲食代
+  notes: グループ全体に対する時間料金です（最大15名様まで）。日曜・祝祭日および夜間の時間帯は割増料金が適用されます。

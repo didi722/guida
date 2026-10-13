@@ -9,7 +9,7 @@ flexible: true
 duration: 60
 maxParticipants: 25
 art: walk
-languages: [it, en, es]
+languages: [it, en, es, ja]
 
 it:
   title: Meet & greet
@@ -64,3 +64,21 @@ es:
   excludes:
     - Entradas, transporte, propinas
   notes: Tarifa por horas para todo el grupo. Festivos y horario nocturno o de tarde-noche tienen suplemento.
+
+ja:
+  title: ミート＆グリート
+  subtitle: 到着されるお客様のお出迎え
+  summary: "ご到着のお客様を、駅、空港、ローマ広場（ピアッツァーレ・ローマ）、ホテルでお出迎えいたします。"
+  meetingPoint: ご相談のうえ決定（駅、空港、ローマ広場、ホテル）
+  meetingUrl: ''
+  description: |
+    貴社のお客様のご到着時に、ネームボードを掲げてお出迎えし、到着直後のサポートを行います。対応場所は、サンタ・ルチア駅、空港、ローマ広場（ピアッツァーレ・ローマ）、クルーズターミナル、ホテルです。最初の1時間は料金に含まれています。ホテルや桟橋までお連れする必要がある場合は、その分の時間が追加されます。
+  highlights:
+    - 時間制のサービスで、時間数をお選びいただけます
+    - パートナーエリアから、ご自身でご予約いただけます
+    - 電子請求書の発行
+  includes:
+    - ご指定の時間分のサービス
+  excludes:
+    - 入場料、交通費、チップ
+  notes: 時間料金はグループ全体に対するものです。日曜・祝祭日および夜間の時間帯は割増料金が適用されます。

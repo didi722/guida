@@ -4,7 +4,7 @@ import { GiftError, activateGift, claimDelivery, createAdminGift, createGiftOrde
 import { normLang, pick } from './langs.js';
 
 // Nome del prodotto per Stripe e per la pagina di pagamento, nella lingua del cliente
-const PRODUCT = { it: 'Buono regalo', en: 'Gift card', es: 'Tarjeta regalo' };
+const PRODUCT = { it: 'Buono regalo', en: 'Gift card', es: 'Tarjeta regalo', ja: 'ギフトカード' };
 
 export function createGiftServices(app) {
   const { db, cfg, payments } = app;

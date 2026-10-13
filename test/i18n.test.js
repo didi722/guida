@@ -52,31 +52,46 @@ test('ogni testo ha una traduzione per ogni lingua e i segnaposto {x} coincidono
 });
 
 test('lingue: ripiego su inglese e italiano, lingua non valida → italiano', () => {
-  assert.deepEqual(LANGS, ['it', 'en', 'es']);
+  assert.deepEqual(LANGS, ['it', 'en', 'es', 'ja']);
   assert.equal(normLang('es'), 'es');
   assert.equal(normLang('xx'), 'it');
   assert.equal(normLang(undefined), 'it');
   assert.equal(normLang('constructor'), 'it', 'niente chiavi ereditate dall’oggetto');
   assert.equal(localeOf('es'), 'es-ES');
   assert.equal(LANG_META.es.stripe, 'es');
+  assert.equal(localeOf('ja'), 'ja-JP');
+  assert.equal(LANG_META.ja.stripe, 'ja');
+  assert.equal(normLang('ja'), 'ja');
+  assert.equal(pick({ it: 'a', en: 'b' }, 'ja'), 'b');
+  assert.equal(pick({ it: 'a', en: 'b', ja: 'd' }, 'ja'), 'd');
+  assert.equal(makeT('ja')('nav.tours'), 'ツアー');
+  assert.equal(makeT('ja')('tour.upTo', { n: 12 }), '12名まで');
   assert.equal(pick({ it: 'a', en: 'b' }, 'es'), 'b');
   assert.equal(pick({ it: 'a' }, 'es'), 'a');
   assert.equal(pick({ it: 'a', en: 'b', es: 'c' }, 'es'), 'c');
   assert.equal(makeT('xx')('nav.tours'), makeT('it')('nav.tours'), 'lingua sconosciuta: italiano');
 });
 
-test('contenuti: ogni tour, articolo e pagina esiste anche in spagnolo (e i tour lo offrono come lingua)', () => {
+test('contenuti: ogni tour, articolo e pagina esiste anche in spagnolo e in giapponese (e i tour li offrono come lingue)', () => {
   const c = loadContent(ROOT);
   for (const t of c.tours) {
-    assert.ok(t.languages.includes('es'), `${t.slug}: lingue del tour`);
-    assert.notEqual(t.i18n.es.summary, t.i18n.en.summary, `${t.slug}: riassunto spagnolo uguale all'inglese (traduzione mancante?)`);
+    for (const l of ['es', 'ja']) {
+      assert.ok(t.languages.includes(l), `${t.slug}: lingue del tour (${l})`);
+      assert.notEqual(t.i18n[l].summary, t.i18n.en.summary, `${t.slug}: riassunto ${l} uguale all'inglese (traduzione mancante?)`);
+    }
+    assert.match(t.i18n.ja.summary, /[\u3040-\u30ff\u4e00-\u9fff]/, `${t.slug}: il riassunto giapponese contiene giapponese`);
   }
   const rawTours = fs.readdirSync(path.join(ROOT, 'content', 'tours')).filter((f) => f.endsWith('.yml'));
-  for (const f of rawTours) assert.ok(YAML.parse(fs.readFileSync(path.join(ROOT, 'content', 'tours', f), 'utf8')).es?.title, `${f}: manca il blocco es`);
+  for (const f of rawTours) {
+    const y = YAML.parse(fs.readFileSync(path.join(ROOT, 'content', 'tours', f), 'utf8'));
+    for (const l of ['es', 'ja']) assert.ok(y[l]?.title, `${f}: manca il blocco ${l}`);
+    assert.deepEqual(Object.keys(y.ja ?? {}).sort(), Object.keys(y.it).sort(), `${f}: il blocco ja ha le stesse chiavi dell'italiano`);
+  }
   for (const p of c.posts) assert.deepEqual(Object.keys(p.i18n).sort(), [...LANGS].sort(), `articolo ${p.slug}`);
   for (const name of ['about', 'cookies', 'privacy', 'terms']) {
     for (const l of LANGS) assert.ok(c.page(name, l)?.html, `pagina ${name} (${l})`);
     const ph = (l) => [...fs.readFileSync(path.join(ROOT, 'content', 'pages', `${name}.${l}.md`), 'utf8').matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]).sort().join(',');
     assert.equal(ph('es'), ph('it'), `${name}: segnaposto {{…}} diversi in spagnolo`);
+    assert.equal(ph('ja'), ph('it'), `${name}: segnaposto {{…}} diversi in giapponese`);
   }
 });

@@ -18,7 +18,7 @@ Quello sguardo me lo porto dietro anche a Venezia. Per me non è un museo a ciel
 ### In breve
 
 - Guida turistica abilitata · {{license}}
-- Lingue: italiano, inglese, spagnolo
+- Lingue: italiano, inglese, spagnolo, giapponese
 - Storico delle religioni e ricercatore indipendente
 
 Se ti piace leggere, sul mio blog [davidetomio.it](https://davidetomio.it) scrivo di religioni, Giappone e storie meno raccontate. Qui, nel [blog di Venezia](/it/blog), trovi curiosità e consigli pratici sulla città.

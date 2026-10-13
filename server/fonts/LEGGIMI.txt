@@ -1,0 +1,23 @@
+Font giapponese dei PDF (voucher, buoni regalo, proposte)
+=========================================================
+
+NotoSansJP-Regular.subset.ttf e NotoSansJP-Bold.subset.ttf sono un SOTTOINSIEME di Noto Sans JP
+(https://fonts.google.com/noto/specimen/Noto+Sans+JP), licenza SIL Open Font License 1.1 (vedi OFL-NotoSansJP.txt).
+
+Contengono: latino di base, Latin-1 e Latin Extended-A, punteggiatura, hiragana, katakana, forme a larghezza intera,
+gli ideogrammi della JIS X 0213 (piano 1: livelli 1-3, circa 8.600 caratteri, tutti quelli dei nomi di persona più comuni),
+alcune varianti frequenti nei cognomi (髙 𠮷 﨑) e gli ideogrammi di compatibilità. Senza tabelle di impaginazione
+(GSUB/GPOS/GDEF): servono a PDFKit solo per i glifi e le larghezze. I file sono TTF non compressi di proposito:
+con un WOFF compresso la libreria che legge il font decomprime l'intera tabella dei glifi a ogni carattere e un voucher
+impiega decine di secondi.
+
+Come sono stati ottenuti (fontTools):
+  1. si parte dai file statici NotoSansJP-Regular.ttf e NotoSansJP-Bold.ttf (per esempio dal pacchetto npm
+     @expo-google-fonts/noto-sans-jp, cartelle 400Regular e 700Bold);
+  2. si scrive in un file di testo l'elenco dei caratteri voluti (i blocchi sopra);
+  3. pyftsubset NotoSansJP_400Regular.ttf --text-file=caratteri.txt --layout-features= --no-hinting --notdef-outline \
+       --drop-tables+=DSIG,GPOS,GSUB,GDEF,BASE,STAT,gasp,vhea,vmtx --name-IDs='*' --output-file=NotoSansJP-Regular.subset.ttf
+     (stesso comando per il Bold).
+
+Il PDF contiene poi solo i glifi davvero usati. Il font si usa solo per i testi con kana o ideogrammi (server/pdf.js,
+useJapaneseFont); tutto il resto resta in Josefin Sans.

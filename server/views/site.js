@@ -170,7 +170,7 @@ ${posts.length
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: cfg.site.name,
-    jobTitle: pick({ it: 'Guida turistica abilitata a Venezia', en: 'Licensed tour guide in Venice', es: 'Guía turístico habilitado en Venecia' }, lang),
+    jobTitle: pick({ it: 'Guida turistica abilitata a Venezia', en: 'Licensed tour guide in Venice', es: 'Guía turístico habilitado en Venecia', ja: 'ヴェネツィアの公認ツアーガイド' }, lang),
     knowsLanguage: LANGS,
     url: `${cfg.baseUrl}/${lang}/`,
     sameAs: [cfg.site.instagram, 'https://davidetomio.it'].filter(Boolean),
@@ -258,7 +258,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     <h1>${ti.title}</h1>
     <p class="lead">${ti.subtitle || ti.summary}</p>
     <ul class="facts">
-      <li><span class="fact-k">${t('tour.duration')}</span><span class="fact-v">${fmtDuration(tour.durationMin)}</span></li>
+      <li><span class="fact-k">${t('tour.duration')}</span><span class="fact-v">${fmtDuration(tour.durationMin, lang)}</span></li>
       <li><span class="fact-k">${t('tour.group')}</span><span class="fact-v">${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })}</span></li>
       <li><span class="fact-k">${t('tour.languages')}</span><span class="fact-v">${tour.languages.map((l) => t(`lang.${l}`)).join(', ')}</span></li>
       <li><span class="fact-k">${t('tour.start')}</span><span class="fact-v">${tour.flexible ? t('tour.startFlexible') : tour.times.join(' · ')}</span></li>
@@ -296,7 +296,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     '@type': 'TouristTrip',
     name: ti.title,
     description: ti.summary,
-    touristType: pick({ it: 'Turisti a Venezia', en: 'Visitors to Venice', es: 'Visitantes de Venecia' }, lang),
+    touristType: pick({ it: 'Turisti a Venezia', en: 'Visitors to Venice', es: 'Visitantes de Venecia', ja: 'ヴェネツィアを訪れる旅行者' }, lang),
     provider: { '@type': 'Person', name: cfg.site.name },
     offers: { '@type': 'Offer', price: ((hourly ? (app.rates.fromPrice(tour.service, 'b2c')?.cents ?? 0) : unitPriceFor(tour, 'b2c')) / 100).toFixed(2), priceCurrency: 'EUR', url: `${cfg.baseUrl}/${lang}/tours/${tour.slug}` },
   };
