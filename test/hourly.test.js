@@ -166,6 +166,66 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
   }
 });
 
+test('home e pagine Tour: due categorie (guida privata a ore e tour di gruppo), senza elenco di tour', async () => {
+  const s = await start();
+  try {
+    const { anon, partner } = s;
+    const home = await (await anon('/it/')).text().then(nb);
+    assert.match(home, /Come vuoi scoprire Venezia\?/);
+    const priv = /<article class="card choice-card reveal" id="private">([^]*?)<\/article>/.exec(home)?.[1] ?? '';
+    const group = /<article class="card choice-card reveal" id="group">([^]*?)<\/article>/.exec(home)?.[1] ?? '';
+    assert.ok(priv && group, 'le due schede ci sono');
+    assert.ok(home.indexOf('id="private"') < home.indexOf('id="group"'), 'prima la guida privata');
+    // guida privata: tariffe al pubblico a colpo d'occhio e collegamento al calcolatore
+    assert.match(priv, /Guida privata a ore/);
+    assert.match(priv, /2 ore<\/span><strong>200 €/);
+    assert.match(priv, /Mezza giornata · 4 ore<\/span><strong>380 €/);
+    assert.match(priv, /Giornata intera · 8 ore<\/span><strong>700 €/);
+    assert.match(priv, /href="\/it\/hourly">Calcola il preventivo/);
+    assert.ok(!priv.includes('160 €'), 'niente tariffe per agenzie');
+    // tour di gruppo: prezzo «da», prossime partenze (al massimo tre) e collegamento a «Prenota»
+    assert.match(group, /Tour di gruppo/);
+    assert.match(group, /da 35 € a persona/);
+    const deps = [...group.matchAll(/class="dep" href="/g)].length;
+    assert.ok(deps >= 1 && deps <= 3, `${deps} partenze`);
+    assert.match(group, /href="\/it\/book">Vedi tutte le partenze/);
+    // niente più elenco di tour in home e niente ricerca per data nella prima schermata
+    assert.ok(!home.includes('tour-card'), 'nessuna scheda di tour in home');
+    assert.ok(!home.includes('quick-search'));
+    assert.match(home, /<a class="btn btn-gold" href="\/it\/hourly">Guida privata a ore<\/a>\s*<a class="btn btn-outline" href="\/it\/book">Tour di gruppo<\/a>/);
+    // in inglese e spagnolo
+    assert.match(await (await anon('/en/')).text(), /How would you like to discover Venice\?[^]*?Private guide by the hour[^]*?Group tours/);
+    assert.match(await (await anon('/es/')).text(), /¿Cómo quieres descubrir Venecia\?[^]*?Guía privado por horas[^]*?Tours en grupo/);
+
+    // un partner con lo sconto del 15% vede le sue tariffe: 160 → 136, 300 → 255, 560 → 476
+    const ph = await (await partner('/it/')).text().then(nb);
+    const ppriv = /id="private">([^]*?)<\/article>/.exec(ph)?.[1] ?? '';
+    for (const price of ['136 €', '255 €', '476 €']) assert.ok(ppriv.includes(price), price);
+    assert.ok(!ppriv.includes('200 €'));
+
+    // pagina Tour: prima la guida privata, poi i gruppi
+    const tours = await (await anon('/it/tours')).text().then(nb);
+    assert.ok(tours.indexOf('id="private"') > 0 && tours.indexOf('id="private"') < tours.indexOf('id="group"'));
+    assert.match(tours, /Guida privata a ore<\/h2>[^]*?Venezia tra Oriente e Occidente[^]*?Tour di gruppo a posti liberi<\/h2>[^]*?Cannaregio/);
+    assert.ok(!tours.includes('Assistente in loco'), 'i servizi per agenzie non si vedono al pubblico');
+    assert.match(await (await partner('/it/tours')).text(), /Assistente in loco/);
+
+    // «Prenota» rimanda alla guida a ore
+    assert.match(await (await anon('/it/book')).text(), /Cerchi una guida tutta per te, a ore\?[^]*?href="\/it\/hourly">Calcola il preventivo/);
+
+    // senza servizi privati visibili la scheda sparisce e resta solo il gruppo (il suo pulsante diventa quello principale)
+    for (const slug of ['guida-a-ore', 'venezia-oriente-occidente', 'isole-murano-burano-torcello']) assert.equal(loc(await s.admin(`/admin/tours/${slug}/toggle`, post({}))), '/admin/tours?ok=toggled');
+    const only = await (await anon('/it/')).text().then(nb);
+    assert.ok(!only.includes('id="private"') && only.includes('id="group"'));
+    assert.match(only, /<a class="btn btn-gold" href="\/it\/book">Tour di gruppo<\/a>/);
+    assert.ok(!only.includes('Guida privata a ore'));
+    assert.ok(!(await (await anon('/it/book')).text()).includes('Cerchi una guida tutta per te'));
+    assert.ok(!(await (await anon('/it/tours')).text()).includes('id="private"'));
+  } finally {
+    s.close();
+  }
+});
+
 test('servizi a ore: prenotazione di un cliente privato (ore, supplementi, orario di fine, conto conservato)', async () => {
   const s = await start();
   try {

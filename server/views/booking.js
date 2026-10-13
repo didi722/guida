@@ -12,7 +12,7 @@ import { parseServiceRecord } from '../rates.js';
 const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
 
 // ───────────────────────── Pagina "Prenota" (prima la data) ─────────────────────────
-export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures = [], channel, tours = ctx.app.content.tours }) {
+export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures = [], channel, tours = ctx.app.content.tours, hourly = false }) {
   const { t, lang, u, app } = ctx;
   const body = html`
 <section class="page-head"><div class="wrap">
@@ -30,6 +30,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
     </label>
     <button class="btn btn-gold" type="submit">${t('quick.go')}</button>
   </form>
+  ${hourly ? html`<p class="hourly-hint">${t('book.hourlyHint')} <a href="${u('/hourly')}">${t('book.hourlyLink')} →</a></p>` : ''}
 
   ${date
     ? html`<h2 class="h-sub spaced">${t('book.resultsFor', { date: fmtDate(date, lang) })}</h2>

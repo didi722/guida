@@ -90,7 +90,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
     </div>
     <div class="form-grid">
       <label class="check"><input type="checkbox" name="active" value="1" ${v.active ? raw('checked') : ''}> Visibile sul sito e prenotabile</label>
-      <label class="check"><input type="checkbox" name="featured" value="1" ${v.featured ? raw('checked') : ''}> In evidenza (in home)</label>
+      <label class="check"><input type="checkbox" name="featured" value="1" ${v.featured ? raw('checked') : ''}> In evidenza: la sua foto compare nella scheda della home</label>
     </div>
     <fieldset class="field"><legend class="label">Tipo di servizio</legend>
       <label class="check"><input type="radio" name="model" value="person" ${v.model === 'person' ? raw('checked') : ''}> <strong>Partenze fisse, prezzo a persona</strong> (tour in piccoli gruppi con orari stabiliti)</label>

@@ -45,7 +45,7 @@ export function publicRouter(app) {
 
   r.get('/', (req, res) => {
     const nowMs = Date.now();
-    const departures = nextDepartures(db, cfg, selectable(channelOf(req.acct)), nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 4 });
+    const departures = nextDepartures(db, cfg, selectable(channelOf(req.acct)), nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 3 });
     send(res, homePage(res.locals.ctx, { departures, quotes: featuredQuotes(db, { limit: 3 }), reviewStats: feedbackStats(db) }));
   });
   r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx)));
@@ -119,7 +119,7 @@ export function publicRouter(app) {
     }
     // senza una data in mente: le prossime partenze, prenotabili con un tocco
     const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : selectable(channel), nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
-    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, tours: selectable(channel) }));
+    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, tours: selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
   });
 
   // ───── servizi a ore: preventivo e orari liberi ─────

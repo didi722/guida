@@ -6,7 +6,8 @@ import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, pick } from '../langs.js';
-import { SERVICES, openTo } from '../rates.js';
+import { SERVICES, openTo, rateRows } from '../rates.js';
+import { formatMoney } from '../util.js';
 import { ratesBlock } from './hourly.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
@@ -29,10 +30,20 @@ export function homePage(ctx, { departures = [], quotes = [], reviewStats = null
   const { content, cfg } = app;
   const rates = app.rates.get();
   const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
-  const featured = content.tours.filter((x) => x.featured && openTo(rates, x, channel));
   const posts = content.postsFor(lang).slice(0, 3);
-  const minDate = minBookableDate(app);
   const hours = fmtHours(t, cfg.policy.b2cFreeCancelHours);
+
+  // le due categorie: guida privata (a ore) e tour di gruppo a posti liberi
+  const shown = content.tours.filter((x) => openTo(rates, x, channel));
+  const groupTours = shown.filter((x) => x.model === 'person');
+  const privateTours = shown.filter((x) => x.model === 'group');
+  const cover = (list) => list.find((x) => x.featured) ?? list[0] ?? null; // la foto di ogni scheda: il tour «in evidenza», altrimenti il primo
+  const guideTour = privateTours.find((x) => x.pricing === 'hourly' && x.service === 'guide' && x.chooseHours) ?? privateTours.find((x) => x.pricing === 'hourly' && x.service === 'guide') ?? null;
+  const discount = channel === 'b2b' ? Number(ctx.acct?.discount_percent) || 0 : 0;
+  const guideRates = guideTour ? rateRows(rates, 'guide', channel, discount) : null;
+  const privateCover = cover(privateTours);
+  const groupCover = cover(groupTours);
+  const fromGroup = groupTours.length ? priceParts(ctx, groupTours.reduce((a, b) => (unitPriceFor(b, channel, ctx.acct) < unitPriceFor(a, channel, ctx.acct) ? b : a))) : null;
 
   const body = html`
 <section class="hero">
@@ -41,22 +52,42 @@ export function homePage(ctx, { departures = [], quotes = [], reviewStats = null
       <p class="eyebrow">${t('home.eyebrow')}</p>
       <h1>${t('home.h1')}</h1>
       <p class="lead">${t('home.lead')}</p>
-      <form class="quick-search" method="get" action="${u('/book')}">
-        <label><span>${t('quick.date')}</span><input type="date" name="date" min="${minDate}" required></label>
-        <label><span>${t('quick.guests')}</span><input type="number" name="pax" min="1" max="25" value="2" inputmode="numeric" required></label>
-        <button class="btn btn-gold" type="submit">${t('quick.go')}</button>
-      </form>
+      <p class="btn-row">
+        ${privateCover ? html`<a class="btn btn-gold" href="${guideTour ? u('/hourly') : u('/tours') + '#private'}">${t('home.private.title')}</a>` : ''}
+        ${groupCover ? html`<a class="btn ${privateCover ? 'btn-outline' : 'btn-gold'}" href="${u('/book')}">${t('home.group.title')}</a>` : ''}
+      </p>
       <p class="hero-links"><a href="${u('/tours')}">${t('home.allTours')} →</a> <span aria-hidden="true">·</span> <a href="${u('/b2b')}">${t('home.forAgencies')}</a></p>
     </div>
     <div class="hero-art">${siteArt(ctx, 'home', 'dome', { label: t('home.artAlt'), alt: t('site.title'), sizes: '(max-width: 900px) 100vw, 560px', eager: true })}</div>
   </div>
 </section>
 
-${departures.length ? html`<section class="section tight departures">
+${privateCover || groupCover ? html`<section class="section tight choose">
   <div class="wrap">
-    <h2 class="h-sub">${t('departures.title')}</h2>
-    <p class="muted">${t('departures.lead')}</p>
-    ${departuresList(ctx, departures)}
+    ${sectionHead(t('home.choose.title'), t('home.choose.lead'))}
+    <div class="choice-grid">
+      ${privateCover ? html`<article class="card choice-card reveal" id="private">
+        <a class="card-media" href="${u(guideTour ? '/hourly' : '/tours')}" tabindex="-1" aria-hidden="true">${tourMedia(ctx, privateCover, '')}<span class="chip chip-float">${t('home.private.eyebrow')}</span></a>
+        <div class="choice-body">
+          <h3>${t('home.private.title')}</h3>
+          <p class="muted">${t('home.private.p')}</p>
+          ${guideRates ? html`<ul class="plain rate-mini">${guideRates.rows.map((r) => html`<li><span>${t(`hourly.b.${r.hours}`)}</span><strong>${formatMoney(r.cents, lang)}</strong></li>`)}</ul>
+          <p class="small muted">${t('hourly.note.group', { max: 25 })} ${t('home.private.sup')}</p>` : ''}
+          <p class="btn-row"><a class="btn btn-gold" href="${u(guideTour ? '/hourly' : '/tours')}">${t('home.private.cta')}</a></p>
+        </div>
+      </article>` : ''}
+      ${groupCover ? html`<article class="card choice-card reveal" id="group">
+        <a class="card-media" href="${u('/book')}" tabindex="-1" aria-hidden="true">${tourMedia(ctx, groupCover, '')}<span class="chip chip-float">${t('home.group.eyebrow')}</span></a>
+        <div class="choice-body">
+          <h3>${t('home.group.title')}</h3>
+          <p class="muted">${t('home.group.p')}${fromGroup ? html` <strong>${t('home.group.from', { price: fromGroup.money })}</strong>` : ''}</p>
+          ${departures.length
+            ? html`<p class="eyebrow small">${t('home.group.next')}</p>${departuresList(ctx, departures.slice(0, 3))}`
+            : html`<p class="small muted">${t('home.group.none')}</p>`}
+          <p class="btn-row"><a class="btn ${privateCover ? 'btn-outline' : 'btn-gold'}" href="${u('/book')}">${t('home.group.cta')}</a></p>
+        </div>
+      </article>` : ''}
+    </div>
   </div>
 </section>` : ''}
 
@@ -66,13 +97,6 @@ ${departures.length ? html`<section class="section tight departures">
     <p class="reveal">${checkIcon}<span><strong>${t('trust.small')}</strong><br>${t('trust.smallSub')}</span></p>
     <p class="reveal">${checkIcon}<span><strong>${t('trust.cancel', { when: hours })}</strong><br>${t('trust.cancelSub')}</span></p>
     <p class="reveal">${checkIcon}<span><strong>${t(ctx.app.cfg.policy.allowPayOnSite ? 'trust.pay' : 'trust.payCard')}</strong><br>${t(ctx.app.cfg.policy.allowPayOnSite ? 'trust.paySub' : 'trust.paySubCard')}</span></p>
-  </div>
-</section>
-
-<section class="section">
-  <div class="wrap">
-    ${sectionHead(t('home.toursTitle'), t('home.toursLead'), html`<a class="btn btn-outline" href="${u('/tours')}">${t('home.allTours')}</a>`)}
-    <div class="grid grid-3">${featured.map((x) => tourCard(ctx, x))}</div>
   </div>
 </section>
 
@@ -168,10 +192,10 @@ export function toursPage(ctx) {
   <h1>${t('tours.title')}</h1><p class="lead">${t('tours.lead')}</p>
 </div></section>
 <section class="section"><div class="wrap">
-  <h2 class="h-sub">${t('tours.groupTitle')}</h2><p class="muted sub-lead">${t('tours.groupLead')}</p>
-  <div class="grid grid-3">${groups.map((x) => tourCard(ctx, x))}</div>
-  <h2 class="h-sub spaced">${t('tours.privateTitle')}</h2><p class="muted sub-lead">${t('tours.privateLead')}</p>
-  <div class="grid grid-3">${priv.map((x) => tourCard(ctx, x))}</div>
+  ${priv.length ? html`<h2 class="h-sub" id="private">${t('tours.privateTitle')}</h2><p class="muted sub-lead">${t('tours.privateLead')}</p>
+  <div class="grid grid-3">${priv.map((x) => tourCard(ctx, x))}</div>` : ''}
+  ${groups.length ? html`<h2 class="h-sub ${priv.length ? 'spaced' : ''}" id="group">${t('tours.groupTitle')}</h2><p class="muted sub-lead">${t('tours.groupLead')}</p>
+  <div class="grid grid-3">${groups.map((x) => tourCard(ctx, x))}</div>` : ''}
   <p class="center spaced reveal"><a class="btn btn-outline" href="${ctx.u('/programs')}">${t('pg.toursLink')}</a></p>
 </div></section>`;
   return page(ctx, { title: t('nav.tours'), description: t('tours.lead'), path: `/${lang}/tours`, body, activeNav: 'tours' });

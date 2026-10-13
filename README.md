@@ -9,6 +9,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 ## Cosa fa
 
 **Per i clienti (B2C)**
+- La home propone **due strade**: la **guida privata a ore** (con le tariffe a colpo d'occhio e il calcolatore del preventivo) e i **tour di gruppo a posti liberi** (con le prossime partenze, prenotabili con un tocco). La pagina *Tour* è divisa nello stesso modo.
 - Scelgono il tour e vedono un **calendario con le date libere** e gli orari, oppure partono dalla data (`/it/book`).
 - Per la **guida privata a ore** (`/it/hourly`) scelgono giorno, ora, ore e persone e vedono subito il totale, con festivo, notturno e auricolari calcolati dal sito.
 - Prenotano senza registrarsi e **pagano subito con carta** (Stripe). Il pagamento «il giorno del tour» è **spento di default** (vedi [Pagamento in contanti](#pagamento-in-contanti-il-giorno-del-tour)).

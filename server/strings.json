@@ -150,9 +150,79 @@
   "Venecia, más allá de la postal."
  ],
  "home.lead": [
-  "Tour a piccoli gruppi e visite private con una guida che ama le storie dietro i monumenti. Prenota online in due minuti.",
-  "Small-group tours and private visits with a guide who loves the stories behind the monuments. Book online in two minutes.",
-  "Tours en grupos reducidos y visitas privadas con un guía que ama las historias que hay detrás de los monumentos. Reserva online en dos minutos."
+  "Visite a piccoli gruppi oppure private, a ore: una guida che ama le storie dietro i monumenti. Prenota online in due minuti.",
+  "Small-group tours or private visits by the hour, with a guide who loves the stories behind the monuments. Book online in two minutes.",
+  "Tours en grupo reducido o visitas privadas por horas, con un guía que ama las historias detrás de los monumentos. Reserva en línea en dos minutos."
+ ],
+ "home.choose.title": [
+  "Come vuoi scoprire Venezia?",
+  "How would you like to discover Venice?",
+  "¿Cómo quieres descubrir Venecia?"
+ ],
+ "home.choose.lead": [
+  "In un piccolo gruppo oppure con una guida tutta per te.",
+  "In a small group, or with a guide all to yourself.",
+  "En un grupo reducido o con un guía solo para ti."
+ ],
+ "home.private.eyebrow": [
+  "Solo per voi",
+  "Just for you",
+  "Solo para ti"
+ ],
+ "home.private.title": [
+  "Guida privata a ore",
+  "Private guide by the hour",
+  "Guía privado por horas"
+ ],
+ "home.private.p": [
+  "Una guida abilitata a tua disposizione, nel giorno e all’ora che preferisci. Scegli quante ore: il prezzo è per tutto il gruppo e lo vedi subito.",
+  "A licensed guide at your disposal, on the day and at the time you prefer. Choose how many hours: the price is for the whole group and you see it straight away.",
+  "Un guía habilitado a tu disposición, el día y a la hora que prefieras. Elige cuántas horas: el precio es para todo el grupo y lo ves al instante."
+ ],
+ "home.private.cta": [
+  "Calcola il preventivo",
+  "Calculate a quote",
+  "Calcular un presupuesto"
+ ],
+ "home.private.sup": [
+  "Festivi, orari serali e auricolari hanno un piccolo supplemento: lo calcola il sito.",
+  "Holidays, evening hours and earpieces carry a small supplement, which the site calculates for you.",
+  "Festivos, horario nocturno y auriculares llevan un pequeño suplemento, que calcula el sitio."
+ ],
+ "home.group.eyebrow": [
+  "A posti liberi",
+  "Open seats",
+  "Plazas libres"
+ ],
+ "home.group.title": [
+  "Tour di gruppo",
+  "Group tours",
+  "Tours en grupo"
+ ],
+ "home.group.p": [
+  "Partenze fisse in piccolo gruppo: scegli il tour e il tuo posto, paghi a persona.",
+  "Fixed departures in a small group: pick a tour and your seat, and pay per person.",
+  "Salidas fijas en grupo reducido: elige el tour y tu plaza, y paga por persona."
+ ],
+ "home.group.next": [
+  "Prossime partenze",
+  "Next departures",
+  "Próximas salidas"
+ ],
+ "home.group.none": [
+  "Scegli una data per vedere i tour con posti liberi.",
+  "Pick a date to see the tours with free seats.",
+  "Elige una fecha para ver los tours con plazas libres."
+ ],
+ "home.group.cta": [
+  "Vedi tutte le partenze",
+  "See all departures",
+  "Ver todas las salidas"
+ ],
+ "home.group.from": [
+  "da {price} a persona",
+  "from {price} per person",
+  "desde {price} por persona"
  ],
  "home.allTours": [
   "Tutti i tour",
@@ -168,16 +238,6 @@
   "Illustrazione di San Marco con il campanile e le cupole",
   "Illustration of St Mark’s with the bell tower and domes",
   "Ilustración de la plaza de San Marcos con el campanario y las cúpulas"
- ],
- "home.toursTitle": [
-  "Tour e servizi",
-  "Tours and services",
-  "Tours y servicios"
- ],
- "home.toursLead": [
-  "Dai tour a piccoli gruppi alle visite private su misura.",
-  "From small-group tours to tailor-made private visits.",
-  "Desde tours en grupos reducidos hasta visitas privadas a medida."
  ],
  "home.b2bTitle": [
   "Lavori nel turismo?",
@@ -335,14 +395,14 @@
   "Cómo funciona"
  ],
  "how.1.t": [
-  "Scegli data e tour",
-  "Pick a date and a tour",
-  "Elige fecha y tour"
+  "Scegli servizio e data",
+  "Choose your service and date",
+  "Elige servicio y fecha"
  ],
  "how.1.p": [
-  "Vedi subito orari disponibili e prezzo, senza registrarti.",
-  "See available times and prices right away, no sign-up.",
-  "Ves al instante los horarios disponibles y el precio, sin registrarte."
+  "Tour di gruppo o guida privata: vedi subito orari disponibili e prezzo, senza registrarti.",
+  "Group tour or private guide: see the available times and the price straight away, with no sign-up.",
+  "Tour en grupo o guía privado: ves al instante los horarios disponibles y el precio, sin registrarte."
  ],
  "how.2.t": [
   "Prenota in due minuti",
@@ -455,14 +515,14 @@
   "Tours y servicios"
  ],
  "tours.lead": [
-  "Visite a piccoli gruppi con partenze fisse e servizi privati su misura, in italiano, inglese e spagnolo.",
-  "Small-group visits with fixed departures and tailor-made private services, in Italian, English and Spanish.",
-  "Visitas en grupos reducidos con salidas fijas y servicios privados a medida, en italiano, inglés y español."
+  "Due modi di visitare Venezia: una guida privata a ore, oppure un tour di gruppo con posti liberi. In italiano, inglese e spagnolo.",
+  "Two ways to visit Venice: a private guide by the hour, or a group tour with open seats. In Italian, English and Spanish.",
+  "Dos formas de visitar Venecia: un guía privado por horas o un tour en grupo con plazas libres. En italiano, inglés y español."
  ],
  "tours.groupTitle": [
-  "Tour a piccoli gruppi",
-  "Small-group tours",
-  "Tours en grupos reducidos"
+  "Tour di gruppo a posti liberi",
+  "Group tours with open seats",
+  "Tours en grupo con plazas libres"
  ],
  "tours.groupLead": [
   "Partenze fisse, prezzo a persona: ti unisci a un gruppo ristretto.",
@@ -470,14 +530,14 @@
   "Salidas fijas, precio por persona: te unes a un grupo reducido."
  ],
  "tours.privateTitle": [
-  "Visite e servizi privati",
-  "Private visits and services",
-  "Visitas y servicios privados"
+  "Guida privata a ore",
+  "Private guide by the hour",
+  "Guía privado por horas"
  ],
  "tours.privateLead": [
-  "Giorno e orario a tua scelta, prezzo per l’intero gruppo.",
-  "Day and time of your choice, price for the whole group.",
-  "Día y hora a tu elección, precio para todo el grupo."
+  "Giorno e orario a tua scelta, prezzo per l’intero gruppo: scegli quante ore e il prezzo si calcola subito.",
+  "The day and time are yours, and the price is for the whole group: choose how many hours and the price is calculated instantly.",
+  "El día y la hora los eliges tú, y el precio es para todo el grupo: elige cuántas horas y el precio se calcula al instante."
  ],
  "tour.kindGroup": [
   "Piccolo gruppo",
@@ -3498,5 +3558,20 @@
   "Vedi le tariffe",
   "See the rates",
   "Ver las tarifas"
+ ],
+ "book.hourlyHint": [
+  "Cerchi una guida tutta per te, a ore?",
+  "Looking for a guide all to yourself, by the hour?",
+  "¿Buscas un guía solo para ti, por horas?"
+ ],
+ "book.hourlyLink": [
+  "Calcola il preventivo",
+  "Calculate a quote",
+  "Calcular un presupuesto"
+ ],
+ "tours.hourlyHint": [
+  "Prezzo calcolato sulle ore che scegli.",
+  "Price calculated on the hours you choose.",
+  "Precio calculado según las horas que elijas."
  ]
 }
