@@ -4,8 +4,10 @@ import { accountTiers } from '../policy.js';
 import { isSimplePolicy, tierSentencesHours } from '../policyText.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
+import { SERVICES } from '../rates.js';
 import { page } from './layout.js';
 import { breadcrumbs, fmtDuration, fmtHours } from './components.js';
+import { ratesBlock } from './hourly.js';
 
 const COUNTRIES = ['IT', 'DE', 'FR', 'ES', 'GB', 'US', 'NL', 'AT', 'CH', 'BE', 'PT', 'PL', 'CZ', 'SE', 'DK', 'NO', 'IE', 'JP', 'CN', 'KR', 'AU', 'CA', 'BR', 'IN', 'AE', 'OTHER'];
 
@@ -72,15 +74,22 @@ export function accountPage(ctx, { acct, bookings, flash = '' }) {
   const tiers = accountTiers(cfg, acct);
   const upcoming = bookings.filter((b) => b.status !== 'expired');
   const statusChip = { pending: 'chip-warn', approved: 'chip-ok', rejected: 'chip-err', suspended: 'chip-err' }[acct.status];
+  const rateServices = approved ? SERVICES.filter((s) => app.rates.has(s, 'b2b')) : [];
+  const fixedTours = content.tours.filter((x) => x.pricing !== 'hourly');
 
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.myAccount')]])}
   <div class="account-head"><div><h1>${acct.company}</h1><p class="muted">${acct.contact_name} · ${acct.email}</p></div>
-    <div class="btn-row">${approved ? html`<a class="btn btn-gold" href="${u('/book')}">${t('b2b.newBooking')}</a>` : ''}<form method="post" action="${u('/b2b/logout')}"><button class="btn btn-outline" type="submit">${t('b2b.logout')}</button></form></div></div>
+    <div class="btn-row">${approved ? html`${rateServices.length ? html`<a class="btn btn-gold" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn ${rateServices.length ? 'btn-outline' : 'btn-gold'}" href="${u('/book')}">${t('b2b.newBooking')}</a>` : ''}<form method="post" action="${u('/b2b/logout')}"><button class="btn btn-outline" type="submit">${t('b2b.logout')}</button></form></div></div>
 </div></section>
 <section class="section tight"><div class="wrap">
   ${flash ? html`<div class="notice notice-ok" role="status">${t(`b2b.flash.${flash}`)}</div>` : ''}
+  ${rateServices.length
+    ? html`<h2 class="h-sub">${t('hourly.ratesYours')}</h2><p class="muted sub-lead">${t('b2b.ratesPartnerLead')}</p>
+    ${ratesBlock(ctx, { channel: 'b2b', services: rateServices, discountPercent: acct.discount_percent ?? 0 })}
+    <div class="spaced"></div>`
+    : ''}
   <div class="grid grid-2 account-grid">
     <div class="card pad"><h2>${t('b2b.status')}</h2>
       <p><span class="chip ${statusChip}">${t(`b2b.st.${acct.status}`)}</span></p>
@@ -92,10 +101,10 @@ export function accountPage(ctx, { acct, bookings, flash = '' }) {
         <li><span class="muted">${t('b2b.discount')}</span> <strong>${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')}</strong></li>
         <li><span class="muted">${t('b2b.payments')}</span> <strong>${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</strong></li></ul>` : ''}
     </div>
-    ${approved
+    ${approved && fixedTours.length
       ? html`<div class="card pad"><h2>${t('b2b.rates')}</h2>
         <div class="table-wrap"><table class="table"><thead><tr><th>${t('s.service')}</th><th class="num">${t('b2b.public')}</th><th class="num">${t('b2b.yours')}</th></tr></thead><tbody>
-          ${content.tours.map((x) => html`<tr><td><a href="${u('/tours/' + x.slug)}">${x.i18n[lang].title}</a><br><small class="muted">${fmtDuration(x.durationMin)} · ${x.model === 'person' ? t('price.perPerson') : t('price.perGroup')}</small></td><td class="num muted">${formatMoney(x.priceCents, lang)}</td><td class="num"><strong>${formatMoney(unitPriceFor(x, 'b2b', acct), lang)}</strong></td></tr>`)}
+          ${fixedTours.map((x) => html`<tr><td><a href="${u('/tours/' + x.slug)}">${x.i18n[lang].title}</a><br><small class="muted">${fmtDuration(x.durationMin, lang)} · ${x.model === 'person' ? t('price.perPerson') : t('price.perGroup')}</small></td><td class="num muted">${formatMoney(x.priceCents, lang)}</td><td class="num"><strong>${formatMoney(unitPriceFor(x, 'b2b', acct), lang)}</strong></td></tr>`)}
         </tbody></table></div></div>`
       : ''}
   </div>

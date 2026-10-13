@@ -231,9 +231,6 @@ a.card:hover .arrow { transform: translateX(5px); }
 .hero-art { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-lg); aspect-ratio: 4 / 3.2; border: 1px solid var(--line); }
 .hero-art svg { width: 100%; height: 100%; }
 .hero-links { margin-top: 1.2rem; font-weight: 700; font-size: 0.95rem; }
-.quick-search { display: grid; grid-template-columns: 1.3fr 0.8fr auto; gap: 10px; align-items: end; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 14px; border-radius: 18px; margin-top: 1.6rem; }
-.quick-search label span { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px 4px; }
-.quick-search .btn { height: 50px; }
 .hero-b2b { padding-bottom: 40px; }
 
 .trust { padding: 8px 0 12px; }
@@ -520,13 +517,12 @@ body.admin { --header-h: 64px; }
   body { font-size: 1rem; }
   .section { padding: 52px 0; } .section.tight { padding-bottom: 52px; }
   .grid-2, .grid-3, .grid-4, .two-col, .form-grid { grid-template-columns: 1fr; }
-  .quick-search { grid-template-columns: 1fr 1fr; } .quick-search .btn { grid-column: 1 / -1; }
-  .quick-search label:first-child { grid-column: 1 / -1; }
   .card.pad, .pad { padding: 20px; }
   .result { grid-template-columns: 1fr; } .result-media { min-height: 130px; }
   .section-head { flex-direction: column; align-items: flex-start; }
   .footer-grid { grid-template-columns: 1fr; }
   .search-card { grid-template-columns: 1fr; }
+  .hero .btn-row { flex-direction: column; align-items: stretch; gap: 10px; } .hero .btn-row .btn { text-align: center; }
   .prow { grid-template-columns: 1fr; } .prow-price { width: 100%; }
   .itin-day { grid-template-columns: 1fr auto; } .itin-when { grid-column: 1 / -1; flex-direction: row; gap: 10px; align-items: baseline; }
   .gift-grid { grid-template-columns: 1fr; } .gift-side { position: static; order: -1; } .gift-art { aspect-ratio: 16 / 7; }
@@ -660,6 +656,25 @@ body.admin { --header-h: 64px; }
 .dep-what { display: flex; flex-direction: column; min-width: 0; } .dep-what strong { line-height: 1.25; } .dep-what small { color: var(--muted); } .dep-what .dep-few { color: var(--accent-text); font-weight: 700; }
 .dep-price { text-align: right; display: flex; flex-direction: column; } .dep-price small { color: var(--muted); }
 @media (max-width: 640px) { .dep-list { grid-template-columns: 1fr; } }
+
+/* home: le due categorie (guida privata a ore, tour di gruppo) */
+.choose .section-head { margin-bottom: 26px; }
+.choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: stretch; }
+.choice-card { display: flex; flex-direction: column; overflow: hidden; }
+.choice-card > .card-media { display: block; }
+.choice-body { display: flex; flex-direction: column; gap: 6px; padding: 22px 24px 24px; flex: 1; }
+.choice-body h3 { margin: 0; font-size: 1.5rem; }
+.choice-body > p { margin: 0; }
+.choice-body .btn-row { margin-top: auto; padding-top: 1.1rem; }
+.choice-body .eyebrow { margin: 10px 0 0; }
+.choice-card .dep-list { grid-template-columns: 1fr; margin-top: 6px; }
+.rate-mini { margin: 8px 0 2px; padding: 0; list-style: none; }
+.rate-mini li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.rate-mini li:last-child { border-bottom: 0; }
+.rate-mini strong { font-size: 1.05rem; white-space: nowrap; }
+.hourly-hint { margin: 18px 4px 0; padding: 12px 16px; border: 1px dashed var(--bronze); border-radius: 14px; font-weight: 600; }
+.hourly-hint a { white-space: nowrap; }
+@media (max-width: 900px) { .choice-grid { grid-template-columns: 1fr; gap: 20px; } .choice-body { padding: 18px 18px 20px; } }
 .summary-list .pax-select { width: auto; min-width: 4.5em; padding: 6px 30px 6px 12px; margin: 0; font-size: 1rem; }
 .summary-list dt label { cursor: pointer; }
 
@@ -716,3 +731,28 @@ body.admin { --header-h: 64px; }
 .mode-option:has(input:checked) { border-color: var(--bronze); background: var(--soft); }
 .mode-option > input { align-self: start; margin-top: 4px; } .mode-body > * { margin: 0 0 8px; } .mode-body > :last-child { margin-bottom: 0; } .mode-body label { cursor: pointer; }
 .mode-body .info-list li { margin-bottom: 6px; } .mode-body .info-list .warn { color: var(--warn); }
+
+/* Tariffe a ore */
+.rate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 18px; }
+.rate-card h3 { margin: 0 0 0.2em; } .rate-card > .muted { margin: 0 0 12px; }
+.rate-table { width: 100%; border-collapse: collapse; }
+.rate-table th { text-align: left; font-weight: 400; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); }
+.rate-table td { text-align: right; font-weight: 700; padding: 9px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.rate-table tr:last-child th, .rate-table tr:last-child td { border-bottom: 0; } .rate-extra th, .rate-extra td { color: var(--muted); font-weight: 400; }
+.rate-extras { margin-bottom: 14px; }
+.sup-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--line); } .sup-list li:last-child { border-bottom: 0; } .sup-list strong { white-space: nowrap; }
+.notes-list li { margin: 0 0 4px; }
+.hourly-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; }
+.hourly-form .field, .hourly-form .check { margin: 0; } .hourly-form .wide, .hourly-form .check, .hourly-form .btn, .hourly-form .notice { grid-column: 1 / -1; }
+.hourly-form .btn { justify-self: start; }
+.quote-card { margin-top: 18px; } .quote-card h2 { margin-top: 0; }
+.summary-list .row-extra dt::before { content: '+ '; }
+.quote-card .summary-list > div, .summary-list .row-line { flex-direction: row !important; } .quote-card .summary-list dd, .summary-list .row-line dd { text-align: right !important; }
+
+/* giapponese: caratteri di sistema (nessun font di terzi), interlinea più larga e a capo più curati */
+:lang(ja) { font-family: 'Josefin Sans', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', 'Meiryo', 'Noto Sans JP', 'Noto Sans CJK JP', system-ui, sans-serif; line-break: strict; word-break: auto-phrase; overflow-wrap: anywhere; }
+html:lang(ja) body { line-height: 1.85; }
+:lang(ja) h1, :lang(ja) h2, :lang(ja) h3, :lang(ja) h4 { line-height: 1.4; letter-spacing: 0; text-wrap: balance; }
+:lang(ja) h1 { font-size: clamp(1.8rem, 5.2vw, 3.1rem); }
+:lang(ja) .eyebrow, :lang(ja) .btn, :lang(ja) .chip { letter-spacing: 0.05em; }
+:lang(ja) .lead { font-weight: 400; }

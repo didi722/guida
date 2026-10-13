@@ -1,13 +1,14 @@
-order: 4
+order: 5
 featured: false
 model: group
+pricing: hourly          # il prezzo viene dalle tariffe a ore (Sito › Tariffe a ore)
+service: guide
 flexible: true
-duration: 330            # 5h30
+duration: 330            # 5h30, fisse
 maxParticipants: 12
-price: 320
-b2bPrice: 260
+cancelHours: 48
 art: islands
-languages: [it, en, es]
+languages: [it, en, es, ja]
 
 it:
   title: Murano, Burano e Torcello
@@ -33,7 +34,7 @@ it:
     - Biglietti del vaporetto o noleggio barca privata
     - Ingresso alla cattedrale di Torcello
     - Pranzo, mance e consumazioni
-  notes: Prezzo per l'intero gruppo, fino a 12 persone. In caso di maltempo severo concordiamo insieme un'alternativa o la data.
+  notes: Prezzo a tariffa oraria per l'intero gruppo, fino a 12 persone (battello escluso). In caso di maltempo severo concordiamo insieme un'alternativa o la data.
 
 en:
   title: Murano, Burano and Torcello
@@ -59,7 +60,7 @@ en:
     - Water bus tickets or private boat hire
     - Entry to Torcello cathedral
     - Lunch, tips and drinks
-  notes: Price for the whole group, up to 12 guests. In case of severe weather we agree on an alternative or another date together.
+  notes: Hourly rate for the whole group, up to 12 guests (boat not included). In case of severe weather we agree on an alternative or another date together.
 
 es:
   title: Murano, Burano y Torcello
@@ -85,4 +86,30 @@ es:
     - Billetes de vaporetto o alquiler de barco privado
     - Entrada a la catedral de Torcello
     - Almuerzo, propinas y consumiciones
-  notes: Precio para todo el grupo, hasta 12 personas. En caso de mal tiempo severo, acordamos juntos una alternativa u otra fecha.
+  notes: Tarifa por horas para todo el grupo, hasta 12 personas (barco no incluido). En caso de mal tiempo severo, acordamos juntos una alternativa u otra fecha.
+
+ja:
+  title: ムラーノ島、ブラーノ島、トルチェッロ島
+  subtitle: ラグーナ（潟）で過ごす半日
+  summary: "ガラス、レース、そして最初期のヴェネツィア人たちの大聖堂。3つの島、3つの物語。"
+  meetingPoint: ご相談のうえ決定（通常はヴァポレットのフォンダメンテ・ノーヴェ停留所、またはサン・マルコ周辺）
+  meetingUrl: ''
+  description: |
+    ラグーナ（潟）は、ヴェネツィアの単なる「背景」ではありません。すべてが始まった場所です。ガイドと一緒に巡ると、島々をつなぐ糸がよりはっきりと見えてきます。
+
+    ムラーノ島ではガラスの歴史をたどり、ガラス工房に入ります。ブラーノ島では色とりどりの家々とレースを眺めながら散策します。トルチェッロ島では、ラグーナで最も初期の居住地の一つに建つサンタ・マリア・アッスンタ大聖堂を訪れ、ビザンティン様式のモザイクを見学します。
+
+    島から島への移動はヴァポレット（水上バス）で行います（ご希望に応じて、プライベートボートも可能です）。ゆったりとしたペースで、たくさん見るよりも、見たものをじっくり理解したい方に向いています。
+  highlights:
+    - "ムラーノ島：ガラスの歴史と、ガラス工房での実演"
+    - "ブラーノ島：色とりどりの家々、レース、島の暮らし"
+    - "トルチェッロ島：大聖堂とビザンティン様式のモザイク"
+    - 水上から眺めるラグーナ（潟）
+  includes:
+    - 全行程に同行する公認ガイド
+    - グループに合わせて調整するルートとスケジュール
+  excludes:
+    - ヴァポレットの乗船券、またはプライベートボートのチャーター料
+    - トルチェッロ島の大聖堂の入場料
+    - 昼食、チップ、その他の飲食代
+  notes: グループ全体に対する時間料金です（最大12名様、船賃は含まれません）。荒天の場合は、代わりのプランまたは別の日程を、ご相談のうえ決めます。

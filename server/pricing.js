@@ -29,7 +29,13 @@ export function unitPriceFor(tour, channel, account = null) {
   return unit;
 }
 
-/** Prezzo di listino in centesimi: a persona (× partecipanti) oppure a gruppo. */
+/** Preventivo di un servizio a ore: le ore sono quelle scelte dal cliente, oppure la durata del tour se è fissa. */
+export function hourlyQuote(app, tour, { pax = 1, channel, account = null, date = null, time = null, hours = null, earpieces = false }) {
+  const h = tour.chooseHours ? Number(hours) : tour.durationMin / 60;
+  return app.rates.quote({ service: tour.service, channel, hours: h, date, time, pax, earpieces, discountPercent: channel === 'b2b' ? (account?.discount_percent ?? 0) : 0 });
+}
+
+/** Prezzo di listino in centesimi: a persona (× partecipanti) oppure a gruppo. Per i servizi a ore vale `previewPricing`. */
 export function priceFor(tour, pax, channel, account = null) {
   const unit = unitPriceFor(tour, channel, account);
   return tour.model === 'person' ? unit * pax : unit;
@@ -96,10 +102,12 @@ export function checkGiftCode(db, rawCode, nowMs) {
  * Calcola il prezzo con sconto e buoni regalo (senza modificare nulla).
  * Solo il canale B2C usa codici e buoni: i partner hanno già le loro tariffe.
  */
-export function previewPricing(app, { tour, pax, channel, account = null, date, email = '', promoCode = '', giftCodes = '', nowMs = Date.now(), ignoreBookingId = null }) {
+export function previewPricing(app, { tour, pax, channel, account = null, date, time = null, hours = null, earpieces = false, email = '', promoCode = '', giftCodes = '', nowMs = Date.now(), ignoreBookingId = null }) {
   const { db } = app;
-  const listCents = priceFor(tour, pax, channel, account);
-  const out = { listCents, discountCents: 0, totalCents: listCents, giftCents: 0, dueCents: listCents, promo: null, gifts: [], errors: {} };
+  // servizi a ore: il prezzo viene dalle tariffe a ore (ore, festivo, notturno, auricolari)
+  const quote = tour.pricing === 'hourly' ? hourlyQuote(app, tour, { pax, channel, account, date, time, hours, earpieces }) : null;
+  const listCents = quote ? (quote.ok ? quote.totalCents : 0) : priceFor(tour, pax, channel, account);
+  const out = { listCents, discountCents: 0, totalCents: listCents, giftCents: 0, dueCents: listCents, promo: null, gifts: [], errors: {}, quote };
   if (channel !== 'b2c') return out;
 
   if (normalizePromo(promoCode)) {

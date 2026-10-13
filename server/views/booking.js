@@ -5,14 +5,15 @@ import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
-import { breadcrumbs, departuresList, fmtDuration, fmtHours, langOptions, tourMedia } from './components.js';
+import { breadcrumbs, departuresList, fmtDuration, fmtHours, hoursLabel, langOptions, tourMedia } from './components.js';
+import { quoteLines } from './hourly.js';
+import { parseServiceRecord } from '../rates.js';
 
 const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
 
 // ───────────────────────── Pagina "Prenota" (prima la data) ─────────────────────────
-export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures = [], channel }) {
+export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures = [], channel, tours = ctx.app.content.tours, hourly = false }) {
   const { t, lang, u, app } = ctx;
-  const tours = app.content.tours;
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.book')]])}
@@ -29,6 +30,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
     </label>
     <button class="btn btn-gold" type="submit">${t('quick.go')}</button>
   </form>
+  ${hourly ? html`<p class="hourly-hint">${t('book.hourlyHint')} <a href="${u('/hourly')}">${t('book.hourlyLink')} →</a></p>` : ''}
 
   ${date
     ? html`<h2 class="h-sub spaced">${t('book.resultsFor', { date: fmtDate(date, lang) })}</h2>
@@ -40,7 +42,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
               <div class="result-media">${tourMedia(ctx, tour, '')}</div>
               <div class="result-body">
                 <h3><a href="${u('/tours/' + tour.slug)}">${ti.title}</a></h3>
-                <p class="muted small">${fmtDuration(tour.durationMin)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>
+                <p class="muted small">${fmtDuration(tour.durationMin, lang)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>
                 <div class="slot-list">${slots.map((s) => html`<a class="slot" href="${slotUrl(u, tour.slug, date, s.time, pax)}"><strong>${s.time}</strong>${tour.model === 'person' ? html`<small>${s.joined ? t('book.confirmedDeparture') : t('book.newDeparture')}${s.left <= 4 ? html` · ${t('w.left', { n: s.left })}` : ''}</small>` : ''}</a>`)}</div>
               </div>
             </article>`;
@@ -55,9 +57,12 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
 }
 
 // ───────────────────────── Checkout ─────────────────────────
-export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, error = '', channel, pricing }) {
+export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, error = '', channel, pricing, hours: serviceHours = null, earpieces = false }) {
   const { t, lang, u, app, acct } = ctx;
   const { cfg } = app;
+  const hourly = tour.pricing === 'hourly';
+  const rates = hourly ? app.rates.get() : null;
+  const duration = hourly ? serviceHours * 60 : tour.durationMin;
   const ti = tour.i18n[lang];
   pricing ??= { listCents: priceFor(tour, pax, channel, acct), discountCents: 0, totalCents: priceFor(tour, pax, channel, acct), giftCents: 0, dueCents: priceFor(tour, pax, channel, acct), promo: null, gifts: [], errors: {} };
   const nothingToPay = pricing.dueCents === 0;
@@ -80,7 +85,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
 <section class="section tight"><div class="wrap checkout-grid">
   <form class="card pad form" method="post" action="${u('/book/checkout')}" id="checkout-form">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
-    <input type="hidden" name="tour" value="${tour.slug}"><input type="hidden" name="date" value="${date}"><input type="hidden" name="time" value="${time}">
+    <input type="hidden" name="tour" value="${tour.slug}"><input type="hidden" name="date" value="${date}"><input type="hidden" name="time" value="${time}">${hourly && tour.chooseHours ? html`<input type="hidden" name="hours" value="${serviceHours}">` : ''}
     <button type="submit" name="apply" value="1" formnovalidate hidden tabindex="-1" id="pax-apply"></button>
     <h2>${isB2b ? t('checkout.contactB2b') : t('checkout.contact')}</h2>
     <div class="form-grid">
@@ -134,10 +139,14 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       <h2>${ti.title}</h2>
       <dl class="summary-list">
         <div><dt>${t('s.date')}</dt><dd>${fmtDate(date, lang)}</dd></div>
-        <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${fmtDuration(tour.durationMin)})</span></dd></div>
+        <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${hourly ? hoursLabel(t, lang, serviceHours) : fmtDuration(duration, lang)})</span></dd></div>
         <div><dt><label for="pax-select">${t('s.guests')}</label></dt><dd><select name="pax" id="pax-select" form="checkout-form" class="pax-select">${Array.from({ length: Math.max(pax, Math.min(25, tour.maxParticipants, slot.left ?? tour.maxParticipants)) }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select><noscript> <button class="btn btn-outline btn-sm" type="submit" name="apply" value="1" form="checkout-form" formnovalidate>${t('checkout.update')}</button></noscript></dd></div>
+        ${hourly && tour.service === 'guide' && rates.surcharges.earpieceCents > 0 && pax >= rates.surcharges.earpieceFromPax
+          ? html`<div><dt>${t('hourly.f.earpieces')}</dt><dd><label class="check"><input type="checkbox" name="earpieces" value="1" form="checkout-form" data-apply ${earpieces ? raw('checked') : ''}> ${formatMoney(rates.surcharges.earpieceCents, lang)} × ${pax}</label></dd></div>`
+          : hourly && earpieces ? html`<input type="hidden" name="earpieces" value="1" form="checkout-form">` : ''}
         <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}</dd></div>
-        ${pricing.discountCents || pricing.giftCents ? html`<div><dt>${t('s.list')}</dt><dd>${formatMoney(pricing.listCents, lang)}</dd></div>` : ''}
+        ${pricing.quote?.ok ? quoteLines(t, lang, pricing.quote, { total: false }) : ''}
+        ${!pricing.quote && (pricing.discountCents || pricing.giftCents) ? html`<div><dt>${t('s.list')}</dt><dd>${formatMoney(pricing.listCents, lang)}</dd></div>` : ''}
         ${pricing.discountCents ? html`<div class="row-discount"><dt>${t('s.discount')} · ${pricing.promo.code}</dt><dd>−${formatMoney(pricing.discountCents, lang)}</dd></div>` : ''}
         ${pricing.giftCents ? html`<div class="row-discount"><dt>${t('s.giftUsed')}</dt><dd>−${formatMoney(pricing.giftCents, lang)}</dd></div>` : ''}
         <div class="summary-total"><dt>${pricing.discountCents || pricing.giftCents ? t('s.due') : t('s.total')}</dt><dd>${formatMoney(pricing.dueCents, lang)}${isB2b ? html` <span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}</dd></div>
@@ -156,7 +165,7 @@ export function slotGonePage(ctx, { tour, date, pax }) {
   const { t, lang, u } = ctx;
   const body = html`<section class="page-head"><div class="wrap narrow center">
     <h1>${t('checkout.goneTitle')}</h1><p class="lead">${t('checkout.goneText')}</p>
-    <p class="btn-row center"><a class="btn btn-gold" href="${u('/book')}?${tour ? 'tour=' + tour.slug + '&' : ''}${date ? 'date=' + date + '&' : ''}pax=${pax}">${t('checkout.pickAnother')}</a></p></div></section>`;
+    <p class="btn-row center"><a class="btn btn-gold" href="${tour?.pricing === 'hourly' ? `${u('/hourly')}?product=${tour.slug}${date ? '&date=' + date : ''}&pax=${pax}` : `${u('/book')}?${tour ? 'tour=' + tour.slug + '&' : ''}${date ? 'date=' + date + '&' : ''}pax=${pax}`}">${t('checkout.pickAnother')}</a></p></div></section>`;
   return page(ctx, { title: t('checkout.goneTitle'), path: `/${lang}/book/checkout`, body, noindex: true });
 }
 
@@ -169,6 +178,7 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
   const st = cancellationState(b);
   const q = `?t=${b.token}`;
   const base = `/${lang}/booking/${b.ref}`;
+  const service = parseServiceRecord(b.service_json);
   const holdLeft = b.status === 'held' ? Math.max(0, Math.ceil((Date.parse(b.hold_expires_at) - Date.now()) / 60000)) : 0;
 
   const heads = {
@@ -199,12 +209,13 @@ export function bookingPage(ctx, b, { flash = '' } = {}) {
     <dl class="summary-list">
       <div><dt>${t('s.service')}</dt><dd>${ti.title}</dd></div>
       <div><dt>${t('s.date')}</dt><dd>${fmtDate(b.date, lang)}</dd></div>
-      <div><dt>${t('s.time')}</dt><dd>${b.start_time}–${b.end_time}</dd></div>
+      <div><dt>${t('s.time')}</dt><dd>${b.start_time}–${b.end_time}${service ? html` <span class="muted">(${hoursLabel(t, lang, service.hours)})</span>` : ''}</dd></div>
       <div><dt>${t('s.guests')}</dt><dd>${b.participants}</dd></div>
       <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}${ti.meetingUrl ? html` · <a href="${ti.meetingUrl}" target="_blank" rel="noopener">${t('tour.openMap')}</a>` : ''}</dd></div>
       <div><dt>${t('s.name')}</dt><dd>${b.name} · ${b.email}${b.phone ? ' · ' + b.phone : ''}</dd></div>
       ${b.client_ref ? html`<div><dt>${t('f.clientRef')}</dt><dd>${b.client_ref}</dd></div>` : ''}
       ${b.notes ? html`<div><dt>${t('f.notes')}</dt><dd>${b.notes}</dd></div>` : ''}
+      ${service ? quoteLines(t, lang, service, { total: false }) : ''}
       ${b.discount_cents ? html`<div class="row-discount"><dt>${t('booking.discountLine', { code: b.promo_code ?? '' })}</dt><dd>−${formatMoney(b.discount_cents, lang, b.currency)}</dd></div>` : ''}
       ${b.gift_cents ? html`<div class="row-discount"><dt>${t('s.giftUsed')}</dt><dd>−${formatMoney(b.gift_cents, lang, b.currency)}</dd></div>` : ''}
       <div class="summary-total"><dt>${b.discount_cents || b.gift_cents ? t('s.due') : t('s.total')}</dt><dd>${formatMoney(due, lang, b.currency)} <span class="muted">· ${payLabel}</span>${paymentNote}</dd></div>

@@ -11,7 +11,7 @@ maxParticipants: 10
 price: 35                # € a persona (pubblico)
 b2bPrice: 28             # € a persona (tariffa agevolata per agenzie/DMC)
 art: dome
-languages: [it, en, es]
+languages: [it, en, es, ja]
 
 it:
   title: San Marco e Rialto
@@ -31,7 +31,7 @@ it:
     - Le calli meno battute fra San Marco e Rialto
     - Il Ponte di Rialto e il mercato storico
   includes:
-    - Guida abilitata, in italiano, inglese o spagnolo
+    - Guida abilitata, in italiano, inglese, spagnolo o giapponese
     - Gruppo di massimo 10 persone
     - Consigli personalizzati su dove mangiare e cosa vedere dopo il tour
   excludes:
@@ -66,7 +66,7 @@ en:
     - The quieter alleys between St Mark's and Rialto
     - The Rialto Bridge and the historic market
   includes:
-    - Licensed guide, in Italian, English or Spanish
+    - Licensed guide, in Italian, English, Spanish or Japanese
     - Group of 10 guests at most
     - Personal tips on where to eat and what to see next
   excludes:
@@ -101,7 +101,7 @@ es:
     - Las calles menos transitadas entre San Marcos y Rialto
     - El Puente de Rialto y el mercado histórico
   includes:
-    - Guía turístico habilitado, en italiano, inglés o español
+    - Guía turístico habilitado, en italiano, inglés, español o japonés
     - Grupo de 10 personas como máximo
     - Consejos personalizados sobre dónde comer y qué ver después del tour
   excludes:
@@ -117,3 +117,38 @@ es:
 
     ¿Puedo reservar para una sola persona?
     Sí. Es un tour en grupo reducido (máximo 10 personas) y las plazas se reservan una a una.
+
+ja:
+  title: サン・マルコとリアルト
+  subtitle: ヴェネツィアの中心部を2時間30分で
+  summary: 広場からヴェネツィアで最も有名な橋まで、建物の正面やモザイク、路地を歴史のページのように読み解きながら歩きます。
+  meetingPoint: サン・マルコ広場、サン・マルコ寺院の前（正確な集合場所はご予約確認メールでご案内します）
+  meetingUrl: https://www.google.com/maps/search/?api=1&query=Piazza+San+Marco+Venezia
+  description: |
+    サン・マルコ広場はヴェネツィアの応接間であり、石でできた大きな一冊の本でもあります。どの建物の正面も、どのモザイクも、円柱の一本一本も、商人たちの共和国がどのように自らのイメージと権力、そして信仰を築き上げたのかを物語っています。
+
+    まずはサン・マルコ寺院とドゥカーレ宮殿から、ヴェネツィアが*なぜ*このような街なのかを紐解きます。その後は人混みを後にして路地を抜け、街の経済の中心であるリアルトへ向かいます。商店や市場、そしてガイドブックには載っていない小さな発見に出会いながら歩きます。
+
+    少人数のグループで、ゆったりとしたペースで巡ります。お話はたっぷりと、覚えていただく名前はほんのわずかです。
+  highlights:
+    - モザイクとヴェネツィアの権力の象徴に彩られた、広場とサン・マルコ寺院の正面
+    - 時計塔とドゥカーレ宮殿を外から見学
+    - サン・マルコとリアルトの間の、観光客の少ない路地
+    - リアルト橋と歴史ある市場
+  includes:
+    - 公認ガイドによるご案内（イタリア語・英語・スペイン語・日本語）
+    - 最大10名様の少人数グループ
+    - ツアー後のお食事処や見どころについての、お客様に合わせたアドバイス
+  excludes:
+    - サン・マルコ寺院とドゥカーレ宮殿の入場料（ご希望の場合は予約のお手伝いをします）
+    - チップ、飲食代
+  notes: 徒歩で約3km、橋や階段があります。歩きやすい靴をおすすめします。
+  faq: |
+    サン・マルコ寺院とドゥカーレ宮殿の中にも入りますか？
+    ツアーでは両方を外側からご紹介し、内部で何をご覧になれるかをご説明します。入場料は含まれていません。内部を見学されたい場合は、チケットの予約と、おすすめの時間帯の選択をお手伝いします。
+
+    どのくらい歩きますか？
+    2時間30分で約3kmです。ゆったりとしたペースで、途中で何度か立ち止まりながら歩きます。橋や階段がありますので、歩きやすい靴でお越しください。
+
+    1名だけでも予約できますか？
+    はい。少人数制のツアー（最大10名様）で、1名様ずつご予約いただけます。

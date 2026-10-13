@@ -1,5 +1,6 @@
 // Documenti PDF: voucher di prenotazione, buono regalo, proposta di programma (e, in invoice.js, la copia di cortesia della fattura).
 // Si usa PDFKit con il Josefin Sans del sito. Il font ha solo i glifi latini di base: i testi dei clienti passano da fold().
+// Per il giapponese (e per nomi scritti con ideogrammi o kana) si passa a Noto Sans JP, incorporato nel PDF: vedi server/fonts.
 import fs from 'node:fs';
 import path from 'node:path';
 import PDFDocument from 'pdfkit';
@@ -7,6 +8,7 @@ import { bookingDue, cancellationState } from './bookings.js';
 import { ROOT } from './config.js';
 import { makeT } from './i18n.js';
 import { localeOf, normLang, pick } from './langs.js';
+import { timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
 import { formatGiftCode } from './pricing.js';
 import { fmtDate, fmtInstant, nowRome } from './time.js';
@@ -25,11 +27,15 @@ const loadFonts = () => (fontBuffers ??= Object.fromEntries(Object.entries(FONT_
 
 // Glifi presenti nel sottoinsieme latino di Josefin Sans (ASCII, Latin-1, punteggiatura generale, €, ™):
 // bastano per italiano, inglese e spagnolo (ñ Ñ á é í ó ú ü ¿ ¡ « » “ ” ‘ ’ – — € º ª).
-const SUPPORTED = /[\u0020-\u007E\u00A0-\u00FF\u0131\u0152\u0153\u2010-\u2027\u2030-\u203A\u20AC\u2122\u2212\n]/;
+// Kana, ideogrammi, punteggiatura e forme a larghezza intera si lasciano passare: li disegna Noto Sans JP (vedi useJapaneseFont).
+const CJK_RANGES = '\\u2E80-\\u2FDF\\u3000-\\u30FF\\u31F0-\\u31FF\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uF900-\\uFAFF\\uFE30-\\uFE4F\\uFF00-\\uFFEF\\u{20000}-\\u{2FFFF}';
+const CJK = new RegExp(`[${CJK_RANGES}]`, 'u');
+const SUPPORTED = new RegExp(`[\\u0020-\\u007E\\u00A0-\\u00FF\\u0131\\u0152\\u0153\\u2010-\\u2027\\u2030-\\u203A\\u20AC\\u2122\\u2212\\n${CJK_RANGES}]`, 'u');
 const REPLACEMENTS = { ł: 'l', Ł: 'L', đ: 'd', Đ: 'D', ħ: 'h', Ħ: 'H', ŧ: 't', Ŧ: 'T', '→': '-', '←': '-', '↔': '-', '✓': '', '✔': '', '★': '*', '☆': '*' };
 
 /**
- * Adatta un testo ai glifi del font: toglie gli accenti non disponibili (ł→l, č→c…), scarta emoji e simboli, mette «?» al posto di alfabeti non latini.
+ * Adatta un testo ai glifi del font: toglie gli accenti non disponibili (ł→l, č→c…), scarta emoji e simboli, mette «?» al posto di alfabeti non latini
+ * (tranne giapponese e ideogrammi, che il PDF disegna con Noto Sans JP).
  * Prima compone le lettere accentate (NFC): «ñ» scritta come n + tilde combinata (capita con certe tastiere e con il copia-incolla) resta «ñ».
  */
 export function fold(input) {
@@ -47,6 +53,48 @@ export function fold(input) {
   return out.trim();
 }
 
+// ───────────── giapponese ─────────────
+// Noto Sans JP (Regular e Bold, licenza OFL), ridotto ai caratteri che servono: kana, punteggiatura, latino e circa 8.800 ideogrammi
+// (JIS X 0213, livelli 1-3). Si legge e si incorpora solo se un testo lo richiede; il PDF contiene solo i glifi usati.
+const JP_FILES = { JR: 'NotoSansJP-Regular.subset.ttf', JB: 'NotoSansJP-Bold.subset.ttf' };
+let jpBuffers = null;
+const loadJapanese = () => (jpBuffers ??= Object.fromEntries(Object.entries(JP_FILES).map(([name, file]) => [name, fs.readFileSync(path.join(ROOT, 'server', 'fonts', file))])));
+
+/**
+ * Per ogni testo con kana o ideogrammi usa Noto Sans JP al posto del font scelto (grassetto resta grassetto), solo per quella chiamata;
+ * tutto il resto continua con Josefin Sans. Vale per text(), widthOfString() e heightOfString(), così le misure restano coerenti.
+ */
+function useJapaneseFont(doc) {
+  let current = 'R';
+  let inside = false;
+  let registered = false;
+  const setFont = doc.font.bind(doc);
+  doc.font = (name, ...rest) => {
+    if (typeof name === 'string') current = name;
+    return setFont(name, ...rest);
+  };
+  for (const method of ['text', 'widthOfString', 'heightOfString']) {
+    const original = doc[method].bind(doc);
+    doc[method] = (str, ...args) => {
+      if (inside || typeof str !== 'string' || !CJK.test(str)) return original(str, ...args);
+      if (!registered) {
+        for (const [name, buf] of Object.entries(loadJapanese())) doc.registerFont(name, buf);
+        registered = true;
+      }
+      const previous = current;
+      inside = true;
+      try {
+        setFont(previous === 'B' ? 'JB' : 'JR');
+        // la spaziatura larga tra le lettere (etichette in maiuscolo) non ha senso con i caratteri giapponesi
+        return original(str, ...args.map((a) => (a && typeof a === 'object' && a.characterSpacing > 0.5 ? { ...a, characterSpacing: 0.5 } : a)));
+      } finally {
+        setFont(previous);
+        inside = false;
+      }
+    };
+  }
+}
+
 // ───────────── documento ─────────────
 export function createDoc(app, { title, subject, lang, label }) {
   const { site } = app.cfg;
@@ -58,6 +106,7 @@ export function createDoc(app, { title, subject, lang, label }) {
     info: { Title: fold(title), Author: fold(site.legalName || site.name), Subject: fold(subject ?? title), Creator: fold(site.name) },
   });
   for (const [name, buf] of Object.entries(loadFonts())) doc.registerFont(name, buf);
+  useJapaneseFont(doc);
   doc.page.margins.top = PAGE.m;
   drawHeader(doc, app, lang, label);
   // le pagine successive hanno un'intestazione compatta
@@ -84,7 +133,7 @@ function drawHeader(doc, app, lang, label, { compact = false } = {}) {
 export function finishDoc(doc, app, lang) {
   const t = makeT(lang);
   const { site } = app.cfg;
-  const vat = site.vatNumber ? `${pick({ it: 'P.IVA', en: 'VAT no.', es: 'N.º IVA' }, lang)} ${site.vatNumber}` : '';
+  const vat = site.vatNumber ? `${pick({ it: 'P.IVA', en: 'VAT no.', es: 'N.º IVA', ja: 'VAT番号' }, lang)} ${site.vatNumber}` : '';
   const line1 = [site.legalName || site.name, vat, site.guideLicense].filter(Boolean).join('  ·  ');
   const line2 = [site.address, site.email, site.phone].filter(Boolean).join('  ·  ');
   const range = doc.bufferedPageRange();
@@ -239,7 +288,7 @@ export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = 
 
   const items = [
     [t('s.date'), fmtDate(b.date, lang), { bold: true }],
-    [t('s.time'), `${b.start_time} – ${b.end_time}`, { bold: true }],
+    [t('s.time'), timeRange(b, lang).replace('–', ' – '), { bold: true }],
     [t('s.guests'), String(b.participants)],
     [t('s.meeting'), ti.meetingPoint, ti.meetingUrl ? { sub: { text: t('tour.openMap'), url: ti.meetingUrl } } : {}],
     // sul voucher B2B, che l'agenzia può girare al cliente, non compaiono i recapiti di chi ha prenotato
@@ -335,7 +384,7 @@ export async function renderGiftCardPdf(app, card, wanted = 'it') {
   if (card.message) {
     y += 10;
     doc.font('I').fontSize(12.5);
-    const msg = `«${fold(card.message)}»`;
+    const msg = lang === 'ja' ? `「${fold(card.message)}」` : `«${fold(card.message)}»`;
     const w = 340;
     const h = doc.heightOfString(msg, { width: w - 32, lineGap: 2 });
     doc.roundedRect(mid - w / 2, y, w, h + 28, 8).fillAndStroke(C.soft, C.line);

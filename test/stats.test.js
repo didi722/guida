@@ -7,7 +7,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createApp } from '../server/app.js';
 import { createConfig, ROOT } from '../server/config.js';
-import { loadContent } from '../server/content.js';
 import { openDb } from '../server/db.js';
 import { confirmPaid, createBooking, expireBooking } from '../server/bookings.js';
 import { acceptProgram, createProgramRequest, markDepositPaid, markQuoted, saveProposal } from '../server/programs.js';
@@ -15,7 +14,7 @@ import { CSV_HEAD, bookingsCsv, bucketsOf, change, diffDays, filterOptions, gift
 import { addDays, localToInstant, nowRome } from '../server/time.js';
 import { formatMoney } from '../server/util.js';
 import { niceScale, statsPage, tickLabel } from '../server/views/admin-stats.js';
-import { addAccount, addGift, addPromo, base, makeApp, NOW } from './helpers.js';
+import { addAccount, addGift, addPromo, base, loadContentWithFixedServices, makeApp, NOW } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
 
@@ -758,7 +757,7 @@ test('asse del grafico: scale tonde e importi leggibili', () => {
 // ───────────── HTTP ─────────────
 const tmp = path.join(ROOT, 'data', 'test-stats-' + crypto.randomBytes(3).toString('hex'));
 after(() => fs.rmSync(tmp, { recursive: true, force: true }));
-const content = loadContent(ROOT);
+const content = loadContentWithFixedServices(ROOT);
 const day = (n) => addDays(nowRome().date, n);
 
 async function start() {

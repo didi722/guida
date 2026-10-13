@@ -1,0 +1,84 @@
+# Servizio per agenzie, a tariffa oraria. Senza una tariffa al pubblico (Sito › Tariffe a ore) lo vedono e lo prenotano solo i partner approvati.
+order: 9
+featured: false
+model: group
+pricing: hourly
+service: leader
+chooseHours: true
+flexible: true
+duration: 240
+maxParticipants: 25
+art: walk
+languages: [it, en, es, ja]
+
+it:
+  title: Tour leader
+  subtitle: Accompagnatore del gruppo, a ore
+  summary: "Un accompagnatore che coordina il gruppo per tutto il servizio: tempi, logistica, fornitori."
+  meetingPoint: Concordato con te (stazione, aeroporto, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    Un tour leader che accompagna e coordina il gruppo durante il servizio: tempi, logistica, rapporti con i fornitori, assistenza ai partecipanti. Dalla mezza giornata alla giornata intera, anche in combinazione con la guida.
+  highlights:
+    - Servizio a ore, con durata a scelta
+    - Prenotabile in autonomia dall'area partner
+    - Fatturazione elettronica
+  includes:
+    - Il servizio per le ore scelte
+  excludes:
+    - Ingressi, trasporti, mance
+  notes: Tariffa oraria per l'intero gruppo. Festivi e orari serali o notturni hanno un supplemento.
+
+en:
+  title: Tour leader
+  subtitle: Group escort, by the hour
+  summary: "An escort who coordinates the group for the whole service: timing, logistics, suppliers."
+  meetingPoint: Agreed with you (station, airport, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    A tour leader who escorts and coordinates the group during the service: timing, logistics, dealing with suppliers, helping participants. From half a day to a full day, also combined with the guide.
+  highlights:
+    - Hourly service, length of your choice
+    - Bookable on your own from the partner area
+    - Electronic invoicing
+  includes:
+    - The service for the hours chosen
+  excludes:
+    - Entry tickets, transport, tips
+  notes: Hourly rate for the whole group. Holidays and evening or night hours carry a supplement.
+
+es:
+  title: Tour leader
+  subtitle: Acompañante del grupo, por horas
+  summary: "Un acompañante que coordina al grupo durante todo el servicio: tiempos, logística, proveedores."
+  meetingPoint: A convenir contigo (estación, aeropuerto, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    Un tour leader que acompaña y coordina al grupo durante el servicio: tiempos, logística, relación con los proveedores, ayuda a los participantes. De media jornada a jornada completa, también combinado con el guía.
+  highlights:
+    - Servicio por horas, duración a elegir
+    - Reservable por tu cuenta desde el área de socios
+    - Facturación electrónica
+  includes:
+    - El servicio durante las horas elegidas
+  excludes:
+    - Entradas, transporte, propinas
+  notes: Tarifa por horas para todo el grupo. Festivos y horario nocturno o de tarde-noche tienen suplemento.
+
+ja:
+  title: ツアーリーダー（添乗員）
+  subtitle: 時間制のグループ同行サービス
+  summary: "サービスの全行程でグループに同行し、時間管理、ロジスティクス、手配先との調整を取りまとめる添乗員です。"
+  meetingPoint: ご相談のうえ決定（駅、空港、ローマ広場、ホテル）
+  meetingUrl: ''
+  description: |
+    サービス時間中、グループに同行して全体を取りまとめるツアーリーダーです。時間管理、ロジスティクス、手配先とのやり取り、参加者へのサポートを行います。半日（4時間）から1日（8時間）までご利用いただけます。ガイドサービスとの併用も可能です。
+  highlights:
+    - 時間制のサービスで、時間数をお選びいただけます
+    - パートナーエリアから、ご自身でご予約いただけます
+    - 電子請求書の発行
+  includes:
+    - ご指定の時間分のサービス
+  excludes:
+    - 入場料、交通費、チップ
+  notes: 時間料金はグループ全体に対するものです。日曜・祝祭日および夜間の時間帯は割増料金が適用されます。

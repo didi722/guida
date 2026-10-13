@@ -5,12 +5,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createApp } from '../server/app.js';
 import { createConfig, ROOT } from '../server/config.js';
-import { loadContent } from '../server/content.js';
 import { openDb } from '../server/db.js';
 import { makeT } from '../server/i18n.js';
 import { createPayments } from '../server/payments.js';
+import { normalizeRates, openTo } from '../server/rates.js';
 import { addDays, localToInstant, nowRome } from '../server/time.js';
-import { addAccount, base as bookingBase, isPdf } from './helpers.js';
+import { addAccount, base as bookingBase, isPdf, loadContentWithFixedServices } from './helpers.js';
 import { hashPassword } from '../server/auth.js';
 import { validateInvoiceXml } from './xsd.js';
 import { confirmPaid, createBooking } from '../server/bookings.js';
@@ -18,7 +18,7 @@ import { confirmPaid, createBooking } from '../server/bookings.js';
 process.env.GUIDA_QUIET = '1';
 
 const tmp = path.join(ROOT, 'data', 'test-http-' + crypto.randomBytes(3).toString('hex'));
-const content = loadContent(ROOT);
+const content = loadContentWithFixedServices(ROOT);
 const day = (n) => addDays(nowRome().date, n);
 
 async function start({ fakeStripe = false, noOnSite = false, fetchImpl: calFetch, cfgOver = {}, pec } = {}) {
@@ -74,7 +74,7 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
   try {
     const f = s.jar();
     for (const lang of ['it', 'en', 'es']) {
-      for (const p of ['/', '/tours', '/book', '/gift', '/b2b', '/b2b/login', '/b2b/register', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((t) => `/tours/${t.slug}`), ...content.postsFor(lang).map((x) => `/blog/${x.slug}`)]) {
+      for (const p of ['/', '/tours', '/book', '/gift', '/b2b', '/b2b/login', '/b2b/register', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', '/hourly', ...content.tours.filter((t) => openTo(normalizeRates(null), t, 'b2c')).map((t) => `/tours/${t.slug}`), ...content.postsFor(lang).map((x) => `/blog/${x.slug}`)]) {
         const res = await f(`/${lang}${p}`);
         assert.equal(res.status, 200, `/${lang}${p}`);
         const html = await res.text();
@@ -85,6 +85,7 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
     }
     assert.equal((await f('/it/nope')).status, 404);
     assert.equal((await f('/it/tours/non-esiste')).status, 404);
+    for (const t of content.tours.filter((x) => !openTo(normalizeRates(null), x, 'b2c'))) assert.equal((await f(`/it/tours/${t.slug}`)).status, 404, `${t.slug} è riservato alle agenzie`);
     assert.equal(loc(await f('/', { headers: { 'accept-language': 'it-IT,it;q=0.9' } })), '/it/');
     assert.equal(loc(await f('/', { headers: { 'accept-language': 'de-DE,en;q=0.8' } })), '/en/');
     assert.equal(loc(await f('/', { headers: { 'accept-language': 'es-AR,es;q=0.9,en;q=0.5' } })), '/es/');

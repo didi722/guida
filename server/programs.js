@@ -265,7 +265,7 @@ export function createProgramServices(app) {
         email: p.email,
         amountCents: p.deposit_cents,
         currency: p.currency,
-        title: `${pick({ it: 'Acconto programma', en: 'Programme deposit', es: 'Anticipo del programa' }, p.lang)} — ${p.proposal_title ?? p.ref}`,
+        title: `${pick({ it: 'Acconto programma', en: 'Programme deposit', es: 'Anticipo del programa', ja: 'プログラムの手付金' }, p.lang)} — ${p.proposal_title ?? p.ref}`,
         description: `${p.ref} · ${p.deposit_percent}%`,
         lang: p.lang,
         successUrl: `${cfg.baseUrl}/${lang}/programs/${p.ref}?t=${p.token}&paid=1`,

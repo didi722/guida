@@ -1,0 +1,84 @@
+# Servizio per agenzie, a tariffa oraria. Senza una tariffa al pubblico (Sito › Tariffe a ore) lo vedono e lo prenotano solo i partner approvati.
+order: 10
+featured: false
+model: group
+pricing: hourly
+service: meetgreet
+chooseHours: true
+flexible: true
+duration: 60
+maxParticipants: 25
+art: walk
+languages: [it, en, es, ja]
+
+it:
+  title: Meet & greet
+  subtitle: Accoglienza dei clienti
+  summary: "Ti aspettiamo all'arrivo: stazione, aeroporto, Piazzale Roma o hotel."
+  meetingPoint: Concordato con te (stazione, aeroporto, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    Accoglienza dei tuoi clienti all'arrivo, con cartello e prima assistenza: stazione di Santa Lucia, aeroporto, Piazzale Roma, terminal crociere o hotel. La prima ora è compresa; se serve accompagnarli all'hotel o a un molo, si aggiungono ore.
+  highlights:
+    - Servizio a ore, con durata a scelta
+    - Prenotabile in autonomia dall'area partner
+    - Fatturazione elettronica
+  includes:
+    - Il servizio per le ore scelte
+  excludes:
+    - Ingressi, trasporti, mance
+  notes: Tariffa oraria per l'intero gruppo. Festivi e orari serali o notturni hanno un supplemento.
+
+en:
+  title: Meet & greet
+  subtitle: Welcoming your guests
+  summary: "We wait for them on arrival: station, airport, Piazzale Roma or hotel."
+  meetingPoint: Agreed with you (station, airport, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    A welcome for your guests on arrival, with a name board and first assistance: Santa Lucia station, the airport, Piazzale Roma, the cruise terminal or the hotel. The first hour is included; if they need to be taken to the hotel or a pier, extra hours are added.
+  highlights:
+    - Hourly service, length of your choice
+    - Bookable on your own from the partner area
+    - Electronic invoicing
+  includes:
+    - The service for the hours chosen
+  excludes:
+    - Entry tickets, transport, tips
+  notes: Hourly rate for the whole group. Holidays and evening or night hours carry a supplement.
+
+es:
+  title: Meet & greet
+  subtitle: Recepción de tus clientes
+  summary: "Los esperamos a su llegada: estación, aeropuerto, Piazzale Roma u hotel."
+  meetingPoint: A convenir contigo (estación, aeropuerto, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    Recepción de tus clientes a su llegada, con cartel y primera asistencia: estación de Santa Lucía, aeropuerto, Piazzale Roma, terminal de cruceros u hotel. La primera hora está incluida; si hay que acompañarlos al hotel o a un muelle, se suman horas.
+  highlights:
+    - Servicio por horas, duración a elegir
+    - Reservable por tu cuenta desde el área de socios
+    - Facturación electrónica
+  includes:
+    - El servicio durante las horas elegidas
+  excludes:
+    - Entradas, transporte, propinas
+  notes: Tarifa por horas para todo el grupo. Festivos y horario nocturno o de tarde-noche tienen suplemento.
+
+ja:
+  title: ミート＆グリート
+  subtitle: 到着されるお客様のお出迎え
+  summary: "ご到着のお客様を、駅、空港、ローマ広場（ピアッツァーレ・ローマ）、ホテルでお出迎えいたします。"
+  meetingPoint: ご相談のうえ決定（駅、空港、ローマ広場、ホテル）
+  meetingUrl: ''
+  description: |
+    貴社のお客様のご到着時に、ネームボードを掲げてお出迎えし、到着直後のサポートを行います。対応場所は、サンタ・ルチア駅、空港、ローマ広場（ピアッツァーレ・ローマ）、クルーズターミナル、ホテルです。最初の1時間は料金に含まれています。ホテルや桟橋までお連れする必要がある場合は、その分の時間が追加されます。
+  highlights:
+    - 時間制のサービスで、時間数をお選びいただけます
+    - パートナーエリアから、ご自身でご予約いただけます
+    - 電子請求書の発行
+  includes:
+    - ご指定の時間分のサービス
+  excludes:
+    - 入場料、交通費、チップ
+  notes: 時間料金はグループ全体に対するものです。日曜・祝祭日および夜間の時間帯は割増料金が適用されます。

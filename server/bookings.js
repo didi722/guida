@@ -1,7 +1,8 @@
 // Logica di business delle prenotazioni (solo database, nessuna rete).
 import { tx } from './db.js';
 import { daySlots, loadAvailabilityContext, slotsForDay } from './availability.js';
-import { isDate, isTime, localToInstant } from './time.js';
+import { isDate, isTime, localToInstant, toMin } from './time.js';
+import { openTo, serviceRecord } from './rates.js';
 import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
 import { normLang } from './langs.js';
@@ -62,6 +63,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
   const tour = content.tour(input.tourSlug);
   if (!tour?.active) throw new BookingError('invalid', 'tour');
   const channel = input.channel === 'b2b' ? 'b2b' : 'b2c';
+  if (!openTo(app.rates.get(), tour, channel)) throw new BookingError('invalid', 'audience'); // servizio riservato alle agenzie
   const account = input.account ?? null;
   if (channel === 'b2b' && account?.status !== 'approved') throw new BookingError('account', 'account not approved');
 
@@ -79,10 +81,14 @@ export function createBooking(app, input, nowMs = Date.now()) {
 
   return tx(db, () => {
     const ctx = loadAvailabilityContext(db, cfg, input.date, input.date, nowMs);
-    const slot = slotsForDay(ctx, cfg, tour, input.date, { pax, channel, nowMs }).find((s) => s.time === input.time);
-    if (!slot) throw new BookingError('unavailable', 'slot not available');
+    // servizi a ore: la durata è quella scelta (o fissa del tour) e il prezzo viene dalle tariffe a ore
+    const quoteInput = { hours: input.hours, earpieces: !!input.earpieces };
+    const pricing = previewPricing(app, { tour, pax, channel, account, date: input.date, time: input.time, ...quoteInput, email, promoCode: input.promoCode, giftCodes: input.giftCodes, nowMs });
+    if (pricing.quote && !pricing.quote.ok) throw new BookingError('invalid', `hours (${pricing.quote.reason})`);
+    const durationMin = pricing.quote ? Math.round(pricing.quote.hours * 60) : null;
 
-    const pricing = previewPricing(app, { tour, pax, channel, account, date: input.date, email, promoCode: input.promoCode, giftCodes: input.giftCodes, nowMs });
+    const slot = slotsForDay(ctx, cfg, tour, input.date, { pax, channel, nowMs, durationMin }).find((s) => s.time === input.time);
+    if (!slot) throw new BookingError('unavailable', 'slot not available');
     if (pricing.errors.promo) throw new BookingError('promo', pricing.errors.promo);
     if (pricing.errors.gift) throw new BookingError('gift', pricing.errors.gift);
 
@@ -124,6 +130,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
       hold_expires_at: status === 'held' ? new Date(nowMs + cfg.policy.holdMinutes * 60_000).toISOString() : null,
       free_cancel_until: hasFreeTier(tiers) ? new Date(startInstant - freeHoursOf(tiers) * HOUR).toISOString() : now, // senza periodo gratuito: già scaduto
       cancel_policy_json: JSON.stringify(tiers),
+      service_json: pricing.quote ? JSON.stringify(serviceRecord(pricing.quote)) : null,
       created_at: now,
       confirmed_at: status === 'confirmed' ? now : null,
     };
@@ -169,7 +176,8 @@ export function confirmPaid(app, bookingId, paymentIntent = null, nowMs = Date.n
     if (b.status === 'expired') {
       const tour = content.tour(b.tour_slug);
       const ctx = loadAvailabilityContext(db, cfg, b.date, b.date, nowMs);
-      const stillFree = slotsForDay(ctx, cfg, tour, b.date, { pax: b.participants, channel: b.channel, nowMs, ignoreId: b.id, skipNotice: true }).some((s) => s.time === b.start_time);
+      const durationMin = toMin(b.end_time) - toMin(b.start_time); // anche per i servizi a ore, con la durata scelta
+      const stillFree = slotsForDay(ctx, cfg, tour, b.date, { pax: b.participants, channel: b.channel, nowMs, ignoreId: b.id, skipNotice: true, durationMin }).some((s) => s.time === b.start_time);
       if (!stillFree) return { outcome: 'conflict', booking: b };
       if (b.gift_cents > 0 && !reserveGiftsAgain(db, b.id, nowMs)) return { outcome: 'conflict', booking: b };
     }
@@ -238,7 +246,7 @@ export function bookingEnd(b) {
   return localToInstant(b.date, b.end_time);
 }
 
-export function slotStillOpen(app, tour, date, time, pax, channel, nowMs = Date.now()) {
-  return daySlots(app.db, app.cfg, tour, date, { pax, channel, nowMs }).find((s) => s.time === time) ?? null;
+export function slotStillOpen(app, tour, date, time, pax, channel, nowMs = Date.now(), durationMin = null) {
+  return daySlots(app.db, app.cfg, tour, date, { pax, channel, nowMs, durationMin }).find((s) => s.time === time) ?? null;
 }
 

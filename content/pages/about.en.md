@@ -18,7 +18,7 @@ I bring that outlook to Venice too. For me it is not an open-air museum but a ci
 ### In short
 
 - Licensed tour guide · {{license}}
-- Languages: Italian, English, Spanish
+- Languages: Italian, English, Spanish, Japanese
 - Historian of religions and independent researcher
 
 If you like reading, on my blog [davidetomio.it](https://davidetomio.it) I write about religions, Japan and lesser-told stories (in Italian). Here, in the [Venice blog](/en/blog), you will find curiosities and practical tips about the city.

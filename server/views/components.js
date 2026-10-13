@@ -4,16 +4,21 @@ import { freeCancelHours, unitPriceFor } from '../bookings.js';
 import { fmtDate, fmtMonth } from '../time.js';
 import { formatMoney } from '../util.js';
 import { LANGS, LANG_META, localeOf } from '../langs.js';
+import { minHours } from '../rates.js';
 import { MEDIA_NAME, smallName } from '../media.js';
 
 /** <option> di tutte le lingue del sito, con quella indicata selezionata. */
 export const langOptions = (selected) => html`${LANGS.map((l) => html`<option value="${l}" ${l === selected ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}`;
 
-export function fmtDuration(min) {
+export function fmtDuration(min, lang) {
   const h = Math.floor(min / 60);
   const m = min % 60;
+  if (lang === 'ja') return h ? (m ? `${h}時間${m}分` : `${h}時間`) : `${m}分`;
   return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
 }
+
+/** «1 ora», «2 ore», «2,5 ore». */
+export const hoursLabel = (t, lang, h) => (h === 1 ? t('hourly.hours1') : t('hourly.hoursN', { n: new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 1 }).format(h) }));
 
 export function fmtHours(t, h) {
   return h >= 48 && h % 24 === 0 ? t('time.days', { n: h / 24 }) : t('time.hours', { n: h });
@@ -43,6 +48,14 @@ export function tourMedia(ctx, tour, label) {
 /** "€35 / persona" oppure "€190 / gruppo", con tariffa B2B se il visitatore è un partner approvato. */
 export function priceParts(ctx, tour) {
   const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
+  if (tour.pricing === 'hourly') {
+    // servizi a ore: «da 200 € / 2 ore» (scegli tu la durata) oppure «290 € / 3 ore» (durata fissa); festivi e notturno si aggiungono dopo
+    const hours = tour.chooseHours ? minHours(tour.service) : tour.durationMin / 60;
+    const q = ctx.app.rates.quote({ service: tour.service, channel, hours, pax: 1, discountPercent: channel === 'b2b' ? (ctx.acct?.discount_percent ?? 0) : 0 });
+    const unit = q.ok ? q.totalCents : 0;
+    const money = formatMoney(unit, ctx.lang);
+    return { channel, unit, hourly: true, money: tour.chooseHours ? ctx.t('price.from', { price: money }) : money, per: hoursLabel(ctx.t, ctx.lang, hours) };
+  }
   const unit = unitPriceFor(tour, channel, ctx.acct);
   return { channel, unit, money: formatMoney(unit, ctx.lang), per: tour.model === 'person' ? ctx.t('price.perPerson') : ctx.t('price.perGroup') };
 }
@@ -72,7 +85,7 @@ export function departuresList(ctx, departures, { pax = 2 } = {}) {
   return html`<ul class="dep-list">${departures.map((d) => {
     const { money, per } = priceParts(ctx, d.tour);
     const n = Math.max(1, Math.min(pax, d.left));
-    const note = d.left <= 3 ? (d.left === 1 ? t('departures.left1') : t('departures.left', { n: d.left })) : d.joined ? t('book.confirmedDeparture') : fmtDuration(d.tour.durationMin);
+    const note = d.left <= 3 ? (d.left === 1 ? t('departures.left1') : t('departures.left', { n: d.left })) : d.joined ? t('book.confirmedDeparture') : fmtDuration(d.tour.durationMin, lang);
     return html`<li><a class="dep" href="${u('/book/checkout')}?tour=${encodeURIComponent(d.tour.slug)}&date=${d.date}&time=${d.time}&pax=${n}">
       <span class="dep-when"><strong>${fmtDate(d.date, lang, 'weekday')}</strong><span class="dep-time">${d.time}</span></span>
       <span class="dep-what"><strong>${d.tour.i18n[lang].title}</strong><small class="${d.left <= 3 ? 'dep-few' : ''}">${note}</small></span>
@@ -86,12 +99,12 @@ export function tourCard(ctx, tour) {
   const ti = tour.i18n[lang];
   const p = priceParts(ctx, tour);
   return html`<a class="card tour-card reveal" href="${u('/tours/' + tour.slug)}">
-    <div class="card-media">${tourMedia(ctx, tour, '')}<span class="chip chip-float">${tour.model === 'person' ? t('tour.kindGroup') : t('tour.kindPrivate')}</span></div>
+    <div class="card-media">${tourMedia(ctx, tour, '')}<span class="chip chip-float">${tour.pricing === 'hourly' ? t('tour.kindHourly') : tour.model === 'person' ? t('tour.kindGroup') : t('tour.kindPrivate')}</span></div>
     <div class="card-body">
       <h3>${ti.title}</h3>
       <p class="muted">${ti.summary}</p>
       <ul class="meta">
-        <li>${fmtDuration(tour.durationMin)}</li>
+        <li>${fmtDuration(tour.durationMin, lang)}</li>
         <li>${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })}</li>
       </ul>
       <p class="card-foot"><span class="price">${p.money}<small> / ${p.per}</small></span>${p.channel === 'b2b' ? html`<span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}<span class="arrow" aria-hidden="true">→</span></p>

@@ -1,7 +1,7 @@
 import express from 'express';
 import { loadAvailabilityContext, nextAvailableDates, nextDepartures, slotsForDay } from '../availability.js';
 import { BookingError, cancellationState, getBookingByRef, slotStillOpen } from '../bookings.js';
-import { previewPricing } from '../pricing.js';
+import { hourlyQuote, previewPricing } from '../pricing.js';
 import { hashPassword, verifyPassword } from '../auth.js';
 import { sendContactMessage, sendPartnerRegistered, icsFor } from '../emails.js';
 import { isDate, isTime, nowRome } from '../time.js';
@@ -10,6 +10,8 @@ import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js'
 import { renderVoucherPdf } from '../pdf.js';
 import { accountPage, loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
+import { hourlyPage } from '../views/hourly.js';
+import { hourOptions, openTo } from '../rates.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
 import { normLang, pick } from '../langs.js';
 import { featuredQuotes, feedbackStats } from '../reviews.js';
@@ -33,15 +35,23 @@ export function publicRouter(app) {
     next();
   });
 
+  // tour che si prenotano con data e persone (i servizi a ore hanno la loro pagina, quelli per agenzie solo i partner)
+  const visible = (channel) => {
+    const rates = app.rates.get();
+    return content.tours.filter((x) => openTo(rates, x, channel));
+  };
+  const selectable = (channel) => visible(channel).filter((x) => x.pricing !== 'hourly');
+  const hourlyProducts = (channel) => visible(channel).filter((x) => x.pricing === 'hourly');
+
   r.get('/', (req, res) => {
     const nowMs = Date.now();
-    const departures = nextDepartures(db, cfg, content.tours, nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 4 });
+    const departures = nextDepartures(db, cfg, selectable(channelOf(req.acct)), nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 3 });
     send(res, homePage(res.locals.ctx, { departures, quotes: featuredQuotes(db, { limit: 3 }), reviewStats: feedbackStats(db) }));
   });
   r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx)));
   r.get('/tours/:slug', (req, res, next) => {
     const tour = content.tour(req.params.slug);
-    if (!tour?.active) return next();
+    if (!tour?.active || !openTo(app.rates.get(), tour, channelOf(req.acct))) return next();
     send(res, tourPage(res.locals.ctx, tour, { quotes: featuredQuotes(db, { tourSlug: tour.slug, limit: 3 }), reviewStats: feedbackStats(db) }));
   });
   r.get('/blog', (req, res) => send(res, blogPage(res.locals.ctx)));
@@ -58,11 +68,11 @@ export function publicRouter(app) {
     legalName: cfg.site.legalName,
     email: cfg.site.email,
     phone: cfg.site.phone,
-    vat: cfg.site.vatNumber || pick({ it: '[P.IVA — da inserire]', en: '[VAT no. — to be added]', es: '[N.º de IVA — por añadir]' }, ctx.lang),
-    address: cfg.site.address || pick({ it: '[indirizzo — da inserire]', en: '[address — to be added]', es: '[dirección — por añadir]' }, ctx.lang),
+    vat: cfg.site.vatNumber || pick({ it: '[P.IVA — da inserire]', en: '[VAT no. — to be added]', es: '[N.º de IVA — por añadir]', ja: '[VAT番号 — 追記予定]' }, ctx.lang),
+    address: cfg.site.address || pick({ it: '[indirizzo — da inserire]', en: '[address — to be added]', es: '[dirección — por añadir]', ja: '[住所 — 追記予定]' }, ctx.lang),
     giftMonths: String(cfg.gift.validityMonths),
     payMethods: cfg.policy.allowPayOnSite ? ctx.t('legal.payBoth') : ctx.t('legal.payCard'),
-    license: cfg.site.guideLicense || pick({ it: '[n. abilitazione — da inserire]', en: '[licence no. — to be added]', es: '[n.º de habilitación — por añadir]' }, ctx.lang),
+    license: cfg.site.guideLicense || pick({ it: '[n. abilitazione — da inserire]', en: '[licence no. — to be added]', es: '[n.º de habilitación — por añadir]', ja: '[ガイド資格番号 — 追記予定]' }, ctx.lang),
     b2cHours: ctx.t(cfg.policy.b2cFreeCancelHours >= 48 && cfg.policy.b2cFreeCancelHours % 24 === 0 ? 'time.days' : 'time.hours', { n: cfg.policy.b2cFreeCancelHours >= 48 && cfg.policy.b2cFreeCancelHours % 24 === 0 ? cfg.policy.b2cFreeCancelHours / 24 : cfg.policy.b2cFreeCancelHours }),
     b2bHours: ctx.t(cfg.policy.b2bFreeCancelHours >= 48 && cfg.policy.b2bFreeCancelHours % 24 === 0 ? 'time.days' : 'time.hours', { n: cfg.policy.b2bFreeCancelHours >= 48 && cfg.policy.b2bFreeCancelHours % 24 === 0 ? cfg.policy.b2bFreeCancelHours / 24 : cfg.policy.b2bFreeCancelHours }),
   });
@@ -92,6 +102,8 @@ export function publicRouter(app) {
   r.get('/book', (req, res) => {
     const ctx = res.locals.ctx;
     const channel = channelOf(req.acct);
+    const asked = content.tour(String(req.query.tour ?? ''));
+    if (asked?.pricing === 'hourly') return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
     const pax = clampInt(req.query.pax, 1, 25, 2);
     const tourSlug = content.tour(String(req.query.tour ?? ''))?.active ? String(req.query.tour) : '';
     const minDate = minBookableDate(app, channel);
@@ -100,31 +112,67 @@ export function publicRouter(app) {
     let suggestions = [];
     if (date) {
       const nowMs = Date.now();
-      const list = tourSlug ? [content.tour(tourSlug)] : content.tours;
+      const list = tourSlug ? [content.tour(tourSlug)] : selectable(channel);
       const actx = loadAvailabilityContext(db, cfg, date, date, nowMs);
       results = list.map((tour) => ({ tour, slots: slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs }) })).filter((x) => x.slots.length);
       if (!results.length) suggestions = nextAvailableDates(db, cfg, list, date < minDate ? minDate : date, { pax, channel, nowMs });
     }
     // senza una data in mente: le prossime partenze, prenotabili con un tocco
-    const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : content.tours, nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
-    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel }));
+    const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : selectable(channel), nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
+    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, tours: selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
+  });
+
+  // ───── servizi a ore: preventivo e orari liberi ─────
+  r.get('/hourly', (req, res) => {
+    const ctx = res.locals.ctx;
+    const channel = channelOf(req.acct);
+    const products = hourlyProducts(channel);
+    const product = products.find((x) => x.slug === String(req.query.product ?? '')) ?? products[0] ?? null;
+    if (!product) return send(res, hourlyPage(ctx, { products: [], product: null, channel, values: {}, quote: null, slots: [], minDate: '' }));
+    const minDate = minBookableDate(app, channel);
+    const date = isDate(req.query.date) && req.query.date >= minDate ? req.query.date : null;
+    const pax = clampInt(req.query.pax, 1, product.maxParticipants, 2);
+    const asked = Number(req.query.hours);
+    const hours = product.chooseHours ? (hourOptions(product.service).includes(asked) ? asked : Math.max(product.durationMin / 60, hourOptions(product.service)[0])) : product.durationMin / 60;
+    const earpieces = req.query.earpieces === '1';
+    const account = channel === 'b2b' ? req.acct : null;
+    const quote = hourlyQuote(app, product, { pax, channel, account, date, time: null, hours, earpieces });
+    let slots = [];
+    if (date && quote.ok) {
+      const nowMs = Date.now();
+      const actx = loadAvailabilityContext(db, cfg, date, date, nowMs);
+      slots = slotsForDay(actx, cfg, product, date, { pax, channel, nowMs, durationMin: Math.round(hours * 60) })
+        .map((s) => ({ ...s, quote: hourlyQuote(app, product, { pax, channel, account, date, time: s.time, hours, earpieces }) }))
+        .filter((s) => s.quote.ok);
+    }
+    send(res, hourlyPage(ctx, { products, product, channel, values: { date, hours, pax, earpieces }, quote, slots, minDate }));
   });
 
   // ───── checkout ─────
-  function readSlotParams(src) {
+  /** Servizio, persone, data e ora (e, per i servizi a ore, durata e auricolari) dai parametri; null se non sono validi. */
+  function readSlotParams(src, channel) {
     const tour = content.tour(String(src.tour ?? ''));
     const pax = Number.parseInt(src.pax, 10);
     if (!tour?.active || !Number.isInteger(pax) || pax < 1 || pax > tour.maxParticipants || !isDate(src.date) || !isTime(src.time)) return null;
-    return { tour, pax, date: src.date, time: src.time };
+    if (!openTo(app.rates.get(), tour, channel)) return null;
+    const p = { tour, pax, date: src.date, time: src.time, hours: null, earpieces: false, durationMin: null };
+    if (tour.pricing === 'hourly') {
+      p.hours = tour.chooseHours ? Number(src.hours) : tour.durationMin / 60;
+      p.earpieces = src.earpieces === '1' || src.earpieces === 'on';
+      if (!hourlyQuote(app, tour, { pax, channel, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces }).ok) return null;
+      p.durationMin = Math.round(p.hours * 60);
+    }
+    return p;
   }
+  const openSlot = (p, channel) => slotStillOpen(app, p.tour, p.date, p.time, p.pax, channel, Date.now(), p.durationMin);
 
   r.get('/book/checkout', async (req, res) => {
     const ctx = res.locals.ctx;
     const channel = channelOf(req.acct);
-    const p = readSlotParams(req.query);
+    const p = readSlotParams(req.query, channel);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(req.query.tour ?? '')), date: null, pax: 2 }), 400);
     await app.calendars.ensureFresh(); // riallinea il calendario personale prima di mostrare/confermare lo slot
-    const slot = slotStillOpen(app, p.tour, p.date, p.time, p.pax, channel);
+    const slot = openSlot(p, channel);
     if (!slot) return send(res, slotGonePage(ctx, p), 409);
     // link promozionali: /book/checkout?...&promo=CODICE (o &gift=CODICE)
     const values = { promo: cleanText(req.query.promo, 40), gift: cleanText(req.query.gift, 120) };
@@ -133,7 +181,7 @@ export function publicRouter(app) {
   });
 
   const pricingFor = (req, p, values, channel) =>
-    previewPricing(app, { tour: p.tour, pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, date: p.date, email: values.email ?? '', promoCode: values.promo, giftCodes: values.gift });
+    previewPricing(app, { tour: p.tour, pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, email: values.email ?? '', promoCode: values.promo, giftCodes: values.gift });
 
   r.post('/book/checkout', form, async (req, res) => {
     const ctx = res.locals.ctx;
@@ -142,20 +190,20 @@ export function publicRouter(app) {
     if (b.website) return res.status(400).end();
     if (!app.limits.booking(ip(req))) return tooMany(res);
     const channel = channelOf(req.acct);
-    const p = readSlotParams(b);
+    const p = readSlotParams(b, channel);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(b.tour ?? '')), date: null, pax: 2 }), 400);
     if (!b.apply) await app.calendars.ensureFresh(); // riallinea il calendario personale prima di prenotare
     const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {
-      const slot = slotStillOpen(app, p.tour, p.date, p.time, p.pax, channel);
+      const slot = openSlot(p, channel);
       return slot ? send(res, checkoutPage(ctx, { ...p, slot, channel, values, error, pricing: pricingFor(req, p, values, channel) }), status) : send(res, slotGonePage(ctx, p), 409);
     };
     if (b.apply) return rerender('', 200); // "Applica": mostra il nuovo totale senza prenotare
     if (!b.consent) return rerender(t('err.consent'));
     try {
       const billing = channel === 'b2b' ? { company: req.acct.company, vat: req.acct.vat, sdi: req.acct.sdi_code, pec: req.acct.pec, address: req.acct.address } : values.invoice ? { text: values.billing } : null;
-      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, ...values, promoCode: values.promo, giftCodes: values.gift, billing }, req.lang);
+      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, ...values, promoCode: values.promo, giftCodes: values.gift, billing }, req.lang);
       res.redirect(303, redirect);
     } catch (e) {
       if (!(e instanceof BookingError)) throw e;

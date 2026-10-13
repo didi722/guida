@@ -7,6 +7,7 @@ import { MEDIA_NAME, MIME_BY_EXT } from './media.js';
 import { openDb } from './db.js';
 import { createContext } from './context.js';
 import { LANGS } from './i18n.js';
+import { openTo } from './rates.js';
 import { langMiddleware, makeCtx, preferredLang, sameOrigin, securityHeaders, send, sessionMiddleware } from './http.js';
 import { publicRouter } from './routes/public.js';
 import { featuresRouter } from './routes/features.js';
@@ -62,7 +63,7 @@ export function createApp(overrides = {}) {
     res.type('text/plain').send(app.payments.demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
   );
   server.get('/sitemap.xml', (req, res) => {
-    const all = ['/', '/tours', '/book', '/gift', '/programs', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.map((x) => `/tours/${x.slug}`)].map((p) => ({ p, langs: LANGS }));
+    const all = ['/', '/tours', '/book', '/gift', '/programs', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.filter((x) => openTo(app.rates.get(), x, 'b2c')).map((x) => `/tours/${x.slug}`), '/hourly'].map((p) => ({ p, langs: LANGS }));
     // un articolo compare solo nelle lingue in cui è tradotto
     const posts = content.posts.map((post) => ({ p: `/blog/${post.slug}`, langs: LANGS.filter((l) => post.i18n[l]) }));
     const url = (lang, p) => `${cfg.baseUrl}/${lang}${p === '/' ? '/' : p}`;

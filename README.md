@@ -1,6 +1,6 @@
 # Guida Venezia — sito di prenotazione
 
-Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **servizi privati**, **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese e spagnolo**, pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
+Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **guida privata a ore** (con assistente, tour leader e meet & greet per le agenzie), **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese, spagnolo e giapponese**, pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
 
 > 📖 **Come si usa il sito** (tour, prezzi, blog, foto, partner, fatture, statistiche, backup…): [`docs/GUIDA.md`](docs/GUIDA.md), che trovi anche nel pannello in **Aiuto › Guida**.
 
@@ -9,7 +9,9 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 ## Cosa fa
 
 **Per i clienti (B2C)**
+- La home propone **due strade**: la **guida privata a ore** (con le tariffe a colpo d'occhio e il calcolatore del preventivo) e i **tour di gruppo a posti liberi** (con le prossime partenze, prenotabili con un tocco). La pagina *Tour* è divisa nello stesso modo.
 - Scelgono il tour e vedono un **calendario con le date libere** e gli orari, oppure partono dalla data (`/it/book`).
+- Per la **guida privata a ore** (`/it/hourly`) scelgono giorno, ora, ore e persone e vedono subito il totale, con festivo, notturno e auricolari calcolati dal sito.
 - Prenotano senza registrarsi e **pagano subito con carta** (Stripe). Il pagamento «il giorno del tour» è **spento di default** (vedi [Pagamento in contanti](#pagamento-in-contanti-il-giorno-del-tour)).
 - Possono usare un **codice sconto** e/o un **buono regalo** al checkout, anche in più volte.
 - Ricevono email di conferma con **voucher PDF**, punto d'incontro, file calendario (.ics) e link per gestire/annullare.
@@ -22,13 +24,14 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 **Per agenzie, DMC e tour operator (B2B)**
 - Pagina commerciale (`/it/b2b`) e **richiesta di accesso** con dati aziendali (P.IVA, SDI/PEC).
 - Tu **approvi** dal pannello e puoi impostare per ogni partner: **sconto extra**, **finestra di cancellazione** (es. 7 giorni), pagamento **a fattura**.
-- Il partner vede le **tariffe riservate**, prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica**, scarica il **voucher PDF senza prezzi** (da girare al cliente finale) e richiede **programmi di più giorni**.
+- La pagina agenzie mette **in cima le tariffe a ore** (mezza giornata, giornata, ora extra, supplementi festivo/superfestivo/notturno/auricolari) per guida, **assistente in loco**, **tour leader** e **meet & greet**, con un calcolatore di preventivo.
+- Il partner vede le **tariffe riservate** (con il suo sconto), prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica**, scarica il **voucher PDF senza prezzi** (da girare al cliente finale) e richiede **programmi di più giorni**.
 
 **Per te (pannello `/admin`, ottimizzato per telefono)** — quasi tutto si cambia da qui, senza toccare il codice ([guida](docs/GUIDA.md))
 - **Agenda** dei prossimi 14 giorni con prenotazioni **e giornate dei programmi**; elenco prenotazioni con ricerca e **annullamento/rimborso** (a percentuale, con penale per chi paga a fattura).
 - **Disponibilità**: orari di lavoro, chiusure, orari speciali, blocchi orari e **calendari collegati** (Google Calendar e simili): gli impegni segnati «Occupato» bloccano da soli gli slot, evitando sovrapposizioni.
 - **Programmi**: richieste, costruttore della proposta (giornate, prezzi, acconto, date trattenute), avvisi se una giornata si sovrappone a qualcos'altro, accettazione, acconto, annullo con rimborso.
-- **Sito**: **tour** (crea, modifica, nascondi, duplica; testi e domande frequenti in italiano, inglese e spagnolo), **listino** con tutti i prezzi in una tabella, **blog** (bozze, copertine, foto nel testo), **pagine** fisse, **testi dell'interfaccia** per lingua, **libreria immagini** (foto di tour, articoli, home, ritratto, anteprima social) e **impostazioni** (contatti, regole di prenotazione, buoni regalo, dati fiscali).
+- **Sito**: **tour** (crea, modifica, nascondi, duplica; testi e domande frequenti in italiano, inglese, spagnolo e giapponese), **listino** con tutti i prezzi in una tabella, **tariffe a ore** (scaglioni, ora extra, supplementi, giorni festivi), **blog** (bozze, copertine, foto nel testo), **pagine** fisse, **testi dell'interfaccia** per lingua, **libreria immagini** (foto di tour, articoli, home, ritratto, anteprima social) e **impostazioni** (contatti, regole di prenotazione, buoni regalo, dati fiscali).
 - **Partner**: approvazione, **listino dedicato** per ciascuno, **sconto**, pagamento a fattura e **politica di annullo a scaglioni** per ciascuno (rimborsi parziali, penali).
 - **Statistiche**: venduto, scontrino medio, incassato e da incassare, annulli, andamento, per tour/partner/canale/pagamento/lingua/giorno, portafoglio futuro, con confronto sul periodo precedente ed esportazione CSV.
 - **Fatture**: voci da fatturare, bozze, **fattura elettronica XML (FatturaPA)** con numerazione progressiva, copia PDF, invio al cliente, trasmissione a SdI via PEC, note di credito, registro CSV.
@@ -68,10 +71,11 @@ I test sui contenuti dei PDF usano `pdftotext` (poppler) e si saltano da soli se
 
 ## Lingue
 
-Il sito è in **italiano, inglese e spagnolo** (`/it`, `/en`, `/es`); la lingua si sceglie dal menu in alto e, alla prima visita, dalla lingua del browser. La lingua della prenotazione decide anche lingua di email, voucher PDF e buoni regalo; le notifiche per te restano in italiano.
+Il sito è in **italiano, inglese, spagnolo e giapponese** (`/it`, `/en`, `/es`, `/ja`); la lingua si sceglie dal menu in alto e, alla prima visita, dalla lingua del browser. La lingua della prenotazione decide anche lingua di email, voucher PDF e buoni regalo; le notifiche per te restano in italiano.
 
-- Un tour manca di una traduzione spagnola? Il sito mostra la versione inglese (il test `test/i18n.test.js` ti avvisa).
-- Per **aggiungere una lingua**: una riga in `server/langs.js`, una colonna in `server/strings.json`, il blocco della lingua nei tour, i file `.xx.md` di blog e pagine, le voci nei dizionari di `server/emails.js`; poi `npm test` indica cosa manca.
+- Un tour manca di una traduzione spagnola o giapponese? Il sito mostra la versione inglese (il test `test/i18n.test.js` ti avvisa).
+- **Giapponese**: nei PDF (voucher, buono regalo, proposta) si usa Noto Sans JP, incorporato solo quando un testo ha kana o ideogrammi (anche il nome di un cliente scritto in giapponese in un voucher inglese o italiano); il file è un sottoinsieme in `server/fonts/` con la sua licenza (OFL) e le istruzioni per rigenerarlo. Il sito usa i caratteri di sistema (nessun font di terzi). Le pagine legali giapponesi sono traduzioni delle bozze: vanno riviste insieme alle altre.
+- Per **aggiungere una lingua**: una riga in `server/langs.js`, una colonna in `server/strings.json`, il blocco della lingua nei tour, i file `.xx.md` di blog e pagine, le voci nei dizionari di `server/emails.js` (e, se serve un alfabeto diverso, il font dei PDF in `server/pdf.js`); poi `npm test` indica cosa manca.
 - Le **lingue offerte** per ogni tour sono nel campo `languages` di `content/tours/*.yml` (compaiono nella scheda del tour); l'abilitazione per ciascuna lingua va indicata in `GUIDE_LICENSE`.
 
 ## Dove si cambiano le cose
@@ -82,6 +86,7 @@ Il sito è in **italiano, inglese e spagnolo** (`/it`, `/en`, `/es`); la lingua 
 |---|---|
 | **Tour e servizi** (testi, prezzi, durata, orari, capienza, lingue, copertina) | Sito › Tour |
 | **Prezzi** (pubblico e tariffa partner) | Sito › Listino; prezzi per singolo partner: Clienti › Partner |
+| **Tariffe a ore** (guida, assistente, tour leader, meet & greet; supplementi; giorni festivi) | Sito › Tariffe a ore |
 | **Articoli del blog**, **pagine** (Chi sono, privacy, condizioni, cookie) | Sito › Blog, Sito › Pagine |
 | **Testi dell'interfaccia** (home, pulsanti, domande frequenti…) | Sito › Testi |
 | **Foto** (copertine, home, ritratto, anteprima social, foto negli articoli) | Sito › Immagini |
@@ -95,7 +100,7 @@ Il sito è in **italiano, inglese e spagnolo** (`/it`, `/en`, `/es`); la lingua 
 
 **I file di `content/`** (tour in `content/tours/*.yml`, articoli in `content/blog/`, pagine in `content/pages/`) sono solo il **contenuto iniziale**: vengono importati nel database **una volta**, la prima volta che il sito parte con un database vuoto. Dopo, si lavora dal pannello e modificarli non cambia più nulla. Il database (`data/guida.sqlite`) e le foto (`data/media/`) vanno quindi su un **disco persistente** e nel **backup**.
 
-Nel contenuto iniziale di un tour: `model: person` = **a persona**, partenze fisse (`times: ["09:30", "14:30"]`); `model: group` = **privato**, prezzo per gruppo, con `flexible: true` il cliente sceglie l'orario ogni 30′. `price` è il prezzo pubblico, `b2bPrice` la tariffa per i partner, `cancelHours` (facoltativo) la cancellazione gratuita di quel tour.
+Nel contenuto iniziale di un tour: `model: person` = **a persona**, partenze fisse (`times: ["09:30", "14:30"]`); `model: group` = **privato**, prezzo per gruppo, con `flexible: true` il cliente sceglie l'orario ogni 30′. `price` è il prezzo pubblico, `b2bPrice` la tariffa per i partner, `cancelHours` (facoltativo) la cancellazione gratuita di quel tour. I servizi **a ore** hanno invece `pricing: hourly` e `service: guide|assistant|leader|meetgreet` (e niente `price`): il prezzo viene dalle tariffe a ore. `audience: b2b` li riserva alle agenzie, `chooseHours: true` lascia scegliere la durata.
 
 ## Pagamento in contanti il giorno del tour
 
@@ -168,6 +173,7 @@ server/
   availability.js   motore delle disponibilità (puro, testato)
   bookings.js       prenotazioni, prezzi, cancellazioni a scaglioni (policy.js)
   pricing.js        codici sconto, buoni regalo, prezzi dedicati ai partner
+  rates.js          tariffe a ore: scaglioni, ora extra, supplementi, giorni festivi (puro, testato)
   programs.js       programmi di più giorni
   calendars.js      calendari collegati (iCal)
   content.js        lettura e controllo di tour, articoli e pagine
@@ -196,6 +202,7 @@ Passo per passo, con i percorsi del pannello, nella [guida](docs/GUIDA.md#20-da-
 - [ ] **Dati d'impresa** (Sito › Impostazioni › Attività e contatti): Partita IVA, abilitazione, indirizzo, email e telefono veri (compaiono nel footer, nelle pagine legali, nelle email e sui PDF).
 - [ ] **Dati fiscali per le fatture** (Sito › Impostazioni › Fatturazione) **confermati dal commercialista**; non emettere una fattura «di prova» su SdI (consumerebbe il numero 1/2027): chiedi al commercialista come verificare il file prima dell'avvio.
 - [ ] **Tour e prezzi veri** (Sito › Tour e Listino): quelli iniziali sono esempi. Controlla anche lingue, punti d'incontro e durate.
+- [ ] **Tariffe a ore** (Sito › Tariffe a ore): le cifre iniziali sono un punto di partenza; **confermale col commercialista** (regime forfettario, contributi, rivalsa).
 - [ ] **Testi**: rileggi Chi sono, articoli del blog e domande frequenti (sono bozze da rivedere e firmare, soprattutto i dettagli storici).
 - [ ] **Pagine legali** (privacy, condizioni, cookie): sono bozze, **falle rivedere da commercialista/consulente**. In particolare buoni regalo (validità, recesso), acconti dei programmi, recensioni, conservazione delle fatture.
 - [ ] **Foto vere** (tour, ritratto, home, anteprima social) al posto delle illustrazioni (Sito › Immagini).

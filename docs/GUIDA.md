@@ -13,7 +13,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 3. [Voglio… → vado in…](#3-voglio-vado-in)
 4. [Ogni giorno: cinque minuti](#4-ogni-giorno-cinque-minuti)
 5. [Tour e servizi](#5-tour-e-servizi)
-6. [Prezzi, sconti e buoni regalo](#6-prezzi-sconti-e-buoni-regalo)
+6. [Prezzi, tariffe a ore, sconti e buoni regalo](#6-prezzi-tariffe-a-ore-sconti-e-buoni-regalo)
 7. [Pagine: Chi sono, privacy, condizioni, cookie](#7-pagine-chi-sono-privacy-condizioni-cookie)
 8. [Blog](#8-blog)
 9. [Testi del sito](#9-testi-del-sito)
@@ -53,7 +53,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 | **Agenda** | Agenda · Prenotazioni · Programmi · Disponibilità |
 | **Clienti** | Partner · Sconti · Feedback |
 | **Conti** | Fatture · Statistiche |
-| **Sito** | Tour · Listino · Blog · Pagine · Testi · Immagini · Impostazioni |
+| **Sito** | Tour · Listino · Tariffe a ore · Blog · Pagine · Testi · Immagini · Impostazioni |
 | **Aiuto** | Guida · Backup · Email |
 
 **Cambiare la password del pannello.** La password non si cambia dal pannello (per sicurezza): sta nella configurazione del server, nella variabile `ADMIN_PASSWORD`. Cambiala nel pannello del tuo hosting (sezione *Environment* / *Variables*), scrivila **senza virgolette** e riavvia il servizio. Usa una password lunga e unica.
@@ -62,7 +62,9 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 
 | Voglio… | Vado in… |
 |---|---|
-| **Cambiare il prezzo** di un tour | **Sito › Listino** |
+| **Cambiare il prezzo** di un tour a prezzo fisso | **Sito › Listino** |
+| Cambiare le **tariffe a ore** (mezza giornata, giornata, ora extra), i **supplementi** (festivo, notturno, auricolari) o i **giorni festivi** | **Sito › Tariffe a ore** |
+| Offrire alle agenzie **assistente, tour leader o meet & greet** | **Sito › Tariffe a ore** (le cifre) e **Sito › Tour** (i servizi) |
 | **Aggiungere un tour** | **Sito › Tour › Nuovo tour** |
 | Cambiare orari, durata, capienza o testi di un tour | **Sito › Tour** › tocca il tour |
 | **Nascondere** un tour (pausa, stagione) | **Sito › Tour › Nascondi** |
@@ -107,7 +109,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
    - **Indirizzo web (slug)**: come compare nell'indirizzo, per esempio `gondola-al-tramonto` → `…/tours/gondola-al-tramonto`. Solo lettere minuscole, numeri e trattini; **dopo la creazione non si cambia**.
    - **Ordine nell'elenco**: numero più basso = più in alto.
    - **Visibile sul sito e prenotabile**: se lo togli il tour sparisce dal sito (le prenotazioni già fatte restano).
-   - **In evidenza (in home)**: lo mostra tra i tour della pagina iniziale.
+   - **In evidenza**: la home ha due schede, *Guida privata a ore* e *Tour di gruppo*; per ciascuna mostra la foto del tour «in evidenza» (se ce ne sono più d'uno, il primo; se nessuno, il primo dell'elenco).
    - **Tipo di servizio**:
      - *Partenze fisse, prezzo a persona*: tour in piccolo gruppo con orari stabiliti (per esempio 09:30 e 14:30). Più clienti possono prenotare la stessa partenza fino alla **capienza massima**.
      - *Servizio privato, prezzo a gruppo*: il cliente prenota tutta la fascia. Con **Orario libero** sceglie lui quando iniziare (ogni 30 minuti, nei tuoi orari di lavoro).
@@ -115,13 +117,14 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
    - **Giorni in cui si svolge**: spunta i giorni della settimana.
    - **Durata** (ore e minuti) e **Persone al massimo**.
 3. **Prezzi e regole**
+   - **Prezzo**: *Prezzo fisso* (lo scrivi qui sotto) oppure **A ore**, per i servizi privati: il prezzo viene allora da **Sito › Tariffe a ore** ([sezione 6](#6-prezzi-tariffe-a-ore-sconti-e-buoni-regalo)) e non c'è nulla da scrivere in questa scheda.
    - **Prezzo al pubblico**: a persona o a gruppo, secondo il tipo. Scrivi `35` o `35,50`.
    - **Tariffa partner B2B**: quello che paga un'agenzia (vuoto = uguale al pubblico). I prezzi **dedicati a un singolo partner** si impostano nella sua scheda ([sezione 14](#14-partner-agenzie-dmc-tour-operator)).
    - **Cancellazione gratuita (ore prima)**: vale solo per questo tour; vuoto = la regola generale (**Sito › Impostazioni › Regole di prenotazione**).
    - **Si può pagare sul posto**: conta solo se il pagamento sul posto è consentito nelle Impostazioni (di default non lo è).
    - **Lingue in cui offri questo servizio**: compaiono nella scheda del tour.
 4. **Immagine di copertina**: scegli una foto già caricata o caricane una ([sezione 10](#10-immagini)). Senza foto il sito usa un'illustrazione.
-5. **Testi** (una scheda per lingua: Italiano, English, Español)
+5. **Testi** (una scheda per lingua: Italiano, English, Español, 日本語)
    - **Titolo**, **Sottotitolo**, **Riassunto** (una o due frasi: compare negli elenchi e su Google), **Punto d'incontro**, **Link alla mappa** (indirizzo Google Maps).
    - **Descrizione**: testo lungo; puoi formattarlo con i pulsanti *Grassetto, Corsivo, Titolo, Elenco, Link, Foto* ([appendice](#21-appendice-formattare-un-testo)) e controllare il risultato con **Anteprima**.
    - **Punti salienti**, **Incluso**, **Non incluso**: **uno per riga**. **Note utili**: testo libero.
@@ -135,8 +138,8 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
      Circa 3 km, a ritmo rilassato.
      ```
 
-     Se per una lingua non scrivi nulla, il sito mostra quelle dell'inglese (per lo spagnolo) o dell'italiano. Idee: cosa si visita dentro e fuori, quanto si cammina, accessibilità, cosa portare, cosa succede se piove, se si può prenotare per una persona sola.
-   - L'**italiano** è obbligatorio. Se una traduzione manca, il sito mostra al suo posto l'inglese (per lo spagnolo) oppure l'italiano: nell'elenco dei tour vedi un avviso *manca EN* o *manca ES*.
+     Se per una lingua non scrivi nulla, il sito mostra quelle dell'inglese (per spagnolo e giapponese) o dell'italiano. Idee: cosa si visita dentro e fuori, quanto si cammina, accessibilità, cosa portare, cosa succede se piove, se si può prenotare per una persona sola.
+   - L'**italiano** è obbligatorio. Se una traduzione manca, il sito mostra al suo posto l'inglese (per spagnolo e giapponese) oppure l'italiano: nell'elenco dei tour vedi un avviso con le lingue che mancano.
 6. Tocca **Crea il tour**. Apri **Vedi sul sito** per controllare come appare.
 
 ### Modificare, nascondere, duplicare, eliminare
@@ -148,10 +151,60 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 
 > Se cambi **orari o giorni** di un tour, controlla in **Agenda** le prenotazioni dei giorni futuri: le prenotazioni già fatte restano dov'erano.
 
-## 6. Prezzi, sconti e buoni regalo
+## 6. Prezzi, tariffe a ore, sconti e buoni regalo
 
 ### Il listino: tutti i prezzi in una pagina
 **Sito › Listino** mostra ogni tour con due colonne modificabili: **Pubblico (€)** e **Partner B2B (€)**. Cambia gli importi e tocca **Salva i prezzi**. Vale per le **nuove** prenotazioni.
+
+### Tariffe a ore: guida, assistente, tour leader, meet & greet
+
+Il servizio privato **non ha un prezzo fisso**: il cliente (o l'agenzia) sceglie **data, orario, ore e numero di persone** e il sito calcola il totale dalle tue tariffe. Le cifre stanno in **Sito › Tariffe a ore** e valgono per le **nuove** prenotazioni: ogni prenotazione conserva il suo conto, riga per riga.
+
+**I quattro servizi**
+
+| Servizio | Chi lo vede all'inizio | Scaglioni |
+|---|---|---|
+| **Servizio guida** | pubblico e agenzie | 2 ore · mezza giornata (4 ore) · giornata intera (8 ore) |
+| **Assistente in loco** | solo agenzie | 2 · 4 · 8 ore |
+| **Tour leader** | solo agenzie | mezza giornata (4 ore) · giornata intera (8 ore) |
+| **Meet & greet** | solo agenzie | fino a 1 ora |
+
+Per ogni servizio scrivi, per il **Pubblico** e per le **Agenzie**, il prezzo di ogni scaglione e quanto costa **Ogni ora in più**: sono euro **per l'intero gruppo**. Se lasci vuota la colonna *Pubblico*, quel servizio non è offerto ai privati.
+
+**Come si calcola.** Il prezzo di *N* ore è quello dello scaglione più grande che non supera *N*, più le ore in più × «Ogni ora in più», senza mai superare lo scaglione successivo. Si prenota a mezz'ore, fino a 12 ore. Con le cifre iniziali: 5 ore di guida per un'agenzia = 300 € (4 ore) + 70 € = **370 €**; 3 ore al pubblico = 200 € + 90 € = **290 €**.
+
+**Supplementi.** Si sommano al prezzo base e li calcola il sito dalla data e dall'orario scelti:
+- **Festivo** (+20%) per domeniche e festività; **Superfestivo** (+50%) lo sostituisce a Natale, Capodanno e Pasqua. I giorni si elencano in *Quali giorni sono festivi* (giorno e mese, per esempio `25-04 01-05`; «pasqua» e «pasquetta» si calcolano da sole).
+- **Notturno** (+30%) solo per le ore che cadono nella fascia (all'inizio dalle 20:00 alle 07:00), in proporzione. Per offrire orari serali o all'alba allarga gli orari in **Agenda › Disponibilità**.
+- **Auricolari** (4 € a persona, da 8 persone, solo servizio guida): il cliente li spunta al pagamento.
+
+Le percentuali si calcolano sul prezzo base (già scontato, per un'agenzia con sconto) e si arrotondano all'euro. In fondo alla pagina, **Prova il calcolatore** apre quello che vedono i clienti.
+
+**Le cifre iniziali** sono un punto di partenza, non una verità: guardano le tariffe di altre guide e associazioni di Venezia (singole guide intorno a 80–85 € l'ora; un'associazione 125 € l'ora, ora extra 150 €, festivi +20%, auricolari 4 € da 8 persone; un coordinatore: meet & greet 55 €, 4 ore 120 €, 8 ore 220 €, notturno +30%). Il listino per le agenzie sta un po' sotto le guide già avviate, quello al pubblico circa il 25% sopra.
+
+| | Pubblico | Agenzie |
+|---|---|---|
+| **Guida**: 2 ore · 4 ore · 8 ore · ora extra | 200 · 380 · 700 · 90 € | 160 · 300 · 560 · 70 € |
+| **Assistente**: 2 · 4 · 8 ore · ora extra | — | 80 · 110 · 200 · 32 € |
+| **Tour leader**: 4 · 8 ore · ora extra | — | 140 · 250 · 36 € |
+| **Meet & greet**: 1 ora · ora extra | — | 50 · 30 € |
+
+**Chi vede cosa**
+- Il pubblico vede **solo il servizio guida**, colonna *Pubblico*: nella pagina **Guida privata a ore** (voce *Guida a ore* del menu) con il calcolatore.
+- Le agenzie vedono le tariffe **Agenzie** in cima alla pagina *Per agenzie* (se lasci spuntato il consenso in *Chi vede le tariffe*; altrimenti solo dopo l'approvazione) e nella loro area.
+- Lo **sconto %** del partner (**Clienti › Partner**) si applica alla tariffa Agenzie, arrotondato all'euro. Il [listino dedicato](#prezzi-dedicati-a-un-partner) per singolo tour non riguarda i servizi a ore.
+
+**I servizi sono «tour» a ore.** In **Sito › Tour**, nel campo *Prezzo* scegli *Prezzo fisso* oppure *A ore*; per quelli a ore indichi il servizio (guida, assistente…), se *Il cliente sceglie quante ore* (altrimenti la durata è fissa, come per un itinerario di tre ore) e *Chi può prenotarlo* (tutti, oppure solo agenzie con account partner). Un itinerario a durata fissa usa le tariffe della guida per quella durata.
+
+**Dopo la prenotazione.** Il calendario blocca la fascia (le ore più la pausa); email, voucher, fattura e scheda della prenotazione riportano ore e supplementi (per esempio «4 ore, festivo +20%, auricolari»). Per i servizi lunghi conviene una **politica di annullo** dedicata alle agenzie (**Clienti › Partner › Politica di annullo**): un blocco di otto ore è difficile da riempire all'ultimo minuto.
+
+> **Quanto resta in tasca? (indicativo: lo confermi col commercialista).** Pensa ai prezzi *al netto* di imposte e contributi. Con la Partita IVA in **regime forfettario** da gennaio 2027:
+> - **Imposta sostitutiva**: **5%** per i primi cinque anni di una nuova attività (se negli ultimi tre anni non hai avuto altre attività e i ricavi restano sotto gli 85.000 € l'anno), poi **15%**. L'età non dà altri vantaggi.
+> - **Base di calcolo**: l'imposta si applica a una percentuale degli incassi (**coefficiente di redditività**). Per le guide è il **67%**, legato al vecchio codice ATECO 79.90.20; il nuovo codice è **79.90.01** e finché non esce la nuova tabella si usa il vecchio abbinamento (alcune guide online riportano il 78%: chiedi quale vale per te nel 2027). Le spese vere **non** si deducono.
+> - **Contributi INPS (Gestione Separata)**: circa il **26%** del reddito imponibile (26,07% nel 2026). Se vuoi, in fattura puoi addebitare la **rivalsa del 4%** (Impostazioni › Fatturazione elettronica).
+> - **Bollo** da 2 € sulle fatture sopra 77,47 €.
+> - **Esempio**: su 100 € incassati restano circa **80 €** con l'imposta al 5% e circa **75 €** al 15% (con il 78%: circa 77 € e 71 €), prima delle spese che sostieni tu (auricolari, trasporti, assicurazione, telefono, quote). Quindi **85 € l'ora lordi sono circa 68 € netti** con il 5%.
+> - Oltre gli 85.000 € l'anno si esce dal forfettario l'anno dopo (oltre 100.000 € subito). Se hai anche un lavoro dipendente c'è un limite sul reddito da lavoro dipendente: chiedi.
 
 ### Prezzi dedicati a un partner
 **Clienti › Partner** › il partner › **Listino dedicato**: per ogni tour puoi scrivere il prezzo che **solo quel partner** paga. Lascia vuoto per applicare la tariffa B2B (con lo sconto percentuale del partner, se c'è). Puoi **copiare il listino da un altro partner**.
@@ -195,7 +248,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 I testi dell'interfaccia — titolo e frasi della home, pulsanti, messaggi, domande frequenti, testi dei PDF, ecc. — si cambiano in **Sito › Testi**, **per ogni lingua**.
 
 1. Trova il testo: cerca una parola (*Cerca*) oppure scegli la sezione (Home, Menu, Prenota, Domande frequenti…).
-2. Cambia il testo nella lingua che vuoi (Italiano, English, Español).
+2. Cambia il testo nella lingua che vuoi (Italiano, English, Español, 日本語).
 3. **Salva i testi di questa pagina**.
 
 Regole:
@@ -295,10 +348,10 @@ Se non scegli nulla, la sezione non compare. Se hai almeno **5 feedback**, sotto
 ### Approvare un partner
 1. Apri la richiesta: vedi dati aziendali (Partita IVA, SDI/PEC), referente e messaggio.
 2. In **Stato e pagamento** scegli **Stato**: *Approvato*, *Rifiutato* o *Sospeso*; imposta lo **Sconto su tutto il listino (%)** (vale per i tour senza prezzo dedicato) e se **può pagare a fattura / bonifico**; aggiungi **Note interne**. **Salva**.
-3. Il partner riceve un'email e può entrare nella sua area: vede le **tariffe riservate**, prenota in autonomia (anche gruppi fino a 25), inserisce un **riferimento pratica**, scarica il **voucher senza prezzi** da girare al cliente finale e richiede **programmi di più giorni**.
+3. Il partner riceve un'email e può entrare nella sua area: vede le **tariffe riservate** (anche quelle **a ore**, con il suo sconto), prenota in autonomia (anche gruppi fino a 25), inserisce un **riferimento pratica**, scarica il **voucher senza prezzi** da girare al cliente finale e richiede **programmi di più giorni**.
 
 ### Listino dedicato
-Nella stessa pagina, **Listino dedicato**: scrivi il prezzo per ogni tour (vuoto = tariffa B2B con lo sconto %). **Salva il listino**. *Copia il listino da…* parte da un altro partner.
+Nella stessa pagina, **Listino dedicato**: scrivi il prezzo per ogni tour (vuoto = tariffa B2B con lo sconto %). **Salva il listino**. I servizi **a ore** non compaiono qui: il loro prezzo viene da **Sito › Tariffe a ore**, con lo sconto % del partner. *Copia il listino da…* parte da un altro partner.
 
 ### Politica di annullo per ogni partner
 Sotto **Politica di annullo** decidi fino a **3 scaglioni**: «fino a *N giorni/ore* prima dell'inizio: rimborso *X*%». Esempio: *fino a 7 giorni prima 100%; fino a 3 giorni prima 50%*; dopo l'ultimo scaglione **non si rimborsa nulla**.
@@ -442,6 +495,7 @@ Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, 
 
 **Prima del lancio**
 - [ ] **Tour e prezzi veri** (Sito › Tour e Listino): i tour d'esempio sono segnaposto. Controlla orari, durate, punti d'incontro, lingue.
+- [ ] **Tariffe a ore** (Sito › Tariffe a ore): le cifre iniziali sono un punto di partenza. Rivedi prezzi, supplementi e giorni festivi, **confermali col commercialista** e fai una prova col calcolatore (*Prova il calcolatore*).
 - [ ] **Foto vere**: copertine dei tour, foto della home, il tuo ritratto in *Chi sono*, anteprima social (Sito › Immagini).
 - [ ] **Testi**: rileggi *Chi sono*, gli articoli, le domande frequenti (Sito › Pagine, Blog, Testi).
 - [ ] **Pagine legali** riviste dal commercialista o da un consulente.

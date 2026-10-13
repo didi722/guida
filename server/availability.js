@@ -76,7 +76,7 @@ export function minNoticeHours(cfg, channel) {
  * Orari prenotabili di un tour in un giorno.
  * @returns {{time:string,end:string,left:number,joined:boolean}[]}
  */
-export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', nowMs, ignoreId = null, skipNotice = false }) {
+export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', nowMs, ignoreId = null, skipNotice = false, durationMin = null }) {
   if (!tour.weekdays.includes(dayOfWeek(date))) return [];
   const win = dayWindow(ctx, date);
   if (!win) return [];
@@ -84,7 +84,7 @@ export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', no
   const today = nowRome(nowMs).date;
   if (date < today || date > addDays(today, cfg.policy.maxAdvanceDays)) return [];
 
-  const dur = tour.durationMin;
+  const dur = durationMin ?? tour.durationMin; // i servizi a ore hanno la durata scelta dal cliente
   const buf = cfg.policy.bufferMin;
   const from = toMin(win.from);
   const to = toMin(win.to);
@@ -138,12 +138,12 @@ export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', no
 }
 
 /** Numero di orari prenotabili per ogni giorno del mese (per colorare il calendario). */
-export function monthAvailability(db, cfg, tour, month, { pax = 1, channel = 'b2c', nowMs }) {
+export function monthAvailability(db, cfg, tour, month, { pax = 1, channel = 'b2c', nowMs, durationMin = null }) {
   const dates = monthDates(month);
   const ctx = loadAvailabilityContext(db, cfg, dates[0], dates.at(-1), nowMs);
   const days = {};
   for (const d of dates) {
-    const n = slotsForDay(ctx, cfg, tour, d, { pax, channel, nowMs }).length;
+    const n = slotsForDay(ctx, cfg, tour, d, { pax, channel, nowMs, durationMin }).length;
     if (n) days[d] = n;
   }
   return days;

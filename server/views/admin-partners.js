@@ -40,7 +40,8 @@ ${items.length
 export function partnerDetailPage(ctx, a, { bookings, others, flash = '', error = '' }) {
   const { app } = ctx;
   const { cfg, content } = app;
-  const tours = content.tours;
+  const tours = content.tours.filter((x) => x.pricing !== 'hourly');
+  const hourlyServices = content.tours.some((x) => x.pricing === 'hourly');
   const dedicated = accountPrices(a);
   const custom = !!(a.cancel_policy_json || a.cancel_hours != null);
   const tiers = accountTiers(cfg, a);
@@ -87,6 +88,7 @@ export function partnerDetailPage(ctx, a, { bookings, others, flash = '', error 
   </tbody></table></div>
   <div class="btn-row"><button class="btn btn-gold" type="submit">Salva il listino</button></div>
 </form>
+${hourlyServices ? html`<p class="muted small">I servizi a ore (guida, assistente, tour leader, meet &amp; greet) non hanno un prezzo per tour: per questo partner valgono le <a href="/admin/rates">Tariffe a ore</a> con lo <strong>sconto su tutto il listino</strong>${a.discount_percent ? ` del ${a.discount_percent}%` : ' (oggi nessuno)'} indicato sopra.</p>` : ''}
 ${others.length
   ? html`<form class="inline-form copy-form" method="post" action="/admin/partners/${a.id}/prices"><input type="hidden" name="action" value="copy"><label class="small muted">Copia il listino da</label> <select name="copy_from">${copyOptions}</select> <button class="btn btn-outline btn-sm" type="submit" data-confirm="Sostituire il listino di ${a.company} con quello scelto?">Copia</button></form>`
   : ''}

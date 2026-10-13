@@ -21,7 +21,7 @@
   var state = { pax: Math.min(2, max), month: minDate.slice(0, 7), days: {}, date: null, time: null, slots: [], loading: false };
   var seq = 0;
 
-  var locale = { it: 'it-IT', es: 'es-ES' }[lang] || 'en-GB';
+  var locale = { it: 'it-IT', es: 'es-ES', ja: 'ja-JP' }[lang] || 'en-GB';
   var money = new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 2 });
   function fill(s, vars) { return s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k]; }); }
   function total() { return model === 'person' ? unit * state.pax : unit; }
@@ -77,7 +77,7 @@
     head.append(prev, title, next);
 
     var grid = el('div', 'cal-grid'); grid.setAttribute('role', 'grid');
-    var dows = { it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'], es: ['L', 'M', 'X', 'J', 'V', 'S', 'D'] }[lang] || ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    var dows = { it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'], es: ['L', 'M', 'X', 'J', 'V', 'S', 'D'], ja: ['月', '火', '水', '木', '金', '土', '日'] }[lang] || ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     dows.forEach(function (d) { grid.append(el('span', 'cal-dow', d)); });
     for (var i = 0; i < offset; i++) grid.append(el('span'));
     for (var d = 1; d <= count; d++) {

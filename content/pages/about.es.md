@@ -18,7 +18,7 @@ Esa mirada me la llevo también a Venecia. Para mí no es un museo al aire libre
 ### En resumen
 
 - Guía turístico habilitado · {{license}}
-- Idiomas: italiano, inglés, español
+- Idiomas: italiano, inglés, español, japonés
 - Historiador de las religiones e investigador independiente
 
 Si te gusta leer, en mi blog [davidetomio.it](https://davidetomio.it) escribo sobre religiones, Japón e historias menos contadas (en italiano). Aquí, en el [blog de Venecia](/es/blog), encontrarás curiosidades y consejos prácticos sobre la ciudad.

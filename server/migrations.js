@@ -347,6 +347,11 @@ const V11_FEATURED_FEEDBACK = `
 ALTER TABLE feedback ADD COLUMN featured INTEGER NOT NULL DEFAULT 0;
 `;
 
+const V12_SERVICE_JSON = `
+-- Servizi a ore: ore, supplementi e voci del conto (si conservano con la prenotazione)
+ALTER TABLE bookings ADD COLUMN service_json TEXT;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -370,6 +375,8 @@ export const MIGRATIONS = [
   V10_REMINDERS,
   // v11 — commenti dei clienti mostrati sul sito
   V11_FEATURED_FEEDBACK,
+  // v12 — dettaglio dei servizi a ore
+  V12_SERVICE_JSON,
 ];
 
 export function migrate(db) {

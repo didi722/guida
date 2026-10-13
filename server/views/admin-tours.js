@@ -3,6 +3,7 @@ import { ART_KEYS } from '../art.js';
 import { LANGS, LANG_META } from '../langs.js';
 import { formatMoney } from '../util.js';
 import { faqToText } from '../content.js';
+import { openTo } from '../rates.js';
 import { adminLayout } from './admin.js';
 import { uploadControl } from './admin-media.js';
 import { mdEditor } from './md-editor.js';
@@ -32,6 +33,10 @@ export function defToValues(def = {}, slug = '') {
     b2bPrice: euroText(def.b2bPrice),
     cancelHours: def.cancelHours != null ? String(def.cancelHours) : '',
     payOnSite: def.payOnSite === false ? '' : '1',
+    pricing: def.pricing === 'hourly' ? 'hourly' : 'fixed',
+    service: def.service ?? 'guide',
+    chooseHours: def.chooseHours ? '1' : '',
+    audience: def.audience === 'b2b' ? 'b2b' : 'all',
     langs: Array.isArray(def.languages) && def.languages.length ? def.languages : [...LANGS],
     art: def.art ?? 'dome',
     image: def.image ?? '',
@@ -40,17 +45,22 @@ export function defToValues(def = {}, slug = '') {
   return v;
 }
 
-const kindLabel = (t) => (t.model === 'person' ? 'Partenze fisse · a persona' : t.flexible ? 'Servizio privato · a gruppo, orario libero' : 'Servizio privato · a gruppo');
+const SERVICE_LABEL = { guide: 'Servizio guida', assistant: 'Assistente in loco', leader: 'Tour leader', meetgreet: 'Meet & greet' };
+const kindLabel = (t, rates) =>
+  t.pricing === 'hourly'
+    ? `${SERVICE_LABEL[t.service] ?? 'Servizio'} · a ore${t.chooseHours ? ' (il cliente sceglie le ore)' : ''}${!openTo(rates, t, 'b2c') ? ' · solo agenzie' : ''}`
+    : t.model === 'person' ? 'Partenze fisse · a persona' : t.flexible ? 'Servizio privato · a gruppo, orario libero' : 'Servizio privato · a gruppo';
 
 export function toursPage(ctx, { tours, upcoming, flash = '', error = '' }) {
+  const rates = ctx.app.rates.get();
   const body = html`
 <p class="btn-row"><a class="btn btn-gold" href="/admin/tours/new">Nuovo tour</a></p>
 ${ctx.app.content.problems?.length ? html`<div class="notice notice-err" role="alert"><strong>Alcuni contenuti hanno problemi e non compaiono nel sito:</strong><ul class="plain">${ctx.app.content.problems.map((p) => html`<li>${p}</li>`)}</ul></div>` : ''}
 ${tours.length
   ? html`<div class="card table-wrap"><table class="table"><thead><tr><th>Tour</th><th class="num">Pubblico</th><th class="num">Partner</th><th>Stato</th><th></th></tr></thead><tbody>
-    ${tours.map((t) => html`<tr><td><a href="/admin/tours/${t.slug}"><strong>${t.i18n.it.title}</strong></a><br><small class="muted">${kindLabel(t)} · ${Math.floor(t.durationMin / 60)}h${String(t.durationMin % 60).padStart(2, '0')} · max ${t.maxParticipants}${upcoming[t.slug] ? ` · ${upcoming[t.slug]} prenotazion${upcoming[t.slug] === 1 ? 'e' : 'i'} future` : ''}</small>
+    ${tours.map((t) => html`<tr><td><a href="/admin/tours/${t.slug}"><strong>${t.i18n.it.title}</strong></a><br><small class="muted">${kindLabel(t, rates)} · ${Math.floor(t.durationMin / 60)}h${String(t.durationMin % 60).padStart(2, '0')} · max ${t.maxParticipants}${upcoming[t.slug] ? ` · ${upcoming[t.slug]} prenotazion${upcoming[t.slug] === 1 ? 'e' : 'i'} future` : ''}</small>
       <br>${LANGS.filter((l) => t.i18n[l].fallback).map((l) => html`<span class="chip chip-warn" title="Il sito mostra il testo di un'altra lingua">manca ${LANG_META[l].short}</span> `)}</td>
-      <td class="num">${formatMoney(t.priceCents, 'it')}</td><td class="num">${formatMoney(t.b2bPriceCents, 'it')}</td>
+      ${t.pricing === 'hourly' ? html`<td class="num muted" colspan="2"><a href="/admin/rates">tariffe a ore</a></td>` : html`<td class="num">${formatMoney(t.priceCents, 'it')}</td><td class="num">${formatMoney(t.b2bPriceCents, 'it')}</td>`}
       <td><span class="chip ${t.active ? 'chip-ok' : 'chip-warn'}">${t.active ? 'visibile' : 'nascosto'}</span></td>
       <td class="actions"><a class="btn btn-outline btn-sm" href="/admin/tours/${t.slug}">Modifica</a>
         <form method="post" action="/admin/tours/${t.slug}/toggle" class="inline-form"><button class="btn btn-outline btn-sm" type="submit">${t.active ? 'Nascondi' : 'Mostra'}</button></form></td></tr>`)}
@@ -80,7 +90,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
     </div>
     <div class="form-grid">
       <label class="check"><input type="checkbox" name="active" value="1" ${v.active ? raw('checked') : ''}> Visibile sul sito e prenotabile</label>
-      <label class="check"><input type="checkbox" name="featured" value="1" ${v.featured ? raw('checked') : ''}> In evidenza (in home)</label>
+      <label class="check"><input type="checkbox" name="featured" value="1" ${v.featured ? raw('checked') : ''}> In evidenza: la sua foto compare nella scheda della home</label>
     </div>
     <fieldset class="field"><legend class="label">Tipo di servizio</legend>
       <label class="check"><input type="radio" name="model" value="person" ${v.model === 'person' ? raw('checked') : ''}> <strong>Partenze fisse, prezzo a persona</strong> (tour in piccoli gruppi con orari stabiliti)</label>
@@ -97,10 +107,19 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
 
   <div class="card pad">
     <h2>Prezzi e regole</h2>
+    <fieldset class="field"><legend class="label">Come si calcola il prezzo</legend>
+      <label class="check"><input type="radio" name="pricing" value="fixed" ${v.pricing === 'hourly' ? '' : raw('checked')}> <strong>Prezzo fisso</strong> (lo scrivi qui sotto)</label>
+      <label class="check"><input type="radio" name="pricing" value="hourly" ${v.pricing === 'hourly' ? raw('checked') : ''}> <strong>A ore</strong>: il prezzo viene dalle <a href="/admin/rates">Tariffe a ore</a> (scaglioni, ore extra, festivi, notturno). Vale solo per i servizi privati.</label>
+    </fieldset>
     <div class="form-grid">
-      ${field(v.model === 'person' ? 'Prezzo al pubblico (€ a persona)' : 'Prezzo al pubblico (€ a gruppo)', 'price', v.price, { hint: 'es. 35 oppure 35,50', attrs: 'inputmode="decimal" required' })}
-      ${field('Tariffa partner B2B (€)', 'b2bPrice', v.b2bPrice, { hint: 'vuoto = uguale al pubblico', attrs: 'inputmode="decimal"' })}
+      <label class="field"><span class="label">Servizio a ore <em>(solo se «A ore»)</em></span><select name="service">${[['guide', 'Servizio guida'], ['assistant', 'Assistente in loco'], ['leader', 'Tour leader'], ['meetgreet', 'Meet & greet']].map(([k, l]) => html`<option value="${k}" ${v.service === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
+      <label class="check"><input type="checkbox" name="chooseHours" value="1" ${v.chooseHours ? raw('checked') : ''}> Il cliente sceglie quante ore (altrimenti la durata sopra è fissa)</label>
     </div>
+    <div class="form-grid">
+      ${field(v.model === 'person' ? 'Prezzo al pubblico (€ a persona)' : 'Prezzo al pubblico (€ a gruppo)', 'price', v.price, { hint: 'solo per i prezzi fissi; es. 35 oppure 35,50', attrs: 'inputmode="decimal"' })}
+      ${field('Tariffa partner B2B (€)', 'b2bPrice', v.b2bPrice, { hint: 'solo prezzi fissi; vuoto = uguale al pubblico', attrs: 'inputmode="decimal"' })}
+    </div>
+    <label class="field"><span class="label">Chi può prenotarlo</span><select name="audience"><option value="all" ${v.audience === 'b2b' ? '' : raw('selected')}>Tutti</option><option value="b2b" ${v.audience === 'b2b' ? raw('selected') : ''}>Solo agenzie con account partner</option></select></label>
     <div class="form-grid">
       ${field('Cancellazione gratuita (ore prima)', 'cancelHours', v.cancelHours, { type: 'number', hint: 'vuoto = regola generale del sito (privati)', attrs: 'min="0" max="2000"' })}
       <label class="check"><input type="checkbox" name="payOnSite" value="1" ${v.payOnSite ? raw('checked') : ''}> Si può pagare sul posto (se il sito lo consente)</label>
@@ -122,7 +141,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
   </div>
 
   ${LANGS.map((l) => html`<details class="card pad lang-block" ${l === 'it' || has(l) || error ? raw('open') : ''}>
-    <summary><h2>Testi · ${LANG_META[l].name}${l === 'it' ? '' : html` <small class="muted">(se vuoti, il sito mostra l’${l === 'es' ? 'inglese' : 'italiano'})</small>`}</h2></summary>
+    <summary><h2>Testi · ${LANG_META[l].name}${l === 'it' ? '' : html` <small class="muted">(se vuoti, il sito mostra l’${l === 'en' ? 'italiano' : 'inglese'})</small>`}</h2></summary>
     ${field('Titolo', `title_${l}`, v[`title_${l}`], { attrs: l === 'it' ? 'required maxlength="120"' : 'maxlength="120"' })}
     ${field('Sottotitolo', `subtitle_${l}`, v[`subtitle_${l}`], { attrs: 'maxlength="160"' })}
     ${field('Riassunto', `summary_${l}`, v[`summary_${l}`], { hint: 'una o due frasi: compare negli elenchi e nei risultati di Google', rows: 3, attrs: l === 'it' ? 'required maxlength="400"' : 'maxlength="400"' })}
@@ -143,8 +162,11 @@ ${tour && !isNew ? html`<form method="post" action="/admin/tours/${tour.slug}/de
 }
 
 export function pricesPage(ctx, { tours, values = {}, flash = '', error = '' }) {
+  const hourlyCount = tours.filter((t) => t.pricing === 'hourly').length;
+  tours = tours.filter((t) => t.pricing !== 'hourly');
   const body = html`
 <p class="muted">Tutti i prezzi in un colpo d’occhio. Scrivi il nuovo importo e salva: vale per le <strong>nuove</strong> prenotazioni (quelle già fatte non cambiano). I prezzi dedicati ai singoli partner stanno nella loro scheda.</p>
+${hourlyCount ? html`<p class="muted">${hourlyCount} ${hourlyCount === 1 ? 'servizio ha' : 'servizi hanno'} il prezzo <strong>a ore</strong>: si cambia in <a href="/admin/rates">Tariffe a ore</a>.</p>` : ''}
 <form method="post" action="/admin/prices" class="card pad form">
   <div class="table-wrap"><table class="table price-table"><thead><tr><th>Tour</th><th class="num">Pubblico (€)</th><th class="num">Partner B2B (€)</th><th>Stato</th></tr></thead><tbody>
     ${tours.map((t) => html`<tr><td><strong>${t.i18n.it.title}</strong><br><small class="muted">${t.model === 'person' ? 'a persona' : 'a gruppo'}</small></td>

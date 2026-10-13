@@ -8,12 +8,12 @@ maxParticipants: 10
 price: 35
 b2bPrice: 28
 art: ghetto
-languages: [it, en, es]
+languages: [it, en, es, ja]
 
 it:
   title: Cannaregio e il Ghetto
   subtitle: La Venezia delle comunità e delle minoranze
-  summary: Il quartiere più autentico, il primo Ghetto della storia e le chiese dove riposa Tintoretto.
+  summary: Il quartiere più autentico, il primo Ghetto della storia e la chiesa dove riposa Tintoretto.
   meetingPoint: Ponte delle Guglie, Cannaregio (il punto esatto è nell'email di conferma)
   meetingUrl: https://www.google.com/maps/search/?api=1&query=Ponte+delle+Guglie+Venezia
   description: |
@@ -28,7 +28,7 @@ it:
     - La Madonna dell'Orto, parrocchia e sepolcro di Tintoretto
     - Fondamenta, botteghe e angoli lontani dal turismo di massa
   includes:
-    - Guida abilitata, in italiano, inglese o spagnolo
+    - Guida abilitata, in italiano, inglese, spagnolo o giapponese
     - Gruppo di massimo 10 persone
     - Indicazioni per bacari e osterie di quartiere
   excludes:
@@ -63,7 +63,7 @@ en:
     - Madonna dell'Orto, Tintoretto's parish church and burial place
     - Quaysides, workshops and corners far from mass tourism
   includes:
-    - Licensed guide, in Italian, English or Spanish
+    - Licensed guide, in Italian, English, Spanish or Japanese
     - Group of 10 guests at most
     - Tips for neighbourhood bacari and taverns
   excludes:
@@ -98,7 +98,7 @@ es:
     - La Madonna dell'Orto, parroquia y sepulcro de Tintoretto
     - Fondamenta, tiendas y rincones lejos del turismo de masas
   includes:
-    - Guía turístico habilitado, en italiano, inglés o español
+    - Guía turístico habilitado, en italiano, inglés, español o japonés
     - Grupo de 10 personas como máximo
     - Sugerencias de bacari y tabernas del barrio
   excludes:
@@ -114,3 +114,38 @@ es:
 
     ¿Por qué se llama «gueto»?
     La palabra nació aquí mismo, en Venecia: en 1516 la República destinó este barrio a la comunidad judía. Durante el tour te cuento de dónde viene el nombre y cómo la palabra recorrió el mundo.
+
+ja:
+  title: カンナレージョ地区とゲットー
+  subtitle: 共同体と少数派が息づくヴェネツィア
+  summary: ヴェネツィアの素顔が最も残る地区、歴史上最初のゲットー、そしてティントレットが眠る教会。
+  meetingPoint: グリエ橋（Ponte delle Guglie）、カンナレージョ地区（正確な集合場所はご予約確認メールでご案内します）
+  meetingUrl: https://www.google.com/maps/search/?api=1&query=Ponte+delle+Guglie+Venezia
+  description: |
+    カンナレージョ地区は、ヴェネツィアが再び「人々が暮らす街」に戻る地区です。1516年、ヴェネツィア共和国はこの地にゲットー（ユダヤ人地区）を設けました。そこは隔離の場であったと同時に、文化・商業・信仰が驚くほど豊かに育まれた場所でもあり、「ゲットー」という言葉そのものの発祥の地でもあります。
+
+    広場や運河沿いの道、地元の商店や工房の間を歩きながら、この街に暮らしてきたさまざまな共同体（ユダヤ人だけでなく、ギリシャ人、アルメニア人、ドイツ人も）の歴史に触れ、ティントレットの教会であるマドンナ・デッロルト教会にたどり着きます。
+
+    ヴェネツィアを形づくってきた宗教や、異なる人々の共存のあり方を通しても、この街を知りたい方のためのコースです。
+  highlights:
+    - "ゲットー・ヌオーヴォとゲットー・ヴェッキオ：歴史、建築、日々の暮らし"
+    - シナゴーグ（ユダヤ教会堂）を外から見学（博物館の見学はオプション）
+    - "マドンナ・デッロルト教会：ティントレットの教区教会であり、墓所"
+    - 観光客の波から離れた運河沿いの道、商店や工房、街角
+  includes:
+    - 公認ガイドによるご案内（イタリア語・英語・スペイン語・日本語）
+    - 最大10名様の少人数グループ
+    - 地元のバーカロ（立ち飲みの居酒屋）やオステリア（食堂）のご案内
+  excludes:
+    - ユダヤ博物館とシナゴーグの入場料
+    - チップ、飲食代
+  notes: ゲットーは、ユダヤ人共同体にとって今も暮らしと信仰が息づく神聖な場所です。敬意のある服装と振る舞いをお願いしております。
+  faq: |
+    シナゴーグやユダヤ博物館の中には入りますか？
+    シナゴーグは今も礼拝に使われている場所のため、外からご覧いただきます。博物館とシナゴーグの見学は任意で、料金には含まれていません。ご希望の場合は、手配をお手伝いします。
+
+    特別な服装は必要ですか？
+    ゲットーはユダヤ人共同体にとって今も暮らしと信仰が息づく神聖な場所です。控えめな服装と、敬意のある振る舞いをお願いしております。
+
+    なぜ「ゲットー」と呼ばれるのですか？
+    この言葉が生まれたのは、まさにここヴェネツィアです。1516年、ヴェネツィア共和国はこの地区をユダヤ人共同体の居住区と定めました。ツアーの中で、名前の由来と、この言葉が世界へ広まっていった経緯をお話しします。

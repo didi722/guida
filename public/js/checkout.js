@@ -14,4 +14,8 @@
   var pax = document.getElementById('pax-select');
   var apply = document.getElementById('pax-apply');
   if (pax && apply && form) pax.addEventListener('change', function () { if (form.requestSubmit) form.requestSubmit(apply); else apply.click(); });
+  // altri campi che cambiano il prezzo (auricolari nei servizi a ore)
+  document.querySelectorAll('[data-apply]').forEach(function (el) {
+    if (apply && form) el.addEventListener('change', function () { if (form.requestSubmit) form.requestSubmit(apply); else apply.click(); });
+  });
 })();

@@ -14,6 +14,7 @@ import { adminPartnersRouter } from './admin-partners.js';
 import { adminStatsRouter } from './admin-stats.js';
 import { adminMediaRouter } from './admin-media.js';
 import { adminToursRouter } from './admin-tours.js';
+import { adminRatesRouter } from './admin-rates.js';
 import { adminBlogRouter } from './admin-blog.js';
 import { adminTextsRouter } from './admin-texts.js';
 import { adminSettingsRouter } from './admin-settings.js';
@@ -112,6 +113,7 @@ export function adminRouter(app) {
   r.use(adminStatsRouter(app));
   r.use(adminMediaRouter(app));
   r.use(adminToursRouter(app));
+  r.use(adminRatesRouter(app));
   r.use(adminBlogRouter(app));
   r.use(adminTextsRouter(app));
   r.use(adminSettingsRouter(app));
