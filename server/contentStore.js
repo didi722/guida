@@ -180,6 +180,29 @@ export function createContentStore({ db, root }) {
       upsert('content_tours', 'slug', slug, def);
       reload();
     },
+    /**
+     * Ordine dei tour nell'elenco (home, pagina Tour, pannello): il primo della lista passa in cima. Gli indirizzi sconosciuti si ignorano;
+     * i tour che non sono nella lista seguono, nel loro ordine attuale. Si numerano di 10 in 10, così resta spazio per inserirne altri.
+     * @returns {number} quanti tour hanno cambiato posto
+     */
+    setTourOrder(slugs) {
+      let changed = 0;
+      tx(db, () => {
+        const bySlug = new Map(db.prepare('SELECT slug, data_json FROM content_tours').all().map((r) => [r.slug, JSON.parse(r.data_json)]));
+        const first = [...new Set((Array.isArray(slugs) ? slugs : []).map(String))].filter((s) => bySlug.has(s));
+        const rest = [...bySlug.keys()].filter((s) => !first.includes(s)).sort((a, b) => Number(bySlug.get(a).order ?? 100) - Number(bySlug.get(b).order ?? 100) || a.localeCompare(b));
+        [...first, ...rest].forEach((slug, i) => {
+          const d = bySlug.get(slug);
+          const order = (i + 1) * 10;
+          if (d.order === order) return;
+          d.order = order;
+          db.prepare('UPDATE content_tours SET data_json = ?, updated_at = ? WHERE slug = ?').run(JSON.stringify(d), nowIso(), slug);
+          changed++;
+        });
+      });
+      if (changed) reload();
+      return changed;
+    },
     deleteTour(slug) {
       if (db.prepare('SELECT 1 FROM bookings WHERE tour_slug = ? LIMIT 1').get(slug)) throw new ContentError('Il tour ha delle prenotazioni: nascondilo invece di eliminarlo (resta nello storico).');
       if (db.prepare(`SELECT 1 FROM promo_codes WHERE tours LIKE ? LIMIT 1`).get(`%"${slug}"%`)) throw new ContentError('Il tour è citato in un codice sconto: modifica o elimina prima il codice.');

@@ -637,6 +637,12 @@ body.admin { --header-h: 64px; }
 .lang-block[open] summary { margin-bottom: 14px; }
 .sticky-actions { position: sticky; bottom: 0; z-index: 5; background: var(--bg); padding: 12px 0; border-top: 1px solid var(--line); }
 .md-preview { padding: 14px; border: 1px dashed var(--line); border-radius: 10px; background: var(--soft); }
+/* testo e anteprima dal vivo: affiancati sugli schermi larghi, uno sotto l'altro sugli stretti; il campo di testo non sparisce mai */
+.md-panes { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.md-panes textarea { margin: 0; }
+.md-panes .md-preview { max-width: none; max-height: 70vh; overflow: auto; margin: 0; }
+.md-hint { margin: 0 0 8px; } .md-hint code { font-size: 0.85em; }
+@media (min-width: 1000px) { .md-panes.has-preview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
 .text-table textarea { min-height: 3.2em; }
 
 /* Tabelle su telefono: ogni riga diventa una scheda; le etichette vengono dalle intestazioni (vedi main.js) */
@@ -667,6 +673,28 @@ body.admin { --header-h: 64px; }
   .queue-table tr:not(.group-row) td { grid-column: 2; }
   .queue-table tr:not(.group-row) td:first-child { grid-column: 1; grid-row: 1 / span 4; padding: 2px 0 0; }
   .row-overdue { background: var(--err-bg); } .row-overdue td { background: transparent; }
+}
+
+/* Sito › Tour: ordine a trascinamento */
+.order-hint { margin: 0 0 8px; }
+.order-status { margin: 0 0 8px; padding: 8px 14px; border-radius: 10px; background: var(--ok-bg); color: var(--ok); font-weight: 700; font-size: 0.93rem; }
+.order-status.is-error { background: var(--err-bg); color: var(--err); }
+.tours-table .drag-col, .tours-table .drag-cell { width: 1%; white-space: nowrap; }
+.drag-handle { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--field); color: var(--muted); cursor: grab; padding: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+.drag-handle svg { width: 20px; height: 20px; fill: currentColor; }
+.drag-handle:hover { border-color: var(--bronze); color: var(--accent-text); }
+.is-sorting, .is-sorting .drag-handle { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+.move-btns { display: inline-flex; flex-direction: column; margin-left: 4px; vertical-align: middle; }
+.move-btns button { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.7rem; line-height: 1; padding: 3px 7px; }
+.move-btns button:hover { color: var(--accent-text); }
+.tours-table tbody tr { transition: transform 0.18s ease; position: relative; }
+.tours-table tbody tr.is-dragging { transition: none; z-index: 3; box-shadow: var(--shadow-lg); outline: 2px solid var(--gold); background: var(--card); }
+.tours-table tbody tr.is-dragging td { background: var(--card); }
+@media (max-width: 640px) {
+  .tours-table tbody tr[data-slug] { display: grid; grid-template-columns: 46px minmax(0, 1fr); column-gap: 8px; }
+  .tours-table tbody tr[data-slug] td { grid-column: 2; }
+  .tours-table tbody tr[data-slug] td.drag-cell { grid-column: 1; grid-row: 1 / span 6; padding: 2px 0 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .tours-table .move-btns { flex-direction: row; margin: 0; }
 }
 
 /* Immagini fisse del sito (scelte dal pannello): stesse proporzioni delle illustrazioni */

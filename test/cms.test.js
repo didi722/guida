@@ -160,6 +160,53 @@ test('tour dal pannello: creare, modificare, nascondere, duplicare, eliminare; i
   }
 });
 
+test('ordine dei tour: si trascina nell’elenco e si salva; un tour nuovo va in fondo; il modulo di modifica non lo tocca', async () => {
+  const s = await start();
+  try {
+    const { admin } = s;
+    const before = s.app.content.allTours.map((t) => t.slug);
+    const list = await (await admin('/admin/tours')).text();
+    assert.match(list, /data-sortable/);
+    assert.match(list, /admin-tours-order\.js/);
+    assert.equal((list.match(/class="drag-handle"/g) ?? []).length, before.length, 'una maniglia per ogni tour');
+    assert.equal((list.match(/data-move="-1"/g) ?? []).length, before.length, 'e le frecce');
+
+    // l'ultimo passa in cima: lo salva il pannello, lo vede subito il sito
+    const next = [before.at(-1), ...before.slice(0, -1)];
+    const res = await admin('/admin/tours/order', json({ slugs: next }));
+    assert.equal(res.status, 200);
+    assert.deepEqual((await res.json()).order, next);
+    assert.deepEqual(s.app.content.allTours.map((t) => t.slug), next);
+    const tours = await (await s.jar()('/it/tours')).text();
+    assert.ok(tours.indexOf(`/it/tours/${next[0]}"`) < tours.indexOf(`/it/tours/${next[1]}"`) || next[0] === 'meet-and-greet', 'la pagina Tour segue l’ordine');
+    assert.deepEqual(s.app.content.allTours.map((t) => t.order), next.map((_, i) => (i + 1) * 10), 'numerati di 10 in 10');
+
+    // una lista parziale e indirizzi sconosciuti: quelli citati vanno in cima, gli altri seguono nel loro ordine
+    await admin('/admin/tours/order', json({ slugs: [next[3], 'non-esiste', next[1]] }));
+    assert.deepEqual(s.app.content.allTours.map((t) => t.slug).slice(0, 2), [next[3], next[1]]);
+    assert.equal(s.app.content.allTours.length, before.length, 'nessun tour perso');
+
+    // dati sbagliati o senza accesso
+    assert.equal((await admin('/admin/tours/order', json({ slugs: 'x' }))).status, 400);
+    assert.equal((await admin('/admin/tours/order', json({ slugs: [1, 2] }))).status, 400);
+    const anon = await fetch(`${s.base}/admin/tours/order`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ slugs: before.slice().reverse() }) });
+    assert.equal(anon.status, 302, 'senza accesso non si cambia nulla');
+    assert.equal(s.app.content.allTours[0].slug, next[3]);
+
+    // il modulo non ha più il campo «ordine»: un tour nuovo va in fondo, e modificarlo non lo sposta
+    assert.ok(!(await (await admin('/admin/tours/new')).text()).includes('name="order"'));
+    assert.equal((await admin('/admin/tours', form({ ...TOUR, order: '1' }))).status, 303);
+    assert.equal(s.app.content.allTours.at(-1).slug, 'gondola-al-tramonto', 'in fondo, anche se il modulo diceva «1»');
+    await admin('/admin/tours/order', json({ slugs: ['gondola-al-tramonto'] }));
+    assert.equal(s.app.content.allTours[0].slug, 'gondola-al-tramonto');
+    await admin('/admin/tours/gondola-al-tramonto', form({ ...TOUR, order: '9999', price: '125' }));
+    assert.equal(s.app.content.allTours[0].slug, 'gondola-al-tramonto', 'salvare il modulo non cambia la posizione');
+    assert.equal(s.app.content.tour('gondola-al-tramonto').priceCents, 12500);
+  } finally {
+    s.close();
+  }
+});
+
 test('domande frequenti del tour: formato a blocchi, markdown, ripiego fra le lingue, errori chiari', async () => {
   // formato: blocchi separati da una riga vuota; prima riga = domanda, il resto = risposta
   assert.deepEqual(parseFaq('Si entra?\nNo, solo dall’esterno.\n\n\nQuanto dura?\nDue ore.\nEmezza.'), [{ q: 'Si entra?', a: 'No, solo dall’esterno.' }, { q: 'Quanto dura?', a: 'Due ore.\nEmezza.' }]);
@@ -404,6 +451,28 @@ test('blog dal pannello: nuovo articolo, lingue, bozza, tour collegati, modifica
     assert.equal((await anon('/it/blog/una-passeggiata-a-castello')).status, 404);
     // senza login nulla
     assert.equal(loc(await anon('/admin/blog', form(POST))), '/admin/login');
+  } finally {
+    s.close();
+  }
+});
+
+test('editor di testo: l’etichetta non avvolge i pulsanti, c’è l’anteprima dal vivo e lo script non assegna `value` (farebbe scappare la pagina)', async () => {
+  const s = await start();
+  try {
+    for (const url of ['/admin/blog/new', '/admin/tours/new']) {
+      const page = await (await s.admin(url)).text();
+      assert.match(page, /<label class="label" for="md-(body|description)_it">/, `${url}: l’etichetta guarda il campo`);
+      assert.match(page, /<textarea id="md-(body|description)_it" name="(body|description)_it"/);
+      const labels = [...page.matchAll(/<label\b[^>]*>[^]*?<\/label>/g)].map((m) => m[0]);
+      assert.ok(!labels.some((l) => l.includes('data-md-toolbar')), `${url}: i pulsanti non stanno dentro un’etichetta (toccare la scritta premerebbe «Grassetto»)`);
+      assert.match(page, /data-md-panes/);
+      assert.match(page, /<em>Corsivo<\/em>/);
+    }
+    const js = fs.readFileSync(path.join(ROOT, 'public', 'js', 'admin-content.js'), 'utf8');
+    assert.ok(!/\b(ta|source)\.value\s*=[^=]/.test(js), 'nessuna assegnazione diretta di value: porta il cursore in fondo e sposta la pagina');
+    assert.match(js, /execCommand\('insertText'/, 'si usa l’inserimento che conserva «annulla»');
+    assert.match(js, /preventScroll: true/);
+    assert.ok(!/touchstart/.test(js.replace(/\/\/.*$/gm, '')), 'annullare touchstart cancellerebbe anche il tocco sul telefono');
   } finally {
     s.close();
   }

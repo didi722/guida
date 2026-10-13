@@ -57,8 +57,13 @@ export function toursPage(ctx, { tours, upcoming, flash = '', error = '' }) {
 <p class="btn-row"><a class="btn btn-gold" href="/admin/tours/new">Nuovo tour</a></p>
 ${ctx.app.content.problems?.length ? html`<div class="notice notice-err" role="alert"><strong>Alcuni contenuti hanno problemi e non compaiono nel sito:</strong><ul class="plain">${ctx.app.content.problems.map((p) => html`<li>${p}</li>`)}</ul></div>` : ''}
 ${tours.length
-  ? html`<div class="card table-wrap"><table class="table"><thead><tr><th>Tour</th><th class="num">Pubblico</th><th class="num">Partner</th><th>Stato</th><th></th></tr></thead><tbody>
-    ${tours.map((t) => html`<tr><td><a href="/admin/tours/${t.slug}"><strong>${t.i18n.it.title}</strong></a><br><small class="muted">${kindLabel(t, rates)} · ${Math.floor(t.durationMin / 60)}h${String(t.durationMin % 60).padStart(2, '0')} · max ${t.maxParticipants}${upcoming[t.slug] ? ` · ${upcoming[t.slug]} prenotazion${upcoming[t.slug] === 1 ? 'e' : 'i'} future` : ''}</small>
+  ? html`<p class="muted small order-hint">L’ordine dell’elenco è quello in cui i tour compaiono sul sito. <strong>Trascina</strong> un tour dalla maniglia <span class="drag-hint" aria-hidden="true">⠿</span> (o usa le frecce ▲ ▼): si salva da solo.</p>
+  <p class="order-status" data-order-status role="status" aria-live="polite" hidden></p>
+  <div class="card table-wrap"><table class="table tours-table"><thead><tr><th class="drag-col"><span class="sr-only">Ordine</span></th><th>Tour</th><th class="num">Pubblico</th><th class="num">Partner</th><th>Stato</th><th></th></tr></thead><tbody data-sortable data-order-url="/admin/tours/order">
+    ${tours.map((t) => html`<tr data-slug="${t.slug}"><td class="drag-cell">
+        <button class="drag-handle" type="button" aria-label="Sposta «${t.i18n.it.title}»: trascinalo, oppure usa le frecce su e giù della tastiera" title="Trascina per cambiare l’ordine"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button>
+        <span class="move-btns"><button type="button" data-move="-1" aria-label="Sposta su «${t.i18n.it.title}»" title="Su">▲</button><button type="button" data-move="1" aria-label="Sposta giù «${t.i18n.it.title}»" title="Giù">▼</button></span></td>
+      <td><a href="/admin/tours/${t.slug}"><strong>${t.i18n.it.title}</strong></a><br><small class="muted">${kindLabel(t, rates)} · ${Math.floor(t.durationMin / 60)}h${String(t.durationMin % 60).padStart(2, '0')} · max ${t.maxParticipants}${upcoming[t.slug] ? ` · ${upcoming[t.slug]} prenotazion${upcoming[t.slug] === 1 ? 'e' : 'i'} future` : ''}</small>
       <br>${LANGS.filter((l) => t.i18n[l].fallback).map((l) => html`<span class="chip chip-warn" title="Il sito mostra il testo di un'altra lingua">manca ${LANG_META[l].short}</span> `)}</td>
       ${t.pricing === 'hourly' ? html`<td class="num muted" colspan="2"><a href="/admin/rates">tariffe a ore</a></td>` : html`<td class="num">${formatMoney(t.priceCents, 'it')}</td><td class="num">${formatMoney(t.b2bPriceCents, 'it')}</td>`}
       <td><span class="chip ${t.active ? 'chip-ok' : 'chip-warn'}">${t.active ? 'visibile' : 'nascosto'}</span></td>
@@ -66,7 +71,7 @@ ${tours.length
         <form method="post" action="/admin/tours/${t.slug}/toggle" class="inline-form"><button class="btn btn-outline btn-sm" type="submit">${t.active ? 'Nascondi' : 'Mostra'}</button></form></td></tr>`)}
   </tbody></table></div>`
   : html`<p class="muted">Nessun tour: creane uno.</p>`}`;
-  return adminLayout(ctx, { title: 'Tour e servizi', active: '/admin/tours', body, flash, error });
+  return adminLayout(ctx, { title: 'Tour e servizi', active: '/admin/tours', body, flash, error, scripts: `<script src="/js/admin-tours-order.js?v=${ctx.app.assetVersion}" defer></script>` });
 }
 
 const field = (label, name, value, { type = 'text', hint = '', rows = 0, attrs = '', placeholder = '' } = {}) => html`<label class="field"><span class="label">${label}${hint ? html` <em>${hint}</em>` : ''}</span>${rows
@@ -86,7 +91,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
       ${isNew
         ? field('Indirizzo web (slug)', 'slug', v.slug, { hint: 'es. cannaregio-ghetto: non si può cambiare dopo', attrs: 'required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="60" autocapitalize="off"' })
         : html`<div class="field"><span class="label">Indirizzo web</span><code>/tours/${v.slug}</code></div>`}
-      ${field('Ordine nell’elenco', 'order', v.order, { type: 'number', hint: 'più basso = più in alto', attrs: 'min="0" max="9999"' })}
+      <div class="field"><span class="label">Posizione nell’elenco</span><span class="muted">${isNew ? 'Un tour nuovo va in fondo: poi lo trascini dove vuoi in ' : 'Si cambia trascinando i tour in '}<a href="/admin/tours">Sito › Tour</a>.</span></div>
     </div>
     <div class="form-grid">
       <label class="check"><input type="checkbox" name="active" value="1" ${v.active ? raw('checked') : ''}> Visibile sul sito e prenotabile</label>

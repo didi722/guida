@@ -14,8 +14,11 @@ export const slugify = (s) =>
 export const lines = (s) => String(s ?? '').split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
 const text = (s, max) => String(s ?? '').replace(/\r\n/g, '\n').trim().slice(0, max);
 
-/** Dal modulo alla definizione che si salva. `existing` conserva ciò che il modulo non mostra. */
-export function bodyToDef(body, existing = {}) {
+/**
+ * Dal modulo alla definizione che si salva. `existing` conserva ciò che il modulo non mostra (come l'ordine, che si cambia trascinando
+ * i tour nell'elenco); un tour nuovo va in fondo (`nextOrder`).
+ */
+export function bodyToDef(body, existing = {}, { nextOrder = 100 } = {}) {
   const errors = [];
   const euros = (name, label, { required = false } = {}) => {
     const raw = String(body[name] ?? '').trim();
@@ -36,7 +39,7 @@ export function bodyToDef(body, existing = {}) {
   const wd = [].concat(body.wd ?? []).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
   if (!wd.length) errors.push('Scegli almeno un giorno della settimana');
   const def = {
-    order: int('order') ?? 100,
+    order: Number.isFinite(Number(existing.order)) && existing.order != null ? Number(existing.order) : nextOrder,
     active: !!body.active,
     featured: !!body.featured,
     model,
@@ -89,6 +92,14 @@ export function adminToursRouter(app) {
 
   r.get('/tours', (req, res) => send(res, toursPage(ctxOf(req), { tours: store().allTours, upcoming: upcomingFor(), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: req.query.err ? String(req.query.err).slice(0, 300) : '' })));
 
+  // ordine dei tour (prima di /tours/:slug, che altrimenti prenderebbe «order» per un indirizzo): l'elenco si trascina (public/js/admin-tours-order.js) e qui si salva la sequenza
+  r.post('/tours/order', express.json({ limit: '20kb' }), (req, res) => {
+    const slugs = req.body?.slugs;
+    if (!Array.isArray(slugs) || slugs.length > 200 || slugs.some((x) => typeof x !== 'string')) return res.status(400).json({ ok: false });
+    store().setTourOrder(slugs);
+    res.json({ ok: true, order: store().allTours.map((t) => t.slug) });
+  });
+
   r.get('/tours/new', (req, res) => {
     const from = req.query.from ? store().rawTour(String(req.query.from)) : null;
     const v = defToValues(from ?? { duration: 120, maxParticipants: 10, order: 100, times: ['10:00'] }, '');
@@ -115,7 +126,7 @@ export function adminToursRouter(app) {
 
   r.post('/tours', form, (req, res) => {
     const slug = String(req.body.slug ?? '').trim() || slugify(req.body.title_it);
-    const { def, errors } = bodyToDef(req.body);
+    const { def, errors } = bodyToDef(req.body, {}, { nextOrder: Math.max(0, ...store().allTours.map((t) => t.order)) + 10 }); // un tour nuovo va in fondo all'elenco
     if (!SLUG.test(slug)) errors.push('L’indirizzo web può contenere solo lettere minuscole, numeri e trattini');
     if (!errors.length) {
       try {
