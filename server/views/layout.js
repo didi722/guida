@@ -179,6 +179,7 @@ ${partner
   </div>
 </footer>`}
 <script src="/js/main.js?v=${app.assetVersion}" defer></script>
+<script src="/js/datepicker.js?v=${app.assetVersion}" defer></script>
 ${scripts}
 </body>
 </html>`;

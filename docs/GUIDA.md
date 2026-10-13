@@ -196,8 +196,8 @@ Le percentuali dei supplementi si calcolano sul prezzo base (già scontato, per 
 
 **Chi vede cosa**
 - Il pubblico vede **solo il servizio guida**, colonna *Pubblico*: nella pagina **Guida privata a ore** (voce *Guida a ore* del menu) con il calcolatore.
-- Le agenzie vedono le tariffe **Agenzie** in cima alla pagina *Per agenzie* (se lasci spuntato il consenso in *Chi vede le tariffe*; altrimenti solo dopo l'approvazione) e nella loro area.
-- Lo **sconto %** del partner (**Clienti › Partner**) si applica alla tariffa Agenzie e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (per eccesso): con il 15%, 160 € diventano 136 € → **140 €**; 110 € diventano 93,50 € → **95 €**. Il prezzo non supera mai quello senza sconto (28 € a persona con il 10% di sconto resterebbe 28 €, perché 25,20 € arrotondato salirebbe a 30 €). Il [listino dedicato](#prezzi-dedicati-a-un-partner) per singolo tour non riguarda i servizi a ore.
+- Le tariffe **Agenzie** non sono mai pubbliche: la pagina *Per agenzie* non le mostra (la vedono tutti, anche i clienti privati). Le agenzie le vedono **solo nella loro area riservata, dopo l'approvazione**: sono la **prima cosa** che compare nella home dell'area (vedi la [sezione 14](#14-partner-agenzie-dmc-tour-operator)).
+- Lo **sconto %** del partner (**Clienti › Partner**) si calcola **sul prezzo al pubblico** (B2C) e **sostituisce** la tariffa Agenzie: non si somma. Il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (per eccesso) e non supera mai il prezzo al pubblico. Esempi con il 15%: guida 2 ore 200 € → **170 €**; 4 ore 380 € → 323 € → **325 €**; 8 ore 700 € → **595 €**. Per i servizi che non hanno un prezzo al pubblico (assistente, tour leader, meet & greet) lo sconto parte dalla tariffa Agenzie: 110 € → 93,50 € → **95 €**. Attenzione: se lo sconto è basso, il risultato può essere **più alto** della tariffa Agenzie (guida 4 ore con il 15%: 325 € contro 300 €). Per un partner che deve pagare la tariffa Agenzie lascia lo sconto a 0. Il [listino dedicato](#prezzi-dedicati-a-un-partner) per singolo tour non riguarda i servizi a ore.
 
 **I servizi sono «tour» a ore.** In **Sito › Tour**, nel campo *Prezzo* scegli *Prezzo fisso* oppure *A ore*; per quelli a ore indichi il servizio (guida, assistente…), se *Il cliente sceglie quante ore* (altrimenti la durata è fissa, come per un itinerario di tre ore) e *Chi può prenotarlo* (tutti, oppure solo agenzie con account partner). Un itinerario a durata fissa usa le tariffe della guida per quella durata.
 
@@ -212,9 +212,9 @@ Le percentuali dei supplementi si calcolano sul prezzo base (già scontato, per 
 > - Oltre gli 85.000 € l'anno si esce dal forfettario l'anno dopo (oltre 100.000 € subito). Se hai anche un lavoro dipendente c'è un limite sul reddito da lavoro dipendente: chiedi.
 
 ### Prezzi dedicati a un partner
-**Clienti › Partner** › il partner › **Listino dedicato**: per ogni tour puoi scrivere il prezzo che **solo quel partner** paga. Lascia vuoto per applicare la tariffa B2B (con lo sconto percentuale del partner, se c'è). Puoi **copiare il listino da un altro partner**.
+**Clienti › Partner** › il partner › **Listino dedicato**: per ogni tour puoi scrivere il prezzo che **solo quel partner** paga. Lascia vuoto per applicare lo sconto percentuale del partner sul prezzo al pubblico, se c'è; altrimenti la tariffa B2B. Puoi **copiare il listino da un altro partner**.
 
-**Quale prezzo vale per un partner?** In quest'ordine: 1) il **prezzo dedicato** per quel tour (così com'è scritto); 2) altrimenti la **tariffa B2B** del tour meno lo **sconto %** del partner, arrotondato al multiplo di 5 € successivo. Nella colonna *Applicato* vedi sempre il prezzo che il partner vedrà.
+**Quale prezzo vale per un partner?** In quest'ordine: 1) il **prezzo dedicato** per quel tour (così com'è scritto); 2) altrimenti, se il partner ha uno **sconto %**, il **prezzo al pubblico** del tour meno lo sconto, arrotondato al multiplo di 5 € successivo (mai oltre il prezzo al pubblico); 3) senza sconto, la **tariffa B2B** del tour. Nella colonna *Applicato* vedi sempre il prezzo che il partner vedrà.
 
 ### Codici sconto e buoni regalo
 **Clienti › Sconti**:
@@ -356,12 +356,13 @@ In Europa chi mostra recensioni deve poter dire che vengono da clienti reali: il
 ### Approvare un partner
 1. Apri la richiesta: vedi dati aziendali (Partita IVA, SDI/PEC), referente e messaggio.
 2. In **Stato e pagamento** scegli **Stato**: *Approvato*, *Rifiutato* o *Sospeso*; imposta lo **Sconto su tutto il listino (%)** (vale per i tour senza prezzo dedicato) e se **può pagare a fattura / bonifico**; aggiungi **Note interne**. **Salva**.
-3. Il partner riceve un'email e può entrare nella sua area (vedi sotto). Se scegli **Sconto %**, il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (mai oltre il prezzo senza sconto).
+3. Il partner riceve un'email e può entrare nella sua area (vedi sotto). Se scegli **Sconto %**, lo sconto si calcola **sul prezzo al pubblico** (non sulla tariffa agenzie) e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (mai oltre il prezzo al pubblico).
 
 ### L'area riservata dell'agenzia
 L'agenzia entra da **Login agenzie** (il pulsante in alto, accanto a *Prenota*; sul telefono è l'icona della persona): da lì può anche **chiedere la registrazione**. Una volta dentro trova un'area **pulita**, pensata per lavorare in fretta: niente blog, *Chi sono*, tour o prezzi al pubblico.
 
-- **In alto**: i pulsanti **Nuova prenotazione** e **Calcola un preventivo** (i servizi a ore), e un **riepilogo**: prossime partenze (con le persone), opzioni aperte (e quando scade la prima), partenze del mese con il loro importo, e **quanto resta da saldare**.
+- **Il tariffario, per primo**: la home dell'area apre con le **sue tariffe a ore** (con il suo sconto già applicato): mezza giornata e giornata intera per guida, assistente, tour leader e meet & greet, **ore supplementari**, **supplemento festivo** e **auricolari**. Sono solo i prezzi delle disponibilità orarie, in evidenza; sotto, le sue condizioni (sconto, annullo, opzioni).
+- **Poi**: i pulsanti **Nuova prenotazione** e **Calcola un preventivo** (i servizi a ore), e un **riepilogo**: prossime partenze (con le persone), opzioni aperte (e quando scade la prima), partenze del mese con il loro importo, e **quanto resta da saldare**.
 - **Elenco o Calendario**: sopra le prenotazioni due pulsanti, *Elenco* (predefinito) e *Calendario*: il calendario mostra il mese con le pratiche di ogni giorno (le opzioni tratteggiate; si tocca un giorno per vederlo sotto) e la scelta si ricorda.
 - **L'elenco delle prenotazioni** (*In arrivo · Opzioni · Passate · Annullate · Tutte*): per ogni pratica il **nome della pratica** (il riferimento che l'agenzia ha scritto), il nominativo, il tour, la data di partenza e quella in cui è stata prenotata, lo stato e il totale. C'è la **ricerca** per nome del cliente, pratica o codice, e il filtro **per data di partenza e per data di prenotazione** (*Filtra per data*). Ogni riga ha **Apri**, **Voucher**, **Fattura** (quando è stata emessa) e, per le opzioni, **Conferma** e **Rilascia**. **Scarica l'elenco (CSV)** esporta quello che si vede, per la contabilità dell'agenzia.
 - **La scheda della pratica**: voucher **senza prezzi** (PDF) da girare al cliente finale, fattura, annullo e, finché il servizio non è iniziato, la possibilità di **cambiare nominativo, riferimento pratica, telefono e note**: l'agenzia spesso prenota prima di conoscere il nome del cliente finale. Se su una prenotazione già confermata cambia nominativo, telefono o note **ricevi un'email** (se cambia solo il riferimento pratica, no).
@@ -388,7 +389,7 @@ Per ogni partner decidi in **Clienti › Partner › Stato e pagamento** se **pu
 - Se un'agenzia annulla oltre il termine gratuito, la **penale** (la parte non rimborsata) si fattura allo stesso modo.
 
 ### Listino dedicato
-Nella stessa pagina, **Listino dedicato**: scrivi il prezzo per ogni tour (vuoto = tariffa B2B con lo sconto %). **Salva il listino**. I servizi **a ore** non compaiono qui: il loro prezzo viene da **Sito › Tariffe a ore**, con lo sconto % del partner. *Copia il listino da…* parte da un altro partner.
+Nella stessa pagina, **Listino dedicato**: scrivi il prezzo per ogni tour (vuoto = prezzo al pubblico meno lo sconto %, oppure la tariffa B2B se non c'è sconto). **Salva il listino**. I servizi **a ore** non compaiono qui: il loro prezzo viene da **Sito › Tariffe a ore**, con lo sconto % del partner. *Copia il listino da…* parte da un altro partner.
 
 ### Politica di annullo per ogni partner
 Sotto **Politica di annullo** decidi fino a **3 scaglioni**: «fino a *N giorni/ore* prima dell'inizio: rimborso *X*%». Esempio: *fino a 7 giorni prima 100%; fino a 3 giorni prima 50%*; dopo l'ultimo scaglione **non si rimborsa nulla**.

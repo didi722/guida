@@ -95,7 +95,10 @@ test('prezzi: a persona, a gruppo, tariffa B2B e sconto partner', (t) => {
   assert.equal(priceFor(shared, 3, 'b2c'), 10500);
   assert.equal(priceFor(priv, 7, 'b2c'), 15000);
   assert.equal(priceFor(shared, 3, 'b2b'), 8400);
-  assert.equal(priceFor(priv, 7, 'b2b', { discount_percent: 10 }), 11000, '120 € − 10% = 108 €: si arrotonda al multiplo di 5 € successivo');
+  // lo sconto del partner parte dal prezzo al pubblico (non dalla tariffa agenzie) e sostituisce quest'ultima
+  assert.equal(priceFor(priv, 7, 'b2b', { discount_percent: 10 }), 13500, '150 € al pubblico − 10% = 135 €');
+  assert.equal(priceFor(priv, 7, 'b2b', { discount_percent: 25 }), 11500, '150 € − 25% = 112,50 €: si arrotonda al multiplo di 5 € successivo');
+  assert.equal(priceFor(shared, 3, 'b2b', { discount_percent: 0 }), 8400, 'senza sconto vale la tariffa agenzie');
 });
 
 test('metodi di pagamento: fattura solo ai partner approvati, in sede solo B2C', (t) => {

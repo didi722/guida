@@ -48,7 +48,7 @@ test('sandbox: dati d’esempio creati senza errori, sito di prova, partner con 
   const dedicated = await (await fetch(`${base}/it/tours/cannaregio-ghetto`, { headers: { cookie: pcookie } })).text();
   assert.match(dedicated, /22,50\s*€/, 'prezzo dedicato');
   assert.match(dedicated, /Tariffa partner/);
-  assert.match(await (await fetch(`${base}/it/tours/san-marco-rialto`, { headers: { cookie: pcookie } })).text(), /25\s*€/, '28 € − 15% = 23,80 € → 25 €');
+  assert.match(await (await fetch(`${base}/it/tours/san-marco-rialto`, { headers: { cookie: pcookie } })).text(), /30\s*€/, '35 € al pubblico − 15% = 29,75 € → 30 €');
   // e la sua politica di annullo a scaglioni è nella scheda del partner
   assert.match(await admin('/admin/partners/1'), /Rimborso del 50% fino al/);
 });

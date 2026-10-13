@@ -16,11 +16,14 @@ const tour = { slug: 'shared', priceCents: 3500, b2bPriceCents: 2800, model: 'pe
 const DATE = '2027-02-20'; // lontano da NOW (4 gennaio 2027)
 const START = localToInstant(DATE, '09:30');
 
-test('listino dedicato: il prezzo del partner vince; senza, tariffa B2B meno lo sconto; ai privati nulla cambia', () => {
+test('listino dedicato: il prezzo del partner vince; senza, il prezzo al pubblico meno lo sconto (o la tariffa B2B se non c’è sconto); ai privati nulla cambia', () => {
   const acct = { discount_percent: 10, prices_json: JSON.stringify({ shared: 2400, other: 100, bad: -5, text: 'x' }) };
   assert.equal(unitPriceFor(tour, 'b2b', acct), 2400, 'prezzo dedicato, senza sconto in più');
-  assert.equal(unitPriceFor({ ...tour, slug: 'senza' }, 'b2b', acct), 2800, '28 € − 10% = 25,20 € → 30 € supera la tariffa B2B: si resta a 28 €');
-  assert.equal(unitPriceFor({ ...tour, slug: 'senza' }, 'b2b', { ...acct, discount_percent: 20 }), 2500, '28 € − 20% = 22,40 € → 25 €');
+  const senza = { ...tour, slug: 'senza' };
+  assert.equal(unitPriceFor(senza, 'b2b', acct), 3500, 'lo sconto parte dal prezzo al pubblico: 35 € − 10% = 31,50 € → 35 € (mai oltre il prezzo al pubblico)');
+  assert.equal(unitPriceFor(senza, 'b2b', { ...acct, discount_percent: 20 }), 3000, '35 € − 20% = 28 € → 30 €');
+  assert.equal(unitPriceFor(senza, 'b2b', { ...acct, discount_percent: 30 }), 2500, '35 € − 30% = 24,50 € → 25 €');
+  assert.equal(unitPriceFor(senza, 'b2b', { ...acct, discount_percent: 0 }), 2800, 'senza sconto, la tariffa B2B');
   assert.equal(unitPriceFor(tour, 'b2c', acct), 3500, 'il listino non tocca i privati');
   assert.deepEqual(accountPrices(acct), { shared: 2400, other: 100 }, 'valori non validi scartati');
   assert.deepEqual(accountPrices({ prices_json: '{rotto' }), {}, 'JSON rovinato: nessun prezzo dedicato, nessun errore');

@@ -2136,10 +2136,10 @@
   "無料キャンセルの期限（開始前）"
  ],
  "b2b.discount": [
-  "Sconto sulla tariffa partner",
-  "Discount on partner rate",
-  "Descuento sobre la tarifa de socio",
-  "パートナー料金からの割引"
+  "Sconto sul prezzo al pubblico",
+  "Discount on the public price",
+  "Descuento sobre el precio al público",
+  "一般料金からの割引"
  ],
  "b2b.baseRate": [
   "tariffa base",
@@ -4247,18 +4247,6 @@
   "Duración",
   "所要時間"
  ],
- "b2b.ratesTitle": [
-  "Le mie tariffe a ore",
-  "My hourly rates",
-  "Mis tarifas por horas",
-  "時間料金表"
- ],
- "b2b.ratesLead": [
-  "Per le agenzie, a colpo d’occhio. Con l’account partner prenoti in autonomia e vedi le tue condizioni (sconti e cancellazione).",
-  "For agencies, at a glance. With a partner account you book on your own and see your conditions (discounts and cancellation).",
-  "Para agencias, de un vistazo. Con la cuenta de socio reservas por tu cuenta y ves tus condiciones (descuentos y cancelación).",
-  "旅行会社様向けの料金を一覧にしました。パートナーアカウントがあれば、ご自身で予約でき、貴社の条件（割引やキャンセル規定）も確認できます。"
- ],
  "b2b.ratesCta": [
   "Calcola un preventivo",
   "Calculate a quote",
@@ -4270,12 +4258,6 @@
   "These already include your discount. Calculate a quote and book.",
   "Ya incluyen tu descuento. Calcula un presupuesto y reserva.",
   "貴社の割引がすでに反映された料金です。見積りを計算して、ご予約ください。"
- ],
- "b2b.seeRates": [
-  "Vedi le tariffe",
-  "See the rates",
-  "Ver las tarifas",
-  "料金を見る"
  ],
  "book.hourlyHint": [
   "Cerchi una guida tutta per te, a ore?",
@@ -5116,5 +5098,23 @@
   "Bookings calendar for {month}",
   "Calendario de reservas de {month}",
   "{month}の予約カレンダー"
+ ],
+ "partner.tariff.title": [
+  "Il tuo tariffario",
+  "Your rates",
+  "Tu tarifario",
+  "料金表"
+ ],
+ "partner.tariff.lead": [
+  "Servizi a ore: i prezzi che paghi tu, per l’intero gruppo.",
+  "Hourly services: the prices you pay, for the whole group.",
+  "Servicios por horas: los precios que pagas tú, para todo el grupo.",
+  "時間制サービス：貴社のお支払い料金です（グループ全体の料金）。"
+ ],
+ "partner.tariff.all": [
+  "Tutti i supplementi e le condizioni",
+  "All supplements and terms",
+  "Todos los suplementos y condiciones",
+  "すべての割増料金と条件"
  ]
 }

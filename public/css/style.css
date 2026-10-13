@@ -934,3 +934,46 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .wallet-box { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--line); }
 .wallet-box p { margin: 0 0 0.5rem; }
 .wallet-box .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-right: 8px; vertical-align: -3px; }
+
+/* ───────── Tariffario in cima all'area agenzie ───────── */
+.tariff-section { padding-bottom: 0; }
+.tariff-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px 20px; flex-wrap: wrap; margin-bottom: 12px; }
+.tariff-head h2 { margin: 0 0 0.1em; font-size: 1.7rem; } .tariff-head p { margin: 0; }
+.tariff-section .rate-card { padding: 18px 20px; } .tariff-section .rate-card h3 { font-size: 1.15rem; }
+
+/* ───────── Selettore di date (public/js/datepicker.js) ───────── */
+.dp { position: relative; display: block; }
+.dp-native { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
+.dp-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; font: inherit; font-size: 1rem; color: var(--text); background: var(--field); border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 14px; cursor: pointer; text-align: left; transition: border-color 0.2s, box-shadow 0.2s; }
+.dp-field:hover { border-color: var(--bronze); }
+.dp-field:focus-visible, .dp.is-focus .dp-field, .dp.is-open .dp-field { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(214, 187, 81, 0.3); }
+.dp-field.is-empty .dp-text { color: var(--muted); }
+.dp-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dp-field svg { width: 20px; height: 20px; flex: none; stroke: var(--accent-text); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.dp-pop { position: absolute; z-index: 2000; width: 320px; max-width: calc(100vw - 16px); background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 14px; animation: dp-in 0.14s ease-out; }
+.dp-pop.is-sheet { position: fixed; left: 10px; right: 10px; bottom: 10px; top: auto; width: auto; max-width: 420px; margin: 0 auto; z-index: 2101; padding: 16px; }
+.dp-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 2100; }
+@keyframes dp-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dp-pop { animation: none; } }
+.dp-head { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; gap: 6px; margin-bottom: 8px; }
+.dp-nav { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--field); color: var(--accent-text); font: inherit; font-size: 1.4rem; line-height: 1; cursor: pointer; padding: 0; }
+.dp-nav:hover:not(:disabled) { border-color: var(--bronze); background: var(--gold-soft); } .dp-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+.dp-title { border: 0; background: none; font: inherit; font-weight: 700; font-size: 1.05rem; color: var(--text); cursor: pointer; padding: 8px; border-radius: 10px; text-align: center; }
+.dp-title:hover { background: var(--gold-soft); }
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.dp-dow { text-align: center; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 4px 0; }
+.dp-day { aspect-ratio: 1; border: 1.5px solid transparent; background: transparent; border-radius: 10px; font: inherit; font-size: 0.98rem; color: var(--text); cursor: pointer; padding: 0; }
+.dp-day:hover:not(:disabled) { background: var(--gold-soft); border-color: rgba(214, 187, 81, 0.6); }
+.dp-day.is-today { border-color: var(--gold); font-weight: 700; }
+.dp-day.is-selected { background: var(--bronze); border-color: var(--bronze); color: #fff; font-weight: 700; }
+.dp-day:disabled { opacity: 0.3; cursor: not-allowed; }
+.dp-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px 0; }
+.dp-month { padding: 14px 4px; border: 1.5px solid transparent; border-radius: 10px; background: transparent; font: inherit; color: var(--text); cursor: pointer; }
+.dp-month:hover:not(:disabled) { background: var(--gold-soft); border-color: rgba(214, 187, 81, 0.6); }
+.dp-month.is-today { border-color: var(--gold); font-weight: 700; } .dp-month.is-selected { background: var(--bronze); border-color: var(--bronze); color: #fff; font-weight: 700; }
+.dp-month:disabled { opacity: 0.3; cursor: not-allowed; }
+.dp-day:focus-visible, .dp-month:focus-visible, .dp-nav:focus-visible, .dp-title:focus-visible, .dp-link:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+.dp-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.dp-link { background: none; border: 0; font: inherit; font-size: 0.9rem; font-weight: 700; color: var(--accent-text); cursor: pointer; padding: 6px 8px; border-radius: 8px; }
+.dp-link:hover:not(:disabled) { background: var(--gold-soft); } .dp-link:disabled { opacity: 0.4; cursor: not-allowed; }
+.dp-close { display: none; margin-left: auto; } .dp-pop.is-sheet .dp-close { display: inline-block; }

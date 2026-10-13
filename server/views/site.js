@@ -6,10 +6,9 @@ import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, pick } from '../langs.js';
-import { SERVICES, openTo, rateRows } from '../rates.js';
+import { openTo, rateRows } from '../rates.js';
 import { formatMoney } from '../util.js';
 import { paymentsFrom } from '../opening.js';
-import { ratesBlock } from './hourly.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
 export function minBookableDate(app, channel = 'b2c', nowMs = Date.now()) {
@@ -400,8 +399,6 @@ export function b2bLandingPage(ctx) {
   const { cfg, content } = app;
   const hours = fmtHours(t, cfg.policy.b2bFreeCancelHours);
   const notice = fmtHours(t, cfg.policy.b2bMinNoticeHours);
-  const rateServices = SERVICES.filter((s) => app.rates.has(s, 'b2b'));
-  const showRates = rateServices.length && (app.rates.get().showB2bPublic || ctx.acct?.status === 'approved');
   const canQuote = hasHourlyProducts(ctx, ctx.acct?.status === 'approved' ? 'b2b' : 'b2c'); // il calcolatore (/hourly) mostra i servizi a ore di questo visitatore: se non ce ne sono, il pulsante non si mostra
   const body = html`
 <section class="hero hero-b2b">
@@ -413,21 +410,13 @@ export function b2bLandingPage(ctx) {
       ${languagesBadge(ctx, { variant: 'band' })}
       <p class="btn-row">
         ${ctx.acct ? html`<a class="btn btn-gold" href="${u('/b2b/account')}">${t('nav.myAccount')}</a>` : html`<a class="btn btn-gold" href="${u('/b2b/register')}">${t('b2b.requestAccess')}</a> <a class="btn btn-outline" href="${u('/b2b/login')}">${t('b2b.login')}</a>`}
-        ${showRates ? html`<a class="btn btn-outline" href="#tariffe">${t('b2b.seeRates')}</a>` : ''}
       </p>
     </div>
     <div class="hero-art">${siteArt(ctx, 'b2b', 'walk', { alt: t('b2b.h1'), sizes: '(max-width: 900px) 100vw, 560px', eager: true })}</div>
   </div>
 </section>
 
-${showRates ? html`<section class="section" id="tariffe">
-  <div class="wrap">
-    ${sectionHead(t('b2b.ratesTitle'), t('b2b.ratesLead'), canQuote ? html`<a class="btn btn-gold" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : '')}
-    ${ratesBlock(ctx, { channel: 'b2b', services: rateServices })}
-  </div>
-</section>` : ''}
-
-<section class="section${showRates ? ' section-alt' : ''}">
+<section class="section">
   <div class="wrap">
     ${sectionHead(t('b2b.benefitsTitle'))}
     <div class="grid grid-3 benefits">

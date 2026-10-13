@@ -10,7 +10,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 
 **Per i clienti (B2C)**
 - La home propone **due strade**: la **guida privata a ore** (con le tariffe a colpo d'occhio e il calcolatore del preventivo) e i **tour di gruppo a posti liberi** (con le prossime partenze, prenotabili con un tocco). La pagina *Tour* è divisa nello stesso modo.
-- Scelgono il tour e vedono un **calendario con le date libere** e gli orari, oppure partono dalla data (`/it/book`).
+- Scelgono il tour e vedono un **calendario con le date libere** e gli orari, oppure partono dalla data (`/it/book`). Dove si sceglie una data (ricerca, filtri dell'area agenzie) c'è un **selettore di date proprio**, più curato di quello del browser (mese con frecce, «Oggi», giorni non disponibili in grigio, a tutta larghezza sul telefono; senza JavaScript resta il campo data standard).
 - Per la **guida privata a ore** (`/it/hourly`) scelgono giorno, ora, ore e persone e vedono subito il totale, con festivo, notturno e auricolari calcolati dal sito.
 - Prenotano senza registrarsi e **pagano subito con carta** (Stripe). Il pagamento «il giorno del tour» è **spento di default** (vedi [Pagamento in contanti](#pagamento-in-contanti-il-giorno-del-tour)).
 - Possono usare un **codice sconto** e/o un **buono regalo** al checkout, anche in più volte.
@@ -24,9 +24,9 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 **Per agenzie, DMC e tour operator (B2B)**
 - Pagina commerciale (`/it/b2b`) e **richiesta di accesso** con dati aziendali (P.IVA, SDI/PEC).
 - Tu **approvi** dal pannello e puoi impostare per ogni partner: **sconto extra**, **finestra di cancellazione** (es. 7 giorni), pagamento **a fattura**.
-- La pagina agenzie mette **in cima le tariffe a ore** (mezza giornata, giornata, ora extra, supplementi festivo/superfestivo/notturno/auricolari) per guida, **assistente in loco**, **tour leader** e **meet & greet**, con un calcolatore di preventivo.
+- La pagina pubblica *Per agenzie* **non mostra le tariffe**: le tariffe a ore (guida, **assistente in loco**, **tour leader**, **meet & greet**) sono riservate e le vede solo l'agenzia approvata, **in cima alla home della sua area**: mezza giornata, giornata intera, ora supplementare, supplemento festivo e auricolari.
 - **Login agenzie** sempre visibile in alto, accanto a *Prenota*. Dopo il login l'**area riservata è pulita** (niente blog, tour o prezzi al pubblico): **riepilogo**, **elenco** (o **calendario** del mese) **delle prenotazioni** con schede, **ricerca** per cliente o pratica, **filtri per data di partenza e di prenotazione**, **voucher PDF senza prezzi**, **fatture** in PDF, **modifica del nominativo** e delle note, annullo, **CSV** per la contabilità, tariffe e condizioni, **Esci** verso la home pubblica.
-- Il partner vede le **tariffe riservate** (con il suo sconto, arrotondato ai 5 € successivi), cerca la disponibilità tra **tour privati** (predefinito) e **condivisi**, prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica** e richiede **programmi di più giorni**.
+- Il partner vede le **tariffe riservate** (lo sconto % si calcola sul prezzo al pubblico e sostituisce la tariffa agenzie; arrotondato ai 5 € successivi), cerca la disponibilità tra **tour privati** (predefinito) e **condivisi**, prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica** e richiede **programmi di più giorni**.
 - **Opzioni**: l'agenzia può **tenere una data senza pagare** mentre il suo cliente decide; la durata dipende da quanto manca al tour (tabella e limiti modificabili, anche per singolo partner), arriva un promemoria e, se non conferma, la data **si libera da sola**. Nessun addebito automatico: se paga a fattura il servizio si fattura dopo.
 
 **Per te (pannello `/admin`, ottimizzato per telefono)** — quasi tutto si cambia da qui, senza toccare il codice ([guida](docs/GUIDA.md))
@@ -62,7 +62,7 @@ npm start                # http://localhost:3000
 - I dati stanno in `data/guida.sqlite`. Per ripartire da zero: ferma il server e cancella la cartella `data/`.
 
 ```bash
-npm test                 # ~270 test: motore prenotazioni, pagamenti, Stripe, B2B, sconti e buoni, calendari, programmi, PDF, fatture, traduzioni, contenuti dal pannello, impostazioni, statistiche, backup, guida
+npm test                 # ~280 test: motore prenotazioni, pagamenti, Stripe, B2B, sconti e buoni, calendari, programmi, PDF, fatture, traduzioni, contenuti dal pannello, impostazioni, statistiche, backup, guida
 ```
 
 I test sui contenuti dei PDF usano `pdftotext` (poppler) e si saltano da soli se non c'è; l'XML delle fatture è controllato contro lo schema FatturaPA con `xmllint-wasm` (dipendenza di sviluppo).

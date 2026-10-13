@@ -312,6 +312,10 @@ test('pre-apertura (prima della partita IVA): si prenota per le date da quel gio
     const { anon, partner, app } = s;
     // l'avviso c'è nelle pagine che servono
     const book = nb(await (await anon(`/it/book?date=${day(40)}&pax=2`)).text());
+    // il selettore di date (JavaScript) c'è nelle pagine del sito e il campo del browser resta sotto, per l'invio e i controlli; nel pannello no
+    assert.match(book, /<script src="\/js\/datepicker\.js\?v=[^"]+" defer><\/script>/);
+    assert.match(book, /<input type="date" name="date" min="[\d-]+" value="[\d-]*" required>/);
+    assert.ok(!(await (await s.admin('/admin')).text()).includes('datepicker.js'), 'il pannello usa il calendario del browser');
     assert.match(book, /notice-info/);
     assert.match(book, /i pagamenti online partono il/);
     const earlySlots = await (await anon(`/api/slots?tour=san-marco-rialto&date=${day(10)}&pax=2`)).json();

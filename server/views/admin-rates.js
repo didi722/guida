@@ -65,8 +65,7 @@ ${custom ? '' : html`<div class="notice notice-ok" role="note">Stai usando le <s
 
   <div class="card pad">
     <h2>Chi vede le tariffe</h2>
-    <label class="check"><input type="checkbox" name="showB2bPublic" value="1" ${(values ? values.showB2bPublic : rates.showB2bPublic) ? raw('checked') : ''}> Mostra le <strong>tariffe per le agenzie</strong> a tutti, nella pagina «Per agenzie» (altrimenti le vedono solo i partner approvati)</label>
-    <p class="muted small">Il pubblico vede sempre e solo le tariffe della colonna «Pubblico» del servizio guida.</p>
+    <p class="muted small">Il pubblico vede sempre e solo le tariffe della colonna «Pubblico» del servizio guida. Le tariffe per le agenzie non compaiono mai nelle pagine aperte a tutti: le vede solo un partner approvato, nella sua area riservata.</p>
   </div>
 
   <div class="btn-row sticky-actions"><button class="btn btn-gold" type="submit">Salva le tariffe</button> <a class="btn btn-outline" href="/it/hourly" target="_blank" rel="noopener">Prova il calcolatore</a></div>

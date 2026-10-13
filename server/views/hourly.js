@@ -39,9 +39,9 @@ const dayWords = (t, lang, text, sundays = false) =>
   ].join(lang === 'ja' ? '、' : ', ');
 
 /** Una tabella di tariffe (scaglioni + ora in più) per un servizio. `discountPercent`: sconto del partner, già applicato. */
-export function rateCard(ctx, { service, channel, discountPercent = 0 }) {
+export function rateCard(ctx, { service, channel, discountPercent = 0, account = null }) {
   const { t, lang, app } = ctx;
-  const data = rateRows(app.rates.get(), service, channel, discountPercent);
+  const data = rateRows(app.rates.get(), service, channel, account?.discount_percent ?? discountPercent);
   if (!data) return '';
   return html`<div class="card pad rate-card reveal">
     <h3>${t(`hourly.s.${service}`)}</h3>
@@ -55,17 +55,18 @@ export function rateCard(ctx, { service, channel, discountPercent = 0 }) {
 }
 
 /** Supplementi (festivo, superfestivo, notturno, auricolari) con le cifre in vigore. */
-export function supplementsBox(ctx, { earpieces = true } = {}) {
+export function supplementsBox(ctx, { earpieces = true, only = null } = {}) {
   const { t, lang, app } = ctx;
   const { surcharges: s, days } = app.rates.get();
   const row = (label, value) => html`<li><span>${label}</span><strong>${value}</strong></li>`;
+  const has = (key) => !only || only.includes(key); // `only`: solo alcune voci (la dashboard dell'agenzia mostra festivi e auricolari)
   return html`<div class="card pad sup-card reveal">
     <h3>${t('hourly.sup.title')}</h3>
     <ul class="plain sup-list">
-      ${s.festivoPct > 0 ? row(t('hourly.sup.festivo', { days: dayWords(t, lang, days.holidays, days.sundays) }), `+${s.festivoPct}%`) : ''}
-      ${s.superFestivoPct > 0 ? row(t('hourly.sup.superfestivo', { days: dayWords(t, lang, days.superHolidays) }), `+${s.superFestivoPct}%`) : ''}
-      ${s.nightPct > 0 && s.nightFrom !== s.nightTo ? row(t('hourly.sup.night', { from: s.nightFrom, to: s.nightTo }), `+${s.nightPct}%`) : ''}
-      ${earpieces && s.earpieceCents > 0 ? row(t('hourly.sup.earpieces', { price: formatMoney(s.earpieceCents, lang), n: s.earpieceFromPax }), '') : ''}
+      ${has('festivo') && s.festivoPct > 0 ? row(t('hourly.sup.festivo', { days: dayWords(t, lang, days.holidays, days.sundays) }), `+${s.festivoPct}%`) : ''}
+      ${has('superfestivo') && s.superFestivoPct > 0 ? row(t('hourly.sup.superfestivo', { days: dayWords(t, lang, days.superHolidays) }), `+${s.superFestivoPct}%`) : ''}
+      ${has('night') && s.nightPct > 0 && s.nightFrom !== s.nightTo ? row(t('hourly.sup.night', { from: s.nightFrom, to: s.nightTo }), `+${s.nightPct}%`) : ''}
+      ${has('earpieces') && earpieces && s.earpieceCents > 0 ? row(t('hourly.sup.earpieces', { price: formatMoney(s.earpieceCents, lang), n: s.earpieceFromPax }), '') : ''}
     </ul>
   </div>`;
 }

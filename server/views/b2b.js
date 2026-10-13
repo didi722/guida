@@ -10,7 +10,7 @@ import { formatMoney } from '../util.js';
 import { SERVICES, openTo } from '../rates.js';
 import { page } from './layout.js';
 import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, timeLeft } from './components.js';
-import { ratesBlock } from './hourly.js';
+import { ratesBlock, ratesNotes, rateCard, supplementsBox } from './hourly.js';
 
 const COUNTRIES = ['IT', 'DE', 'FR', 'ES', 'GB', 'US', 'NL', 'AT', 'CH', 'BE', 'PT', 'PL', 'CZ', 'SE', 'DK', 'NO', 'IE', 'JP', 'CN', 'KR', 'AU', 'CA', 'BR', 'IN', 'AE', 'OTHER'];
 
@@ -166,6 +166,23 @@ function pendingPage(ctx, acct) {
   return page(ctx, { title: t('nav.agencyArea'), path: `/${lang}/b2b/account`, body, noindex: true, activeNav: 'b2b-account' });
 }
 
+
+/**
+ * Il tariffario a ore, la prima cosa che vede un'agenzia: per ogni servizio mezza giornata, giornata intera e ora in più,
+ * più i supplementi festivi e gli auricolari. Le cifre sono quelle che pagherà lei (con le sue condizioni).
+ */
+function tariffario(ctx, acct) {
+  const { t, u, app } = ctx;
+  const services = SERVICES.filter((s) => app.rates.has(s, 'b2b'));
+  if (!services.length) return '';
+  const cards = services.map((service) => rateCard(ctx, { service, channel: 'b2b', account: acct })).filter((x) => String(x));
+  return html`<div class="tariff-head"><div><h2 id="tariffario">${t('partner.tariff.title')}</h2><p class="muted">${t('partner.tariff.lead')}</p></div>
+    <a class="small" href="${u('/b2b/rates')}">${t('partner.tariff.all')} →</a></div>
+  <div class="rate-grid">${cards}</div>
+  <div class="rate-extras">${supplementsBox(ctx, { earpieces: services.includes('guide'), only: ['festivo', 'earpieces'] })}</div>
+  ${ratesNotes(ctx, { channel: 'b2b' })}`;
+}
+
 /**
  * La dashboard dell'agenzia: riepilogo, ricerca e filtri, elenco delle prenotazioni con le azioni di ogni giorno.
  * list: { rows, counts, total, page, pages, view } · summary: vedi partnerSummary · filters: vedi parseFilters.
@@ -197,9 +214,12 @@ export function accountPage(ctx, { acct, filters, list, summary, flash = '', mod
     <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a>${canQuote ? html`<a class="btn btn-outline btn-lg" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}</div>
   </div>
 </div></section>
-<section class="section tight"><div class="wrap">
+<section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">
   ${flashKey ? html`<div class="notice notice-${/error|expired|locked/.test(flash) ? 'err' : 'ok'}" role="status">${t(flashKey)}</div>` : ''}
   ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
+  ${tariffario(ctx, acct)}
+</div></section>
+<section class="section tight"><div class="wrap">
 
   <div class="kpis">
     ${kpi(`${base}?view=upcoming`, t('partner.kpi.upcoming'), summary.upcoming.count, t('partner.kpi.pax', { n: summary.upcoming.pax }))}

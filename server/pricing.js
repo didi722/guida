@@ -20,12 +20,15 @@ export function accountPrices(account) {
   return priceLists.get(account);
 }
 
-/** Prezzo di un tour per un canale: ai partner, il prezzo dedicato se c'è; altrimenti la tariffa B2B meno lo sconto del partner. */
+/**
+ * Prezzo di un tour per un canale: ai partner, il prezzo dedicato se c'è; altrimenti, se il partner ha uno sconto %, il prezzo al pubblico meno lo sconto
+ * (arrotondato ai 5 € successivi, mai oltre il prezzo al pubblico); senza sconto, la tariffa B2B.
+ */
 export function unitPriceFor(tour, channel, account = null) {
   if (channel !== 'b2b') return tour.priceCents;
   const dedicated = accountPrices(account)[tour.slug];
   if (dedicated != null) return dedicated;
-  return applyPartnerDiscount(tour.b2bPriceCents, account?.discount_percent); // sconto del partner, arrotondato al multiplo di 5 € per eccesso
+  return Number(account?.discount_percent) > 0 ? applyPartnerDiscount(tour.priceCents, account.discount_percent) : tour.b2bPriceCents;
 }
 
 /** Preventivo di un servizio a ore: le ore sono quelle scelte dal cliente, oppure la durata del tour se è fissa. */

@@ -403,13 +403,13 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
 
     // partner approvato
     const now = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
-    assert.equal(now.slots[0].totalCents, 18500, '190 € − 5% = 180,50 → 185');
+    assert.equal(now.slots[0].totalCents, 23000, 'lo sconto parte dal prezzo al pubblico: 240 € − 5% = 228 → 230 (e non 190 € − 5%)');
     const ok = await partner('/it/book/checkout', form({ tour: 'servizio-mezza-giornata', date, time: '09:00', pax: '10', name: 'Giulia', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 42', consent: '1' }));
     assert.equal(ok.status, 303);
     const b = s.app.db.prepare('SELECT * FROM bookings WHERE client_ref = ?').get('PRATICA 42');
     assert.equal(b.channel, 'b2b');
     assert.equal(b.status, 'confirmed');
-    assert.equal(b.total_cents, 18500);
+    assert.equal(b.total_cents, 23000);
     assert.equal(b.payment_method, 'invoice');
     assert.equal(Date.parse(b.free_cancel_until), localToInstant(date, '09:00') - 120 * 3600_000, 'partner con 120 h di cancellazione gratuita');
     assert.match(await (await partner('/it/b2b/account')).text(), /PRATICA 42|VE-/);
@@ -465,7 +465,7 @@ test('partner: listino dedicato e politica di annullo gestiti dall’admin (vali
     const dedicated = await (await partner(`/api/slots?tour=servizio-mezza-giornata&date=${date}&pax=10`)).json();
     assert.equal(dedicated.slots[0].totalCents, 15050);
     const discounted = await (await partner(`/api/slots?tour=cannaregio-ghetto&date=${date}&pax=2`)).json();
-    assert.equal(discounted.slots[0].totalCents, 5600, '2 × 28 €: 28 € − 10% = 25,20 € salirebbe a 30 €, oltre il listino, quindi resta 28 €');
+    assert.equal(discounted.slots[0].totalCents, 7000, '2 × 35 €: 35 € al pubblico − 10% = 31,50 € → 35 € (multiplo di 5 € successivo, mai oltre il prezzo al pubblico)');
     assert.match(await (await partner('/it/b2b/rates')).text(), /150,50/);
 
     // politica: validazioni, poi salvataggio (giorni → ore)

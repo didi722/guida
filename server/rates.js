@@ -19,7 +19,6 @@ export const HOUR_STEP = 0.5;
  * quello al pubblico è circa +25%. Sono un punto di partenza: si cambiano dal pannello.
  */
 export const DEFAULT_RATES = {
-  showB2bPublic: true,
   services: {
     guide: { public: { prices: [20000, 38000, 70000], extra: 9000 }, b2b: { prices: [16000, 30000, 56000], extra: 7000 } },
     assistant: { b2b: { prices: [8000, 11000, 20000], extra: 3200 } },
@@ -39,6 +38,7 @@ export const DISCOUNT_STEP_CENTS = 500;
  * Prezzo (centesimi) dopo lo sconto percentuale di un partner: arrotondato per eccesso al multiplo di 5 €, senza mai superare il prezzo non scontato
  * (su un prezzo piccolo, per esempio 28 € a persona, con uno sconto del 10% si resta a 28 €: 25,20 € salirebbe a 30 €).
  * Senza sconto il prezzo resta com'è scritto nel listino.
+ * Lo sconto di un partner si calcola sul PREZZO AL PUBBLICO (B2C), non sulla tariffa agenzie: vedi partnerRate e unitPriceFor.
  */
 export function applyPartnerDiscount(cents, discountPercent) {
   const d = Math.min(100, Math.max(0, Number(discountPercent) || 0));
@@ -46,7 +46,6 @@ export function applyPartnerDiscount(cents, discountPercent) {
   const exact = (cents * (10000 - Math.round(d * 100))) / 10000; // sconti a passi di 0,01%: si calcola con interi per non perdere centesimi
   return Math.max(0, Math.min(cents, Math.ceil(exact / DISCOUNT_STEP_CENTS - 1e-9) * DISCOUNT_STEP_CENTS));
 }
-const discounted = applyPartnerDiscount;
 
 // ───────────── giorni festivi ─────────────
 /** Domenica di Pasqua (calendario gregoriano) come 'YYYY-MM-DD'. */
@@ -141,20 +140,36 @@ export function hourOptions(service) {
   return out;
 }
 
+/**
+ * Le tariffe che paga un partner per un servizio (scaglioni e ora extra). Senza sconto: la tariffa agenzie. Con uno sconto %: il prezzo al pubblico
+ * meno lo sconto (arrotondato ai 5 € successivi), al posto della tariffa agenzie. Se il servizio non ha un prezzo al pubblico (assistente,
+ * tour leader, meet & greet: sono solo per le agenzie) non c'è da dove partire, e lo sconto si applica alla tariffa agenzie.
+ */
+export function partnerRate(rates, service, discountPercent = 0) {
+  const b2b = rates.services[service]?.b2b;
+  if (!b2b) return null;
+  const d = Math.min(100, Math.max(0, Number(discountPercent) || 0));
+  if (!(d > 0)) return b2b;
+  const from = rates.services[service].public ?? b2b;
+  return { prices: from.prices.map((p) => applyPartnerDiscount(p, d)), extra: applyPartnerDiscount(from.extra, d) };
+}
+
+/** La tariffa di un canale: per i privati quella al pubblico, per i partner quella con le loro condizioni (partnerRate). */
+const rateFor = (rates, service, channel, discountPercent = 0) => (channel === 'b2b' ? partnerRate(rates, service, discountPercent) : (rates.services[service]?.public ?? null));
+
 /** Le cifre da mostrare in una tabella: gli scaglioni e l'ora extra, già con lo sconto del partner. */
 export function rateRows(rates, service, channel, discountPercent = 0) {
-  const rate = rates.services[service]?.[channel === 'b2b' ? 'b2b' : 'public'];
+  const rate = rateFor(rates, service, channel, discountPercent);
   if (!rate) return null;
-  const d = channel === 'b2b' ? Math.min(100, Math.max(0, Number(discountPercent) || 0)) : 0;
-  return { rows: BRACKETS[service].map((hours, i) => ({ hours, cents: discounted(rate.prices[i], d) })), extraCents: discounted(rate.extra, d) };
+  return { rows: BRACKETS[service].map((hours, i) => ({ hours, cents: rate.prices[i] })), extraCents: rate.extra };
 }
 
 /** Prezzo «da» (il primo scaglione) per mostrarlo sulle schede e negli elenchi. */
 export function fromPrice(rates, service, channel, discountPercent = 0) {
-  const rate = rates.services[service]?.[channel === 'b2b' ? 'b2b' : 'public'];
+  const rate = rateFor(rates, service, channel, discountPercent);
   if (!rate) return null;
   const h = minHours(service);
-  return { hours: h, cents: discounted(basePrice(service, rate, h), channel === 'b2b' ? discountPercent : 0) };
+  return { hours: h, cents: basePrice(service, rate, h) };
 }
 
 /**
@@ -164,13 +179,13 @@ export function fromPrice(rates, service, channel, discountPercent = 0) {
 export function quote(rates, { service, channel = 'b2c', hours, date = null, time = null, pax = 1, earpieces = false, discountPercent = 0 }) {
   if (!SERVICES.includes(service)) return { ok: false, reason: 'service' };
   const key = channel === 'b2b' ? 'b2b' : 'public';
-  const rate = rates.services[service]?.[key];
+  const rate = rateFor(rates, service, channel, discountPercent);
   if (!rate) return { ok: false, reason: 'channel' };
   const h = Number(hours);
   if (!(h >= minHours(service) && h <= MAX_HOURS && Math.round(h / HOUR_STEP) * HOUR_STEP === h)) return { ok: false, reason: 'hours' };
 
   const disc = channel === 'b2b' ? Math.min(100, Math.max(0, Number(discountPercent) || 0)) : 0;
-  const baseCents = discounted(basePrice(service, rate, h), disc);
+  const baseCents = basePrice(service, rate, h); // lo sconto del partner è già nella tariffa (partnerRate)
   const s = rates.surcharges;
   const lines = [{ key: 'base', cents: baseCents }];
 
@@ -225,7 +240,6 @@ export function serviceNote(rec) {
 export function normalizeRates(raw) {
   const out = clone(DEFAULT_RATES);
   if (!raw || typeof raw !== 'object') return out;
-  if (typeof raw.showB2bPublic === 'boolean') out.showB2bPublic = raw.showB2bPublic;
   for (const service of SERVICES) {
     const src = raw.services?.[service];
     out.services[service] = out.services[service] ?? {};
@@ -313,7 +327,6 @@ export function parseRatesForm(body = {}, current = DEFAULT_RATES) {
       next.services[service][channel] = { prices, extra };
     }
   }
-  next.showB2bPublic = !!body.showB2bPublic;
   next.days.sundays = !!body.sundays;
   const s = next.surcharges;
   s.festivoPct = num('festivoPct', { max: 300 }) ?? s.festivoPct;
