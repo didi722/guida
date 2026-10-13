@@ -7,6 +7,7 @@ import path from 'node:path';
 import YAML from 'yaml';
 import { marked } from 'marked';
 import { LANGS } from './langs.js';
+import { MAX_HOURS, SERVICES, minHours } from './rates.js';
 
 marked.use({ gfm: true, breaks: false });
 export const md = (s) => marked.parse(String(s ?? ''), { async: false });
@@ -88,12 +89,22 @@ const tourBlock = (d, lang) => {
 export function normalizeTour(slug, d, where = slug) {
   if (!SLUG.test(slug)) fail(where, 'l’indirizzo (slug) può contenere solo lettere minuscole, numeri e trattini');
   if (!['person', 'group'].includes(d.model)) fail(where, 'scegli il tipo: a persona (partenze fisse) o a gruppo (servizio privato)');
+  // servizi a ore: il prezzo non sta nel tour ma nelle tariffe a ore (Sito › Tariffe a ore)
+  const hourly = d.pricing === 'hourly';
+  if (hourly) {
+    if (d.model !== 'group') fail(where, 'un servizio a ore è privato (a gruppo), non a persona');
+    if (!SERVICES.includes(d.service)) fail(where, 'scegli il servizio: guida, assistente, tour leader o meet & greet');
+  }
   if (!d.flexible && !(Array.isArray(d.times) && d.times.length)) fail(where, 'indica gli orari di partenza oppure scegli «orario libero»');
   for (const t of list(d.times)) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(t)) fail(where, `orario non valido: «${t}» (usa il formato 09:30)`);
   if (!(Number(d.duration) > 0)) fail(where, 'la durata deve essere maggiore di zero');
+  if (hourly) {
+    const hours = Number(d.duration) / 60;
+    if (!(hours >= minHours(d.service) && hours <= MAX_HOURS && Number.isInteger(hours * 2))) fail(where, `la durata di un servizio a ore va da ${minHours(d.service)} a ${MAX_HOURS} ore, di mezz’ora in mezz’ora`);
+  }
   if (!(Number.isInteger(Number(d.maxParticipants)) && Number(d.maxParticipants) > 0)) fail(where, 'il numero massimo di persone deve essere un intero maggiore di zero');
-  if (!(Number(d.price) >= 0) || d.price === '' || d.price == null) fail(where, 'il prezzo al pubblico non è valido');
-  if (d.b2bPrice != null && d.b2bPrice !== '' && !(Number(d.b2bPrice) >= 0)) fail(where, 'la tariffa B2B non è valida');
+  if (!hourly && (!(Number(d.price) >= 0) || d.price === '' || d.price == null)) fail(where, 'il prezzo al pubblico non è valido');
+  if (!hourly && d.b2bPrice != null && d.b2bPrice !== '' && !(Number(d.b2bPrice) >= 0)) fail(where, 'la tariffa B2B non è valida');
   if (d.cancelHours != null && d.cancelHours !== '' && !(Number(d.cancelHours) >= 0)) fail(where, 'le ore di cancellazione non sono valide');
   if (!d.it?.title || !d.it?.summary) fail(where, 'servono almeno titolo e riassunto in italiano');
   const i18n = {};
@@ -135,14 +146,18 @@ export function normalizeTour(slug, d, where = slug) {
     weekdays: Array.isArray(d.weekdays) && d.weekdays.length ? d.weekdays.map(Number) : [0, 1, 2, 3, 4, 5, 6],
     durationMin: Number(d.duration),
     maxParticipants: Number(d.maxParticipants),
-    priceCents: cents(d.price),
-    b2bPriceCents: cents(d.b2bPrice ?? d.price) ?? cents(d.price),
+    pricing: hourly ? 'hourly' : 'fixed', // 'hourly': il prezzo viene dalle tariffe a ore
+    service: hourly ? d.service : null, // guide | assistant | leader | meetgreet
+    audience: d.audience === 'b2b' ? 'b2b' : 'all', // 'b2b': solo per i partner approvati
+    chooseHours: hourly && !!d.chooseHours, // il cliente sceglie quante ore; altrimenti la durata è quella del tour
+    priceCents: hourly ? 0 : cents(d.price),
+    b2bPriceCents: hourly ? 0 : cents(d.b2bPrice ?? d.price) ?? cents(d.price),
     cancelHours: d.cancelHours == null || d.cancelHours === '' ? null : Number(d.cancelHours),
     payOnSite: d.payOnSite !== false,
     art: d.art ?? 'dome',
     image: d.image || null,
     languages: languages.length ? languages : [...LANGS],
-    category: d.category ?? (d.model === 'person' ? 'group' : 'private'),
+    category: d.category ?? (hourly ? 'hourly' : d.model === 'person' ? 'group' : 'private'),
     i18n,
   };
 }

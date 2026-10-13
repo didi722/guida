@@ -57,9 +57,12 @@ function seedHistory({ lagoon, bluesail, d, now }) {
   const TOURS = [
     { slug: 'san-marco-rialto', w: 5, times: ['09:30', '14:30'], pax: [1, 6] },
     { slug: 'cannaregio-ghetto', w: 3, times: ['10:00', '15:00'], pax: [1, 6] },
-    { slug: 'passeggiata-privata-2h', w: 2, times: ['10:00', '11:30', '16:00'], pax: [2, 8] },
+    { slug: 'guida-a-ore', w: 3, times: ['09:30', '10:00', '14:00', '15:30'], pax: [2, 12], hours: [2, 2, 3, 4, 4, 6, 8] },
     { slug: 'venezia-oriente-occidente', w: 1, times: ['09:30', '14:00'], pax: [4, 12] },
     { slug: 'isole-murano-burano-torcello', w: 1, times: ['09:00'], pax: [4, 10] },
+    // servizi riservate alle agenzie
+    { slug: 'meet-and-greet', w: 1, times: ['10:00', '16:00'], pax: [2, 20], hours: [1, 1, 2], partnerOnly: true },
+    { slug: 'assistente-a-ore', w: 1, times: ['09:00', '14:00'], pax: [10, 25], hours: [2, 4, 4, 8], partnerOnly: true },
   ];
   const NAMES = ['Sofia Conti', 'Mark Thompson', 'Elena Pastore', 'Hans Becker', 'Lucía Fernández', 'Paolo Gentile', 'Emma Wilson', 'Marco De Luca', 'Chiara Longo', 'David Miller', 'Marta Ruiz', 'Giorgio Neri', 'Claire Dubois', 'Anna Costa'];
   const LANGS = [{ w: 5, v: 'it' }, { w: 4, v: 'en' }, { w: 2, v: 'es' }].map((x) => ({ ...x }));
@@ -71,11 +74,12 @@ function seedHistory({ lagoon, bluesail, d, now }) {
     const date = d(-between(8, 150));
     const lead = between(2, 24);
     const at = localToInstant(addDays(date, -lead), '12:00');
-    const partner = rnd() < 0.3 ? (rnd() < 0.7 ? lagoon : bluesail) : null;
+    const partner = rnd() < 0.3 || tour.partnerOnly ? (rnd() < 0.7 ? lagoon : bluesail) : null;
     const lang = pickWeighted(LANGS).v;
     const name = partner ? partner.contact_name : NAMES[i % NAMES.length];
     const input = {
       tourSlug: tour.slug, date, time: tour.times[between(0, tour.times.length - 1)], pax: between(...tour.pax), name,
+      ...(tour.hours ? { hours: tour.hours[between(0, tour.hours.length - 1)], earpieces: rnd() < 0.4 } : {}),
       email: partner ? partner.email : `${name.toLowerCase().replace(/[^a-z]+/g, '.')}@example.com`, lang,
       ...(partner ? { channel: 'b2b', account: partner, paymentMethod: partner === lagoon ? 'invoice' : 'card', clientRef: `Gruppo ${between(1, 40)}` } : { paymentMethod: 'card' }),
     };
@@ -156,12 +160,13 @@ async function seed() {
   book('John Smith: Cannaregio fra 9 giorni, pagata con carta (in inglese)', { tourSlug: 'cannaregio-ghetto', date: d(9), time: '15:00', pax: 4, name: 'John Smith', email: 'john.smith@example.com', lang: 'en', paymentMethod: 'card' }, { paid: true });
   book('Carmen Ruiz: San Marco fra 2 giorni (in spagnolo)', { tourSlug: 'san-marco-rialto', date: d(2), time: '14:30', pax: 3, name: 'Carmen Ruiz', email: 'carmen.ruiz@example.com', lang: 'es', paymentMethod: 'card' }, { paid: true });
   // partner
-  book('Lagoon DMC: passeggiata privata fra 12 giorni, a fattura (sconto 15%, rimborso totale fino a 7 giorni prima)', { tourSlug: 'passeggiata-privata-2h', date: d(12), time: '10:00', pax: 8, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Rossi' });
+  book('Lagoon DMC: guida a ore (4 ore, auricolari) fra 12 giorni, a fattura (sconto 15%, rimborso totale fino a 7 giorni prima)', { tourSlug: 'guida-a-ore', hours: 4, earpieces: true, date: d(12), time: '10:00', pax: 12, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Rossi' });
   book('Lagoon DMC: San Marco fra 4 giorni, a fattura (dentro i 7 giorni: rimborso 50%, penale 50% se annulla)', { tourSlug: 'san-marco-rialto', date: d(4), time: '14:30', pax: 6, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Bianchi' });
   book('Blue Sail Tours: San Marco fra 8 giorni, pagata con carta', { tourSlug: 'san-marco-rialto', date: d(8), time: '09:30', pax: 2, channel: 'b2b', account: bluesail, name: 'Luca Neri', email: bluesail.email, lang: 'en', paymentMethod: 'card' }, { paid: true });
+  book('Blue Sail Tours: meet & greet fra 5 giorni, a carta', { tourSlug: 'meet-and-greet', hours: 1, date: d(5), time: '10:00', pax: 14, channel: 'b2b', account: bluesail, name: 'Luca Neri', email: bluesail.email, lang: 'en', paymentMethod: 'card', clientRef: 'Arrivo gruppo Miller' }, { paid: true });
   // già svolte (finiscono in «Da fatturare» e fanno partire la richiesta di recensione)
   book('Laura Bianchi: San Marco di 6 giorni fa, pagata con carta', { tourSlug: 'san-marco-rialto', date: d(-6), time: '09:30', pax: 2, name: 'Laura Bianchi', email: 'laura.bianchi@example.com', lang: 'it', paymentMethod: 'card' }, { paid: true, at: earlier });
-  book('Lagoon DMC: passeggiata di 5 giorni fa, a fattura (da incassare e da fatturare)', { tourSlug: 'passeggiata-privata-2h', date: d(-5), time: '10:00', pax: 5, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Verdi' }, { at: earlier });
+  book('Lagoon DMC: guida di 3 ore di 5 giorni fa, a fattura (da incassare e da fatturare)', { tourSlug: 'guida-a-ore', hours: 3, date: d(-5), time: '10:00', pax: 5, channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, lang: 'it', paymentMethod: 'invoice', clientRef: 'Gruppo Verdi' }, { at: earlier });
 
   // buono regalo e codice sconto
   let giftCode = '—';

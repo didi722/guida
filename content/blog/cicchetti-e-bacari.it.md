@@ -4,7 +4,7 @@ date: 2026-10-07
 summary: Cos'è un'ombra, come si ordina e perché conviene allontanarsi di qualche ponte dalla piazza.
 tags: [Cucina, Consigli, Cannaregio]
 art: bacaro
-tours: [cannaregio-ghetto, passeggiata-privata-2h]
+tours: [cannaregio-ghetto, guida-a-ore]
 ---
 Il modo più veneziano di mangiare è anche il più semplice: **entrare in un bacaro, ordinare qualche cicchetto e un'ombra, e mangiare in piedi al banco**.
 

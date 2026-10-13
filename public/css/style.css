@@ -716,3 +716,20 @@ body.admin { --header-h: 64px; }
 .mode-option:has(input:checked) { border-color: var(--bronze); background: var(--soft); }
 .mode-option > input { align-self: start; margin-top: 4px; } .mode-body > * { margin: 0 0 8px; } .mode-body > :last-child { margin-bottom: 0; } .mode-body label { cursor: pointer; }
 .mode-body .info-list li { margin-bottom: 6px; } .mode-body .info-list .warn { color: var(--warn); }
+
+/* Tariffe a ore */
+.rate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 18px; }
+.rate-card h3 { margin: 0 0 0.2em; } .rate-card > .muted { margin: 0 0 12px; }
+.rate-table { width: 100%; border-collapse: collapse; }
+.rate-table th { text-align: left; font-weight: 400; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); }
+.rate-table td { text-align: right; font-weight: 700; padding: 9px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.rate-table tr:last-child th, .rate-table tr:last-child td { border-bottom: 0; } .rate-extra th, .rate-extra td { color: var(--muted); font-weight: 400; }
+.rate-extras { margin-bottom: 14px; }
+.sup-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--line); } .sup-list li:last-child { border-bottom: 0; } .sup-list strong { white-space: nowrap; }
+.notes-list li { margin: 0 0 4px; }
+.hourly-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; }
+.hourly-form .field, .hourly-form .check { margin: 0; } .hourly-form .wide, .hourly-form .check, .hourly-form .btn, .hourly-form .notice { grid-column: 1 / -1; }
+.hourly-form .btn { justify-self: start; }
+.quote-card { margin-top: 18px; } .quote-card h2 { margin-top: 0; }
+.summary-list .row-extra dt::before { content: '+ '; }
+.quote-card .summary-list > div, .summary-list .row-line { flex-direction: row !important; } .quote-card .summary-list dd, .summary-list .row-line dd { text-align: right !important; }

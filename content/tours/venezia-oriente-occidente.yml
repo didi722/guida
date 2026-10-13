@@ -1,11 +1,12 @@
-order: 3
+order: 4
 featured: true
-model: group             # privato: prezzo a gruppo, orario a scelta
+model: group             # privato, orario a scelta
+pricing: hourly          # il prezzo viene dalle tariffe a ore (Sito › Tariffe a ore)
+service: guide
 flexible: true
-duration: 180
+duration: 180            # 3 ore, fisse
 maxParticipants: 15
-price: 190               # € a gruppo
-b2bPrice: 150
+cancelHours: 48
 art: eastwest
 languages: [it, en, es]
 
@@ -34,7 +35,7 @@ it:
   excludes:
     - Ingressi a monumenti e musei
     - Mance e consumazioni
-  notes: Prezzo per l'intero gruppo, fino a 15 persone.
+  notes: Prezzo a tariffa oraria per l'intero gruppo, fino a 15 persone; festivi e orari serali hanno un supplemento.
 
 en:
   title: Venice between East and West
@@ -61,7 +62,7 @@ en:
   excludes:
     - Entry tickets to monuments and museums
     - Tips and drinks
-  notes: Price for the whole group, up to 15 guests.
+  notes: Hourly rate for the whole group, up to 15 guests; holidays and evening hours carry a supplement.
 
 es:
   title: Venecia entre Oriente y Occidente
@@ -88,4 +89,4 @@ es:
   excludes:
     - Entradas a monumentos y museos
     - Propinas y consumiciones
-  notes: Precio para todo el grupo, hasta 15 personas.
+  notes: Tarifa por horas para todo el grupo, hasta 15 personas; festivos y horario nocturno tienen suplemento.

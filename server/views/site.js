@@ -6,6 +6,8 @@ import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, pick } from '../langs.js';
+import { SERVICES, openTo } from '../rates.js';
+import { ratesBlock } from './hourly.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
 export function minBookableDate(app, channel = 'b2c', nowMs = Date.now()) {
@@ -25,7 +27,9 @@ function faqItems(ctx, keys) {
 export function homePage(ctx, { departures = [], quotes = [], reviewStats = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { content, cfg } = app;
-  const featured = content.tours.filter((x) => x.featured);
+  const rates = app.rates.get();
+  const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
+  const featured = content.tours.filter((x) => x.featured && openTo(rates, x, channel));
   const posts = content.postsFor(lang).slice(0, 3);
   const minDate = minBookableDate(app);
   const hours = fmtHours(t, cfg.policy.b2cFreeCancelHours);
@@ -154,8 +158,10 @@ ${posts.length
 // ───────────────────────── Tour ─────────────────────────
 export function toursPage(ctx) {
   const { t, lang, app } = ctx;
-  const groups = app.content.tours.filter((x) => x.model === 'person');
-  const priv = app.content.tours.filter((x) => x.model === 'group');
+  const rates = app.rates.get();
+  const shown = app.content.tours.filter((x) => openTo(rates, x, ctx.acct?.status === 'approved' ? 'b2b' : 'b2c'));
+  const groups = shown.filter((x) => x.model === 'person');
+  const priv = shown.filter((x) => x.model === 'group');
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.tours')]])}
@@ -186,7 +192,18 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
     legend: t('w.legend'), selected: t('w.selected'), minPeople: t('w.min'), maxPeople: t('w.max'),
   };
 
-  const widget = html`
+  const hourly = tour.pricing === 'hourly';
+  const hourlyCard = html`
+<aside class="book-card" id="book">
+  <div class="book-head">
+    <p class="price-big">${p.money}<small> / ${p.per}</small></p>
+    ${channel === 'b2b' ? html`<span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}
+  </div>
+  <p class="muted">${t('hourly.card.note')}</p>
+  <a class="btn btn-gold btn-block" href="${u('/hourly')}?product=${tour.slug}">${t('hourly.card.cta')}</a>
+  <p class="small muted policy-note">${cancellationLine(ctx, tour, channel)}</p>
+</aside>`;
+  const widget = hourly ? hourlyCard : html`
 <aside class="book-card" id="book" data-widget data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-unit="${p.unit}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
   <div class="book-head">
     <p class="price-big">${p.money}<small> / ${p.per}</small></p>
@@ -213,7 +230,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
   <article class="tour-main">
     ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.tours'), u('/tours')], [ti.title]])}
     ${tour.image ? '' : html`<div class="tour-banner">${tourMedia(ctx, tour)}</div>`}
-    <p class="eyebrow">${tour.model === 'person' ? t('tour.kindGroup') : t('tour.kindPrivate')}</p>
+    <p class="eyebrow">${hourly ? t('tour.kindHourly') : tour.model === 'person' ? t('tour.kindGroup') : t('tour.kindPrivate')}</p>
     <h1>${ti.title}</h1>
     <p class="lead">${ti.subtitle || ti.summary}</p>
     <ul class="facts">
@@ -248,7 +265,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
   </article>
   <div class="tour-side">${widget}</div>
 </div>
-<div class="mobile-cta"><div><strong>${p.money}</strong><small> / ${p.per}</small></div><a class="btn btn-gold btn-sm" href="#book">${t('w.pickDate')}</a></div>`;
+<div class="mobile-cta"><div><strong>${p.money}</strong><small> / ${p.per}</small></div>${hourly ? html`<a class="btn btn-gold btn-sm" href="${u('/hourly')}?product=${tour.slug}">${t('hourly.card.cta')}</a>` : html`<a class="btn btn-gold btn-sm" href="#book">${t('w.pickDate')}</a>`}</div>`;
 
   const ld = {
     '@context': 'https://schema.org',
@@ -257,7 +274,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     description: ti.summary,
     touristType: pick({ it: 'Turisti a Venezia', en: 'Visitors to Venice', es: 'Visitantes de Venecia' }, lang),
     provider: { '@type': 'Person', name: cfg.site.name },
-    offers: { '@type': 'Offer', price: (unitPriceFor(tour, 'b2c') / 100).toFixed(2), priceCurrency: 'EUR', url: `${cfg.baseUrl}/${lang}/tours/${tour.slug}` },
+    offers: { '@type': 'Offer', price: ((hourly ? (app.rates.fromPrice(tour.service, 'b2c')?.cents ?? 0) : unitPriceFor(tour, 'b2c')) / 100).toFixed(2), priceCurrency: 'EUR', url: `${cfg.baseUrl}/${lang}/tours/${tour.slug}` },
   };
   return page(ctx, { title: ti.title, description: ti.summary, path: `/${lang}/tours/${tour.slug}`, body, ld, ogImage: mediaUrl(cfg, tour.image), activeNav: 'tours', bodyClass: 'tour-page', scripts: raw('<script src="/js/booking.js?v=' + app.assetVersion + '" defer></script>') });
 }
@@ -356,7 +373,8 @@ export function b2bLandingPage(ctx) {
   const { cfg, content } = app;
   const hours = fmtHours(t, cfg.policy.b2bFreeCancelHours);
   const notice = fmtHours(t, cfg.policy.b2bMinNoticeHours);
-  const services = content.tours.filter((x) => x.model === 'group' && x.slug.startsWith('servizio'));
+  const rateServices = SERVICES.filter((s) => app.rates.has(s, 'b2b'));
+  const showRates = rateServices.length && (app.rates.get().showB2bPublic || ctx.acct?.status === 'approved');
   const body = html`
 <section class="hero hero-b2b">
   <div class="wrap hero-grid">
@@ -366,13 +384,21 @@ export function b2bLandingPage(ctx) {
       <p class="lead">${t('b2b.lead')}</p>
       <p class="btn-row">
         ${ctx.acct ? html`<a class="btn btn-gold" href="${u('/b2b/account')}">${t('nav.myAccount')}</a>` : html`<a class="btn btn-gold" href="${u('/b2b/register')}">${t('b2b.requestAccess')}</a> <a class="btn btn-outline" href="${u('/b2b/login')}">${t('b2b.login')}</a>`}
+        ${showRates ? html`<a class="btn btn-outline" href="#tariffe">${t('b2b.seeRates')}</a>` : ''}
       </p>
     </div>
     <div class="hero-art">${siteArt(ctx, 'b2b', 'walk', { alt: t('b2b.h1'), sizes: '(max-width: 900px) 100vw, 560px', eager: true })}</div>
   </div>
 </section>
 
-<section class="section">
+${showRates ? html`<section class="section" id="tariffe">
+  <div class="wrap">
+    ${sectionHead(t('b2b.ratesTitle'), t('b2b.ratesLead'), html`<a class="btn btn-gold" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>`)}
+    ${ratesBlock(ctx, { channel: 'b2b', services: rateServices })}
+  </div>
+</section>` : ''}
+
+<section class="section${showRates ? ' section-alt' : ''}">
   <div class="wrap">
     ${sectionHead(t('b2b.benefitsTitle'))}
     <div class="grid grid-3 benefits">
@@ -403,7 +429,7 @@ export function b2bLandingPage(ctx) {
       <p class="muted small">${t('b2b.policy.note')}</p>
     </div>
     <p class="center reveal"><a href="${u('/programs')}">${t('pg.b2bLink')} →</a></p>
-    ${services.length ? html`<p class="center reveal">${t('b2b.servicesLead')} ${services.map((s, i) => html`${i ? ' · ' : ''}<a href="${u('/tours/' + s.slug)}">${s.i18n[lang].title}</a>`)}</p>` : ''}
+    ${showRates ? html`<p class="center reveal"><a href="${u('/hourly')}">${t('b2b.ratesCta')} →</a></p>` : ''}
   </div>
 </section>
 

@@ -1,0 +1,66 @@
+# Servizio per agenzie, a tariffa oraria. Senza una tariffa al pubblico (Sito › Tariffe a ore) lo vedono e lo prenotano solo i partner approvati.
+order: 8
+featured: false
+model: group
+pricing: hourly
+service: assistant
+chooseHours: true
+flexible: true
+duration: 120
+maxParticipants: 25
+art: walk
+languages: [it, en, es]
+
+it:
+  title: Assistente in loco
+  subtitle: Assistenza al gruppo, a ore
+  summary: "Una persona di fiducia che segue il tuo gruppo in hotel, ai terminal e nei trasferimenti."
+  meetingPoint: Concordato con te (stazione, aeroporto, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    Assistenza in loco per gruppi e agenzie: accoglienza in hotel, supporto ai terminal, accompagnamento nei trasferimenti, gestione dei tempi con i fornitori. Non è una visita guidata: è un aiuto operativo per far filare tutto liscio.
+  highlights:
+    - Servizio a ore, con durata a scelta
+    - Prenotabile in autonomia dall'area partner
+    - Fatturazione elettronica
+  includes:
+    - Il servizio per le ore scelte
+  excludes:
+    - Ingressi, trasporti, mance
+  notes: Tariffa oraria per l'intero gruppo. Festivi e orari serali o notturni hanno un supplemento.
+
+en:
+  title: On-site assistant
+  subtitle: Group support, by the hour
+  summary: "A trusted person who looks after your group at the hotel, at terminals and during transfers."
+  meetingPoint: Agreed with you (station, airport, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    On-site support for groups and agencies: hotel welcome, terminal assistance, escort during transfers, timing with suppliers. It is not a guided tour: it is operational help to keep everything running smoothly.
+  highlights:
+    - Hourly service, length of your choice
+    - Bookable on your own from the partner area
+    - Electronic invoicing
+  includes:
+    - The service for the hours chosen
+  excludes:
+    - Entry tickets, transport, tips
+  notes: Hourly rate for the whole group. Holidays and evening or night hours carry a supplement.
+
+es:
+  title: Asistente en destino
+  subtitle: Asistencia al grupo, por horas
+  summary: "Una persona de confianza que atiende a tu grupo en el hotel, en las terminales y en los traslados."
+  meetingPoint: A convenir contigo (estación, aeropuerto, Piazzale Roma, hotel)
+  meetingUrl: ''
+  description: |
+    Asistencia en destino para grupos y agencias: recepción en el hotel, apoyo en las terminales, acompañamiento en los traslados, gestión de tiempos con los proveedores. No es una visita guiada: es una ayuda operativa para que todo salga bien.
+  highlights:
+    - Servicio por horas, duración a elegir
+    - Reservable por tu cuenta desde el área de socios
+    - Facturación electrónica
+  includes:
+    - El servicio durante las horas elegidas
+  excludes:
+    - Entradas, transporte, propinas
+  notes: Tarifa por horas para todo el grupo. Festivos y horario nocturno o de tarde-noche tienen suplemento.

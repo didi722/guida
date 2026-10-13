@@ -71,7 +71,7 @@ export function adminPartnersRouter(app) {
       return res.redirect(303, here(a.id, 'ok', 'copied'));
     }
     const list = {};
-    for (const t of content.tours) {
+    for (const t of content.tours.filter((x) => x.pricing !== 'hourly')) {
       const raw = String(req.body[`price_${t.slug}`] ?? '').trim();
       if (!raw) continue;
       const cents = parseEuros(raw);

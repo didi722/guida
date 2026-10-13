@@ -31,7 +31,8 @@ export function bodyToDef(body, existing = {}) {
     const raw = String(body[name] ?? '').trim();
     return raw === '' ? null : Number(raw);
   };
-  const model = body.model === 'group' ? 'group' : 'person';
+  const hourly = body.pricing === 'hourly'; // il prezzo viene dalle tariffe a ore (Sito › Tariffe a ore)
+  const model = hourly || body.model === 'group' ? 'group' : 'person';
   const wd = [].concat(body.wd ?? []).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
   if (!wd.length) errors.push('Scegli almeno un giorno della settimana');
   const def = {
@@ -44,7 +45,7 @@ export function bodyToDef(body, existing = {}) {
     weekdays: wd,
     duration: (int('durH') ?? 0) * 60 + (int('durM') ?? 0),
     maxParticipants: int('maxParticipants'),
-    price: euros('price', 'Prezzo al pubblico', { required: true }),
+    price: euros('price', 'Prezzo al pubblico', { required: !hourly }),
     b2bPrice: euros('b2bPrice', 'Tariffa partner'),
     cancelHours: int('cancelHours'),
     payOnSite: !!body.payOnSite,
@@ -52,6 +53,14 @@ export function bodyToDef(body, existing = {}) {
     image: String(body.image ?? '').trim() || null,
     languages: [].concat(body.langs ?? []).filter((l) => LANGS.includes(l)),
   };
+  if (hourly) {
+    def.pricing = 'hourly';
+    def.service = String(body.service ?? 'guide');
+    def.chooseHours = !!body.chooseHours;
+    delete def.price;
+    delete def.b2bPrice;
+  }
+  if (body.audience === 'b2b') def.audience = 'b2b';
   if (existing.category) def.category = existing.category;
   for (const l of LANGS) {
     const block = {};
@@ -97,6 +106,7 @@ export function adminToursRouter(app) {
     v.active = body.active ? '1' : '';
     v.featured = body.featured ? '1' : '';
     v.flexible = body.flexible ? '1' : '';
+    v.chooseHours = body.chooseHours ? '1' : '';
     v.payOnSite = body.payOnSite ? '1' : '';
     v.wd = [].concat(body.wd ?? []).map(String);
     v.langs = [].concat(body.langs ?? []);
@@ -165,7 +175,7 @@ export function adminToursRouter(app) {
   r.post('/prices', form, (req, res) => {
     const errors = [];
     const next = [];
-    for (const t of store().allTours) {
+    for (const t of store().allTours.filter((x) => x.pricing !== 'hourly')) {
       const price = parseEuros(req.body[`price_${t.slug}`]);
       const b2b = parseEuros(req.body[`b2b_${t.slug}`]);
       if (price == null || price < 0) errors.push(`${t.i18n.it.title}: prezzo al pubblico non valido`);

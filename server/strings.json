@@ -1325,14 +1325,14 @@
   "Para agencias y DMC"
  ],
  "b2b.h1": [
-  "Una guida abilitata a Venezia per i tuoi clienti, a tariffe riservate.",
-  "A licensed guide in Venice for your clients, at reserved rates.",
-  "Un guía turístico habilitado en Venecia para tus clientes, con tarifas exclusivas."
+  "Una guida abilitata a Venezia per i tuoi clienti, a tariffe orarie chiare.",
+  "A licensed guide in Venice for your clients, at clear hourly rates.",
+  "Un guía turístico habilitado en Venecia para tus clientes, con tarifas por horas claras."
  ],
  "b2b.lead": [
-  "Prenota in autonomia slot e servizi guida per i tuoi gruppi, 24 ore su 24. Tariffe agevolate, cancellazione gratuita estesa, fattura elettronica.",
-  "Book guide slots and services for your groups on your own, 24/7. Discounted rates, extended free cancellation, e-invoicing.",
-  "Reserva por tu cuenta horarios y servicios de guía para tus grupos, las 24 horas. Tarifas con descuento, cancelación gratuita ampliada y factura electrónica."
+  "Prenota in autonomia guida, assistente, tour leader e meet & greet per i tuoi gruppi, 24 ore su 24. Tariffe orarie chiare, cancellazione gratuita estesa, fattura elettronica.",
+  "Book a guide, assistant, tour leader and meet & greet for your groups on your own, 24/7. Clear hourly rates, extended free cancellation, electronic invoicing.",
+  "Reserva por tu cuenta guía, asistente, tour leader y meet & greet para tus grupos, 24 horas al día. Tarifas por horas claras, cancelación gratuita ampliada, factura electrónica."
  ],
  "b2b.requestAccess": [
   "Richiedi accesso partner",
@@ -1375,14 +1375,14 @@
   "Qué obtienes"
  ],
  "b2b.b1.t": [
-  "Tariffe riservate",
-  "Reserved rates",
-  "Tarifas exclusivas"
+  "Tariffe chiare, sconti dedicati",
+  "Clear rates, dedicated discounts",
+  "Tarifas claras, descuentos a medida"
  ],
  "b2b.b1.p": [
-  "Listino agevolato per DMC, tour operator e agenzie, visibile dopo l’approvazione. Per volumi o accordi annuali possiamo concordare condizioni dedicate.",
-  "A discounted rate card for DMCs, tour operators and agencies, visible after approval. For volumes or annual agreements we can set dedicated terms.",
-  "Lista de precios con descuento para DMC, operadores turísticos y agencias, visible tras la aprobación. Para volúmenes o acuerdos anuales podemos pactar condiciones a medida."
+  "Le tariffe a ore sono qui sopra, senza sorprese. Con l’account partner ti riservo sconti e prezzi dedicati, anche con accordi annuali.",
+  "The hourly rates are above, no surprises. With a partner account I set dedicated discounts and prices for you, including annual agreements.",
+  "Las tarifas por horas están arriba, sin sorpresas. Con la cuenta de socio te reservo descuentos y precios a medida, también con acuerdos anuales."
  ],
  "b2b.b2.t": [
   "Disponibilità in tempo reale",
@@ -1500,9 +1500,9 @@
   "Grupos de hasta 25 personas, dentro de los límites establecidos por el Ayuntamiento de Venecia."
  ],
  "b2b.policy.4": [
-  "Pagamento a fattura (bonifico) o con carta. Le tariffe sono visibili nell’area riservata.",
-  "Pay by invoice (bank transfer) or card. Rates are visible in the partner area.",
-  "Pago con factura (transferencia) o con tarjeta. Las tarifas están visibles en el área de socios."
+  "Pagamento a fattura (bonifico) o con carta. Le tue condizioni (sconti e annullo) sono nell’area partner.",
+  "Pay by invoice (bank transfer) or card. Your terms (discounts and cancellation) are in the partner area.",
+  "Pago con factura (transferencia) o con tarjeta. Tus condiciones (descuentos y cancelación) están en el área de socios."
  ],
  "b2b.policy.note": [
   "Le condizioni possono essere personalizzate per ogni partner (ad esempio finestre di cancellazione diverse o tariffe a volume).",
@@ -1575,9 +1575,9 @@
   "Solicita acceso como socio"
  ],
  "b2b.reg.lead": [
-  "Compila i dati della tua azienda. Dopo l’approvazione potrai vedere le tariffe riservate e prenotare.",
-  "Fill in your company details. After approval you will see the reserved rates and be able to book.",
-  "Completa los datos de tu empresa. Tras la aprobación podrás ver las tarifas exclusivas y reservar."
+  "Compila i dati della tua azienda. Dopo l’approvazione potrai prenotare in autonomia, con le tue condizioni.",
+  "Fill in your company details. After approval you will be able to book on your own, with your terms.",
+  "Completa los datos de tu empresa. Tras la aprobación podrás reservar por tu cuenta, con tus condiciones."
  ],
  "b2b.reg.company": [
   "Azienda",
@@ -1660,9 +1660,9 @@
   "Solicitud enviada"
  ],
  "b2b.reg.doneText": [
-  "Grazie! Ti ho inviato una email di conferma. Appena approvo il tuo account potrai prenotare con le tariffe riservate.",
-  "Thank you! I have sent you a confirmation email. As soon as I approve your account you can book at the reserved rates.",
-  "¡Gracias! Te he enviado un correo de confirmación. En cuanto apruebe tu cuenta, podrás reservar con las tarifas exclusivas."
+  "Grazie! Ti ho inviato una email di conferma. Appena approvo il tuo account potrai prenotare in autonomia, con le tue condizioni.",
+  "Thank you! I have sent you a confirmation email. As soon as I approve your account you can book on your own, with your terms.",
+  "¡Gracias! Te he enviado un correo de confirmación. En cuanto apruebe tu cuenta, podrás reservar por tu cuenta, con tus condiciones."
  ],
  "b2b.status": [
   "Stato dell’account",
@@ -1685,9 +1685,9 @@
   "Activa"
  ],
  "b2b.st.approved.text": [
-  "Puoi prenotare con le tariffe riservate.",
-  "You can book at the reserved rates.",
-  "Puedes reservar con las tarifas exclusivas."
+  "Puoi prenotare con le tue tariffe e condizioni.",
+  "You can book with your rates and terms.",
+  "Puedes reservar con tus tarifas y condiciones."
  ],
  "b2b.st.rejected": [
   "Non approvato",
@@ -3153,5 +3153,350 @@
   "Leggi tutte le recensioni",
   "Read all reviews",
   "Leer todas las reseñas"
+ ],
+ "nav.hourly": [
+  "Guida a ore",
+  "Guide by the hour",
+  "Guía por horas"
+ ],
+ "hourly.title": [
+  "Guida privata a ore",
+  "Private guide by the hour",
+  "Guía privado por horas"
+ ],
+ "hourly.titleB2b": [
+  "Servizi a ore per agenzie",
+  "Hourly services for agencies",
+  "Servicios por horas para agencias"
+ ],
+ "hourly.lead": [
+  "Una guida abilitata tutta per te: scegli il giorno, l’ora e per quante ore. Il prezzo è per tutto il gruppo e lo vedi subito.",
+  "A licensed guide just for you: choose the day, the start time and how many hours. The price is for the whole group and you see it straight away.",
+  "Un guía habilitado solo para ti: elige el día, la hora y cuántas horas. El precio es para todo el grupo y lo ves al instante."
+ ],
+ "hourly.leadB2b": [
+  "Guida, assistente, tour leader e meet & greet a tariffa oraria. Calcola il preventivo e prenota in autonomia.",
+  "Guide, assistant, tour leader and meet & greet at hourly rates. Calculate your quote and book on your own.",
+  "Guía, asistente, tour leader y meet & greet por horas. Calcula el presupuesto y reserva por tu cuenta."
+ ],
+ "hourly.rates": [
+  "Tariffe",
+  "Rates",
+  "Tarifas"
+ ],
+ "hourly.ratesYours": [
+  "Le tue tariffe",
+  "Your rates",
+  "Tus tarifas"
+ ],
+ "hourly.agencyRates": [
+  "Tariffe per le agenzie",
+  "Rates for agencies",
+  "Tarifas para agencias"
+ ],
+ "hourly.b.1": [
+  "Fino a 1 ora",
+  "Up to 1 hour",
+  "Hasta 1 hora"
+ ],
+ "hourly.b.2": [
+  "2 ore",
+  "2 hours",
+  "2 horas"
+ ],
+ "hourly.b.4": [
+  "Mezza giornata · 4 ore",
+  "Half day · 4 hours",
+  "Media jornada · 4 horas"
+ ],
+ "hourly.b.8": [
+  "Giornata intera · 8 ore",
+  "Full day · 8 hours",
+  "Jornada completa · 8 horas"
+ ],
+ "hourly.b.extra": [
+  "Ogni ora in più",
+  "Each extra hour",
+  "Cada hora adicional"
+ ],
+ "hourly.s.guide": [
+  "Servizio guida",
+  "Guide service",
+  "Servicio de guía"
+ ],
+ "hourly.s.assistant": [
+  "Assistente in loco",
+  "On-site assistant",
+  "Asistente en destino"
+ ],
+ "hourly.s.leader": [
+  "Tour leader",
+  "Tour leader",
+  "Tour leader"
+ ],
+ "hourly.s.meetgreet": [
+  "Meet & greet",
+  "Meet & greet",
+  "Meet & greet"
+ ],
+ "hourly.d.guide": [
+  "Visita guidata con guida abilitata, itinerario concordato in anticipo.",
+  "Guided visit with a licensed guide, itinerary agreed in advance.",
+  "Visita guiada con guía habilitado, itinerario acordado de antemano."
+ ],
+ "hourly.d.assistant": [
+  "Assistenza al gruppo in hotel, ai terminal e durante i trasferimenti.",
+  "Support for the group at the hotel, at terminals and during transfers.",
+  "Asistencia al grupo en el hotel, en las terminales y durante los traslados."
+ ],
+ "hourly.d.leader": [
+  "Accompagnatore e coordinatore del gruppo per tutto il servizio: tempi, logistica, fornitori.",
+  "Group escort and coordinator for the whole service: timing, logistics, suppliers.",
+  "Acompañante y coordinador del grupo durante todo el servicio: tiempos, logística, proveedores."
+ ],
+ "hourly.d.meetgreet": [
+  "Accoglienza dei clienti a stazione, aeroporto, Piazzale Roma o hotel.",
+  "Welcoming guests at the station, airport, Piazzale Roma or hotel.",
+  "Recepción de los clientes en la estación, el aeropuerto, Piazzale Roma o el hotel."
+ ],
+ "hourly.sup.title": [
+  "Supplementi",
+  "Supplements",
+  "Suplementos"
+ ],
+ "hourly.sup.festivo": [
+  "Festivi: {days}",
+  "Holidays: {days}",
+  "Festivos: {days}"
+ ],
+ "hourly.sup.superfestivo": [
+  "Superfestivi: {days}",
+  "Peak holidays: {days}",
+  "Superfestivos: {days}"
+ ],
+ "hourly.sup.sundays": [
+  "domeniche",
+  "Sundays",
+  "domingos"
+ ],
+ "hourly.sup.night": [
+  "Notturno, dalle {from} alle {to}: sulle ore comprese nella fascia",
+  "Night, from {from} to {to}: on the hours falling in that window",
+  "Nocturno, de {from} a {to}: sobre las horas dentro de esa franja"
+ ],
+ "hourly.sup.earpieces": [
+  "Auricolari: {price} a persona, da {n} persone",
+  "Audio headsets: {price} per person, from {n} people",
+  "Auriculares: {price} por persona, desde {n} personas"
+ ],
+ "hourly.day.pasqua": [
+  "Pasqua",
+  "Easter",
+  "Pascua"
+ ],
+ "hourly.day.pasquetta": [
+  "Pasquetta",
+  "Easter Monday",
+  "Lunes de Pascua"
+ ],
+ "hourly.note.group": [
+  "Tariffe per l’intero gruppo, fino a {max} persone. Non comprendono ingressi, trasporti e mance.",
+  "Rates for the whole group, up to {max} people. Entry tickets, transport and tips are not included.",
+  "Tarifas para todo el grupo, hasta {max} personas. No incluyen entradas, transporte ni propinas."
+ ],
+ "hourly.note.noVat": [
+  "Operazione senza IVA (regime forfettario).",
+  "No VAT charged (flat-rate regime).",
+  "Operación sin IVA (régimen forfetario)."
+ ],
+ "hourly.note.vatInc": [
+  "Prezzi al pubblico IVA inclusa.",
+  "Public prices include VAT.",
+  "Precios al público con IVA incluido."
+ ],
+ "hourly.note.vatExc": [
+  "Tariffe per le agenzie IVA esclusa.",
+  "Agency rates exclude VAT.",
+  "Tarifas para agencias sin IVA."
+ ],
+ "hourly.note.rivalsa": [
+  "Nelle fatture alle imprese si aggiunge la rivalsa INPS del {pct}%.",
+  "A {pct}% social-security surcharge (INPS) is added to invoices to companies.",
+  "En las facturas a empresas se añade el recargo INPS del {pct}%."
+ ],
+ "hourly.note.min": [
+  "Durata minima: {n} ore.",
+  "Minimum duration: {n} hours.",
+  "Duración mínima: {n} horas."
+ ],
+ "hourly.f.product": [
+  "Servizio",
+  "Service",
+  "Servicio"
+ ],
+ "hourly.f.hours": [
+  "Durata",
+  "Duration",
+  "Duración"
+ ],
+ "hourly.f.earpieces": [
+  "Auricolari per il gruppo",
+  "Audio headsets for the group",
+  "Auriculares para el grupo"
+ ],
+ "hourly.f.go": [
+  "Calcola e vedi gli orari",
+  "Calculate and see times",
+  "Calcular y ver horarios"
+ ],
+ "hourly.hours1": [
+  "1 ora",
+  "1 hour",
+  "1 hora"
+ ],
+ "hourly.hoursN": [
+  "{n} ore",
+  "{n} hours",
+  "{n} horas"
+ ],
+ "hourly.quote.title": [
+  "Il tuo preventivo",
+  "Your quote",
+  "Tu presupuesto"
+ ],
+ "hourly.quote.total": [
+  "Totale",
+  "Total",
+  "Total"
+ ],
+ "hourly.quote.pickDate": [
+  "Scegli una data per vedere gli orari liberi e i supplementi.",
+  "Pick a date to see the free start times and the supplements.",
+  "Elige una fecha para ver los horarios libres y los suplementos."
+ ],
+ "hourly.quote.estimate": [
+  "Preventivo indicativo: festivo e notturno dipendono dalla data e dall’orario di inizio.",
+  "Indicative quote: holiday and night supplements depend on the date and start time.",
+  "Presupuesto orientativo: festivo y nocturno dependen de la fecha y la hora de inicio."
+ ],
+ "hourly.quote.times": [
+  "Scegli l’orario di inizio",
+  "Choose the start time",
+  "Elige la hora de inicio"
+ ],
+ "hourly.quote.none": [
+  "Nessun orario libero con questa durata in quel giorno. Prova un’altra data o meno ore, oppure scrivimi.",
+  "No start time is free for this duration that day. Try another date or fewer hours, or write to me.",
+  "No hay horarios libres con esta duración ese día. Prueba otra fecha o menos horas, o escríbeme."
+ ],
+ "hourly.quote.fixed": [
+  "Orario e supplementi si calcolano dopo aver scelto l’inizio.",
+  "Supplements are calculated once you pick the start time.",
+  "Los suplementos se calculan al elegir la hora de inicio."
+ ],
+ "hourly.line.base": [
+  "Servizio, {hours}",
+  "Service, {hours}",
+  "Servicio, {hours}"
+ ],
+ "hourly.line.festivo": [
+  "Supplemento festivo ({pct}%)",
+  "Holiday supplement ({pct}%)",
+  "Suplemento festivo ({pct}%)"
+ ],
+ "hourly.line.superfestivo": [
+  "Supplemento superfestivo ({pct}%)",
+  "Peak-holiday supplement ({pct}%)",
+  "Suplemento superfestivo ({pct}%)"
+ ],
+ "hourly.line.night": [
+  "Supplemento notturno ({pct}% su {min} minuti)",
+  "Night supplement ({pct}% on {min} minutes)",
+  "Suplemento nocturno ({pct}% sobre {min} minutos)"
+ ],
+ "hourly.line.earpieces": [
+  "Auricolari ({n} × {price})",
+  "Audio headsets ({n} × {price})",
+  "Auriculares ({n} × {price})"
+ ],
+ "hourly.err.service": [
+  "Questo servizio non è disponibile.",
+  "This service is not available.",
+  "Este servicio no está disponible."
+ ],
+ "hourly.err.hours": [
+  "Durata non valida per questo servizio.",
+  "Invalid duration for this service.",
+  "Duración no válida para este servicio."
+ ],
+ "hourly.err.agencyOnly": [
+  "Questo servizio è riservato alle agenzie con account partner.",
+  "This service is reserved for agencies with a partner account.",
+  "Este servicio está reservado a agencias con cuenta de socio."
+ ],
+ "hourly.card.cta": [
+  "Calcola e prenota",
+  "Calculate and book",
+  "Calcular y reservar"
+ ],
+ "hourly.card.note": [
+  "Scegli data, durata e orario: il prezzo si calcola subito.",
+  "Pick the date, duration and start time: the price is calculated instantly.",
+  "Elige fecha, duración y hora: el precio se calcula al instante."
+ ],
+ "hourly.agencyOnly": [
+  "Solo per agenzie",
+  "Agencies only",
+  "Solo para agencias"
+ ],
+ "tour.kindHourly": [
+  "A ore",
+  "By the hour",
+  "Por horas"
+ ],
+ "price.from": [
+  "da {price}",
+  "from {price}",
+  "desde {price}"
+ ],
+ "price.forHours": [
+  "{hours} · per il gruppo",
+  "{hours} · for the group",
+  "{hours} · para el grupo"
+ ],
+ "price.perHourly": [
+  "gruppo, a ore",
+  "group, hourly",
+  "grupo, por horas"
+ ],
+ "s.duration": [
+  "Durata",
+  "Duration",
+  "Duración"
+ ],
+ "b2b.ratesTitle": [
+  "Le mie tariffe a ore",
+  "My hourly rates",
+  "Mis tarifas por horas"
+ ],
+ "b2b.ratesLead": [
+  "Per le agenzie, a colpo d’occhio. Con l’account partner prenoti in autonomia e vedi le tue condizioni (sconti e cancellazione).",
+  "For agencies, at a glance. With a partner account you book on your own and see your conditions (discounts and cancellation).",
+  "Para agencias, de un vistazo. Con la cuenta de socio reservas por tu cuenta y ves tus condiciones (descuentos y cancelación)."
+ ],
+ "b2b.ratesCta": [
+  "Calcola un preventivo",
+  "Calculate a quote",
+  "Calcular un presupuesto"
+ ],
+ "b2b.ratesPartnerLead": [
+  "Sono già le tariffe con il tuo sconto. Calcola un preventivo e prenota.",
+  "These already include your discount. Calculate a quote and book.",
+  "Ya incluyen tu descuento. Calcula un presupuesto y reserva."
+ ],
+ "b2b.seeRates": [
+  "Vedi le tariffe",
+  "See the rates",
+  "Ver las tarifas"
  ]
 }

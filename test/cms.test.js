@@ -59,7 +59,7 @@ test('primo avvio: i file di content/ finiscono nel database e il sito li legge 
   const db = openDb(':memory:');
   assert.equal(seedContent(db, ROOT), true);
   assert.equal(seedContent(db, ROOT), false, 'una seconda volta non importa nulla');
-  assert.equal(db.prepare('SELECT COUNT(*) n FROM content_tours').get().n, 7);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM content_tours').get().n, 8);
   assert.equal(db.prepare('SELECT COUNT(*) n FROM content_posts').get().n, 3);
   assert.equal(db.prepare('SELECT COUNT(*) n FROM content_pages').get().n, 4);
   const store = createContentStore({ db, root: ROOT });

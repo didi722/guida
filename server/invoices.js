@@ -7,6 +7,7 @@ import { formatGiftCode } from './pricing.js';
 import { addDays, fmtDate, isDate, nowRome } from './time.js';
 import { cleanText } from './util.js';
 import { normLang } from './langs.js';
+import { parseServiceRecord, serviceNote } from './rates.js';
 
 export class InvoiceError extends Error {
   constructor(code, message, problems = []) {
@@ -143,7 +144,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
       customer: acct ? acct.company : b.name,
       buyer: acct ? buyerFromAccount(acct) : buyerFromPerson(b.name, b.email, b.lang),
       hint: b.billing_json ? (JSON.parse(b.billing_json).text ?? null) : null,
-      description: `${tour?.i18n.it.title ?? b.tour_slug} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${b.participants} ${b.participants === 1 ? 'persona' : 'persone'}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
+      description: `${tour?.i18n.it.title ?? b.tour_slug} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${b.participants} ${b.participants === 1 ? 'persona' : 'persone'}${serviceNote(parseServiceRecord(b.service_json)) ? ` – ${serviceNote(parseServiceRecord(b.service_json))}` : ''}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
       amountCents: cents,
       payments,
       dueBy: addDays(trigger, 12),

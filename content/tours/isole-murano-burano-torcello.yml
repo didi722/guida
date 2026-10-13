@@ -1,11 +1,12 @@
-order: 4
+order: 5
 featured: false
 model: group
+pricing: hourly          # il prezzo viene dalle tariffe a ore (Sito › Tariffe a ore)
+service: guide
 flexible: true
-duration: 330            # 5h30
+duration: 330            # 5h30, fisse
 maxParticipants: 12
-price: 320
-b2bPrice: 260
+cancelHours: 48
 art: islands
 languages: [it, en, es]
 
@@ -33,7 +34,7 @@ it:
     - Biglietti del vaporetto o noleggio barca privata
     - Ingresso alla cattedrale di Torcello
     - Pranzo, mance e consumazioni
-  notes: Prezzo per l'intero gruppo, fino a 12 persone. In caso di maltempo severo concordiamo insieme un'alternativa o la data.
+  notes: Prezzo a tariffa oraria per l'intero gruppo, fino a 12 persone (battello escluso). In caso di maltempo severo concordiamo insieme un'alternativa o la data.
 
 en:
   title: Murano, Burano and Torcello
@@ -59,7 +60,7 @@ en:
     - Water bus tickets or private boat hire
     - Entry to Torcello cathedral
     - Lunch, tips and drinks
-  notes: Price for the whole group, up to 12 guests. In case of severe weather we agree on an alternative or another date together.
+  notes: Hourly rate for the whole group, up to 12 guests (boat not included). In case of severe weather we agree on an alternative or another date together.
 
 es:
   title: Murano, Burano y Torcello
@@ -85,4 +86,4 @@ es:
     - Billetes de vaporetto o alquiler de barco privado
     - Entrada a la catedral de Torcello
     - Almuerzo, propinas y consumiciones
-  notes: Precio para todo el grupo, hasta 12 personas. En caso de mal tiempo severo, acordamos juntos una alternativa u otra fecha.
+  notes: Tarifa por horas para todo el grupo, hasta 12 personas (barco no incluido). En caso de mal tiempo severo, acordamos juntos una alternativa u otra fecha.

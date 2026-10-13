@@ -4,7 +4,7 @@ date: 2026-10-07
 summary: Qué es una ombra, cómo se pide y por qué conviene alejarse unos cuantos puentes de la plaza.
 tags: [Cocina, Consejos, Cannaregio]
 art: bacaro
-tours: [cannaregio-ghetto, passeggiata-privata-2h]
+tours: [cannaregio-ghetto, guida-a-ore]
 ---
 La forma más veneciana de comer es también la más sencilla: **entrar en un bacaro, pedir unos cicchetti y una ombra, y comer de pie en la barra**.
 

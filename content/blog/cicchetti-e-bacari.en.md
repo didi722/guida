@@ -4,7 +4,7 @@ date: 2026-10-07
 summary: What an "ombra" is, how to order and why it pays to walk a few bridges away from the square.
 tags: [Food, Tips, Cannaregio]
 art: bacaro
-tours: [cannaregio-ghetto, passeggiata-privata-2h]
+tours: [cannaregio-ghetto, guida-a-ore]
 ---
 The most Venetian way of eating is also the simplest: **step into a bacaro, order a few cicchetti and an ombra, and eat standing at the counter**.
 

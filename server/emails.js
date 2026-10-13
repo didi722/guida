@@ -9,6 +9,7 @@ import { formatMoney } from './util.js';
 import { formatGiftCode } from './pricing.js';
 import { makeT } from './i18n.js';
 import { normLang, pick } from './langs.js';
+import { parseServiceRecord, serviceNote, timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
@@ -131,7 +132,7 @@ function summaryRows(app, b, lang) {
     [tr.ref, b.ref],
     [tr.tour, ti.title],
     [tr.date, fmtDate(b.date, lang)],
-    [tr.time, `${b.start_time}–${b.end_time}`],
+    [tr.time, timeRange(b, lang)],
     [tr.people, String(b.participants)],
     [tr.meeting, ti.meetingPoint],
   ];
@@ -264,6 +265,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
     `${label} ${b.ref} (${b.channel.toUpperCase()})`,
     `${tour.i18n.it.title}`,
     `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${b.participants} pers.`,
+    parseServiceRecord(b.service_json) ? `Servizio a ore: ${serviceNote(parseServiceRecord(b.service_json))}` : null,
     `${b.name} <${b.email}>${b.phone ? ' · ' + b.phone : ''}`,
     b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
     b.notes ? `Note: ${b.notes}` : null,
@@ -595,7 +597,7 @@ export async function sendReminder(app, b) {
   const rows = [
     [tr.tour, ti.title],
     [tr.date, fmtDate(b.date, lang)],
-    [tr.time, `${b.start_time}–${b.end_time}`],
+    [tr.time, timeRange(b, lang)],
     [tr.people, String(b.participants)],
     [tr.meeting, ti.meetingPoint],
     [tr.ref, b.ref],

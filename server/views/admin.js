@@ -6,13 +6,15 @@ import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { dayOfWeek, fmtDate, fmtMonth, monthDates, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
 import { langName, normLang } from '../langs.js';
+import { parseServiceRecord, serviceNote } from '../rates.js';
+import { quoteLines } from './hourly.js';
 
 // Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
 export const ADMIN_GROUPS = [
   { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità']] },
   { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
   { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
-  { label: 'Sito', items: [['/admin/tours', 'Tour'], ['/admin/prices', 'Listino'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/settings', 'Impostazioni']] },
+  { label: 'Sito', items: [['/admin/tours', 'Tour'], ['/admin/prices', 'Listino'], ['/admin/rates', 'Tariffe a ore'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/settings', 'Impostazioni']] },
   { label: 'Aiuto', items: [['/admin/guide', 'Guida'], ['/admin/backup', 'Backup'], ['/admin/mail', 'Email']] },
 ];
 
@@ -148,6 +150,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
   const tour = ctx.app.content.tour(b.tour_slug);
   const st = cancellationState(b);
   const live = b.status === 'confirmed' || b.status === 'held';
+  const service = parseServiceRecord(b.service_json);
   const today = nowRome().date;
   const wa = b.phone ? b.phone.replace(/[^\d]/g, '') : '';
   const body = html`
@@ -160,6 +163,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       <div><dt>Data</dt><dd>${fmtDate(b.date, 'it')}</dd></div>
       <div><dt>Orario</dt><dd>${b.start_time}–${b.end_time}</dd></div>
       <div><dt>Persone</dt><dd>${b.participants}</dd></div>
+      ${service ? html`<div><dt>Servizio a ore</dt><dd>${serviceNote(service)}</dd></div>${quoteLines(makeT('it'), 'it', service, { total: false })}` : ''}
       <div><dt>Pagina del cliente</dt><dd><a href="/${normLang(b.lang)}/booking/${b.ref}?t=${b.token}">Apri come la vede il cliente</a> <small class="muted">(da qui si prova anche l’annullo)</small></dd></div>
       ${b.discount_cents ? html`<div><dt>Sconto</dt><dd>${b.promo_code} · −${formatMoney(b.discount_cents, 'it', b.currency)} (listino ${formatMoney(b.list_cents, 'it', b.currency)})</dd></div>` : ''}
       ${b.gift_cents ? html`<div><dt>Buono regalo</dt><dd>−${formatMoney(b.gift_cents, 'it', b.currency)}</dd></div>` : ''}

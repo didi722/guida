@@ -2,7 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import YAML from 'yaml';
 import { createConfig, ROOT } from '../server/config.js';
+import { buildContent, readContentFiles } from '../server/content.js';
 import { openDb } from '../server/db.js';
 import { localToInstant } from '../server/time.js';
 import { createContext } from '../server/context.js';
@@ -122,4 +124,15 @@ export function pdfText(buf) {
   const r = spawnSync('pdftotext', ['-layout', '-', '-'], { input: Buffer.from(buf), encoding: 'utf8' });
   if (r.status !== 0) throw new Error(`pdftotext: ${r.stderr}`);
   return r.stdout.replace(/[ \t]+/g, ' ');
+}
+
+/**
+ * Il contenuto del sito più tre servizi privati a PREZZO FISSO (passeggiata di 2 ore, mezza giornata, giornata):
+ * nel sito oggi i servizi privati sono a ore, ma il prezzo fisso per gruppo (e il listino dedicato ai partner) resta una funzione da provare.
+ */
+export function loadContentWithFixedServices(root = ROOT) {
+  const raw = readContentFiles(root);
+  const dir = path.join(root, 'test', 'fixtures', 'tours');
+  for (const f of fs.readdirSync(dir)) raw.tours[f.replace(/\.yml$/, '')] = YAML.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+  return buildContent(raw);
 }

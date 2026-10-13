@@ -1,6 +1,7 @@
 import express from 'express';
 import { daySlots, monthAvailability } from '../availability.js';
 import { priceFor } from '../bookings.js';
+import { openTo } from '../rates.js';
 import { isDate, isMonth, nowRome } from '../time.js';
 import { safeEqual } from '../util.js';
 import { makeCtx, noStore, send, tooMany } from '../http.js';
@@ -18,7 +19,7 @@ export function apiRouter(app) {
   function parse(req) {
     const tour = content.tour(String(req.query.tour ?? ''));
     const pax = Number.parseInt(req.query.pax, 10);
-    if (!tour?.active || !Number.isInteger(pax) || pax < 1 || pax > tour.maxParticipants) return null;
+    if (!tour?.active || tour.pricing === 'hourly' || !openTo(app.rates.get(), tour, channelOf(req.acct)) || !Number.isInteger(pax) || pax < 1 || pax > tour.maxParticipants) return null; // i servizi a ore hanno la loro pagina (/hourly)
     return { tour, pax };
   }
 

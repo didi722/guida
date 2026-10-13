@@ -1,0 +1,79 @@
+# Guida privata a tariffa oraria: il cliente sceglie giorno, orario e quante ore. Il prezzo viene dalle tariffe a ore (Sito › Tariffe a ore).
+order: 3
+featured: true
+model: group
+pricing: hourly
+service: guide
+chooseHours: true        # il cliente sceglie la durata
+flexible: true           # e l'orario di inizio
+duration: 120            # durata minima (minuti)
+maxParticipants: 25
+cancelHours: 48
+art: walk
+languages: [it, en, es]
+
+it:
+  title: Guida privata a ore
+  subtitle: Scegli tu giorno, orario e durata
+  summary: "Una guida abilitata tutta per te e il tuo gruppo, per il tempo che ti serve: da 2 ore a una giornata intera."
+  meetingPoint: Concordato con te (hotel, molo, terminal)
+  meetingUrl: ''
+  description: |
+    Una guida abilitata a tua disposizione per le ore che scegli, con inizio all'orario che preferisci. Vale per famiglie e piccoli gruppi come per agenzie, DMC e tour operator.
+
+    L'itinerario si concorda in anticipo in base ai tuoi interessi, al tempo disponibile e alla logistica (arrivo da hotel, nave da crociera, molo, terminal): dai classici San Marco e Rialto ai quartieri meno battuti, dalla storia delle religioni ai cicchetti.
+  highlights:
+    - Guida abilitata, a tua completa disposizione
+    - Durata a scelta, da 2 ore a una giornata intera
+    - Itinerario concordato in anticipo
+    - Gruppi fino a 25 persone, nel rispetto dei limiti previsti dal Comune
+  includes:
+    - Guida abilitata
+    - Coordinamento preventivo con il referente del gruppo
+  excludes:
+    - Ingressi, trasporti, mance
+  notes: Prezzo per l'intero gruppo, a tariffa oraria. Festivi e orari serali o notturni hanno un supplemento; auricolari a richiesta per i gruppi.
+
+en:
+  title: Private guide by the hour
+  subtitle: You choose the day, the start time and the length
+  summary: "A licensed guide just for you and your group, for as long as you need: from 2 hours to a full day."
+  meetingPoint: Agreed with you (hotel, pier, terminal)
+  meetingUrl: ''
+  description: |
+    A licensed guide at your disposal for the hours you choose, starting when you prefer. It works for families and small groups as well as for agencies, DMCs and tour operators.
+
+    The itinerary is agreed in advance based on your interests, the time available and logistics (hotel pick-up, cruise ship, pier, terminal): from the classics of San Marco and Rialto to the quieter districts, from the history of religions to cicchetti.
+  highlights:
+    - Licensed guide, entirely at your disposal
+    - Length of your choice, from 2 hours to a full day
+    - Itinerary agreed in advance
+    - Groups of up to 25 guests, in line with the City's limits
+  includes:
+    - Licensed guide
+    - Advance coordination with the group's contact person
+  excludes:
+    - Entry tickets, transport, tips
+  notes: Price for the whole group, at an hourly rate. Holidays and evening or night hours carry a supplement; audio headsets available on request for groups.
+
+es:
+  title: Guía privado por horas
+  subtitle: Tú eliges el día, la hora y la duración
+  summary: "Un guía habilitado solo para ti y tu grupo, el tiempo que necesites: de 2 horas a una jornada completa."
+  meetingPoint: A convenir contigo (hotel, muelle, terminal)
+  meetingUrl: ''
+  description: |
+    Un guía habilitado a tu disposición durante las horas que elijas, empezando a la hora que prefieras. Sirve tanto para familias y grupos pequeños como para agencias, DMC y operadores turísticos.
+
+    El itinerario se acuerda de antemano según tus intereses, el tiempo disponible y la logística (recogida en el hotel, crucero, muelle, terminal): de los clásicos de San Marcos y Rialto a los barrios menos transitados, de la historia de las religiones a los cicchetti.
+  highlights:
+    - Guía habilitado, totalmente a tu disposición
+    - Duración a elegir, de 2 horas a una jornada completa
+    - Itinerario acordado de antemano
+    - Grupos de hasta 25 personas, dentro de los límites del Ayuntamiento
+  includes:
+    - Guía habilitado
+    - Coordinación previa con el responsable del grupo
+  excludes:
+    - Entradas, transporte, propinas
+  notes: Precio para todo el grupo, por horas. Festivos y horario nocturno o de tarde-noche tienen suplemento; auriculares bajo petición para grupos.

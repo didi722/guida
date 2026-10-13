@@ -4,6 +4,7 @@ import { freeCancelHours, unitPriceFor } from '../bookings.js';
 import { fmtDate, fmtMonth } from '../time.js';
 import { formatMoney } from '../util.js';
 import { LANGS, LANG_META, localeOf } from '../langs.js';
+import { minHours } from '../rates.js';
 import { MEDIA_NAME, smallName } from '../media.js';
 
 /** <option> di tutte le lingue del sito, con quella indicata selezionata. */
@@ -14,6 +15,9 @@ export function fmtDuration(min) {
   const m = min % 60;
   return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
 }
+
+/** «1 ora», «2 ore», «2,5 ore». */
+export const hoursLabel = (t, lang, h) => (h === 1 ? t('hourly.hours1') : t('hourly.hoursN', { n: new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 1 }).format(h) }));
 
 export function fmtHours(t, h) {
   return h >= 48 && h % 24 === 0 ? t('time.days', { n: h / 24 }) : t('time.hours', { n: h });
@@ -43,6 +47,14 @@ export function tourMedia(ctx, tour, label) {
 /** "€35 / persona" oppure "€190 / gruppo", con tariffa B2B se il visitatore è un partner approvato. */
 export function priceParts(ctx, tour) {
   const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
+  if (tour.pricing === 'hourly') {
+    // servizi a ore: «da 200 € / 2 ore» (scegli tu la durata) oppure «290 € / 3 ore» (durata fissa); festivi e notturno si aggiungono dopo
+    const hours = tour.chooseHours ? minHours(tour.service) : tour.durationMin / 60;
+    const q = ctx.app.rates.quote({ service: tour.service, channel, hours, pax: 1, discountPercent: channel === 'b2b' ? (ctx.acct?.discount_percent ?? 0) : 0 });
+    const unit = q.ok ? q.totalCents : 0;
+    const money = formatMoney(unit, ctx.lang);
+    return { channel, unit, hourly: true, money: tour.chooseHours ? ctx.t('price.from', { price: money }) : money, per: hoursLabel(ctx.t, ctx.lang, hours) };
+  }
   const unit = unitPriceFor(tour, channel, ctx.acct);
   return { channel, unit, money: formatMoney(unit, ctx.lang), per: tour.model === 'person' ? ctx.t('price.perPerson') : ctx.t('price.perGroup') };
 }
@@ -86,7 +98,7 @@ export function tourCard(ctx, tour) {
   const ti = tour.i18n[lang];
   const p = priceParts(ctx, tour);
   return html`<a class="card tour-card reveal" href="${u('/tours/' + tour.slug)}">
-    <div class="card-media">${tourMedia(ctx, tour, '')}<span class="chip chip-float">${tour.model === 'person' ? t('tour.kindGroup') : t('tour.kindPrivate')}</span></div>
+    <div class="card-media">${tourMedia(ctx, tour, '')}<span class="chip chip-float">${tour.pricing === 'hourly' ? t('tour.kindHourly') : tour.model === 'person' ? t('tour.kindGroup') : t('tour.kindPrivate')}</span></div>
     <div class="card-body">
       <h3>${ti.title}</h3>
       <p class="muted">${ti.summary}</p>
