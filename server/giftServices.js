@@ -2,6 +2,7 @@
 import { notifyGuideGift, sendGiftToBuyer, sendGiftToRecipient } from './emails.js';
 import { GiftError, activateGift, claimDelivery, createAdminGift, createGiftOrder, getGift, getGiftByRef, giftsDueForDelivery, voidAbandonedGifts } from './gifts.js';
 import { normLang, pick } from './langs.js';
+import { onlinePaymentsOpen } from './opening.js';
 
 // Nome del prodotto per Stripe e per la pagina di pagamento, nella lingua del cliente
 const PRODUCT = { it: 'Buono regalo', en: 'Gift card', es: 'Tarjeta regalo', ja: 'ギフトカード' };
@@ -10,9 +11,9 @@ export function createGiftServices(app) {
   const { db, cfg, payments } = app;
 
   const svc = {
-    /** Può pagare online chi ha Stripe configurato (o la modalità demo in sviluppo). */
+    /** Può pagare online chi ha Stripe configurato (o la modalità demo in sviluppo), e solo da quando si incassa (vedi opening.js). */
     get available() {
-      return payments.live || payments.demo;
+      return onlinePaymentsOpen(app);
     },
 
     async startCheckout(card, lang, nowMs = Date.now(), attempt = 0) {

@@ -4330,5 +4330,197 @@
   "Languages I lead tours in",
   "Idiomas en los que guío los tours",
   "ツアーを案内できる言語"
+ ],
+ "option.title": [
+  "Il tuo cliente non ha ancora confermato?",
+  "Has your client not confirmed yet?",
+  "¿Tu cliente aún no ha confirmado?",
+  "お客様はまだ確定されていませんか？"
+ ],
+ "option.text": [
+  "Opziona la data: la tengo per te fino a {until} ({days}), senza pagare nulla e senza impegno. Quando il tuo cliente conferma, la confermi dal tuo account; altrimenti si libera da sola.",
+  "Hold the date: I keep it for you until {until} ({days}), with no payment and no commitment. When your client confirms, you confirm it from your account; otherwise it is released automatically.",
+  "Opciona la fecha: te la guardo hasta el {until} ({days}), sin pagar nada y sin compromiso. Cuando tu cliente confirme, la confirmas desde tu cuenta; si no, se libera sola.",
+  "日程を仮押さえできます。{until}まで（{days}）、お支払いなし・義務なしで確保します。お客様が確定されたら、アカウントから確定してください。確定されない場合は、自動的に解放されます。"
+ ],
+ "option.btn": [
+  "Opziona senza pagare",
+  "Hold without paying",
+  "Opcionar sin pagar",
+  "支払いなしで仮押さえする"
+ ],
+ "option.days1": [
+  "1 giorno",
+  "1 day",
+  "1 día",
+  "1日間"
+ ],
+ "option.daysN": [
+  "{n} giorni",
+  "{n} days",
+  "{n} días",
+  "{n}日間"
+ ],
+ "option.err.tooClose": [
+  "Per una data così vicina non si può opzionare: prenota direttamente.",
+  "This date is too close to hold: please book directly.",
+  "Esta fecha está demasiado cerca para opcionarla: reserva directamente.",
+  "日程が近すぎるため、仮押さえはできません。直接ご予約ください。"
+ ],
+ "option.err.limit": [
+  "Hai già troppe opzioni aperte: conferma o rilascia una per poterne fare un’altra.",
+  "You already have too many open options: confirm or release one to place another.",
+  "Ya tienes demasiadas opciones abiertas: confirma o libera una para poder opcionar otra.",
+  "仮押さえが上限に達しています。1件を確定または解除すると、新しく仮押さえできます。"
+ ],
+ "option.err.disabled": [
+  "Le opzioni non sono disponibili per il tuo account.",
+  "Options are not available for your account.",
+  "Las opciones no están disponibles para tu cuenta.",
+  "このアカウントでは、仮押さえをご利用いただけません。"
+ ],
+ "booking.optionTitle": [
+  "Data trattenuta (opzione)",
+  "Date held (option)",
+  "Fecha reservada (opción)",
+  "日程を仮押さえ中"
+ ],
+ "booking.optionText": [
+  "La data è trattenuta per te fino a {until}. Non hai pagato nulla: confermala quando il tuo cliente ha deciso, oppure rilasciala. Se non fai nulla, si libera da sola.",
+  "The date is held for you until {until}. You have paid nothing: confirm it when your client has decided, or release it. If you do nothing, it is released automatically.",
+  "La fecha está reservada para ti hasta el {until}. No has pagado nada: confírmala cuando tu cliente se decida, o libérala. Si no haces nada, se libera sola.",
+  "この日程は{until}まで仮押さえされています。お支払いはまだ発生していません。お客様が決まったら確定し、見送りの場合は解除してください。何もされない場合は、自動的に解放されます。"
+ ],
+ "booking.optionLeft": [
+  "Scade tra {when}",
+  "Expires in {when}",
+  "Caduca en {when}",
+  "期限まで{when}"
+ ],
+ "booking.optionConfirm": [
+  "Conferma la prenotazione",
+  "Confirm the booking",
+  "Confirmar la reserva",
+  "予約を確定する"
+ ],
+ "booking.optionRelease": [
+  "Rilascia la data",
+  "Release the date",
+  "Liberar la fecha",
+  "日程を解除する"
+ ],
+ "booking.optionPayWith": [
+  "Come vuoi pagare?",
+  "How would you like to pay?",
+  "¿Cómo quieres pagar?",
+  "お支払い方法"
+ ],
+ "booking.optionConfirmAsk": [
+  "Confermare la prenotazione? Da ora vale la tua politica di annullo.",
+  "Confirm the booking? From now on your cancellation policy applies.",
+  "¿Confirmar la reserva? A partir de ahora se aplica tu política de cancelación.",
+  "予約を確定しますか？ これ以降は、貴社のキャンセル規定が適用されます。"
+ ],
+ "booking.optionConfirmAskLate": [
+  "Confermando, la prenotazione non è più rimborsabile secondo la tua politica di annullo. Confermare?",
+  "If you confirm, the booking is no longer refundable under your cancellation policy. Confirm?",
+  "Si confirmas, la reserva ya no es reembolsable según tu política de cancelación. ¿Confirmar?",
+  "確定すると、貴社のキャンセル規定により、この予約は返金できなくなります。確定しますか？"
+ ],
+ "booking.optionReleaseAsk": [
+  "Rilasciare la data? Torna disponibile per altri clienti.",
+  "Release the date? It becomes available to other clients again.",
+  "¿Liberar la fecha? Vuelve a estar disponible para otros clientes.",
+  "日程を解除しますか？ 他のお客様が予約できるようになります。"
+ ],
+ "booking.payOnlineNow": [
+  "Paga ora online",
+  "Pay online now",
+  "Pagar ahora online",
+  "今すぐオンラインで支払う"
+ ],
+ "booking.payOnlineHint": [
+  "Se preferisci, puoi anticipare il pagamento online: altrimenti paghi di persona il giorno del servizio.",
+  "If you prefer, you can pay in advance online: otherwise you pay in person on the day of the service.",
+  "Si lo prefieres, puedes adelantar el pago online: si no, pagas en persona el día del servicio.",
+  "ご希望の場合は、オンラインで事前にお支払いいただけます。そうでない場合は、サービス当日に直接お支払いください。"
+ ],
+ "booking.flash.option-confirmed": [
+  "Prenotazione confermata: ti abbiamo mandato riepilogo e voucher.",
+  "Booking confirmed: we have sent you the summary and the voucher.",
+  "Reserva confirmada: te hemos enviado el resumen y el voucher.",
+  "予約を確定しました。確認内容とバウチャーをお送りしました。"
+ ],
+ "booking.flash.option-released": [
+  "Opzione rilasciata: la data è tornata libera.",
+  "Option released: the date is available again.",
+  "Opción liberada: la fecha vuelve a estar disponible.",
+  "仮押さえを解除しました。日程は解放されました。"
+ ],
+ "booking.flash.option-expired": [
+  "L’opzione era scaduta: la data è stata liberata.",
+  "The option had expired: the date has been released.",
+  "La opción había caducado: la fecha se ha liberado.",
+  "仮押さえの期限が切れていたため、日程は解放されました。"
+ ],
+ "booking.flash.option-error": [
+  "Non è stato possibile confermare l’opzione: scrivimi e la sistemiamo.",
+  "The option could not be confirmed: write to me and we will sort it out.",
+  "No se ha podido confirmar la opción: escríbeme y lo arreglamos.",
+  "仮押さえを確定できませんでした。ご連絡いただければ対応いたします。"
+ ],
+ "booking.expiredOptionTitle": [
+  "Opzione terminata",
+  "Option ended",
+  "Opción terminada",
+  "仮押さえは終了しました"
+ ],
+ "booking.expiredOptionText": [
+  "L’opzione è scaduta o è stata rilasciata: la data è tornata libera. Nessun costo.",
+  "The option has expired or was released: the date is available again. No cost.",
+  "La opción ha caducado o se ha liberado: la fecha vuelve a estar disponible. Sin coste.",
+  "仮押さえは期限切れまたは解除されました。日程は解放されています。費用は発生しません。"
+ ],
+ "preopen.notice": [
+  "Le prenotazioni sono aperte, ma i pagamenti online partono il {date}: per ora non si paga nulla. Si prenotano le date dal {date} in poi e si paga di persona il giorno del servizio (contanti o carta).",
+  "Bookings are open, but online payments start on {date}: there is nothing to pay for now. You can book dates from {date} onwards and pay in person on the day of the service (cash or card).",
+  "Las reservas están abiertas, pero los pagos online empiezan el {date}: por ahora no se paga nada. Se reservan fechas a partir del {date} y se paga en persona el día del servicio (efectivo o tarjeta).",
+  "ご予約の受付は始まっていますが、オンライン決済は{date}から開始します。現時点でのお支払いは不要です。{date}以降の日程をご予約いただき、サービス当日に直接お支払いください（現金またはカード）。"
+ ],
+ "preopen.agency": [
+  "I pagamenti online partono il {date}: fino ad allora si prenota a fattura o con un’opzione, per le date dal {date} in poi.",
+  "Online payments start on {date}: until then you book by invoice or with an option, for dates from {date} onwards.",
+  "Los pagos online empiezan el {date}: hasta entonces se reserva con factura o con una opción, para fechas a partir del {date}.",
+  "オンライン決済は{date}から開始します。それまでは、請求書払いまたは仮押さえで、{date}以降の日程をご予約ください。"
+ ],
+ "book.kind.label": [
+  "Che tipo di tour?",
+  "Which kind of tour?",
+  "¿Qué tipo de tour?",
+  "ツアーの種類"
+ ],
+ "book.kind.private": [
+  "Tour privati",
+  "Private tours",
+  "Tours privados",
+  "プライベートツアー"
+ ],
+ "book.kind.shared": [
+  "Tour condivisi",
+  "Shared tours",
+  "Tours compartidos",
+  "乗り合いツアー"
+ ],
+ "book.privateSlots": [
+  "Orari liberi per {hours}",
+  "Free start times for {hours}",
+  "Horarios libres para {hours}",
+  "{hours}の枠で空いている開始時刻"
+ ],
+ "book.privateOther": [
+  "Altre durate e orari →",
+  "Other durations and times →",
+  "Otras duraciones y horarios →",
+  "他の時間数・開始時刻を見る →"
  ]
 }

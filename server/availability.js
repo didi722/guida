@@ -9,7 +9,11 @@
 //    fuori dalle fasce bloccate e con il preavviso minimo.
 
 import { getSetting } from './db.js';
+import { paymentsFrom } from './opening.js';
 import { addDays, dayOfWeek, fromMin, localToInstant, monthDates, nowRome, toMin } from './time.js';
+
+/** Prenotazioni che occupano il calendario adesso: confermate, in attesa di pagamento (slot trattenuto) e opzioni non scadute. Servono due `now` (ISO). */
+export const LIVE_BOOKING_SQL = `(status = 'confirmed' OR (status = 'held' AND hold_expires_at > ?) OR (status = 'option' AND option_expires_at > ?))`;
 
 function groupBy(rows, key) {
   const m = new Map();
@@ -52,9 +56,9 @@ export function loadAvailabilityContext(db, cfg, fromDate, toDate, nowMs, { igno
     db
       .prepare(
         `SELECT id, tour_slug, date, start_time, end_time, buffer_min, participants FROM bookings
-         WHERE date BETWEEN ? AND ? AND (status = 'confirmed' OR (status = 'held' AND hold_expires_at > ?))`,
+         WHERE date BETWEEN ? AND ? AND ${LIVE_BOOKING_SQL}`, // confermate, in pagamento e opzioni non scadute
       )
-      .all(fromDate, toDate, new Date(nowMs).toISOString()),
+      .all(fromDate, toDate, new Date(nowMs).toISOString(), new Date(nowMs).toISOString()),
     'date',
   );
   return { weekly, overrides, blocks, bookings };
@@ -83,6 +87,7 @@ export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', no
 
   const today = nowRome(nowMs).date;
   if (date < today || date > addDays(today, cfg.policy.maxAdvanceDays)) return [];
+  if (date < (paymentsFrom(cfg) || '0000-00-00')) return []; // prima dell'apertura degli incassi non si prenota (vedi opening.js)
 
   const dur = durationMin ?? tour.durationMin; // i servizi a ore hanno la durata scelta dal cliente
   const buf = cfg.policy.bufferMin;

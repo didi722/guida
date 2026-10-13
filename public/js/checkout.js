@@ -6,9 +6,13 @@
     r.addEventListener('change', function () { if (r.checked) btn.textContent = r.getAttribute('data-label'); });
   });
   var form = document.getElementById('checkout-form');
+  var optionBtn = document.getElementById('option-submit');
   if (form) form.addEventListener('submit', function (e) {
     if (e.submitter && e.submitter.name === 'apply') return; // «Applica» e cambio di persone: si ricarica la pagina, non si prenota
-    btn.disabled = true; btn.classList.add('is-busy');
+    // niente `disabled` sul pulsante che ha inviato il modulo: il browser non ne manderebbe più nome e valore (serve a «Opziona»)
+    if (!e.submitter || e.submitter === btn) btn.disabled = true;
+    btn.classList.add('is-busy');
+    if (optionBtn) optionBtn.classList.add('is-busy');
   });
   // cambio del numero di persone: ricalcola prezzo e posti tenendo i dati già scritti
   var pax = document.getElementById('pax-select');

@@ -8,12 +8,14 @@ import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fm
 import { LANGS, pick } from '../langs.js';
 import { SERVICES, openTo, rateRows } from '../rates.js';
 import { formatMoney } from '../util.js';
+import { paymentsFrom } from '../opening.js';
 import { ratesBlock } from './hourly.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
 export function minBookableDate(app, channel = 'b2c', nowMs = Date.now()) {
   const hours = channel === 'b2b' ? app.cfg.policy.b2bMinNoticeHours : app.cfg.policy.b2cMinNoticeHours;
-  return nowRome(nowMs + hours * 3600_000).date;
+  const date = nowRome(nowMs + hours * 3600_000).date;
+  return date < paymentsFrom(app.cfg) ? paymentsFrom(app.cfg) : date; // in pre-apertura si prenota solo da quel giorno in poi
 }
 
 function faqItems(ctx, keys) {

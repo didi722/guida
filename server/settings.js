@@ -4,6 +4,7 @@
 // modifica successiva della configurazione continua ad avere effetto. I segreti (chiavi di pagamento, password,
 // posta) non passano di qui: restano nella configurazione del server.
 import { validItalianVat } from './fatturapa.js';
+import { MAX_OPTION_TIERS, normalizeOptionTiers } from './optionPolicy.js';
 import { getSetting, setSetting } from './db.js';
 import { cleanText, isEmail } from './util.js';
 
@@ -134,6 +135,26 @@ const TYPES = {
     parse: (raw, f) => (f.options.some(([value]) => value === String(raw ?? '')) ? ok(String(raw ?? '')) : bad('Scegli una delle opzioni.')),
     show: (v) => String(v ?? ''),
   },
+  // tabella «se il tour è fra almeno N giorni, l'opzione dura D giorni»: righe `chiave.0.from`, `chiave.0.days`, …
+  tiers: {
+    rowsFrom: (body, f) => Array.from({ length: MAX_OPTION_TIERS }, (_, i) => ({ from: String(body[`${f.key}.${i}.from`] ?? '').trim(), days: String(body[`${f.key}.${i}.days`] ?? '').trim() })),
+    parse(raw, f, body) {
+      const rows = this.rowsFrom(body, f).filter((r) => r.from !== '' || r.days !== '');
+      const out = [];
+      for (const r of rows) {
+        const from = toNumber(r.from);
+        const days = toNumber(r.days);
+        if (!Number.isInteger(from) || from < 0 || from > 730) return bad('Nella tabella, i giorni che mancano al tour vanno scritti con un numero intero (da 0 a 730).');
+        if (!Number.isInteger(days) || days < 1 || days > 90) return bad('Nella tabella, la durata dell’opzione va scritta in giorni, da 1 a 90.');
+        out.push({ fromDays: from, days });
+      }
+      if (new Set(out.map((r) => r.fromDays)).size !== out.length) return bad('Due righe hanno lo stesso numero di giorni: tienine una.');
+      return ok(normalizeOptionTiers(out));
+    },
+    show: (v) => normalizeOptionTiers(v).map((r) => ({ from: String(r.fromDays), days: String(r.days) })),
+    /** I valori scritti nel modulo (in un salvataggio non riuscito) tornano com'erano. */
+    fromPosted: (posted, f) => (Object.keys(posted).some((k) => k.startsWith(`${f.key}.`)) ? TYPES.tiers.rowsFrom(posted, f) : null),
+  },
 };
 
 const REGIMES = [['RF19', 'Regime forfettario (RF19)'], ['RF01', 'Regime ordinario (RF01)'], ['RF02', 'Contribuenti minimi (RF02)']];
@@ -172,6 +193,19 @@ export const SECTIONS = [
       { key: 'reminders.enabled', type: 'bool', label: 'Promemoria al cliente la sera prima del tour', hint: 'email automatica con orario, punto d’incontro e come contattarti; solo clienti privati' },
       { key: 'reminders.sendHour', type: 'int', min: 8, max: 22, unit: 'h', label: 'Ora di invio del promemoria', hint: 'ora di Venezia, la sera prima' },
       { key: 'policy.allowPayOnSite', type: 'bool', label: 'Consenti di pagare il giorno del servizio', hint: 'i privati prenotano senza pagare online: più comodo per loro, più rischio di assenze' },
+      { key: 'policy.paymentsFrom', type: 'date', label: 'Incassi dal (pre-apertura)', hint: 'es. il giorno in cui apri la partita IVA. Prima di questa data il sito accetta prenotazioni, ma solo per date da quel giorno in poi e senza incassare online: i privati pagano il giorno del servizio, le agenzie a fattura. Vuoto = incassi sempre attivi' },
+    ],
+  },
+  {
+    id: 'options',
+    title: 'Opzioni per le agenzie',
+    intro: 'Un’agenzia deve prima quotare il pacchetto al suo cliente, e solo dopo conferma. Con l’opzione tiene la data senza pagare e senza impegno: se non conferma entro la scadenza, la data si libera da sola (e prima le arriva un promemoria). Più il tour è lontano, più l’opzione dura. Per un singolo partner puoi cambiare la durata, il numero massimo di opzioni o toglierle: Clienti › Partner.',
+    fields: [
+      { key: 'options.enabled', type: 'bool', label: 'Le agenzie possono opzionare una data', hint: 'se lo togli, le agenzie prenotano direttamente come prima' },
+      { key: 'options.tiers', type: 'tiers', label: 'Quanto dura l’opzione', hint: 'in base a quanto manca al tour; se il tour è più vicino dell’ultima riga, non si può opzionare (si prenota direttamente)' },
+      { key: 'options.minReleaseHours', type: 'int', min: 0, max: 720, unit: 'ore', label: 'Scadenza al più tardi', hint: 'l’opzione scade sempre almeno così tante ore prima del tour, così puoi ancora rivendere la data' },
+      { key: 'options.maxActive', type: 'int', min: 0, max: 100, unit: 'opzioni', label: 'Opzioni aperte insieme, per agenzia', hint: '0 = nessun limite; evita che un’agenzia ti blocchi mezza agenda' },
+      { key: 'options.reminderHours', type: 'int', min: 0, max: 168, unit: 'ore', label: 'Promemoria all’agenzia prima della scadenza', hint: '0 = nessun promemoria; non parte per le opzioni brevissime' },
     ],
   },
   {
@@ -239,6 +273,7 @@ export function createSettings({ cfg, db }) {
     if (f.type === 'bool') return typeof v === 'boolean';
     if (['int', 'eur', 'pct'].includes(f.type)) return typeof v === 'number' && Number.isFinite(v);
     if (f.type === 'select') return f.options.some(([o]) => o === v);
+    if (f.type === 'tiers') return Array.isArray(v) && v.every((r) => Number.isInteger(r?.fromDays) && Number.isInteger(r?.days));
     return typeof v === 'string';
   };
   /** Il valore scelto per un campo: quello del pannello se c'è, altrimenti quello della configurazione del server. */
@@ -273,7 +308,7 @@ export function createSettings({ cfg, db }) {
         ...s,
         fields: s.fields.map((f) => {
           const type = TYPES[f.type];
-          const shown = f.key in posted ? posted[f.key] : type.show(value(f.key), f);
+          const shown = type.fromPosted?.(posted, f) ?? (f.key in posted ? posted[f.key] : type.show(value(f.key), f));
           return { ...f, options: f.options ? optionsOf(f) : undefined, value: shown, error: errors[f.key] ?? '', changed: !same(value(f.key), base[f.key]), base: type.show(base[f.key], f) };
         }),
         changed: s.fields.some((f) => !same(value(f.key), base[f.key])),
@@ -287,7 +322,7 @@ export function createSettings({ cfg, db }) {
       const parsed = {};
       for (const f of section.fields) {
         const raw = f.type === 'bool' ? (body[f.key] ? '1' : '') : body[f.key];
-        const r = TYPES[f.type].parse(raw ?? '', f);
+        const r = TYPES[f.type].parse(raw ?? '', f, body);
         if (r.error) errors[f.key] = r.error;
         else parsed[f.key] = r.value;
       }

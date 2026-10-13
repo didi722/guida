@@ -1,17 +1,19 @@
 import express from 'express';
 import { loadAvailabilityContext, nextAvailableDates, nextDepartures, slotsForDay } from '../availability.js';
-import { BookingError, cancellationState, getBookingByRef, slotStillOpen } from '../bookings.js';
+import { BookingError, activeOptionCount, cancellationState, getBookingByRef, slotStillOpen } from '../bookings.js';
+import { maxActiveOptions, optionWindow } from '../optionPolicy.js';
+import { onlinePaymentsOpen } from '../opening.js';
 import { hourlyQuote, previewPricing } from '../pricing.js';
 import { hashPassword, verifyPassword } from '../auth.js';
 import { sendContactMessage, sendPartnerRegistered, icsFor } from '../emails.js';
-import { isDate, isTime, nowRome } from '../time.js';
+import { isDate, isTime, localToInstant, nowRome } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
 import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { accountPage, loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { hourlyPage } from '../views/hourly.js';
-import { hourOptions, openTo } from '../rates.js';
+import { hourOptions, minHours, openTo } from '../rates.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
 import { normLang, pick } from '../langs.js';
 import { featuredQuotes, feedbackStats } from '../reviews.js';
@@ -99,27 +101,55 @@ export function publicRouter(app) {
   });
 
   // ───── prenota: prima la data ─────
+  /**
+   * Spunte della ricerca per le agenzie: «tour privati» (guida a ore, itinerari privati) e «tour condivisi» (partenze a persona).
+   * Se non si è scelto nulla, solo i privati; se si invia il modulo senza nessuna spunta, tutto.
+   */
+  const readKinds = (q, channel) => {
+    if (channel !== 'b2b') return { private: true, shared: true, shown: false };
+    if (q.kinds !== '1') return { private: true, shared: false, shown: true };
+    const picked = new Set([].concat(q.kind ?? []).map(String));
+    if (!picked.has('private') && !picked.has('shared')) return { private: true, shared: true, shown: true };
+    return { private: picked.has('private'), shared: picked.has('shared'), shown: true };
+  };
+  const isShared = (x) => x.model === 'person';
+  const isPrivateTour = (x) => x.model === 'group' && (x.pricing !== 'hourly' || x.service === 'guide'); // assistente, tour leader e meet & greet sono servizi, non tour
+  /** I tour che compaiono nella ricerca: i privati e/o i condivisi per le agenzie; per i privati cittadini i tour a prezzo fisso. */
+  const searchable = (channel, kinds) => (channel === 'b2b' ? visible(channel).filter((x) => (kinds.shared && isShared(x)) || (kinds.private && isPrivateTour(x))) : selectable(channel));
+  /** Ore con cui si cerca la disponibilità di un servizio a ore: la durata fissa del tour, o il minimo del servizio. */
+  const searchHours = (tour) => (tour.chooseHours ? minHours(tour.service) : tour.durationMin / 60);
+
   r.get('/book', (req, res) => {
     const ctx = res.locals.ctx;
     const channel = channelOf(req.acct);
     const asked = content.tour(String(req.query.tour ?? ''));
-    if (asked?.pricing === 'hourly') return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
+    if (asked?.pricing === 'hourly' && !(channel === 'b2b' && isPrivateTour(asked))) return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
+    const kinds = readKinds(req.query, channel);
     const pax = clampInt(req.query.pax, 1, 25, 2);
-    const tourSlug = content.tour(String(req.query.tour ?? ''))?.active ? String(req.query.tour) : '';
+    const list0 = searchable(channel, kinds);
+    const tourSlug = asked?.active && (channel === 'b2b' ? visible(channel).includes(asked) : list0.includes(asked)) ? asked.slug : '';
     const minDate = minBookableDate(app, channel);
     const date = isDate(req.query.date) ? req.query.date : null;
     let results = [];
     let suggestions = [];
     if (date) {
       const nowMs = Date.now();
-      const list = tourSlug ? [content.tour(tourSlug)] : selectable(channel);
+      const list = tourSlug ? [content.tour(tourSlug)] : list0;
       const actx = loadAvailabilityContext(db, cfg, date, date, nowMs);
-      results = list.map((tour) => ({ tour, slots: slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs }) })).filter((x) => x.slots.length);
+      results = list
+        .map((tour) => {
+          if (tour.pricing !== 'hourly') return { tour, slots: slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs }) };
+          // servizio a ore: orari liberi per la durata minima, e il prezzo «da»
+          const hours = searchHours(tour);
+          const quote = hourlyQuote(app, tour, { pax, channel, account: req.acct, date, time: null, hours });
+          return { tour, hours, quote, slots: quote.ok ? slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs, durationMin: Math.round(hours * 60) }) : [] };
+        })
+        .filter((x) => x.slots.length);
       if (!results.length) suggestions = nextAvailableDates(db, cfg, list, date < minDate ? minDate : date, { pax, channel, nowMs });
     }
     // senza una data in mente: le prossime partenze, prenotabili con un tocco
-    const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : selectable(channel), nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
-    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, tours: selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
+    const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : list0.filter(isShared), nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
+    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, kinds, tours: channel === 'b2b' ? visible(channel).filter((x) => isShared(x) || isPrivateTour(x)) : selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
   });
 
   // ───── servizi a ore: preventivo e orari liberi ─────
@@ -177,8 +207,18 @@ export function publicRouter(app) {
     // link promozionali: /book/checkout?...&promo=CODICE (o &gift=CODICE)
     const values = { promo: cleanText(req.query.promo, 40), gift: cleanText(req.query.gift, 120) };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
-    send(res, checkoutPage(ctx, { ...p, slot, channel, values, pricing: pricingFor(req, p, values, channel) }));
+    send(res, checkoutPage(ctx, { ...p, slot, channel, values, pricing: pricingFor(req, p, values, channel), option: optionPreview(req, p, channel) }));
   });
+
+  /** L'agenzia può opzionare questo servizio? Fino a quando? (null per i privati o se le opzioni sono spente) */
+  const optionPreview = (req, p, channel) => {
+    if (channel !== 'b2b' || !req.acct) return null;
+    const w = optionWindow({ options: cfg.options, account: req.acct, startMs: localToInstant(p.date, p.time), nowMs: Date.now() });
+    if (!w.ok) return w.reason === 'disabled' ? null : { ok: false, reason: w.reason };
+    const limit = maxActiveOptions(cfg.options, req.acct);
+    if (limit > 0 && activeOptionCount(db, req.acct.id) >= limit) return { ok: false, reason: 'limit', limit };
+    return { ok: true, expiresMs: w.expiresMs, days: w.days };
+  };
 
   const pricingFor = (req, p, values, channel) =>
     previewPricing(app, { tour: p.tour, pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, email: values.email ?? '', promoCode: values.promo, giftCodes: values.gift });
@@ -197,18 +237,20 @@ export function publicRouter(app) {
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {
       const slot = openSlot(p, channel);
-      return slot ? send(res, checkoutPage(ctx, { ...p, slot, channel, values, error, pricing: pricingFor(req, p, values, channel) }), status) : send(res, slotGonePage(ctx, p), 409);
+      return slot ? send(res, checkoutPage(ctx, { ...p, slot, channel, values, error, pricing: pricingFor(req, p, values, channel), option: optionPreview(req, p, channel) }), status) : send(res, slotGonePage(ctx, p), 409);
     };
     if (b.apply) return rerender('', 200); // "Applica": mostra il nuovo totale senza prenotare
     if (!b.consent) return rerender(t('err.consent'));
+    const wantsOption = b.action === 'option' && channel === 'b2b'; // «Opziona»: la data resta trattenuta senza pagare
     try {
       const billing = channel === 'b2b' ? { company: req.acct.company, vat: req.acct.vat, sdi: req.acct.sdi_code, pec: req.acct.pec, address: req.acct.address } : values.invoice ? { text: values.billing } : null;
-      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, ...values, promoCode: values.promo, giftCodes: values.gift, billing }, req.lang);
+      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, ...values, promoCode: values.promo, giftCodes: values.gift, billing, option: wantsOption }, req.lang);
       res.redirect(303, redirect);
     } catch (e) {
       if (!(e instanceof BookingError)) throw e;
       if (e.code === 'unavailable') return send(res, slotGonePage(ctx, p), 409);
       if (e.code === 'promo' || e.code === 'gift') return rerender('');
+      if (e.code === 'option') return rerender(t(`option.err.${['tooClose', 'limit'].includes(e.message) ? e.message : 'disabled'}`));
       return rerender(e.code === 'payment' ? t('err.payment') : t('err.fields'));
     }
   });
@@ -223,8 +265,8 @@ export function publicRouter(app) {
   r.get('/booking/:ref', async (req, res, next) => {
     let b = loadBooking(req);
     if (!b) return next();
-    if (req.query.paid && b.status === 'held') b = await services.syncStripe(b);
-    send(res, bookingPage(res.locals.ctx, b, { flash: req.query.flash ? String(req.query.flash) : '' }));
+    if (req.query.paid && (b.status === 'held' || services.payableLater(b))) b = await services.syncStripe(b);
+    send(res, bookingPage(res.locals.ctx, b, { flash: req.query.flash ? String(req.query.flash) : '', payLater: services.payableLater(b) }));
   });
   r.get('/booking/:ref/calendar.ics', (req, res, next) => {
     const b = loadBooking(req);
@@ -243,6 +285,26 @@ export function publicRouter(app) {
     if (b.status !== 'confirmed' || cancellationState(b).percent <= 0) return back('cancel-error'); // senza rimborso si scrive alla guida
     await services.cancel(b.id, { by: 'customer' });
     back('cancelled');
+  });
+
+  // ───── opzioni: l'agenzia conferma o rilascia (con il link della prenotazione, anche dal suo account) ─────
+  const optionBack = (req, b, flash) => {
+    const next = safeNext(req.body?.next);
+    if (next) return `${next}${next.includes('?') ? '&' : '?'}flash=${flash}`;
+    return `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}`;
+  };
+  r.post('/booking/:ref/option/confirm', form, async (req, res, next) => {
+    const b = loadBooking(req);
+    if (!b || b.status !== 'option') return next();
+    const result = await services.confirmOption(b.id, req.lang, { method: String(req.body.method ?? '') });
+    if (result.redirect) return res.redirect(303, result.redirect);
+    res.redirect(303, optionBack(req, b, { confirmed: 'option-confirmed', expired: 'option-expired' }[result.outcome] ?? 'option-error'));
+  });
+  r.post('/booking/:ref/option/release', form, async (req, res, next) => {
+    const b = loadBooking(req);
+    if (!b || b.status !== 'option') return next();
+    await services.releaseOption(b.id, { by: 'customer' });
+    res.redirect(303, optionBack(req, b, 'option-released'));
   });
 
   // ───── area partner B2B ─────

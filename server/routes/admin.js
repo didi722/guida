@@ -1,11 +1,14 @@
 import crypto from 'node:crypto';
 import express from 'express';
 import { getBooking } from '../bookings.js';
+import { LIVE_BOOKING_SQL } from '../availability.js';
+import { paymentsFrom, isPreOpening } from '../opening.js';
 import { calendar, eventLines } from '../ics.js';
 import { getSetting, setSetting } from '../db.js';
-import { addDays, isDate, isMonth, isTime, monthDates, nowRome, toMin } from '../time.js';
+import { addDays, dayOfWeek, isDate, isMonth, isTime, monthDates, nowRome, toMin } from '../time.js';
 import { cleanText, safeEqual } from '../util.js';
 import { loginAdmin, logoutAdmin, send, sendPdf, tooMany } from '../http.js';
+import { parseCookies, setCookie } from '../auth.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
@@ -40,6 +43,8 @@ const FLASH = {
   review: 'Richiesta di recensione aggiornata.',
   featured: 'Fatto: la modifica è già visibile sul sito.',
   reminder: 'Promemoria aggiornato.',
+  extended: 'Opzione prorogata: l’agenzia è stata avvisata.',
+  released: 'Data rilasciata: l’agenzia è stata avvisata.',
   calendar: 'Calendario collegato e sincronizzato.',
   calsynced: 'Calendario sincronizzato.',
   caltoggled: 'Calendario aggiornato.',
@@ -69,7 +74,8 @@ export function adminRouter(app) {
   r.get('/calendar.ics', (req, res) => {
     if (!safeEqual(String(req.query.k ?? ''), feedToken)) return res.status(404).end();
     const since = addDays(nowRome().date, -30);
-    const rows = db.prepare(`SELECT * FROM bookings WHERE status = 'confirmed' AND date >= ? ORDER BY date, start_time`).all(since);
+    const nowIso = new Date().toISOString();
+    const rows = db.prepare(`SELECT * FROM bookings WHERE (status = 'confirmed' OR (status = 'option' AND option_expires_at > ?)) AND date >= ? ORDER BY date, start_time`).all(nowIso, since);
     const events = rows.map((b) => {
       const tour = app.content.tour(b.tour_slug);
       return eventLines({
@@ -77,7 +83,7 @@ export function adminRouter(app) {
         date: b.date,
         start: b.start_time,
         end: b.end_time,
-        summary: `${tour?.i18n.it.title ?? b.tour_slug} · ${b.participants} pers. · ${b.name}`,
+        summary: `${b.status === 'option' ? 'OPZIONE · ' : ''}${tour?.i18n.it.title ?? b.tour_slug} · ${b.participants} pers. · ${b.name}`,
         description: [b.ref, b.channel === 'b2b' ? 'B2B' : 'Privato', b.client_ref, b.phone, b.email, b.notes, `Pagamento: ${b.payment_method} (${b.payment_status})`].filter(Boolean).join('\n'),
         location: tour?.i18n.it.meetingPoint,
         url: `${cfg.baseUrl}/admin/bookings/${b.id}`,
@@ -133,34 +139,68 @@ export function adminRouter(app) {
     res.redirect(303, '/admin/feedback?ok=featured');
   });
 
-  // ───── agenda ─────
-  r.get('/', (req, res) => {
-    const today = nowRome().date;
-    const end = addDays(today, 13);
-    const rows = db.prepare(`SELECT * FROM bookings WHERE date BETWEEN ? AND ? AND (status = 'confirmed' OR (status = 'held' AND hold_expires_at > ?)) ORDER BY date, start_time`).all(today, end, new Date().toISOString());
+  // ───── agenda: prima come calendario (si può tornare all'elenco dei prossimi 14 giorni; la scelta si ricorda) ─────
+  const AGENDA_COOKIE = 'av';
+  const YEAR = 365 * 24 * 3600;
+  /** Prenotazioni e giornate dei programmi tra due date, per l'agenda (elenco e calendario). */
+  const agendaItems = (from, to) => {
+    const nowIso = new Date().toISOString();
+    const rows = db.prepare(`SELECT * FROM bookings WHERE date BETWEEN ? AND ? AND ${LIVE_BOOKING_SQL} ORDER BY date, start_time`).all(from, to, nowIso, nowIso);
     // giornate dei programmi di più giorni (accettati o confermati), con l'avviso se si sovrappongono a qualcosa
     const programRows = db
       .prepare(`SELECT d.*, p.id AS pid, p.ref, p.name, p.status, p.participants, p.proposal_title FROM program_days d JOIN programs p ON p.id = d.program_id WHERE d.date BETWEEN ? AND ? AND p.status IN ('accepted', 'confirmed') ORDER BY d.date, d.start_time`)
-      .all(today, end)
+      .all(from, to)
       .map((d) => ({ ...d, kind: 'program', conflicts: dayConflicts(app, d, { ignoreProgramId: d.pid }) }));
-    const days = Array.from({ length: 14 }, (_, i) => {
-      const date = addDays(today, i);
-      const items = [...rows.filter((b) => b.date === date).map((b) => ({ ...b, kind: 'booking' })), ...programRows.filter((x) => x.date === date)];
-      return { date, items: items.sort((a, b) => toMin(a.start_time) - toMin(b.start_time)) };
-    });
+    const itemsOn = (date) => [...rows.filter((b) => b.date === date).map((b) => ({ ...b, kind: 'booking' })), ...programRows.filter((x) => x.date === date)].sort((a, b) => toMin(a.start_time) - toMin(b.start_time));
+    return { itemsOn };
+  };
+
+  r.get('/', (req, res) => {
+    const today = nowRome().date;
+    const asked = ['cal', 'list'].includes(req.query.v) ? req.query.v : null;
+    const view = asked ?? (parseCookies(req.headers.cookie)[AGENDA_COOKIE] === 'list' ? 'list' : 'cal'); // senza scelta: calendario
+    if (asked) setCookie(res, cfg, AGENDA_COOKIE, asked, { maxAgeSec: YEAR });
+
+    let days = [];
+    let calendar = null;
+    if (view === 'list') {
+      const end = addDays(today, 13);
+      const { itemsOn } = agendaItems(today, end);
+      days = Array.from({ length: 14 }, (_, i) => ({ date: addDays(today, i), items: itemsOn(addDays(today, i)) }));
+    } else {
+      const month = isMonth(String(req.query.m ?? '')) ? String(req.query.m) : today.slice(0, 7);
+      const dates = monthDates(month);
+      const offset = (dayOfWeek(dates[0]) + 6) % 7; // lunedì = 0
+      const gridStart = addDays(dates[0], -offset);
+      const total = Math.ceil((offset + dates.length) / 7) * 7;
+      const gridEnd = addDays(gridStart, total - 1);
+      const { itemsOn } = agendaItems(gridStart, gridEnd);
+      const closed = new Set(db.prepare('SELECT date FROM day_overrides WHERE closed = 1 AND date BETWEEN ? AND ?').all(gridStart, gridEnd).map((x) => x.date));
+      const cells = Array.from({ length: total }, (_, i) => {
+        const date = addDays(gridStart, i);
+        return { date, inMonth: date.slice(0, 7) === month, items: itemsOn(date), closed: closed.has(date) };
+      });
+      const wanted = isDate(String(req.query.d ?? '')) ? String(req.query.d) : null;
+      const selected = wanted && cells.some((c) => c.date === wanted) ? wanted : cells.some((c) => c.date === today) ? today : dates[0];
+      const [y, m] = month.split('-').map(Number);
+      const shift = (n) => `${new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7)}`;
+      calendar = { month, prev: shift(-1), next: shift(1), cells, selected, selectedItems: cells.find((c) => c.date === selected).items, todayCount: agendaItems(today, today).itemsOn(today).length };
+    }
     const programs = db.prepare(`SELECT COALESCE(SUM(status = 'new'), 0) AS todo, COALESCE(SUM(status IN ('quoted', 'accepted')), 0) AS waiting FROM programs`).get();
     const pendingPartners = db.prepare(`SELECT COUNT(*) n FROM accounts WHERE status = 'pending'`).get().n;
-    const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(new Date().toISOString()).n;
+    const nowIso = new Date().toISOString();
+    const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(nowIso).n;
+    const options = db.prepare(`SELECT COUNT(*) n, MIN(option_expires_at) next FROM bookings WHERE status = 'option' AND option_expires_at > ?`).get(nowIso);
     const invoicesDue = app.invoices.queue().filter((i) => i.overdue).length;
-    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, today, days, pendingPartners, held, programs, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
+    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, today, view, days, calendar, pendingPartners, held, options, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
   });
 
   // ───── prenotazioni ─────
   r.get('/bookings', (req, res) => {
-    const filter = ['upcoming', 'past', 'cancelled', 'all'].includes(req.query.f) ? req.query.f : 'upcoming';
+    const filter = ['upcoming', 'options', 'past', 'cancelled', 'all'].includes(req.query.f) ? req.query.f : 'upcoming';
     const q = cleanText(req.query.q, 80);
     const today = nowRome().date;
-    const where = { upcoming: `date >= '${today}' AND status IN ('confirmed','held')`, past: `date < '${today}' AND status IN ('confirmed','held')`, cancelled: `status IN ('cancelled','expired')`, all: '1=1' }[filter];
+    const where = { upcoming: `date >= '${today}' AND status IN ('confirmed','held','option')`, options: `status = 'option'`, past: `date < '${today}' AND status IN ('confirmed','held','option')`, cancelled: `status IN ('cancelled','expired')`, all: '1=1' }[filter];
     const like = `%${q}%`;
     const items = db
       .prepare(`SELECT * FROM bookings WHERE ${where} ${q ? 'AND (name LIKE ? OR email LIKE ? OR ref LIKE ? OR client_ref LIKE ?)' : ''} ORDER BY date ${filter === 'past' || filter === 'all' ? 'DESC' : 'ASC'}, start_time LIMIT 300`)
@@ -210,7 +250,13 @@ export function adminRouter(app) {
     if (!b) return next();
     const refund = ['auto', 'full', 'none'].includes(req.body.refund) ? req.body.refund : 'auto';
     await services.cancel(b.id, { by: 'admin', reason: req.body.reason, refund });
-    res.redirect(303, `/admin/bookings/${b.id}?ok=cancelled`);
+    res.redirect(303, `/admin/bookings/${b.id}?ok=${b.status === 'option' ? 'released' : 'cancelled'}`);
+  });
+  r.post('/bookings/:id/option/extend', form, async (req, res, next) => {
+    const b = getBooking(db, Number(req.params.id));
+    if (!b) return next();
+    const done = await services.extendOption(b.id, Number(req.body.days));
+    res.redirect(303, `/admin/bookings/${b.id}${done ? '?ok=extended' : ''}`);
   });
 
   // ───── disponibilità ─────

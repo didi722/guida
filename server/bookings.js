@@ -7,6 +7,8 @@ import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts,
 import { cleanText, isEmail, newRef, newToken } from './util.js';
 import { normLang } from './langs.js';
 import { freeHoursOf, hasFreeTier, parseTiers, policyFor, refundPercentAt, singleTier, splitAmounts } from './policy.js';
+import { isPreOpening } from './opening.js';
+import { maxActiveOptions, optionWindow, reminderAt } from './optionPolicy.js';
 
 export { priceFor, unitPriceFor };
 
@@ -27,20 +29,30 @@ export function freeCancelHours(cfg, tour, channel, account = null) {
 /** Importo che il cliente deve ancora pagare con carta/in sede/fattura (totale meno quanto coperto da buoni regalo). */
 export const bookingDue = (b) => b.total_cents - (b.gift_cents ?? 0);
 
-/** Metodi di pagamento disponibili (può essere vuoto: prenotazioni online non attive finché non si configura Stripe). */
-export function paymentOptions(app, tour, channel, account = null) {
+/**
+ * Metodi di pagamento disponibili (può essere vuoto: prenotazioni online non attive finché non si configura Stripe).
+ * In «pre-apertura» (prima della data degli incassi, vedi opening.js) non si incassa online: ai privati resta il pagamento
+ * il giorno del servizio, alle agenzie la fattura.
+ */
+export function paymentOptions(app, tour, channel, account = null, nowMs = Date.now()) {
   const { cfg } = app;
-  const cardOk = !!cfg.stripe.secretKey || cfg.demoPayments;
+  const pre = isPreOpening(cfg, nowMs);
+  const cardOk = (!!cfg.stripe.secretKey || cfg.demoPayments) && !pre;
   const opts = [];
   if (channel === 'b2b') {
     if (account?.allow_invoice) opts.push('invoice');
     if (cardOk) opts.push('card');
+  } else if (pre) {
+    opts.push('onsite');
   } else {
     if (cardOk) opts.push('card');
     if (cfg.policy.allowPayOnSite && tour.payOnSite) opts.push('onsite');
   }
   return opts;
 }
+
+const iso = (ms) => new Date(ms).toISOString();
+
 
 export function getBooking(db, id) {
   return db.prepare('SELECT * FROM bookings WHERE id = ?').get(id);
@@ -56,6 +68,8 @@ export function getBookingByRef(db, ref) {
  * - invoice  → confermata subito, fatturata (solo B2B approvati)
  * - giftcard → totale coperto da buoni regalo: confermata subito
  * - free     → totale azzerato da un codice sconto: confermata subito
+ * - option   → (`input.option`, solo partner) status "option": la data resta trattenuta senza pagare fino a `option_expires_at`;
+ *              si conferma (fattura o carta) o si rilascia; altrimenti si libera da sola
  * Codici sconto e buoni regalo (`promoCode`, `giftCodes`) valgono solo per i clienti privati.
  */
 export function createBooking(app, input, nowMs = Date.now()) {
@@ -76,6 +90,8 @@ export function createBooking(app, input, nowMs = Date.now()) {
   if (name.length < 2) throw new BookingError('invalid', 'name');
   if (!isEmail(email)) throw new BookingError('invalid', 'email');
 
+  const wantsOption = !!input.option;
+  if (wantsOption && channel !== 'b2b') throw new BookingError('option', 'only agencies can option a date');
   const tiers = policyFor(cfg, tour, channel, account); // dei partner o dei privati; se ne conserva una copia nella prenotazione
   const startInstant = localToInstant(input.date, input.time);
 
@@ -92,12 +108,23 @@ export function createBooking(app, input, nowMs = Date.now()) {
     if (pricing.errors.promo) throw new BookingError('promo', pricing.errors.promo);
     if (pricing.errors.gift) throw new BookingError('gift', pricing.errors.gift);
 
-    let method = input.paymentMethod;
-    if (pricing.dueCents === 0) method = pricing.giftCents > 0 ? 'giftcard' : 'free';
-    else if (!paymentOptions(app, tour, channel, account).includes(method)) throw new BookingError('payment', 'payment method not allowed');
+    // opzione: la data resta trattenuta senza pagare, fino a una scadenza decisa dalle regole del sito (e del partner)
+    let optionExpires = null;
+    if (wantsOption) {
+      const win = optionWindow({ options: cfg.options, account, startMs: startInstant, nowMs });
+      if (!win.ok) throw new BookingError('option', win.reason);
+      const limit = maxActiveOptions(cfg.options, account);
+      if (limit > 0 && activeOptionCount(db, account.id, nowMs) >= limit) throw new BookingError('option', 'limit');
+      optionExpires = iso(win.expiresMs);
+    }
 
-    const status = method === 'card' ? 'held' : 'confirmed';
-    const prepaid = method === 'giftcard' || method === 'free';
+    let method = input.paymentMethod;
+    if (wantsOption) method = account.allow_invoice ? 'invoice' : 'card'; // come pagherà si sceglie alla conferma
+    else if (pricing.dueCents === 0) method = pricing.giftCents > 0 ? 'giftcard' : 'free';
+    else if (!paymentOptions(app, tour, channel, account, nowMs).includes(method)) throw new BookingError('payment', 'payment method not allowed');
+
+    const status = wantsOption ? 'option' : method === 'card' ? 'held' : 'confirmed';
+    const prepaid = !wantsOption && (method === 'giftcard' || method === 'free');
     const now = new Date(nowMs).toISOString();
     const row = {
       ref: newRef(),
@@ -128,6 +155,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
       payment_method: method,
       payment_status: prepaid ? 'paid' : 'unpaid',
       hold_expires_at: status === 'held' ? new Date(nowMs + cfg.policy.holdMinutes * 60_000).toISOString() : null,
+      option_expires_at: optionExpires,
       free_cancel_until: hasFreeTier(tiers) ? new Date(startInstant - freeHoursOf(tiers) * HOUR).toISOString() : now, // senza periodo gratuito: già scaduto
       cancel_policy_json: JSON.stringify(tiers),
       service_json: pricing.quote ? JSON.stringify(serviceRecord(pricing.quote)) : null,
@@ -142,8 +170,16 @@ export function createBooking(app, input, nowMs = Date.now()) {
   });
 }
 
-/** Segna come scaduta una prenotazione in attesa di pagamento e libera lo slot. */
+/**
+ * Segna come scaduta una prenotazione in attesa di pagamento e libera lo slot.
+ * Se era un'opzione che si stava confermando con la carta e la sua scadenza non è ancora arrivata, torna opzione (il pagamento
+ * non è andato a buon fine, ma la data resta trattenuta fino alla scadenza dell'opzione).
+ */
 export function expireBooking(db, bookingId, nowMs = Date.now()) {
+  const b = getBooking(db, bookingId);
+  if (b?.status === 'held' && b.option_expires_at && Date.parse(b.option_expires_at) > nowMs) {
+    return db.prepare(`UPDATE bookings SET status = 'option', hold_expires_at = NULL WHERE id = ? AND status = 'held'`).run(bookingId).changes;
+  }
   const changes = db.prepare(`UPDATE bookings SET status = 'expired' WHERE id = ? AND status = 'held'`).run(bookingId).changes;
   if (changes) restoreGifts(db, bookingId, nowMs); // il pagamento non è arrivato: i buoni tornano disponibili
   return changes;
@@ -160,7 +196,7 @@ export function expireHolds(db, nowMs = Date.now()) {
 /**
  * Segna come pagata e conferma. Se lo slot era già scaduto prova a riprenderlo; se nel frattempo
  * è stato occupato restituisce outcome "conflict" (il chiamante deve rimborsare).
- * @returns {{outcome: 'confirmed'|'already'|'conflict'|'cancelled', booking: object}}
+ * @returns {{outcome: 'confirmed'|'paid_later'|'already'|'conflict'|'cancelled', booking: object}}
  */
 export function confirmPaid(app, bookingId, paymentIntent = null, nowMs = Date.now()) {
   const { db, cfg, content } = app;
@@ -168,7 +204,12 @@ export function confirmPaid(app, bookingId, paymentIntent = null, nowMs = Date.n
     const b = getBooking(db, bookingId);
     if (!b) throw new BookingError('invalid', 'booking not found');
     if (b.status === 'confirmed') {
-      if (paymentIntent && !b.stripe_payment_intent) db.prepare('UPDATE bookings SET stripe_payment_intent = ? WHERE id = ?').run(paymentIntent, b.id);
+      if (paymentIntent && !b.stripe_payment_intent) {
+        // chi aveva scelto di pagare il giorno del servizio (o prenotato prima dell'apertura degli incassi) può pagare online dalla pagina della prenotazione
+        const payNow = b.payment_status === 'unpaid' && b.payment_method === 'onsite';
+        db.prepare(`UPDATE bookings SET stripe_payment_intent = ?${payNow ? ", payment_status = 'paid', payment_method = 'card'" : ''} WHERE id = ?`).run(paymentIntent, b.id);
+        if (payNow) return { outcome: 'paid_later', booking: getBooking(db, b.id) };
+      }
       return { outcome: 'already', booking: getBooking(db, b.id) };
     }
     if (b.status === 'cancelled') return { outcome: 'cancelled', booking: b };
@@ -220,6 +261,11 @@ export function cancelBooking(app, bookingId, { by, reason = null, refund = 'aut
     const b = getBooking(db, bookingId);
     if (!b) throw new BookingError('invalid', 'booking not found');
     if (b.status === 'cancelled' || b.status === 'expired') return { booking: b, refundCents: 0, retainedCents: 0, percent: 0, giftRestoredCents: 0, already: true };
+    // un'opzione non ha incassato nulla né dà diritto a penali: annullarla vuol dire rilasciare la data (e non conta come annullo)
+    if (b.status === 'option') {
+      lapseOption(db, b, by, nowMs, reason || 'Opzione rilasciata');
+      return { booking: getBooking(db, b.id), refundCents: 0, retainedCents: 0, percent: 100, giftRestoredCents: 0, option: true };
+    }
 
     const percent = refund === 'full' ? 100 : refund === 'none' ? 0 : cancellationState(b, nowMs).percent;
     const { refundCents, retainedCents } = b.status === 'confirmed' ? splitAmounts({ paidCents: b.payment_status === 'paid' ? bookingDue(b) : 0, dueCents: bookingDue(b) }, percent) : { refundCents: 0, retainedCents: 0 };
@@ -250,3 +296,88 @@ export function slotStillOpen(app, tour, date, time, pax, channel, nowMs = Date.
   return daySlots(app.db, app.cfg, tour, date, { pax, channel, nowMs, durationMin }).find((s) => s.time === time) ?? null;
 }
 
+
+// ───────────── opzioni ─────────────
+/** Quante opzioni non scadute ha aperte un partner. */
+export function activeOptionCount(db, accountId, nowMs = Date.now()) {
+  return db.prepare(`SELECT COUNT(*) n FROM bookings WHERE account_id = ? AND status = 'option' AND option_expires_at > ?`).get(accountId, iso(nowMs)).n;
+}
+
+/** Chiude un'opzione senza conferma (scaduta o rilasciata): lo slot si libera. Non è un annullo: nessun rimborso, nessuna penale. */
+function lapseOption(db, b, by, nowMs, reason) {
+  return db.prepare(`UPDATE bookings SET status = 'expired', cancelled_at = ?, cancelled_by = ?, cancel_reason = ?, hold_expires_at = NULL WHERE id = ? AND status = 'option'`).run(iso(nowMs), by, cleanText(reason, 300) || null, b.id).changes;
+}
+
+/** Il partner (o la guida) rilascia l'opzione: la data torna libera. @returns {object|null} la prenotazione, o null se non era un'opzione aperta */
+export function releaseOption(app, bookingId, { by, reason = 'Opzione rilasciata' }, nowMs = Date.now()) {
+  const { db } = app;
+  return tx(db, () => {
+    const b = getBooking(db, bookingId);
+    if (!b || b.status !== 'option') return null;
+    lapseOption(db, b, by, nowMs, reason);
+    return getBooking(db, b.id);
+  });
+}
+
+/** Libera le opzioni scadute. @returns {object[]} le prenotazioni appena scadute (servono per avvisare l'agenzia) */
+export function expireOptions(db, nowMs = Date.now()) {
+  const due = db.prepare(`SELECT * FROM bookings WHERE status = 'option' AND option_expires_at <= ?`).all(iso(nowMs));
+  return due.filter((b) => lapseOption(db, b, 'system', nowMs, 'Opzione scaduta senza conferma') === 1).map((b) => getBooking(db, b.id));
+}
+
+/** Opzioni a cui va mandato adesso il promemoria di scadenza. */
+export function optionsDueForReminder(app, nowMs = Date.now()) {
+  const { db, cfg } = app;
+  return db
+    .prepare(`SELECT * FROM bookings WHERE status = 'option' AND option_reminded_at IS NULL AND option_expires_at > ?`)
+    .all(iso(nowMs))
+    .filter((b) => {
+      const at = reminderAt({ createdMs: Date.parse(b.created_at), expiresMs: Date.parse(b.option_expires_at), reminderHours: cfg.options.reminderHours });
+      return at != null && at <= nowMs;
+    });
+}
+
+/** Prolunga un'opzione di `days` giorni (dalla scadenza attuale, o da adesso se è già scaduta ma non ancora liberata), mai oltre l'inizio del servizio. */
+export function extendOption(app, bookingId, days, nowMs = Date.now()) {
+  const { db } = app;
+  const n = Math.round(Number(days));
+  if (!Number.isInteger(n) || n < 1 || n > 90) throw new BookingError('invalid', 'days');
+  return tx(db, () => {
+    const b = getBooking(db, bookingId);
+    if (!b || b.status !== 'option') return null;
+    const from = Math.max(Date.parse(b.option_expires_at), nowMs);
+    const latest = localToInstant(b.date, b.start_time) - HOUR;
+    const next = Math.min(from + n * 24 * HOUR, latest);
+    if (next <= nowMs) return null;
+    db.prepare(`UPDATE bookings SET option_expires_at = ?, option_reminded_at = NULL WHERE id = ?`).run(iso(next), b.id);
+    return getBooking(db, b.id);
+  });
+}
+
+/**
+ * L'agenzia conferma l'opzione. Se può pagare a fattura, la prenotazione è subito confermata; altrimenti passa «in attesa di pagamento»
+ * con la carta (lo slot resta trattenuto `holdMinutes`, come per ogni prenotazione con carta).
+ * @returns {{outcome: 'confirmed'|'pay'|'expired'|'state'|'payment'|'account', booking: object}}
+ */
+export function confirmOption(app, bookingId, { method = null } = {}, nowMs = Date.now()) {
+  const { db, cfg, content } = app;
+  return tx(db, () => {
+    const b = getBooking(db, bookingId);
+    if (!b || b.status !== 'option') return { outcome: 'state', booking: b };
+    if (Date.parse(b.option_expires_at) <= nowMs) {
+      lapseOption(db, b, 'system', nowMs, 'Opzione scaduta senza conferma');
+      return { outcome: 'expired', booking: getBooking(db, b.id) };
+    }
+    const account = b.account_id ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
+    if (account?.status !== 'approved') return { outcome: 'account', booking: b };
+    const allowed = paymentOptions(app, content.tour(b.tour_slug), 'b2b', account, nowMs);
+    const chosen = allowed.includes(method) ? method : allowed[0];
+    if (!chosen) return { outcome: 'payment', booking: b };
+    if (chosen === 'invoice') {
+      db.prepare(`UPDATE bookings SET status = 'confirmed', payment_method = 'invoice', confirmed_at = ?, hold_expires_at = NULL WHERE id = ?`).run(iso(nowMs), b.id);
+      return { outcome: 'confirmed', booking: getBooking(db, b.id) };
+    }
+    db.prepare(`UPDATE bookings SET status = 'held', payment_method = 'card', hold_expires_at = ? WHERE id = ?`).run(iso(nowMs + cfg.policy.holdMinutes * 60_000), b.id);
+    return { outcome: 'pay', booking: getBooking(db, b.id) };
+  });
+}

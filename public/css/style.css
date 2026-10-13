@@ -202,6 +202,7 @@ ul.plain, ol.plain { list-style: none; margin: 0; padding: 0; }
 .notice { padding: 12px 16px; border-radius: 10px; border: 1px solid; margin-bottom: 1rem; font-size: 0.97rem; }
 .notice-ok { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
 .notice-err { background: var(--err-bg); border-color: var(--err); color: var(--err); }
+.notice-info { background: var(--gold-soft); border-color: var(--bronze); color: var(--text); }
 
 /* ───────── Card e griglie ───────── */
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
@@ -374,6 +375,9 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 /* ───────── Prenota / checkout ───────── */
 .search-card { display: grid; grid-template-columns: 1fr 0.55fr 1.2fr auto; gap: 14px; align-items: end; }
 .search-card .field { margin: 0; } .search-card .btn { height: 48px; }
+.search-card .kinds { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 24px; border: 0; padding: 0; margin: 0; } .search-card .kinds .check { margin: 4px 0; }
+.option-box { margin-top: 18px; padding: 16px 18px; border: 1.5px dashed var(--bronze); border-radius: 12px; background: var(--soft); } .option-box h3 { font-size: 1.05rem; margin: 0 0 6px; } .option-box p { margin: 0 0 12px; font-size: 0.95rem; color: var(--muted); }
+.option-note { margin: 12px 0 0; }
 .results { display: grid; gap: 18px; margin-top: 1rem; }
 .result { display: grid; grid-template-columns: 220px 1fr; }
 .result-media { position: relative; overflow: hidden; min-height: 150px; } .result-media svg, .result-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -673,6 +677,30 @@ body.admin { --header-h: 64px; }
   .queue-table tr:not(.group-row) td { grid-column: 2; }
   .queue-table tr:not(.group-row) td:first-child { grid-column: 1; grid-row: 1 / span 4; padding: 2px 0 0; }
   .row-overdue { background: var(--err-bg); } .row-overdue td { background: transparent; }
+}
+
+/* Agenda a calendario (pannello) */
+.kpis { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.agenda-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; } .agenda-head .h-sub { margin: 0; } .agenda-head .tabs { margin: 0; }
+.acal-head { display: flex; align-items: center; gap: 10px; margin: 8px 0 12px; } .acal-title { font-size: 1.2rem; text-transform: capitalize; min-width: 11ch; text-align: center; }
+.acal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.acal-dow { text-align: center; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 4px 0; }
+.acal-cell { position: relative; display: flex; flex-direction: column; gap: 3px; min-height: 104px; padding: 6px 6px 8px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); text-decoration: none; overflow: hidden; }
+.acal-cell:hover { border-color: var(--bronze); background: var(--gold-soft); }
+.acal-cell.is-other { opacity: 0.5; } .acal-cell.is-today { box-shadow: 0 0 0 2px var(--gold); } .acal-cell.is-selected { border-color: var(--bronze); background: var(--gold-soft); }
+.acal-cell.is-closed { background: repeating-linear-gradient(135deg, var(--soft), var(--soft) 6px, var(--card) 6px, var(--card) 12px); }
+.acal-n { font-weight: 700; font-size: 0.95rem; } .acal-closed { position: absolute; top: 8px; right: 8px; font-size: 0.65rem; color: var(--err); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.acal-evs { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.acal-ev { display: block; font-size: 0.72rem; line-height: 1.25; padding: 1px 6px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--ok-bg); color: var(--ok); border-left: 3px solid var(--ok); }
+.ev-wait { background: var(--warn-bg); color: var(--warn); border-left-color: var(--warn); }
+.ev-opt { background: transparent; color: var(--warn); border: 1px dashed var(--warn); border-left-width: 3px; }
+.ev-prog { background: var(--gold-soft); color: var(--accent-text); border-left-color: var(--gold); }
+.acal-more { font-size: 0.7rem; color: var(--muted); padding-left: 6px; } .acal-count { display: none; }
+.acal-legend .legend { width: 22px; height: 10px; border-radius: 4px; vertical-align: middle; border: 0; border-left: 3px solid var(--ok); background: var(--ok-bg); } .acal-legend .legend.ev-wait { border-left-color: var(--warn); background: var(--warn-bg); } .acal-legend .legend.ev-opt { background: transparent; border: 1px dashed var(--warn); border-left-width: 3px; } .acal-legend .legend.ev-prog { border-left-color: var(--gold); background: var(--gold-soft); }
+@media (max-width: 640px) {
+  .acal { gap: 3px; } .acal-cell { min-height: 56px; padding: 4px; align-items: center; } .acal-evs, .acal-closed { display: none; }
+  .acal-count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50px; background: var(--gold); color: var(--ink); font-size: 0.75rem; font-weight: 700; }
+  .acal-title { min-width: 0; flex: 1; }
 }
 
 /* Sito › Tour: ordine a trascinamento */

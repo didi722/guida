@@ -158,7 +158,7 @@ export function bookingUrl(app, b, lang = normLang(b.lang)) {
   return `${app.cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`;
 }
 
-function summaryRows(app, b, lang) {
+function summaryRows(app, b, lang, { option = false } = {}) {
   const tr = T[lang];
   const ti = tourText(app, b.tour_slug, lang);
   const rows = [
@@ -171,7 +171,7 @@ function summaryRows(app, b, lang) {
   ];
   if (b.discount_cents) rows.push([tr.discount(b.promo_code), `−${formatMoney(b.discount_cents, lang, b.currency)}`]);
   if (b.gift_cents) rows.push([tr.giftUsed, `−${formatMoney(b.gift_cents, lang, b.currency)}`]);
-  rows.push([b.discount_cents || b.gift_cents ? tr.due : tr.total, `${formatMoney(bookingDue(b), lang, b.currency)} (${tr.pay[b.payment_method]})`]);
+  rows.push([b.discount_cents || b.gift_cents ? tr.due : tr.total, option ? formatMoney(bookingDue(b), lang, b.currency) : `${formatMoney(bookingDue(b), lang, b.currency)} (${tr.pay[b.payment_method]})`]);
   if (b.client_ref) rows.push([tr.clientRef, b.client_ref]);
   return rows;
 }
@@ -315,6 +315,146 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
   });
 }
 
+
+// ───────────── Opzioni delle agenzie ─────────────
+const O = {
+  it: {
+    createdSubject: (ref, title, d) => `Opzione registrata ${ref} — ${title}, ${d}`,
+    createdIntro: (until) => `la data è trattenuta per te fino a ${until}. Non hai pagato nulla e non hai alcun impegno: entro quel termine conferma la prenotazione (dal tuo account o dal pulsante qui sotto), oppure rilasciala se il tuo cliente non conferma. Se non fai nulla, la data si libera da sola.`,
+    until: 'Opzione valida fino a',
+    cta: 'Conferma o rilascia l’opzione',
+    reminderSubject: (ref, until) => `Promemoria: l’opzione ${ref} scade il ${until}`,
+    reminderIntro: (until) => `la tua opzione scade il ${until}. Se il tuo cliente ha confermato, conferma ora la prenotazione; altrimenti rilasciala, così la data torna libera.`,
+    expiredSubject: (ref) => `Opzione scaduta ${ref}`,
+    expiredIntro: (until) => `l’opzione non è stata confermata entro ${until}, quindi la data è stata liberata. Nessun costo e nessun impegno. Se ti serve ancora, puoi prenotare di nuovo dal sito, se la data è ancora disponibile.`,
+    releasedSubject: (ref) => `Opzione rilasciata ${ref}`,
+    releasedIntro: 'l’opzione è stata rilasciata e la data è tornata libera. Nessun costo e nessun impegno.',
+    extendedSubject: (ref) => `Opzione prorogata ${ref}`,
+    extendedIntro: (until) => `ti ho prorogato l’opzione: la data resta trattenuta fino a ${until}.`,
+  },
+  en: {
+    createdSubject: (ref, title, d) => `Option placed ${ref} — ${title}, ${d}`,
+    createdIntro: (until) => `the date is held for you until ${until}. You have paid nothing and there is no commitment: before then, confirm the booking (from your account or the button below), or release it if your client does not confirm. If you do nothing, the date is released automatically.`,
+    until: 'Option valid until',
+    cta: 'Confirm or release the option',
+    reminderSubject: (ref, until) => `Reminder: option ${ref} expires on ${until}`,
+    reminderIntro: (until) => `your option expires on ${until}. If your client has confirmed, confirm the booking now; otherwise release it so the date becomes available again.`,
+    expiredSubject: (ref) => `Option expired ${ref}`,
+    expiredIntro: (until) => `the option was not confirmed by ${until}, so the date has been released. No cost and no commitment. If you still need it, you can book again on the website, if the date is still available.`,
+    releasedSubject: (ref) => `Option released ${ref}`,
+    releasedIntro: 'the option has been released and the date is available again. No cost and no commitment.',
+    extendedSubject: (ref) => `Option extended ${ref}`,
+    extendedIntro: (until) => `I have extended your option: the date stays held until ${until}.`,
+  },
+  es: {
+    createdSubject: (ref, title, d) => `Opción registrada ${ref} — ${title}, ${d}`,
+    createdIntro: (until) => `la fecha queda reservada para ti hasta el ${until}. No has pagado nada y no hay ningún compromiso: antes de esa fecha confirma la reserva (desde tu cuenta o con el botón de abajo) o libérala si tu cliente no confirma. Si no haces nada, la fecha se libera sola.`,
+    until: 'Opción válida hasta',
+    cta: 'Confirmar o liberar la opción',
+    reminderSubject: (ref, until) => `Recordatorio: la opción ${ref} caduca el ${until}`,
+    reminderIntro: (until) => `tu opción caduca el ${until}. Si tu cliente ha confirmado, confirma ahora la reserva; si no, libérala para que la fecha vuelva a estar disponible.`,
+    expiredSubject: (ref) => `Opción caducada ${ref}`,
+    expiredIntro: (until) => `la opción no se confirmó antes del ${until}, así que la fecha se ha liberado. Sin coste ni compromiso. Si todavía la necesitas, puedes reservar de nuevo en la web, si la fecha sigue disponible.`,
+    releasedSubject: (ref) => `Opción liberada ${ref}`,
+    releasedIntro: 'la opción se ha liberado y la fecha vuelve a estar disponible. Sin coste ni compromiso.',
+    extendedSubject: (ref) => `Opción prorrogada ${ref}`,
+    extendedIntro: (until) => `he prorrogado tu opción: la fecha queda reservada hasta el ${until}.`,
+  },
+  ja: {
+    createdSubject: (ref, title, d) => `仮押さえ（オプション）を受け付けました ${ref} — ${title}（${d}）`,
+    createdIntro: (until) => `この日程を${until}まで仮押さえしました。お支払いは発生せず、義務もありません。期限までに、アカウントまたは下のボタンから予約を確定するか、お客様が確定されない場合は解除してください。何もされない場合、日程は自動的に解放されます。`,
+    until: '仮押さえの期限',
+    cta: '仮押さえを確定または解除する',
+    reminderSubject: (ref, until) => `リマインダー：仮押さえ ${ref} の期限は${until}です`,
+    reminderIntro: (until) => `仮押さえの期限は${until}です。お客様が確定された場合は、今すぐ予約を確定してください。確定されない場合は解除して、日程を解放してください。`,
+    expiredSubject: (ref) => `仮押さえの期限が切れました ${ref}`,
+    expiredIntro: (until) => `${until}までに確定されなかったため、日程を解放しました。費用は発生せず、義務もありません。引き続き必要な場合は、日程が空いていれば、サイトから改めてご予約いただけます。`,
+    releasedSubject: (ref) => `仮押さえを解除しました ${ref}`,
+    releasedIntro: '仮押さえを解除し、日程を解放しました。費用は発生せず、義務もありません。',
+    extendedSubject: (ref) => `仮押さえを延長しました ${ref}`,
+    extendedIntro: (until) => `仮押さえを延長しました。日程は${until}まで確保されています。`,
+  },
+};
+
+async function sendOptionMail(app, b, { subject, intro, withCta = true }) {
+  const lang = normLang(b.lang);
+  const tr = T[lang];
+  const o = O[lang];
+  const rows = [...(b.status === 'option' && b.option_expires_at ? [[o.until, fmtInstant(Date.parse(b.option_expires_at), lang)]] : []), ...summaryRows(app, b, lang, { option: true })];
+  const link = withCta ? bookingUrl(app, b, lang) : '';
+  await app.mail.send({
+    to: b.email,
+    subject,
+    text: [tr.hello(b.name), '', intro, '', ...rows.map(([k, v]) => `${k}: ${v}`), '', ...(withCta ? [`${o.cta}: ${link}`, ''] : []), tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${tr.hello(b.name)}</p><p>${intro}</p>
+        <table style="border-collapse:collapse;width:100%;font-size:15px">${rows.map(([k, v]) => html`<tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top">${k}</td><td style="padding:6px 0"><strong>${v}</strong></td></tr>`)}</table>
+        ${withCta ? html`<p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${o.cta}</a></p>` : ''}
+        <p style="color:#666;font-size:13px">${tr.contactLine}<br>${tr.bye} ${app.cfg.site.name}</p>`,
+      ),
+    ),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+const untilOf = (b, lang) => fmtInstant(Date.parse(b.option_expires_at), lang);
+
+/** All'agenzia: l'opzione è registrata e fino a quando la data è trattenuta. */
+export async function sendOptionCreated(app, b) {
+  const lang = normLang(b.lang);
+  const o = O[lang];
+  await sendOptionMail(app, b, { subject: o.createdSubject(b.ref, tourText(app, b.tour_slug, lang).title, fmtDate(b.date, lang, 'short')), intro: o.createdIntro(untilOf(b, lang)) });
+}
+
+/** All'agenzia: l'opzione sta per scadere. */
+export async function sendOptionReminder(app, b) {
+  const lang = normLang(b.lang);
+  const o = O[lang];
+  await sendOptionMail(app, b, { subject: o.reminderSubject(b.ref, untilOf(b, lang)), intro: o.reminderIntro(untilOf(b, lang)) });
+}
+
+/** All'agenzia: l'opzione è scaduta e la data è libera. */
+export async function sendOptionExpired(app, b) {
+  const lang = normLang(b.lang);
+  const o = O[lang];
+  await sendOptionMail(app, b, { subject: o.expiredSubject(b.ref), intro: o.expiredIntro(untilOf(b, lang)), withCta: false });
+}
+
+/** All'agenzia: la guida ha rilasciato l'opzione. */
+export async function sendOptionReleased(app, b) {
+  const o = O[normLang(b.lang)];
+  await sendOptionMail(app, b, { subject: o.releasedSubject(b.ref), intro: o.releasedIntro, withCta: false });
+}
+
+/** All'agenzia: la guida ha prorogato l'opzione. */
+export async function sendOptionExtended(app, b) {
+  const lang = normLang(b.lang);
+  const o = O[lang];
+  await sendOptionMail(app, b, { subject: o.extendedSubject(b.ref), intro: o.extendedIntro(untilOf(b, lang)) });
+}
+
+/** Avviso alla guida (in italiano) sulle opzioni: nuova, scaduta, rilasciata dall'agenzia. */
+export async function notifyGuideOption(app, b, kind) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const tour = app.content.tour(b.tour_slug);
+  const label = { created: 'Nuova opzione', expired: 'Opzione scaduta: data liberata', released: 'Opzione rilasciata dall’agenzia: data liberata' }[kind];
+  const account = b.account_id ? app.db.prepare('SELECT company FROM accounts WHERE id = ?').get(b.account_id) : null;
+  const lines = [
+    `${label} ${b.ref}${account ? ` — ${account.company}` : ''}`,
+    tour?.i18n.it.title ?? b.tour_slug,
+    `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${b.participants} pers.`,
+    b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
+    kind === 'created' ? `Trattenuta fino al ${fmtInstant(Date.parse(b.option_expires_at), 'it')}; se l’agenzia non conferma, si libera da sola.` : null,
+    `Totale: ${formatMoney(b.total_cents, 'it', b.currency)}`,
+    '',
+    `${app.cfg.baseUrl}/admin/bookings/${b.id}`,
+  ].filter((x) => x !== null);
+  await app.mail.send({ to, subject: `${label}: ${tour?.i18n.it.title ?? b.tour_slug} — ${b.date} ${b.start_time}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
+}
 
 // ───────────── Partner B2B ─────────────
 const P = {

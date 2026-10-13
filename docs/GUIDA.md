@@ -89,7 +89,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
 
 ## 4. Ogni giorno: cinque minuti
 
-1. **Agenda** (la prima schermata): in alto vedi quanti servizi hai oggi, i programmi da preparare, i partner da approvare, i pagamenti in corso. Sotto, i **prossimi 14 giorni** con tutte le prenotazioni e le giornate dei programmi. Se c'è un avviso rosso (calendario che non si sincronizza, voci da fatturare oltre i 12 giorni) toccalo: ti porta dove risolvere.
+1. **Agenda** (la prima schermata): in alto vedi quanti servizi hai oggi, i programmi da preparare, i partner da approvare, le **opzioni** aperte e i pagamenti in corso. Sotto c'è l'agenda: si apre come **Calendario** del mese (tocca un giorno per vederlo qui sotto; le opzioni delle agenzie sono tratteggiate) e con **Elenco, 14 giorni** passi all'elenco dei prossimi 14 giorni con tutte le prenotazioni e le giornate dei programmi; il pannello ricorda la tua scelta. Se c'è un avviso rosso (calendario che non si sincronizza, voci da fatturare oltre i 12 giorni) toccalo: ti porta dove risolvere.
 2. **Partner da approvare**: se c'è un numero, apri **Clienti › Partner** e rispondi (vedi [sezione 14](#14-partner-agenzie-dmc-tour-operator)). Il partner è avvisato per email.
 3. **Programmi da preparare**: richieste di più giorni in attesa di una tua proposta ([sezione 12](#12-prenotazioni-annulli-e-programmi-di-più-giorni)).
 4. **Fatture** (una o due volte a settimana): le prenotazioni svolte o pagate finiscono in *Da fatturare*; il termine consigliato per emettere è **12 giorni** ([sezione 13](#13-fatture)).

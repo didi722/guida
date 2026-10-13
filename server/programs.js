@@ -5,6 +5,7 @@ import { sendProgramAccepted, sendProgramConfirmed, sendProgramReceived, sendPro
 import { addDays, isDate, isTime, nowRome, toMin } from './time.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
 import { normLang, pick } from './langs.js';
+import { onlinePaymentsOpen } from './opening.js';
 
 export const INTERESTS = ['art', 'history', 'religions', 'food', 'lagoon', 'photography', 'architecture', 'family'];
 export const GROUP_TYPES = ['family', 'friends', 'school', 'corporate', 'agency', 'other'];
@@ -219,7 +220,7 @@ export function createProgramServices(app) {
 
   const svc = {
     get depositsOnline() {
-      return payments.live || payments.demo;
+      return onlinePaymentsOpen(app); // in pre-apertura (vedi opening.js) l'acconto non si paga online: lo registri tu quando arriva
     },
 
     async submit(input, nowMs = Date.now()) {

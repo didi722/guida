@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { LANGS } from './langs.js';
+import { DEFAULT_OPTION_TIERS } from './optionPolicy.js';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -103,7 +104,17 @@ export function createConfig(overrides = {}) {
       slotStepMin: num(e.SLOT_STEP_MIN, 30), // passo orari per i servizi a inizio libero
       holdMinutes: num(e.HOLD_MINUTES, 35), // blocco dello slot durante il pagamento
       allowPayOnSite: bool(e.ALLOW_PAY_ON_SITE, false), // pagamento il giorno del servizio: disattivato di default
+      paymentsFrom: /^\d{4}-\d{2}-\d{2}$/.test(e.PAYMENTS_FROM || '') ? e.PAYMENTS_FROM : '', // «pre-apertura»: prima di questa data si prenota senza incassare online (vedi opening.js)
       currency: 'EUR',
+    },
+
+    // Opzioni delle agenzie: la data resta trattenuta senza pagare fino a una scadenza, poi si libera da sola (vedi optionPolicy.js)
+    options: {
+      enabled: bool(e.OPTIONS_ENABLED, true),
+      tiers: DEFAULT_OPTION_TIERS.map((t) => ({ ...t })), // «se il tour è fra almeno N giorni, l'opzione dura D giorni»
+      minReleaseHours: num(e.OPTION_MIN_RELEASE_HOURS, 48), // l'opzione scade almeno così tante ore prima del servizio
+      maxActive: num(e.OPTION_MAX_ACTIVE, 5), // opzioni aperte insieme per partner (0 = nessun limite)
+      reminderHours: num(e.OPTION_REMINDER_HOURS, 24), // promemoria all'agenzia così tante ore prima della scadenza
     },
 
     calendar: {

@@ -1,5 +1,6 @@
 // Partner B2B nel pannello: elenco, approvazione, condizioni, listino dedicato e politica di annullo.
 import express from 'express';
+import { activeOptionCount } from '../bookings.js';
 import { sendPartnerApproved } from '../emails.js';
 import { send } from '../http.js';
 import { MAX_HOURS, MAX_TIERS, validateTiers } from '../policy.js';
@@ -13,6 +14,7 @@ const FLASH = {
   prices: 'Listino aggiornato.',
   policy: 'Politica di annullo aggiornata.',
   copied: 'Copiato.',
+  options: 'Opzioni aggiornate.',
 };
 const ERR = {
   price: 'Un prezzo non è valido: scrivi un importo in euro, per esempio 24,50 (lascia vuoto per usare la tariffa standard).',
@@ -22,6 +24,7 @@ const ERR = {
   order: 'Il rimborso non può aumentare avvicinandosi al servizio: più si è vicini, meno si rimborsa.',
   count: `Al massimo ${MAX_TIERS} scaglioni.`,
   copy: 'Scegli il partner da cui copiare.',
+  options: 'Durata e numero di opzioni: scrivi numeri interi (durata da 1 a 90 giorni, opzioni da 0 a 100) oppure lascia vuoto.',
 };
 
 export function adminPartnersRouter(app) {
@@ -43,7 +46,8 @@ export function adminPartnersRouter(app) {
     if (!a) return next();
     const bookings = db.prepare('SELECT * FROM bookings WHERE account_id = ? ORDER BY date DESC LIMIT 100').all(a.id);
     const others = db.prepare('SELECT id, company FROM accounts WHERE id != ? ORDER BY company').all(a.id);
-    send(res, partnerDetailPage(ctxOf(req), a, { bookings, others, flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
+    const openOptions = activeOptionCount(db, a.id);
+    send(res, partnerDetailPage(ctxOf(req), a, { bookings, others, openOptions, flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
   });
 
   // stato, sconto, pagamento a fattura, note
@@ -82,6 +86,23 @@ export function adminPartnersRouter(app) {
     for (const [slug, cents] of Object.entries(accountPrices(a))) if (!content.tours.some((t) => t.slug === slug) && content.tour(slug)) list[slug] = cents;
     db.prepare('UPDATE accounts SET prices_json = ? WHERE id = ?').run(Object.keys(list).length ? JSON.stringify(list) : null, a.id);
     res.redirect(303, here(a.id, 'ok', 'prices'));
+  });
+
+  // opzioni: può opzionare, durata fissa, massimo di opzioni aperte
+  r.post('/partners/:id/options', form, (req, res, next) => {
+    const a = get(req.params.id);
+    if (!a) return next();
+    const int = (v, min, max) => {
+      const raw = String(v ?? '').trim();
+      if (raw === '') return { ok: true, value: null };
+      const n = Number(raw.replace(',', '.'));
+      return Number.isInteger(n) && n >= min && n <= max ? { ok: true, value: n } : { ok: false };
+    };
+    const days = int(req.body.option_days, 1, 90);
+    const max = int(req.body.option_max, 0, 100);
+    if (!days.ok || !max.ok) return res.redirect(303, here(a.id, 'err', 'options'));
+    db.prepare('UPDATE accounts SET options_enabled = ?, option_days = ?, option_max = ? WHERE id = ?').run(req.body.options_enabled ? 1 : 0, days.value, max.value, a.id);
+    res.redirect(303, here(a.id, 'ok', 'options'));
   });
 
   // politica di annullo a scaglioni

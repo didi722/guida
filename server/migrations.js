@@ -352,6 +352,16 @@ const V12_SERVICE_JSON = `
 ALTER TABLE bookings ADD COLUMN service_json TEXT;
 `;
 
+const V13_OPTIONS = `
+-- Opzioni delle agenzie: la data resta trattenuta fino a una scadenza (status 'option'), poi si libera da sola
+ALTER TABLE bookings ADD COLUMN option_expires_at TEXT;       -- fino a quando lo slot resta trattenuto (si conserva anche dopo la conferma o la scadenza)
+ALTER TABLE bookings ADD COLUMN option_reminded_at TEXT;      -- promemoria di scadenza già inviato
+ALTER TABLE accounts ADD COLUMN options_enabled INTEGER NOT NULL DEFAULT 1;  -- il partner può opzionare
+ALTER TABLE accounts ADD COLUMN option_days INTEGER;          -- durata fissa dell'opzione (giorni) per questo partner; NULL = tabella del sito
+ALTER TABLE accounts ADD COLUMN option_max INTEGER;           -- massimo di opzioni aperte insieme per questo partner; NULL = valore del sito
+CREATE INDEX IF NOT EXISTS bookings_option ON bookings(status, option_expires_at);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -377,6 +387,8 @@ export const MIGRATIONS = [
   V11_FEATURED_FEEDBACK,
   // v12 — dettaglio dei servizi a ore
   V12_SERVICE_JSON,
+  // v13 — opzioni delle agenzie
+  V13_OPTIONS,
 ];
 
 export function migrate(db) {

@@ -5,10 +5,10 @@ import { tierSentences } from '../policyText.js';
 import { accountPrices, unitPriceFor } from '../pricing.js';
 import { addDays, fmtDate, localToInstant, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
-import { STATUS_IT, adminLayout } from './admin.js';
+import { adminLayout, statusLabel } from './admin.js';
 
 const ST = { pending: 'Da approvare', approved: 'Approvato', rejected: 'Rifiutato', suspended: 'Sospeso' };
-const chip = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
+const chip = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', option: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
 const eur = (c) => formatMoney(c, 'it');
 const euroInput = (c) => (c == null ? '' : c % 100 ? (c / 100).toFixed(2).replace('.', ',') : String(c / 100));
 const splitHours = (h) => (h >= 48 && h % 24 === 0 ? { value: h / 24, unit: 'd' } : { value: h, unit: 'h' });
@@ -37,7 +37,7 @@ ${items.length
   return adminLayout(ctx, { title: 'Partner B2B', active: '/admin/partners', body });
 }
 
-export function partnerDetailPage(ctx, a, { bookings, others, flash = '', error = '' }) {
+export function partnerDetailPage(ctx, a, { bookings, others, openOptions = 0, flash = '', error = '' }) {
   const { app } = ctx;
   const { cfg, content } = app;
   const tours = content.tours.filter((x) => x.pricing !== 'hourly');
@@ -93,6 +93,19 @@ ${others.length
   ? html`<form class="inline-form copy-form" method="post" action="/admin/partners/${a.id}/prices"><input type="hidden" name="action" value="copy"><label class="small muted">Copia il listino da</label> <select name="copy_from">${copyOptions}</select> <button class="btn btn-outline btn-sm" type="submit" data-confirm="Sostituire il listino di ${a.company} con quello scelto?">Copia</button></form>`
   : ''}
 
+<h2 class="h-sub spaced" id="opzioni">Opzioni (data trattenuta senza pagare)</h2>
+<form class="card pad form" method="post" action="/admin/partners/${a.id}/options">
+  <p class="muted">Con l’opzione l’agenzia tiene la data mentre aspetta la conferma del suo cliente, senza pagare e senza impegno; se non conferma entro la scadenza la data si libera da sola. ${cfg.options.enabled ? html`Per questo partner valgono le regole del sito (<a href="/admin/settings?s=options#options">Sito › Impostazioni › Opzioni per le agenzie</a>) salvo ciò che cambi qui sotto.` : html`Le opzioni sono <strong>spente per tutto il sito</strong> (<a href="/admin/settings?s=options#options">Sito › Impostazioni › Opzioni per le agenzie</a>).`}</p>
+  <ul class="plain facts-list">${cfg.options.tiers.map((t) => html`<li><span class="muted">tour fra almeno ${t.fromDays} giorni</span> <strong>${t.days} ${t.days === 1 ? 'giorno' : 'giorni'}</strong></li>`)}</ul>
+  <label class="check"><input type="checkbox" name="options_enabled" value="1" ${a.options_enabled ? raw('checked') : ''}> Può opzionare</label>
+  <div class="form-grid">
+    <label class="field"><span class="label">Durata fissa dell’opzione <em>(giorni; vuoto = secondo la tabella)</em></span><input type="number" name="option_days" min="1" max="90" value="${a.option_days ?? ''}" inputmode="numeric" placeholder="tabella del sito"></label>
+    <label class="field"><span class="label">Opzioni aperte insieme <em>(vuoto = ${cfg.options.maxActive || 'nessun limite'}, come il sito; 0 = nessun limite)</em></span><input type="number" name="option_max" min="0" max="100" value="${a.option_max ?? ''}" inputmode="numeric" placeholder="${cfg.options.maxActive || 'nessun limite'}"></label>
+  </div>
+  <p class="small muted">Una durata fissa vale anche per i tour vicini, ma l’opzione scade sempre almeno ${cfg.options.minReleaseHours} ore prima del servizio. Opzioni aperte ora: <strong>${openOptions}</strong>.</p>
+  <div class="btn-row"><button class="btn btn-gold" type="submit">Salva le opzioni</button></div>
+</form>
+
 <h2 class="h-sub spaced" id="annullo">Politica di annullo</h2>
 <form class="card pad form" method="post" action="/admin/partners/${a.id}/policy" id="policy-form">
   <p class="muted">${custom ? 'Questo partner ha una politica propria.' : html`Ora vale quella predefinita del sito: <strong>rimborso totale fino a ${cfg.policy.b2bFreeCancelHours} ore prima</strong>. Compila le righe per personalizzarla.`}
@@ -112,7 +125,7 @@ ${others.length
 
 <h2 class="h-sub spaced">Prenotazioni</h2>
 ${bookings.length
-  ? html`<div class="card table-wrap"><table class="table"><tbody>${bookings.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')} ${b.start_time}</a></td><td>${content.tour(b.tour_slug)?.i18n.it.title}</td><td class="num">${b.participants}</td><td><span class="chip ${chip(b.status)}">${STATUS_IT[b.status]}</span></td><td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}</tbody></table></div>`
+  ? html`<div class="card table-wrap"><table class="table"><tbody>${bookings.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')} ${b.start_time}</a></td><td>${content.tour(b.tour_slug)?.i18n.it.title}</td><td class="num">${b.participants}</td><td><span class="chip ${chip(b.status)}">${statusLabel(b)}</span></td><td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}</tbody></table></div>`
   : html`<p class="muted">Ancora nessuna prenotazione.</p>`}`;
   return adminLayout(ctx, { title: a.company, active: '/admin/partners', body, flash, error, scripts: `<script src="/js/admin-partner.js?v=${app.assetVersion}" defer></script>` });
 }

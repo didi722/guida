@@ -1,7 +1,8 @@
 // Orchestrazione: collega DB, pagamenti ed email.
-import { BookingError, bookingDue, cancelBooking, confirmPaid, createBooking, expireBooking, expireHolds, getBooking, getBookingByRef, markRefund } from './bookings.js';
-import { sendBookingCancelled, sendBookingConfirmed, sendSlotLostRefund } from './emails.js';
-import { fmtDate } from './time.js';
+import { BookingError, bookingDue, cancelBooking, confirmOption, confirmPaid, createBooking, expireBooking, expireHolds, expireOptions, extendOption, getBooking, getBookingByRef, markRefund, optionsDueForReminder, releaseOption } from './bookings.js';
+import { notifyGuideOption, sendBookingCancelled, sendBookingConfirmed, sendOptionCreated, sendOptionExpired, sendOptionExtended, sendOptionReleased, sendOptionReminder, sendSlotLostRefund } from './emails.js';
+import { onlinePaymentsOpen } from './opening.js';
+import { fmtDate, localToInstant } from './time.js';
 
 export function createServices(app) {
   const { db, cfg, content, payments } = app;
@@ -44,6 +45,12 @@ export function createServices(app) {
     /** Prenota e, se si paga con carta, prepara il pagamento. Ritorna { booking, redirect }. */
     async book(input, lang, nowMs = Date.now()) {
       const booking = createBooking(app, input, nowMs);
+      if (booking.status === 'option') {
+        // opzione: la data resta trattenuta senza pagare; l'agenzia conferma (o rilascia) dal suo account
+        await sendOptionCreated(app, booking, nowMs);
+        await notifyGuideOption(app, booking, 'created');
+        return { booking, redirect: `/${lang}/booking/${booking.ref}?t=${booking.token}&new=1` };
+      }
       if (booking.payment_method !== 'card') {
         await sendBookingConfirmed(app, booking, nowMs);
         return { booking, redirect: `/${lang}/booking/${booking.ref}?t=${booking.token}&new=1` };
@@ -91,10 +98,72 @@ export function createServices(app) {
     async cancel(bookingId, { by, reason, refund = 'auto' }, nowMs = Date.now()) {
       const res = cancelBooking(app, bookingId, { by, reason, refund }, nowMs);
       if (res.already) return res;
+      if (res.option) {
+        // un'opzione non ha incassato nulla: «annullarla» la rilascia (nessun rimborso, nessuna penale); l'agenzia lo sa se l'ha fatto la guida
+        if (by === 'admin') await sendOptionReleased(app, res.booking);
+        else await notifyGuideOption(app, res.booking, 'released');
+        return res;
+      }
       let refunded = 0;
       if (res.refundCents) refunded = (await doRefund(res.booking, res.refundCents)) ? res.refundCents : 0;
       await sendBookingCancelled(app, getBooking(db, bookingId), refunded);
       return { ...res, refundCents: refunded, booking: getBooking(db, bookingId) };
+    },
+
+    /**
+     * L'agenzia conferma un'opzione: a fattura è subito confermata (voucher compreso); con la carta si passa al pagamento.
+     * @returns {Promise<{outcome: string, booking: object, redirect?: string}>}
+     */
+    async confirmOption(bookingId, lang, { method = null } = {}, nowMs = Date.now()) {
+      const res = confirmOption(app, bookingId, { method }, nowMs);
+      if (res.outcome === 'confirmed') {
+        await sendBookingConfirmed(app, res.booking, nowMs);
+      } else if (res.outcome === 'pay') {
+        try {
+          res.redirect = await svc.startCheckout(res.booking, lang, nowMs);
+          res.booking = getBooking(db, res.booking.id);
+        } catch (err) {
+          // se Stripe non risponde l'opzione resta com'era: si può riprovare
+          expireBooking(db, res.booking.id, nowMs);
+          console.error('[opzione] errore Stripe:', err.message);
+          return { outcome: 'payment', booking: getBooking(db, res.booking.id) };
+        }
+      } else if (res.outcome === 'expired') {
+        await sendOptionExpired(app, res.booking);
+        await notifyGuideOption(app, res.booking, 'expired');
+      }
+      return res;
+    },
+
+    /** Rilascia un'opzione (la data torna libera). `by`: 'customer' (l'agenzia) | 'admin'. @returns {Promise<object|null>} */
+    async releaseOption(bookingId, { by, reason }, nowMs = Date.now()) {
+      const b = releaseOption(app, bookingId, { by, reason }, nowMs);
+      if (!b) return null;
+      if (by === 'admin') await sendOptionReleased(app, b);
+      else await notifyGuideOption(app, b, 'released');
+      return b;
+    },
+
+    /** La guida prolunga un'opzione di qualche giorno e avvisa l'agenzia. @returns {Promise<object|null>} */
+    async extendOption(bookingId, days, nowMs = Date.now()) {
+      const b = extendOption(app, bookingId, days, nowMs);
+      if (b) await sendOptionExtended(app, b);
+      return b;
+    },
+
+    /** Lavoro periodico: libera le opzioni scadute (avvisando agenzia e guida) e manda i promemoria di scadenza. */
+    async sweepOptions(nowMs = Date.now()) {
+      let n = 0;
+      for (const b of expireOptions(db, nowMs)) {
+        n++;
+        await sendOptionExpired(app, b);
+        await notifyGuideOption(app, b, 'expired');
+      }
+      for (const b of optionsDueForReminder(app, nowMs)) {
+        const claimed = db.prepare(`UPDATE bookings SET option_reminded_at = ? WHERE id = ? AND status = 'option' AND option_reminded_at IS NULL`).run(new Date(nowMs).toISOString(), b.id).changes;
+        if (claimed === 1) await sendOptionReminder(app, getBooking(db, b.id), nowMs);
+      }
+      return n;
     },
 
     /** Il cliente è tornato da Stripe prima del webhook: verifichiamo noi lo stato. */
@@ -108,12 +177,17 @@ export function createServices(app) {
   };
 
   app.jobs.push((nowMs) => svc.sweep(nowMs));
+  app.jobs.push((nowMs) => svc.sweepOptions(nowMs));
+
+  /** Prenotazione confermata ma ancora da pagare (pagamento il giorno del servizio, o prenotata prima dell'apertura degli incassi): si può pagare online dalla sua pagina. */
+  const payableLater = (b, nowMs = Date.now()) => b.status === 'confirmed' && b.channel === 'b2c' && b.payment_status === 'unpaid' && b.payment_method === 'onsite' && bookingDue(b) > 0 && onlinePaymentsOpen(app, nowMs) && localToInstant(b.date, b.start_time) > nowMs;
+  svc.payableLater = payableLater;
 
   // Le prenotazioni si pagano con lo stesso meccanismo (webhook, ripresa, pagina demo) di gift card e acconti.
   app.payables.register('booking', {
     find: (ref) => getBookingByRef(db, ref),
     dueCents: bookingDue,
-    isOpen: (b) => b.status === 'held' && Date.parse(b.hold_expires_at) > Date.now(),
+    isOpen: (b) => (b.status === 'held' && Date.parse(b.hold_expires_at) > Date.now()) || payableLater(b),
     title: (b, lang) => content.tour(b.tour_slug)?.i18n[lang]?.title ?? b.ref,
     onPaid: (b, pi, nowMs) => svc.handlePaid(b.id, pi, nowMs),
     onExpired: (b) => expireBooking(db, b.id),

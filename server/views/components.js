@@ -32,6 +32,14 @@ export function languagesBadge(ctx, { variant = 'hero' } = {}) {
   </div>`;
 }
 
+/** Quanto manca a una scadenza, a parole: «3 giorni», «1 giorno», «20 ore». */
+export function timeLeft(t, ms) {
+  const hours = ms / 3_600_000;
+  if (hours >= 47) { const d = Math.round(hours / 24); return d === 1 ? t('option.days1') : t('option.daysN', { n: d }); }
+  if (hours >= 23) return t('option.days1');
+  return t('time.hours', { n: Math.max(1, Math.round(hours)) });
+}
+
 /** Ci sono servizi a ore prenotabili da questo canale? Se no, «Calcola un preventivo» non porterebbe da nessuna parte e il pulsante non si mostra. */
 export const hasHourlyProducts = (ctx, channel) => {
   const rates = ctx.app.rates.get();

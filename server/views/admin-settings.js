@@ -13,6 +13,18 @@ function fieldHtml(f) {
     return html`<div class="field"><label class="check"><input type="checkbox" name="${f.key}" value="1" ${f.value ? raw('checked') : ''}> <span><strong>${f.label}</strong>${f.hint ? html`<br><small class="muted">${f.hint}</small>` : ''}</span></label>${err}${dflt}</div>`;
   }
   const label = html`<span class="label">${f.label}${f.hint ? html` <em>${f.hint}</em>` : ''}</span>`;
+  if (f.type === 'tiers') {
+    // la tabella «se il tour è fra almeno N giorni, l'opzione dura D giorni»: righe con due numeri, qualche riga vuota per aggiungerne
+    const rows = Array.from({ length: 5 }, (_, i) => f.value[i] ?? { from: '', days: '' });
+    const summary = f.base.length ? f.base.map((r) => `da ${r.from} giorni: ${r.days}`).join(' · ') : '(nessuna riga)';
+    return html`<fieldset class="field field-wide tiers-field"><legend class="label">${f.label}${f.hint ? html` <em>${f.hint}</em>` : ''}</legend>
+      <div class="tier-rows">${rows.map((r, i) => html`<div class="tier-row"><span class="muted">Se il tour è fra almeno</span>
+        <input name="${f.key}.${i}.from" inputmode="numeric" value="${r.from}" aria-label="Giorni che mancano al tour, riga ${i + 1}" class="tier-num" autocomplete="off">
+        <span class="muted">giorni, l’opzione dura</span>
+        <input name="${f.key}.${i}.days" inputmode="numeric" value="${r.days}" aria-label="Durata dell’opzione in giorni, riga ${i + 1}" class="tier-num" autocomplete="off"><span>giorni</span></div>`)}</div>
+      <p class="small muted">Lascia vuote le righe che non servono. Esempio: «da 30 giorni: 10» vuol dire che per un tour che inizia fra 30 giorni o più l’opzione dura 10 giorni.</p>
+      ${err}${f.changed ? html`<small class="muted">Predefinito: ${summary}</small>` : ''}</fieldset>`;
+  }
   if (f.type === 'select') {
     return html`<label class="field">${label}<select name="${f.key}">${f.options.map(([v, l]) => html`<option value="${v}" ${v === f.value ? raw('selected') : ''}>${l}</option>`)}</select>${err}${dflt}</label>`;
   }
