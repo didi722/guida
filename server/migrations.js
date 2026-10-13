@@ -377,6 +377,30 @@ CREATE TABLE feedback_translations (
 );
 `;
 
+const V15_LANG_PRIVATE_INVITES = `
+-- Lingua in cui si svolge il tour (diversa dalla lingua della conferma, bookings.lang): in un tour condiviso a posti, la lingua del primo che prenota
+-- vincola quella partenza. NULL = prenotazione di prima (nessun vincolo).
+ALTER TABLE bookings ADD COLUMN tour_lang TEXT;
+
+-- Impegni privati in agenda (tour presi fuori dal sito): sono blocchi orari con un titolo; una serie di giorni si elimina insieme.
+ALTER TABLE blocks ADD COLUMN title TEXT;
+ALTER TABLE blocks ADD COLUMN details TEXT;
+ALTER TABLE blocks ADD COLUMN kind TEXT NOT NULL DEFAULT 'external';  -- external (altra agenzia, impegno) | private (tour preso privatamente)
+ALTER TABLE blocks ADD COLUMN series TEXT;
+
+-- Inviti a un amico: ogni invito ha un suo codice sconto, valido una volta sola, per quella partenza.
+CREATE TABLE invites (
+  id            INTEGER PRIMARY KEY,
+  booking_id    INTEGER NOT NULL REFERENCES bookings(id),
+  promo_code_id INTEGER NOT NULL REFERENCES promo_codes(id),
+  code          TEXT NOT NULL,
+  friend_email  TEXT,
+  sent_at       TEXT,
+  created_at    TEXT NOT NULL
+);
+CREATE INDEX invites_booking ON invites(booking_id);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -406,6 +430,8 @@ export const MIGRATIONS = [
   V13_OPTIONS,
   // v14 — traduzioni automatiche dei commenti
   V14_REVIEW_TRANSLATIONS,
+  // v15 — lingua del tour, impegni privati in agenda, inviti a un amico
+  V15_LANG_PRIVATE_INVITES,
 ];
 
 export function migrate(db) {

@@ -41,9 +41,11 @@ export function adminDiscountsRouter(app) {
   r.get('/discounts', (req, res) => {
     const tab = req.query.tab === 'gifts' ? 'gifts' : 'promos';
     const now = Date.now();
-    const promos = db.prepare('SELECT * FROM promo_codes ORDER BY active DESC, id DESC').all().map((p) => ({ ...p, uses: promoUses(db, p.id, now) }));
+    // i codici degli inviti («Invita un amico») sono automatici: non si elencano uno per uno
+    const promos = db.prepare('SELECT * FROM promo_codes WHERE id NOT IN (SELECT promo_code_id FROM invites) ORDER BY active DESC, id DESC').all().map((p) => ({ ...p, uses: promoUses(db, p.id, now) }));
+    const invites = db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(EXISTS (SELECT 1 FROM bookings b WHERE b.promo_code_id = invites.promo_code_id AND b.status = \'confirmed\')), 0) AS used FROM invites').get();
     const gifts = tab === 'gifts' ? db.prepare(`SELECT * FROM gift_cards WHERE status != 'pending' OR created_at > ? ORDER BY id DESC LIMIT 300`).all(new Date(now - 7 * 86400_000).toISOString()) : [];
-    send(res, discountsPage(ctxOf(req), { tab, promos, gifts, tours: content.tours, today: nowRome(now).date, flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
+    send(res, discountsPage(ctxOf(req), { tab, promos, invites, gifts, tours: content.tours, today: nowRome(now).date, flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
   });
 
   r.post('/discounts/promos', form, (req, res) => {

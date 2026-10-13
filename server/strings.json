@@ -5116,5 +5116,161 @@
   "All supplements and terms",
   "Todos los suplementos y condiciones",
   "すべての割増料金と条件"
+ ],
+ "s.tourLang": [
+  "Lingua del tour",
+  "Tour language",
+  "Idioma del tour",
+  "ツアーの言語"
+ ],
+ "f.tourLang": [
+  "Lingua del tour",
+  "Tour language",
+  "Idioma del tour",
+  "ツアーの言語"
+ ],
+ "f.tourLangHint": [
+  "La lingua in cui si svolge il tour. La conferma ti arriva nella lingua scelta qui sotto.",
+  "The language the tour is held in. Your confirmation arrives in the language chosen below.",
+  "El idioma en el que se realiza el tour. La confirmación te llega en el idioma elegido abajo.",
+  "ツアーが行われる言語です。確認メールは下で選んだ言語で届きます。"
+ ],
+ "checkout.langLocked": [
+  "Questa partenza è già prenotata in {lang}: per non mescolare nello stesso gruppo persone che parlano lingue diverse, si può prenotare solo in {lang}.",
+  "This departure is already booked in {lang}: to avoid mixing people who speak different languages in the same group, it can only be booked in {lang}.",
+  "Esta salida ya está reservada en {lang}: para no mezclar en el mismo grupo a personas que hablan idiomas distintos, solo se puede reservar en {lang}.",
+  "この出発はすでに{lang}で予約されています。異なる言語の方が同じグループにならないよう、{lang}でのみ予約できます。"
+ ],
+ "err.tourLang": [
+  "Nel frattempo questa partenza è stata prenotata in {lang}: si può prenotare solo in quella lingua. Controlla la lingua del tour e riprova.",
+  "In the meantime this departure was booked in {lang}: it can only be booked in that language. Check the tour language and try again.",
+  "Entretanto esta salida se ha reservado en {lang}: solo se puede reservar en ese idioma. Revisa el idioma del tour e inténtalo de nuevo.",
+  "その間にこの出発が{lang}で予約されました。この言語でのみ予約できます。ツアーの言語を確認してもう一度お試しください。"
+ ],
+ "w.tourLang": [
+  "Lingua del tour",
+  "Tour language",
+  "Idioma del tour",
+  "ツアーの言語"
+ ],
+ "w.inLang": [
+  "in {lang}",
+  "in {lang}",
+  "en {lang}",
+  "{lang}で"
+ ],
+ "invite.title": [
+  "Invita un amico",
+  "Invite a friend",
+  "Invita a un amigo",
+  "友だちを招待"
+ ],
+ "invite.lead": [
+  "In questa partenza c’è ancora posto. Manda a un amico il suo codice sconto personale: ha il {percent}% di sconto, una volta sola e solo per questa partenza, e si unisce al tuo gruppo.",
+  "There is still room on this departure. Send a friend their own personal code: they get {percent}% off, once only and for this departure only, and join your group.",
+  "Aún hay plazas en esta salida. Envía a un amigo su código personal: tiene un {percent}% de descuento, una sola vez y solo para esta salida, y se une a tu grupo.",
+  "この出発にはまだ空きがあります。友だちに専用の割引コードを送りましょう。この出発のみ、1回限り{percent}%割引で、あなたのグループに参加できます。"
+ ],
+ "invite.email": [
+  "Email dell’amico (facoltativa)",
+  "Friend’s email (optional)",
+  "Email del amigo (opcional)",
+  "友だちのメール（任意）"
+ ],
+ "invite.emailHint": [
+  "Se la scrivi, gli mandiamo noi l’invito. Altrimenti copi il collegamento e lo mandi tu.",
+  "If you add it, we send the invitation. Otherwise copy the link and send it yourself.",
+  "Si la escribes, enviamos nosotros la invitación. Si no, copia el enlace y envíalo tú.",
+  "入力するとこちらから招待を送ります。入力しない場合は、リンクをコピーして送ってください。"
+ ],
+ "invite.btn": [
+  "Crea l’invito",
+  "Create the invitation",
+  "Crear la invitación",
+  "招待を作成"
+ ],
+ "invite.code": [
+  "Codice",
+  "Code",
+  "Código",
+  "コード"
+ ],
+ "invite.link": [
+  "Collegamento da mandare",
+  "Link to send",
+  "Enlace para enviar",
+  "送るリンク"
+ ],
+ "invite.whatsapp": [
+  "Manda su WhatsApp",
+  "Send on WhatsApp",
+  "Enviar por WhatsApp",
+  "WhatsAppで送る"
+ ],
+ "invite.share": [
+  "Ti invito a «{tour}» il {date} alle {time}. Con questo codice hai il {percent}% di sconto: {code}",
+  "I’m inviting you to “{tour}” on {date} at {time}. Use this code for {percent}% off: {code}",
+  "Te invito a «{tour}» el {date} a las {time}. Con este código tienes un {percent}% de descuento: {code}",
+  "{date} {time}の「{tour}」にご招待します。このコードで{percent}%割引：{code}"
+ ],
+ "invite.used": [
+  "usato",
+  "used",
+  "usado",
+  "使用済み"
+ ],
+ "invite.unused": [
+  "non ancora usato",
+  "not used yet",
+  "aún sin usar",
+  "未使用"
+ ],
+ "invite.sentTo": [
+  "inviato a {email}",
+  "sent to {email}",
+  "enviado a {email}",
+  "{email}に送信済み"
+ ],
+ "invite.none.full": [
+  "Questa partenza è al completo (o lo sarà con gli inviti già mandati): non si possono mandare altri inviti.",
+  "This departure is full (or will be with the invitations already sent): no more invitations can be sent.",
+  "Esta salida está completa (o lo estará con las invitaciones ya enviadas): no se pueden enviar más invitaciones.",
+  "この出発は満席です（送信済みの招待で満席になります）。これ以上招待できません。"
+ ],
+ "invite.none.max": [
+  "Hai già mandato tutti gli inviti che si possono fare con questa prenotazione.",
+  "You have already sent all the invitations allowed with this booking.",
+  "Ya has enviado todas las invitaciones permitidas con esta reserva.",
+  "この予約で送れる招待はすべて送信済みです。"
+ ],
+ "booking.flash.inviteMade": [
+  "Invito creato: copia il collegamento o mandalo su WhatsApp.",
+  "Invitation created: copy the link or send it on WhatsApp.",
+  "Invitación creada: copia el enlace o envíalo por WhatsApp.",
+  "招待を作成しました。リンクをコピーするか、WhatsAppで送ってください。"
+ ],
+ "booking.flash.inviteSent": [
+  "Invito mandato all’amico, con il suo codice sconto.",
+  "Invitation sent to your friend, with their discount code.",
+  "Invitación enviada a tu amigo, con su código de descuento.",
+  "友だちに割引コード付きの招待を送りました。"
+ ],
+ "booking.flash.invite-error": [
+  "Non è stato possibile creare l’invito: controlla l’email o riprova più tardi.",
+  "The invitation could not be created: check the email or try again later.",
+  "No se pudo crear la invitación: revisa el email o inténtalo más tarde.",
+  "招待を作成できませんでした。メールを確認するか、後でもう一度お試しください。"
+ ],
+ "promo.err.own_invite": [
+  "Questo codice è un invito per un amico: non vale per chi lo ha mandato.",
+  "This code is an invitation for a friend: it is not valid for the person who sent it.",
+  "Este código es una invitación para un amigo: no vale para quien lo envió.",
+  "このコードは友だち向けの招待コードです。送った本人には使えません。"
+ ],
+ "invite.mailHint": [
+  "Hai ancora posti liberi in questa partenza: puoi invitare un amico con il suo codice sconto personale.",
+  "There is still room on this departure: you can invite a friend with their own personal discount code.",
+  "Quedan plazas libres en esta salida: puedes invitar a un amigo con su código de descuento personal.",
+  "この出発にはまだ空きがあります。専用の割引コードで友だちを招待できます。"
  ]
 }

@@ -5,7 +5,7 @@ import { splitAmounts } from '../policy.js';
 import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { dayOfWeek, fmtDate, fmtMonth, monthDates, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
-import { langName, normLang } from '../langs.js';
+import { LANG_META, langName, normLang } from '../langs.js';
 import { parseServiceRecord, serviceNote } from '../rates.js';
 import { quoteLines } from './hourly.js';
 
@@ -83,7 +83,7 @@ function bookingRow(ctx, b) {
   return html`<a class="agenda-item" href="/admin/bookings/${b.id}">
     <span class="agenda-time"><strong>${b.start_time}</strong><small>${b.end_time}</small></span>
     <span class="agenda-main"><strong>${tour?.i18n.it.title ?? b.tour_slug}</strong>
-      <small>${b.participants} pers. · ${b.name}${b.client_ref ? ' · ' + b.client_ref : ''}${b.channel === 'b2b' ? ' · B2B' : ''}</small></span>
+      <small>${b.participants} pers.${b.tour_lang ? ` · ${b.tour_lang.toUpperCase()}` : ''} · ${b.name}${b.client_ref ? ' · ' + b.client_ref : ''}${b.channel === 'b2b' ? ' · B2B' : ''}</small></span>
     <span class="agenda-state"><span class="chip ${chipFor(b.status)}">${statusLabel(b)}</span><small>${b.status === 'option' ? `fino al ${untilIt(b.option_expires_at)}` : `${PAY_IT[b.payment_method]} · ${PAYSTATUS_IT[b.payment_status]}`}</small></span>
   </a>`;
 }
@@ -95,6 +95,20 @@ function programRow(d) {
     <span class="agenda-state"><span class="chip ${d.status === 'confirmed' ? 'chip-ok' : 'chip-warn'}">${d.status === 'confirmed' ? 'Programma' : 'Manca l’acconto'}</span>${d.conflicts.length ? html`<small class="field-error">⚠ si sovrappone a un altro impegno</small>` : ''}</span>
   </a>`;
 }
+
+const allDay = (b) => b.start_time === '00:00' && b.end_time >= '23:59';
+/** Un impegno fuori dal sito (tour privato preso per email o di persona, altra agenzia): toglie le ore dalle disponibilità. */
+function blockRow(b) {
+  const label = b.title || b.note || 'Impegno';
+  return html`<div class="agenda-item agenda-private">
+    <span class="agenda-time">${allDay(b) ? html`<strong>Tutto</strong><small>il giorno</small>` : html`<strong>${b.start_time}</strong><small>${b.end_time}</small>`}</span>
+    <span class="agenda-main"><strong>${label}</strong><small>${b.blockKind === 'private' ? 'Tour privato fuori dal sito' : 'Impegno esterno'}${b.details ? ' · ' + b.details : ''}</small></span>
+    <span class="agenda-state"><span class="chip">Non prenotabile</span>
+      <form method="post" action="/admin/agenda/block/${b.id}/delete" class="inline-form" data-confirm="Togliere questo impegno dall’agenda? Quelle ore torneranno prenotabili."><input type="hidden" name="d" value="${b.date}"><button class="btn btn-outline btn-sm" type="submit">Elimina</button></form>
+      ${b.series ? html`<form method="post" action="/admin/agenda/block/${b.id}/delete" class="inline-form" data-confirm="Togliere dall’agenda tutti i giorni di questo impegno?"><input type="hidden" name="all" value="1"><input type="hidden" name="d" value="${b.date}"><button class="btn btn-outline btn-sm" type="submit">Elimina tutti i giorni</button></form>` : ''}</span>
+  </div>`;
+}
+const agendaRow = (ctx, b) => (b.kind === 'program' ? programRow(b) : b.kind === 'block' ? blockRow(b) : bookingRow(ctx, b));
 
 function calendarWarning(problems) {
   return problems?.length
@@ -109,7 +123,7 @@ const EV_CLASS = { confirmed: 'ev-ok', held: 'ev-wait', option: 'ev-opt' };
 function agendaCalendar(ctx, cal, today) {
   const { month, prev, next, cells, selected, selectedItems } = cal;
   const href = (m, d = '') => `/admin?v=cal&m=${m}${d ? `&d=${d}` : ''}`;
-  const title = (b) => (b.kind === 'program' ? b.title : ctx.app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug);
+  const title = (b) => (b.kind === 'program' ? b.title : b.kind === 'block' ? b.title || b.note || 'Impegno' : ctx.app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug);
   return html`
 <div class="acal-head"><a class="btn btn-sm btn-outline" href="${href(prev)}" aria-label="Mese precedente">←</a><strong class="acal-title">${fmtMonth(month, 'it')}</strong><a class="btn btn-sm btn-outline" href="${href(next)}" aria-label="Mese successivo">→</a>
   ${month !== today.slice(0, 7) || selected !== today ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7), today)}">Oggi</a>` : ''}</div>
@@ -117,17 +131,18 @@ function agendaCalendar(ctx, cal, today) {
   ${['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((d) => html`<span class="acal-dow">${d}</span>`)}
   ${cells.map((c) => html`<a class="acal-cell ${c.inMonth ? '' : 'is-other'} ${c.date === today ? 'is-today' : ''} ${c.date === selected ? 'is-selected' : ''} ${c.closed ? 'is-closed' : ''} ${c.items.length ? 'has-items' : ''}" href="${href(month, c.date)}#giorno" aria-label="${fmtDate(c.date, 'it', 'weekday')}${c.closed ? ', chiuso' : ''}: ${c.items.length ? `${c.items.length} ${c.items.length === 1 ? 'servizio' : 'servizi'}` : 'libero'}">
     <span class="acal-n">${Number(c.date.slice(8))}</span>
-    <span class="acal-evs">${c.items.slice(0, 3).map((b) => html`<span class="acal-ev ${b.kind === 'program' ? 'ev-prog' : EV_CLASS[b.status] ?? 'ev-ok'}" title="${b.start_time} ${title(b)}">${b.start_time} ${SHORT(title(b))}</span>`)}${c.items.length > 3 ? html`<span class="acal-more">+${c.items.length - 3}</span>` : ''}</span>
+    <span class="acal-evs">${c.items.slice(0, 3).map((b) => html`<span class="acal-ev ${b.kind === 'program' ? 'ev-prog' : b.kind === 'block' ? 'ev-priv' : EV_CLASS[b.status] ?? 'ev-ok'}" title="${allDay(b) ? '' : b.start_time + ' '}${title(b)}">${allDay(b) ? '' : b.start_time + ' '}${SHORT(title(b))}</span>`)}${c.items.length > 3 ? html`<span class="acal-more">+${c.items.length - 3}</span>` : ''}</span>
     ${c.items.length ? html`<span class="acal-count" aria-hidden="true">${c.items.length}</span>` : ''}
     ${c.closed ? html`<span class="acal-closed">chiuso</span>` : ''}
   </a>`)}
 </div>
-<p class="small muted acal-legend"><span class="legend ev-ok"></span> confermata · <span class="legend ev-opt"></span> opzione (data trattenuta) · <span class="legend ev-wait"></span> in attesa di pagamento · <span class="legend ev-prog"></span> programma di più giorni · tocca un giorno per vederlo qui sotto.</p>
+<p class="small muted acal-legend"><span class="legend ev-ok"></span> confermata · <span class="legend ev-opt"></span> opzione (data trattenuta) · <span class="legend ev-wait"></span> in attesa di pagamento · <span class="legend ev-prog"></span> programma di più giorni · <span class="legend ev-priv"></span> impegno fuori dal sito · tocca un giorno per vederlo qui sotto.</p>
 <section class="agenda-day" id="giorno"><h3>${fmtDate(selected, 'it')}${selected === today ? html` <span class="chip chip-accent">Oggi</span>` : ''}${cells.find((c) => c.date === selected)?.closed ? html` <span class="chip chip-warn">chiuso</span>` : ''}</h3>
-  ${selectedItems.length ? html`<div class="card">${selectedItems.map((b) => (b.kind === 'program' ? programRow(b) : bookingRow(ctx, b)))}</div>` : html`<p class="muted">Nessun servizio in questo giorno.</p>`}</section>`;
+  ${selectedItems.length ? html`<div class="card">${selectedItems.map((b) => agendaRow(ctx, b))}</div>` : html`<p class="muted">Nessun servizio in questo giorno.</p>`}</section>`;
 }
 
 export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null }, programs, invoicesDue = 0, feedUrl, flash, problems, preOpening = null }) {
+  const selectedDay = calendar?.selected ?? today;
   const body = html`
 ${calendarWarning(problems)}
 ${preOpening ? html`<div class="notice notice-info" role="note"><strong>Pre-apertura:</strong> fino al ${fmtDate(preOpening, 'it', 'date')} il sito accetta prenotazioni (solo per date da quel giorno in poi) senza incassare online: i privati pagano il giorno del servizio, le agenzie a fattura. <a href="/admin/settings?s=rules#rules">Cambia la data</a></div>` : ''}
@@ -144,12 +159,28 @@ ${invoicesDue ? html`<div class="notice notice-err" role="alert"><strong>${invoi
 ${view === 'cal' && calendar
   ? agendaCalendar(ctx, calendar, today)
   : days.filter((d) => d.items.length).length
-    ? days.filter((d) => d.items.length).map((d) => html`<section class="agenda-day"><h3>${fmtDate(d.date, 'it')}${d.date === today ? html` <span class="chip chip-accent">Oggi</span>` : ''}</h3><div class="card">${d.items.map((b) => (b.kind === 'program' ? programRow(b) : bookingRow(ctx, b)))}</div></section>`)
+    ? days.filter((d) => d.items.length).map((d) => html`<section class="agenda-day"><h3>${fmtDate(d.date, 'it')}${d.date === today ? html` <span class="chip chip-accent">Oggi</span>` : ''}</h3><div class="card">${d.items.map((b) => agendaRow(ctx, b))}</div></section>`)
     : html`<p class="muted">Nessuna prenotazione nei prossimi 14 giorni.</p>`}
+<h2 class="h-sub spaced" id="privato">Un tour preso fuori dal sito?</h2>
+<form class="card pad form" method="post" action="/admin/agenda/private">
+  <p class="muted">Un cliente che ti ha scritto, una prenotazione di persona, un’altra agenzia: scrivila qui e quelle ore (o quei giorni) spariscono dalle disponibilità del sito, così nessuno le prenota per sbaglio.</p>
+  <label class="field"><span class="label">Cosa è</span><input name="title" required maxlength="120" placeholder="es. Tour privato, famiglia Rossi"></label>
+  <div class="form-grid">
+    <label class="field"><span class="label">Dal giorno</span><input type="date" name="from" required value="${selectedDay}"></label>
+    <label class="field"><span class="label">Al giorno <em>(se dura più giorni)</em></span><input type="date" name="to"></label>
+  </div>
+  <label class="check"><input type="checkbox" name="allDay" value="1" data-allday checked> Tutto il giorno</label>
+  <div class="form-grid" data-times hidden>
+    <label class="field"><span class="label">Dalle</span><input type="time" name="start" value="09:00"></label>
+    <label class="field"><span class="label">Alle</span><input type="time" name="end" value="13:00"></label>
+  </div>
+  <label class="field"><span class="label">Note <em>(facoltativo)</em></span><textarea name="details" rows="2" maxlength="600" placeholder="contatto, punto d’incontro, prezzo concordato…"></textarea></label>
+  <div class="btn-row"><button class="btn btn-gold" type="submit">Aggiungi all’agenda</button></div>
+</form>
 <h2 class="h-sub spaced">Calendario sul telefono</h2>
 <div class="card pad"><p>Aggiungi questo indirizzo come <strong>calendario in abbonamento</strong> (Google Calendar, Apple Calendar, Outlook) per vedere le prenotazioni confermate (e le opzioni) insieme ai tuoi impegni. L'indirizzo è privato: non condividerlo.</p>
 <p><input class="copy-field" readonly value="${feedUrl}" data-select-all></p></div>`;
-  return adminLayout(ctx, { title: 'Agenda', active: '/admin', body, flash });
+  return adminLayout(ctx, { title: 'Agenda', active: '/admin', body, flash, scripts: `<script src="/js/admin-agenda.js?v=${ctx.app.assetVersion}" defer></script>` });
 }
 
 export function bookingsPage(ctx, { items, filter, q }) {
@@ -196,6 +227,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       <div><dt>Data</dt><dd>${fmtDate(b.date, 'it')}</dd></div>
       <div><dt>Orario</dt><dd>${b.start_time}–${b.end_time}</dd></div>
       <div><dt>Persone</dt><dd>${b.participants}</dd></div>
+      ${b.tour_lang && LANG_META[b.tour_lang] ? html`<div><dt>Lingua del tour</dt><dd>${LANG_META[b.tour_lang].name}</dd></div>` : ''}
       ${service ? html`<div><dt>Servizio a ore</dt><dd>${serviceNote(service)}</dd></div>${quoteLines(makeT('it'), 'it', service, { total: false })}` : ''}
       ${b.status === 'option' ? html`<div><dt>Opzione</dt><dd>data trattenuta fino al <strong>${untilIt(b.option_expires_at)}</strong>${Date.parse(b.option_expires_at) - Date.now() < 48 * 3600_000 ? html` <span class="chip chip-warn">scade a breve</span>` : ''}<br><small class="muted">L’agenzia non ha pagato nulla: se non conferma entro la scadenza, la data si libera da sola.</small></dd></div>`
         : b.status === 'expired' && b.option_expires_at ? html`<div><dt>Opzione</dt><dd>terminata${b.cancelled_at ? ` il ${untilIt(b.cancelled_at)}` : ''}${b.cancel_reason ? ` · ${b.cancel_reason}` : ''}<br><small class="muted">Scadenza prevista: ${untilIt(b.option_expires_at)}. Nessun costo.</small></dd></div>`

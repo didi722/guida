@@ -7,7 +7,7 @@ import PDFDocument from 'pdfkit';
 import { bookingDue, cancellationState } from './bookings.js';
 import { ROOT } from './config.js';
 import { makeT } from './i18n.js';
-import { localeOf, normLang, pick } from './langs.js';
+import { LANG_META, localeOf, normLang, pick } from './langs.js';
 import { timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
 import { formatGiftCode } from './pricing.js';
@@ -291,6 +291,7 @@ export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = 
     [t('s.time'), timeRange(b, lang).replace('–', ' – '), { bold: true }],
     [t('s.guests'), String(b.participants)],
     [t('s.meeting'), ti.meetingPoint, ti.meetingUrl ? { sub: { text: t('tour.openMap'), url: ti.meetingUrl } } : {}],
+    ...(b.tour_lang && LANG_META[b.tour_lang] ? [[t('s.tourLang'), LANG_META[b.tour_lang].name]] : []),
     // sul voucher B2B, che l'agenzia può girare al cliente, non compaiono i recapiti di chi ha prenotato
     [t('s.name'), b2b ? b.name : [b.name, b.email, b.phone].filter(Boolean).join('  ·  ')],
   ];

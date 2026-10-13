@@ -695,8 +695,11 @@ body.admin { --header-h: 64px; }
 .ev-wait { background: var(--warn-bg); color: var(--warn); border-left-color: var(--warn); }
 .ev-opt { background: transparent; color: var(--warn); border: 1px dashed var(--warn); border-left-width: 3px; }
 .ev-prog { background: var(--gold-soft); color: var(--accent-text); border-left-color: var(--gold); }
+.ev-priv { background: rgba(120, 120, 120, 0.2); color: var(--text); border-left-color: var(--muted); }
+.agenda-private { background: repeating-linear-gradient(135deg, transparent 0 8px, rgba(127,127,127,.07) 8px 16px); cursor: default; }
+.agenda-private .agenda-state { flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .acal-more { font-size: 0.7rem; color: var(--muted); padding-left: 6px; } .acal-count { display: none; }
-.acal-legend .legend { width: 22px; height: 10px; border-radius: 4px; vertical-align: middle; border: 0; border-left: 3px solid var(--ok); background: var(--ok-bg); } .acal-legend .legend.ev-wait { border-left-color: var(--warn); background: var(--warn-bg); } .acal-legend .legend.ev-opt { background: transparent; border: 1px dashed var(--warn); border-left-width: 3px; } .acal-legend .legend.ev-prog { border-left-color: var(--gold); background: var(--gold-soft); }
+.acal-legend .legend { width: 22px; height: 10px; border-radius: 4px; vertical-align: middle; border: 0; border-left: 3px solid var(--ok); background: var(--ok-bg); } .acal-legend .legend.ev-wait { border-left-color: var(--warn); background: var(--warn-bg); } .acal-legend .legend.ev-opt { background: transparent; border: 1px dashed var(--warn); border-left-width: 3px; } .acal-legend .legend.ev-prog { border-left-color: var(--gold); background: var(--gold-soft); } .acal-legend .legend.ev-priv { border-left-color: var(--muted); background: rgba(120, 120, 120, 0.2); }
 @media (max-width: 640px) {
   .acal { gap: 3px; } .acal-cell { min-height: 56px; padding: 4px; align-items: center; } .acal-evs, .acal-closed { display: none; }
   .acal-count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50px; background: var(--gold); color: var(--ink); font-size: 0.75rem; font-weight: 700; }
@@ -977,3 +980,8 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .dp-link { background: none; border: 0; font: inherit; font-size: 0.9rem; font-weight: 700; color: var(--accent-text); cursor: pointer; padding: 6px 8px; border-radius: 8px; }
 .dp-link:hover:not(:disabled) { background: var(--gold-soft); } .dp-link:disabled { opacity: 0.4; cursor: not-allowed; }
 .dp-close { display: none; margin-left: auto; } .dp-pop.is-sheet .dp-close { display: inline-block; }
+
+/* Invita un amico (pagina della prenotazione) */
+.invite-box { margin-top: 16px; }
+.invite-box .invite-item { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.invite-box code { font-size: 1.05em; letter-spacing: 0.04em; }

@@ -55,6 +55,10 @@ const FLASH = {
   custom: 'Orario speciale impostato.',
   block: 'Blocco aggiunto.',
   unblock: 'Blocco eliminato.',
+  private: 'Impegno aggiunto in agenda: quelle ore non sono più prenotabili dal sito.',
+  privateOver: 'Impegno aggiunto in agenda, ma attenzione: si sovrappone a prenotazioni già presenti (le trovi qui sotto, nei giorni indicati).',
+  privateDeleted: 'Impegno tolto dall’agenda: quelle ore tornano prenotabili.',
+  privateBad: 'Impegno non aggiunto: controlla titolo, date e orari.',
 };
 
 export function adminRouter(app) {
@@ -151,7 +155,9 @@ export function adminRouter(app) {
       .prepare(`SELECT d.*, p.id AS pid, p.ref, p.name, p.status, p.participants, p.proposal_title FROM program_days d JOIN programs p ON p.id = d.program_id WHERE d.date BETWEEN ? AND ? AND p.status IN ('accepted', 'confirmed') ORDER BY d.date, d.start_time`)
       .all(from, to)
       .map((d) => ({ ...d, kind: 'program', conflicts: dayConflicts(app, d, { ignoreProgramId: d.pid }) }));
-    const itemsOn = (date) => [...rows.filter((b) => b.date === date).map((b) => ({ ...b, kind: 'booking' })), ...programRows.filter((x) => x.date === date)].sort((a, b) => toMin(a.start_time) - toMin(b.start_time));
+    // impegni fuori dal sito (tour privati presi per email o di persona, altre agenzie): tolgono le ore dalle disponibilità
+    const blockRows = db.prepare('SELECT * FROM blocks WHERE date BETWEEN ? AND ? ORDER BY date, start_time').all(from, to).map((x) => ({ ...x, blockKind: x.kind, kind: 'block' }));
+    const itemsOn = (date) => [...rows.filter((b) => b.date === date).map((b) => ({ ...b, kind: 'booking' })), ...programRows.filter((x) => x.date === date), ...blockRows.filter((x) => x.date === date)].sort((a, b) => toMin(a.start_time) - toMin(b.start_time));
     return { itemsOn };
   };
 
@@ -184,7 +190,7 @@ export function adminRouter(app) {
       const selected = wanted && cells.some((c) => c.date === wanted) ? wanted : cells.some((c) => c.date === today) ? today : dates[0];
       const [y, m] = month.split('-').map(Number);
       const shift = (n) => `${new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7)}`;
-      calendar = { month, prev: shift(-1), next: shift(1), cells, selected, selectedItems: cells.find((c) => c.date === selected).items, todayCount: agendaItems(today, today).itemsOn(today).length };
+      calendar = { month, prev: shift(-1), next: shift(1), cells, selected, selectedItems: cells.find((c) => c.date === selected).items, todayCount: agendaItems(today, today).itemsOn(today).filter((x) => x.kind !== 'block').length };
     }
     const programs = db.prepare(`SELECT COALESCE(SUM(status = 'new'), 0) AS todo, COALESCE(SUM(status IN ('quoted', 'accepted')), 0) AS waiting FROM programs`).get();
     const pendingPartners = db.prepare(`SELECT COUNT(*) n FROM accounts WHERE status = 'pending'`).get().n;
@@ -193,6 +199,40 @@ export function adminRouter(app) {
     const options = db.prepare(`SELECT COUNT(*) n, MIN(option_expires_at) next FROM bookings WHERE status = 'option' AND option_expires_at > ?`).get(nowIso);
     const invoicesDue = app.invoices.queue().filter((i) => i.overdue).length;
     send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, today, view, days, calendar, pendingPartners, held, options, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
+  });
+
+  // ───── impegni privati in agenda: un tour preso fuori dal sito (email, di persona…) toglie quelle ore dalle disponibilità ─────
+  r.post('/agenda/private', form, (req, res) => {
+    const b = req.body;
+    const title = cleanText(b.title, 120);
+    const from = String(b.from ?? '');
+    const to = b.to ? String(b.to) : from;
+    const allDay = b.allDay === '1';
+    const start = allDay ? '00:00' : String(b.start ?? '');
+    const end = allDay ? '23:59' : String(b.end ?? '');
+    const days = isDate(from) && isDate(to) && to >= from ? Math.round((Date.parse(to) - Date.parse(from)) / 86400000) + 1 : 0;
+    if (!title || !days || days > 60 || !isTime(start) || !isTime(end) || toMin(start) >= toMin(end)) return res.redirect(303, `/admin?v=cal${isDate(from) ? `&m=${from.slice(0, 7)}&d=${from}` : ''}&ok=privateBad#privato`);
+    const details = cleanText(b.details, 600) || null;
+    const series = days > 1 ? crypto.randomBytes(6).toString('hex') : null;
+    const now = new Date().toISOString();
+    const nowIso = now;
+    let over = 0;
+    for (let i = 0; i < days; i++) {
+      const date = addDays(from, i);
+      db.prepare("INSERT INTO blocks(date, start_time, end_time, note, title, details, kind, series, created_at) VALUES(?,?,?,?,?,?,'private',?,?)").run(date, start, end, title, title, details, series, now);
+      over += db.prepare(`SELECT COUNT(*) n FROM bookings WHERE date = ? AND ${LIVE_BOOKING_SQL} AND start_time < ? AND end_time > ?`).get(date, nowIso, nowIso, end, start).n;
+    }
+    res.redirect(303, `/admin?v=cal&m=${from.slice(0, 7)}&d=${from}&ok=${over ? 'privateOver' : 'private'}#giorno`);
+  });
+  r.post('/agenda/block/:id/delete', form, (req, res) => {
+    const id = Number(req.params.id);
+    const row = db.prepare('SELECT * FROM blocks WHERE id = ?').get(id);
+    if (row) {
+      if (req.body.all === '1' && row.series) db.prepare('DELETE FROM blocks WHERE series = ?').run(row.series);
+      else db.prepare('DELETE FROM blocks WHERE id = ?').run(id);
+    }
+    const d = isDate(String(req.body.d ?? '')) ? String(req.body.d) : row?.date;
+    res.redirect(303, `/admin?v=cal${d ? `&m=${d.slice(0, 7)}&d=${d}` : ''}&ok=privateDeleted#giorno`);
   });
 
   // ───── prenotazioni ─────

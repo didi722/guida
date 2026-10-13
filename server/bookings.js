@@ -5,7 +5,7 @@ import { isDate, isTime, localToInstant, toMin } from './time.js';
 import { openTo, serviceRecord } from './rates.js';
 import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
-import { normLang } from './langs.js';
+import { LANGS, normLang } from './langs.js';
 import { freeHoursOf, hasFreeTier, parseTiers, policyFor, refundPercentAt, singleTier, splitAmounts } from './policy.js';
 import { isPreOpening } from './opening.js';
 import { maxActiveOptions, optionWindow, reminderAt } from './optionPolicy.js';
@@ -105,6 +105,13 @@ export function createBooking(app, input, nowMs = Date.now()) {
 
     const slot = slotsForDay(ctx, cfg, tour, input.date, { pax, channel, nowMs, durationMin }).find((s) => s.time === input.time);
     if (!slot) throw new BookingError('unavailable', 'slot not available');
+    // lingua del tour: tra quelle offerte; in una partenza condivisa già iniziata vale quella di chi ha prenotato per primo
+    const offered = tour.languages?.length ? tour.languages : LANGS;
+    const asked = input.tourLang ? String(input.tourLang) : '';
+    if (asked && !offered.includes(asked)) throw new BookingError('invalid', 'tourLang');
+    const confirmLang = normLang(input.lang);
+    const tourLang = asked || slot.lang || (offered.includes(confirmLang) ? confirmLang : offered[0]);
+    if (slot.lang && slot.lang !== tourLang) throw new BookingError('language', slot.lang); // il gruppo parla già un'altra lingua
     if (pricing.errors.promo) throw new BookingError('promo', pricing.errors.promo);
     if (pricing.errors.gift) throw new BookingError('gift', pricing.errors.gift);
 
@@ -140,7 +147,8 @@ export function createBooking(app, input, nowMs = Date.now()) {
       name,
       email,
       phone: cleanText(input.phone, 40) || null,
-      lang: normLang(input.lang),
+      lang: confirmLang,
+      tour_lang: tourLang,
       notes: cleanText(input.notes, 1000) || null,
       client_ref: cleanText(input.clientRef, 120) || null,
       billing_json: input.billing ? JSON.stringify(input.billing) : null,
@@ -218,7 +226,7 @@ export function confirmPaid(app, bookingId, paymentIntent = null, nowMs = Date.n
       const tour = content.tour(b.tour_slug);
       const ctx = loadAvailabilityContext(db, cfg, b.date, b.date, nowMs);
       const durationMin = toMin(b.end_time) - toMin(b.start_time); // anche per i servizi a ore, con la durata scelta
-      const stillFree = slotsForDay(ctx, cfg, tour, b.date, { pax: b.participants, channel: b.channel, nowMs, ignoreId: b.id, skipNotice: true, durationMin }).some((s) => s.time === b.start_time);
+      const stillFree = slotsForDay(ctx, cfg, tour, b.date, { pax: b.participants, channel: b.channel, nowMs, ignoreId: b.id, skipNotice: true, durationMin, tourLang: b.tour_lang ?? null }).some((s) => s.time === b.start_time);
       if (!stillFree) return { outcome: 'conflict', booking: b };
       if (b.gift_cents > 0 && !reserveGiftsAgain(db, b.id, nowMs)) return { outcome: 'conflict', booking: b };
     }

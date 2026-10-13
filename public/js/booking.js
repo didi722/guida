@@ -18,7 +18,8 @@
   var cont = root.querySelector('[data-continue]');
   var paxOut = root.querySelector('[data-pax]');
 
-  var state = { pax: Math.min(2, max), month: minDate.slice(0, 7), days: {}, date: null, time: null, slots: [], loading: false };
+  var langSel = root.querySelector('[data-tour-lang]');
+  var state = { tl: langSel ? langSel.value : '', pax: Math.min(2, max), month: minDate.slice(0, 7), days: {}, date: null, time: null, slots: [], loading: false };
   var seq = 0;
 
   var locale = { it: 'it-IT', es: 'es-ES', ja: 'ja-JP' }[lang] || 'en-GB';
@@ -43,11 +44,13 @@
     });
   }
 
+  function tlParam() { return state.tl ? '&tl=' + encodeURIComponent(state.tl) : ''; }
+
   function loadMonth() {
     var my = ++seq;
     state.loading = true; state.error = false;
     renderCal();
-    getJson('/api/availability?tour=' + encodeURIComponent(tour) + '&month=' + state.month + '&pax=' + state.pax)
+    getJson('/api/availability?tour=' + encodeURIComponent(tour) + '&month=' + state.month + '&pax=' + state.pax + tlParam())
       .then(function (d) { if (my !== seq) return; state.days = d.days || {}; state.loading = false; renderCal(); })
       .catch(function () { if (my !== seq) return; state.loading = false; state.error = true; renderCal(); });
   }
@@ -56,7 +59,7 @@
     var my = ++seq;
     slotsEl.hidden = false;
     slotsEl.replaceChildren(el('p', 'muted small', L.loading));
-    getJson('/api/slots?tour=' + encodeURIComponent(tour) + '&date=' + state.date + '&pax=' + state.pax)
+    getJson('/api/slots?tour=' + encodeURIComponent(tour) + '&date=' + state.date + '&pax=' + state.pax + tlParam())
       .then(function (d) { if (my !== seq) return; state.slots = d.slots || []; renderSlots(); })
       .catch(function () { if (my !== seq) return; slotsEl.replaceChildren(el('p', 'muted small', L.error)); });
   }
@@ -113,7 +116,7 @@
       var b = el('button', 'slot-btn' + (s.time === state.time ? ' is-selected' : ''));
       b.type = 'button'; b.dataset.time = s.time;
       b.append(el('strong', null, s.time));
-      var note = model === 'person' ? (s.joined ? L.joined : '') + (s.left <= 4 ? (s.joined ? ' · ' : '') + fill(L.left, { n: s.left }) : '') : '';
+      var note = model === 'person' ? [s.joined ? L.joined : '', s.lang && L.langNames[s.lang] ? fill(L.inLang, { lang: L.langNames[s.lang] }) : '', s.left <= 4 ? fill(L.left, { n: s.left }) : ''].filter(Boolean).join(' · ') : '';
       if (note) b.append(el('small', null, note));
       b.addEventListener('click', function () { state.time = s.time; renderSlots(); update(); });
       wrap.append(b);
@@ -127,7 +130,7 @@
       summary.hidden = false;
       var dateStr = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(state.date + 'T12:00:00Z'));
       summary.replaceChildren(el('span', null, dateStr + ' · ' + state.time + ' · ' + (state.pax === 1 ? L.person1 : fill(L.personN, { n: state.pax }))), el('strong', null, L.total + ' ' + money.format(total() / 100)));
-      cont.href = bookUrl + '?tour=' + encodeURIComponent(tour) + '&date=' + state.date + '&time=' + state.time + '&pax=' + state.pax;
+      cont.href = bookUrl + '?tour=' + encodeURIComponent(tour) + '&date=' + state.date + '&time=' + state.time + '&pax=' + state.pax + tlParam();
       cont.setAttribute('aria-disabled', 'false');
     } else {
       summary.hidden = true;
@@ -146,6 +149,8 @@
   }
   root.querySelector('[data-pax-minus]').addEventListener('click', function () { setPax(state.pax - 1); });
   root.querySelector('[data-pax-plus]').addEventListener('click', function () { setPax(state.pax + 1); });
+
+  if (langSel) langSel.addEventListener('change', function () { state.tl = langSel.value; state.time = null; update(); loadMonth(); if (state.date) loadSlots(); });
 
   update();
   loadMonth();

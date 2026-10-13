@@ -1250,3 +1250,100 @@ test('prossime partenze: in home e in «Prenota» (senza data), con prezzo, post
     s.close();
   }
 });
+
+test('lingua del tour: scelta nel widget e al pagamento; la partenza condivisa resta nella lingua del primo che prenota', async () => {
+  const s = await start();
+  try {
+    const f = s.jar();
+    const date = day(25);
+    // il widget del tour ha la scelta della lingua (il tour la offre in quattro)
+    const tourPage = await (await f('/it/tours/san-marco-rialto')).text();
+    assert.match(tourPage, /<select data-tour-lang>[^]*?<option value="it" selected>Italiano<\/option>[^]*?<option value="en" >English/);
+    assert.match(await (await s.jar()('/en/tours/san-marco-rialto')).text(), /<option value="en" selected>English<\/option>/, 'di partenza la lingua del sito');
+    // il pagamento ha la scelta, diversa dalla lingua della conferma
+    const co = await (await f(`/it/book/checkout?tour=san-marco-rialto&date=${date}&time=09:30&pax=2&tl=en`)).text();
+    assert.match(co, /name="tourLang"[^]*?<option value="en" selected>English<\/option>/);
+    assert.match(co, /name="lang"/);
+    // il primo prenota in inglese (conferma in italiano)
+    const first = await f('/it/book/checkout', form({ tour: 'san-marco-rialto', date, time: '09:30', pax: '2', name: 'Anna', email: 'anna@example.com', lang: 'it', tourLang: 'en', paymentMethod: 'onsite', consent: '1' }));
+    assert.equal(first.status, 303);
+    const b = s.app.db.prepare("SELECT * FROM bookings WHERE email = 'anna@example.com'").get();
+    assert.deepEqual([b.lang, b.tour_lang], ['it', 'en']);
+    assert.match(await (await f(loc(first))).text(), /Lingua del tour<\/dt><dd>English/);
+    // da quel momento la partenza è «in inglese»: lo dicono le API, il widget, la ricerca e il pagamento
+    const slots = await (await f(`/api/slots?tour=san-marco-rialto&date=${date}&pax=1`)).json();
+    assert.deepEqual(slots.slots.map((x) => [x.time, x.lang]), [['09:30', 'en'], ['14:30', null]]);
+    assert.deepEqual((await (await f(`/api/slots?tour=san-marco-rialto&date=${date}&pax=1&tl=it`)).json()).slots.map((x) => x.time), ['14:30'], 'chi cerca in italiano non la vede');
+    assert.deepEqual((await (await f(`/api/slots?tour=san-marco-rialto&date=${date}&pax=1&tl=en`)).json()).slots.map((x) => x.time), ['09:30', '14:30']);
+    assert.equal((await (await f(`/api/availability?tour=san-marco-rialto&month=${date.slice(0, 7)}&pax=1&tl=xx`)).json()).days[date], 2, 'lingua sconosciuta: nessun filtro');
+    assert.match(await (await f(`/it/book?date=${date}&pax=1&tour=san-marco-rialto`)).text().then((x) => x.replace(/\s+/g, ' ')), /Partenza confermata · in English/);
+    const locked = await (await f(`/it/book/checkout?tour=san-marco-rialto&date=${date}&time=09:30&pax=1&tl=it`)).text();
+    assert.match(locked, /Questa partenza è già prenotata in English/);
+    assert.ok(!/<select name="tourLang"/.test(locked), 'niente scelta: la lingua è quella del gruppo');
+    assert.match(locked, /<input type="hidden" name="tourLang" value="en">/);
+    // chi prova a forzare un'altra lingua riceve un errore chiaro e non prenota
+    const bad = await f('/it/book/checkout', form({ tour: 'san-marco-rialto', date, time: '09:30', pax: '1', name: 'Luca', email: 'luca@example.com', lang: 'it', tourLang: 'it', paymentMethod: 'onsite', consent: '1' }));
+    assert.equal(bad.status, 409);
+    assert.match(await bad.text(), /prenotata in English: si può prenotare solo in quella lingua/);
+    assert.equal(s.app.db.prepare("SELECT COUNT(*) n FROM bookings WHERE email = 'luca@example.com'").get().n, 0);
+    // la guida lo sa
+    assert.match(s.app.mail.sent.find((m) => m.to === 'guida@example.com' && /Nuova prenotazione/.test(m.subject))?.text ?? '', /Lingua del tour: English/);
+  } finally {
+    s.close();
+  }
+});
+
+test('invita un amico: dalla pagina della prenotazione, con email o con collegamento; l’amico arriva alla stessa partenza con il codice già inserito', async () => {
+  const s = await start();
+  try {
+    const f = s.jar();
+    const date = day(26);
+    const res = await f('/it/book/checkout', form({ tour: 'san-marco-rialto', date, time: '09:30', pax: '2', name: 'Anna', email: 'anna@example.com', lang: 'it', tourLang: 'en', paymentMethod: 'onsite', consent: '1' }));
+    const page = loc(res);
+    const html = (await (await f(page)).text()).replace(/\s+/g, ' ');
+    assert.match(html, /Invita un amico/);
+    assert.match(html, /ha il 10% di sconto|hanno il 10%|ha il 10%|10% di sconto/);
+    assert.match(html, /action="\/it\/booking\/VE-[A-Z0-9]+\/invite\?t=/);
+    // senza token, niente
+    assert.equal((await f(page.replace(/\?t=.*/, '/invite?t=sbagliato'), form({ email: '' }))).status, 404);
+
+    // con l'email: la manda il sito
+    const base = page.split('?')[0];
+    const token = page.split('t=')[1].split('&')[0];
+    const sent = await f(`${base}/invite?t=${token}`, form({ email: 'luca@example.com' }));
+    assert.equal(sent.status, 303);
+    assert.match(loc(sent), /flash=inviteSent#invita$/);
+    const mail = s.app.mail.sent.find((m) => m.to === 'luca@example.com');
+    assert.match(mail.subject, /Anna invites you/, 'nella lingua del tour (inglese)');
+    const code = /AMICO-[A-Z0-9]{6}/.exec(mail.text)[0];
+    const link = /https?:\/\/\S*book\/checkout\S*/.exec(mail.text)[0];
+    assert.ok(link.includes(`promo=${code}`));
+
+    // il collegamento porta alla stessa partenza, con lo sconto già applicato e la lingua del gruppo
+    const friend = s.jar();
+    const co = await (await friend(link.replace(s.app.cfg.baseUrl, ''))).text();
+    assert.match(co, new RegExp(`value="${code}"`));
+    assert.match(co, /Sconto|Discount|−/);
+    assert.match(co, /<input type="hidden" name="tourLang" value="en">/);
+
+    // senza email: collegamento da copiare + WhatsApp; il secondo codice è diverso
+    const made = await f(`${base}/invite?t=${token}`, form({ email: '' }));
+    assert.match(loc(made), /flash=inviteMade/);
+    const after = (await (await f(loc(made))).text()).replace(/\s+/g, ' ');
+    assert.equal((after.match(/AMICO-[A-Z0-9]{6}/g) ?? []).filter((c, i, a) => a.indexOf(c) === i).length, 2, 'due inviti');
+    assert.match(after, /https:\/\/wa\.me\/\?text=/);
+    assert.match(after, /non ancora usato/);
+    // l'amico prenota con il codice: il suo invito risulta usato
+    const booked = await friend('/it/book/checkout', form({ tour: 'san-marco-rialto', date, time: '09:30', pax: '1', name: 'Luca', email: 'luca@example.com', lang: 'it', tourLang: 'en', paymentMethod: 'onsite', promo: code, consent: '1' }));
+    assert.equal(booked.status, 303);
+    assert.equal(s.app.db.prepare("SELECT promo_code FROM bookings WHERE email = 'luca@example.com'").get().promo_code, code);
+    assert.match((await (await f(loc(made))).text()), /usato/);
+    // email sbagliata
+    assert.match(loc(await f(`${base}/invite?t=${token}`, form({ email: 'boh' }))), /flash=invite-error/);
+    // le prenotazioni di un tour privato non hanno invito
+    const priv = await f('/it/book/checkout', form({ tour: 'passeggiata-privata-2h', date: day(27), time: '10:00', pax: '2', name: 'Marta', email: 'marta@example.com', lang: 'it', paymentMethod: 'onsite', consent: '1' }));
+    assert.ok(!(await (await f(loc(priv))).text()).includes('Invita un amico'));
+  } finally {
+    s.close();
+  }
+});

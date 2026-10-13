@@ -5,7 +5,8 @@ import { maxActiveOptions, optionWindow } from '../optionPolicy.js';
 import { onlinePaymentsOpen } from '../opening.js';
 import { hourlyQuote, previewPricing } from '../pricing.js';
 import { hashPassword, verifyPassword } from '../auth.js';
-import { sendContactMessage, sendPartnerRegistered, icsFor } from '../emails.js';
+import { sendContactMessage, sendInviteEmail, sendPartnerRegistered, icsFor } from '../emails.js';
+import { createInvite, inviteLink, inviteOffer } from '../invites.js';
 import { isDate, isTime, localToInstant, nowRome } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
 import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js';
@@ -17,7 +18,7 @@ import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/book
 import { hourlyPage } from '../views/hourly.js';
 import { hourOptions, minHours, openTo } from '../rates.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
-import { normLang, pick } from '../langs.js';
+import { LANG_META, normLang, pick } from '../langs.js';
 import { featuredQuotes, feedbackStats } from '../reviews.js';
 
 const clampInt = (v, min, max, d) => {
@@ -207,7 +208,7 @@ export function publicRouter(app) {
     const slot = openSlot(p, channel);
     if (!slot) return send(res, slotGonePage(ctx, p), 409);
     // link promozionali: /book/checkout?...&promo=CODICE (o &gift=CODICE)
-    const values = { promo: cleanText(req.query.promo, 40), gift: cleanText(req.query.gift, 120) };
+    const values = { promo: cleanText(req.query.promo, 40), gift: cleanText(req.query.gift, 120), tourLang: p.tour.languages.includes(String(req.query.tl)) ? String(req.query.tl) : '' };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     send(res, checkoutPage(ctx, { ...p, slot, channel, values, pricing: pricingFor(req, p, values, channel), option: optionPreview(req, p, channel) }));
   });
@@ -235,7 +236,7 @@ export function publicRouter(app) {
     const p = readSlotParams(b, channel);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(b.tour ?? '')), date: null, pax: 2 }), 400);
     if (!b.apply) await app.calendars.ensureFresh(); // riallinea il calendario personale prima di prenotare
-    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
+    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), tourLang: p.tour.languages.includes(String(b.tourLang)) ? String(b.tourLang) : '', notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {
       const slot = openSlot(p, channel);
@@ -252,6 +253,7 @@ export function publicRouter(app) {
       if (!(e instanceof BookingError)) throw e;
       if (e.code === 'unavailable') return send(res, slotGonePage(ctx, p), 409);
       if (e.code === 'promo' || e.code === 'gift') return rerender('');
+      if (e.code === 'language') return rerender(t('err.tourLang', { lang: LANG_META[e.message]?.name ?? e.message }), 409);
       if (e.code === 'option') return rerender(t(`option.err.${['tooClose', 'limit'].includes(e.message) ? e.message : 'disabled'}`));
       return rerender(e.code === 'payment' ? t('err.payment') : t('err.fields'));
     }
@@ -270,7 +272,7 @@ export function publicRouter(app) {
     if (req.query.paid && (b.status === 'held' || services.payableLater(b))) b = await services.syncStripe(b);
     // l'agenzia che ha fatto la prenotazione (se è entrata) la vede dentro la sua area, con fattura e modifica del nominativo
     const owner = !!req.acct && b.account_id === req.acct.id && req.acct.status === 'approved';
-    send(res, bookingPage(res.locals.ctx, b, { flash: req.query.flash ? String(req.query.flash) : '', payLater: services.payableLater(b), owner, invoice: owner ? invoiceOfBooking(db, b.id) : null }));
+    send(res, bookingPage(res.locals.ctx, b, { flash: req.query.flash ? String(req.query.flash) : '', payLater: services.payableLater(b), owner, invoice: owner ? invoiceOfBooking(db, b.id) : null, invite: inviteOffer(app, b) }));
   });
   r.get('/booking/:ref/calendar.ics', (req, res, next) => {
     const b = loadBooking(req);
@@ -293,6 +295,22 @@ export function publicRouter(app) {
     if (!b || !walletOptions(app, b).apple) return next();
     const file = await applePass(app, b, req.lang);
     res.set({ 'Content-Type': 'application/vnd.apple.pkpass', 'Content-Disposition': `attachment; filename="${b.ref}.pkpass"`, 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }).send(file);
+  });
+  // «Invita un amico»: un codice sconto tutto suo per questa partenza (e, se c'è l'email, l'invito lo spediamo noi)
+  r.post('/booking/:ref/invite', form, async (req, res, next) => {
+    const b = loadBooking(req);
+    if (!b) return next();
+    const to = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}#invita`);
+    if (!app.limits.codes(ip(req))) return tooMany(res);
+    try {
+      const email = cleanText(req.body.email, 200);
+      const { invite } = createInvite(app, b, { email });
+      if (invite.friend_email) await sendInviteEmail(app, b, invite, inviteLink(app, b, invite.code, normLang(b.tour_lang ?? b.lang)));
+      return to(invite.friend_email ? 'inviteSent' : 'inviteMade');
+    } catch (e) {
+      if (e.reason) return to('invite-error');
+      throw e;
+    }
   });
   r.post('/booking/:ref/cancel', form, async (req, res, next) => {
     const b = loadBooking(req);

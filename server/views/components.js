@@ -122,7 +122,7 @@ export function departuresList(ctx, departures, { pax = 2 } = {}) {
     const note = d.left <= 3 ? (d.left === 1 ? t('departures.left1') : t('departures.left', { n: d.left })) : d.joined ? t('book.confirmedDeparture') : fmtDuration(d.tour.durationMin, lang);
     return html`<li><a class="dep" href="${u('/book/checkout')}?tour=${encodeURIComponent(d.tour.slug)}&date=${d.date}&time=${d.time}&pax=${n}">
       <span class="dep-when"><strong>${fmtDate(d.date, lang, 'weekday')}</strong><span class="dep-time">${d.time}</span></span>
-      <span class="dep-what"><strong>${d.tour.i18n[lang].title}</strong><small class="${d.left <= 3 ? 'dep-few' : ''}">${note}</small></span>
+      <span class="dep-what"><strong>${d.tour.i18n[lang].title}</strong><small class="${d.left <= 3 ? 'dep-few' : ''}">${note}${d.lang ? ` · ${t('w.inLang', { lang: LANG_META[d.lang]?.name ?? d.lang })}` : ''}</small></span>
       <span class="dep-price"><strong>${money}</strong><small>/ ${per}</small></span>
     </a></li>`;
   })}</ul>`;

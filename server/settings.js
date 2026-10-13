@@ -209,6 +209,16 @@ export const SECTIONS = [
     ],
   },
   {
+    id: 'invite',
+    title: 'Invita un amico',
+    intro: 'Chi ha prenotato un tour condiviso a posti può mandare a un amico un codice sconto tutto suo, valido una volta sola e solo per quella partenza: l’amico si unisce al gruppo e tu riempi i posti liberi.',
+    fields: [
+      { key: 'invite.enabled', type: 'bool', label: 'I clienti possono invitare un amico', hint: 'compare nella pagina della prenotazione finché c’è posto; solo clienti privati, solo tour a posti' },
+      { key: 'invite.percent', type: 'int', min: 1, max: 90, unit: '%', label: 'Sconto per l’amico' },
+      { key: 'invite.maxPerBooking', type: 'int', min: 1, max: 20, unit: 'inviti', label: 'Inviti per ogni prenotazione', hint: 'ogni invito è un codice diverso, mai più dei posti ancora liberi' },
+    ],
+  },
+  {
     id: 'extras',
     title: 'Buoni regalo, programmi e recensioni',
     fields: [

@@ -128,6 +128,13 @@ export function createConfig(overrides = {}) {
       sendHour: num(e.REMINDER_SEND_HOUR, 18), // ora di Venezia
     },
 
+    // «Invita un amico» (tour condivisi): ogni invito è un codice sconto univoco, valido una volta sola per quella partenza
+    invite: {
+      enabled: bool(e.INVITE_ENABLED, true),
+      percent: num(e.INVITE_PERCENT, 10), // sconto per l'amico
+      maxPerBooking: num(e.INVITE_MAX_PER_BOOKING, 3), // inviti per ogni prenotazione
+    },
+
     reviews: {
       enabled: bool(e.REVIEWS_ENABLED, true),
       googleUrl: e.REVIEW_URL || '', // link «scrivi una recensione» del profilo Google Business

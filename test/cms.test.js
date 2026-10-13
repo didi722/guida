@@ -642,3 +642,68 @@ test('migrazione: i tour di prima (due tariffe) diventano B2C più una copia B2B
   createContentStore({ db, root: ROOT });
   assert.equal(db.prepare('SELECT COUNT(*) n FROM content_tours').get().n, n, 'al riavvio non si crea altro');
 });
+
+test('agenda: un tour preso fuori dal sito (email, di persona) toglie le ore dalle disponibilità; si vede in agenda e si può togliere', async () => {
+  const s = await start();
+  try {
+    const { admin } = s;
+    const anon = s.jar();
+    const d0 = new Date(Date.now() + 20 * 86400000);
+    const iso = (n) => new Date(d0.getTime() + n * 86400000).toISOString().slice(0, 10);
+    const slots = async (date) => (await (await anon(`/api/slots?tour=san-marco-rialto&date=${date}&pax=1`)).json()).slots.map((x) => x.time);
+    const before = await slots(iso(0));
+    assert.ok(before.length > 0, 'prima c’è disponibilità');
+
+    // più giorni, tutto il giorno
+    const ok = await admin('/admin/agenda/private', form({ title: 'Tour privato, famiglia Rossi', from: iso(0), to: iso(2), allDay: '1', details: 'tel. 333 000 000' }));
+    assert.equal(ok.status, 303);
+    assert.match(loc(ok), /ok=private#giorno/);
+    const rows = s.app.db.prepare("SELECT * FROM blocks WHERE kind = 'private' ORDER BY date").all();
+    assert.deepEqual(rows.map((r) => [r.date, r.start_time, r.end_time, r.title]), [0, 1, 2].map((n) => [iso(n), '00:00', '23:59', 'Tour privato, famiglia Rossi']));
+    assert.ok(rows[0].series && rows.every((r) => r.series === rows[0].series), 'una serie');
+    for (const n of [0, 1, 2]) assert.deepEqual(await slots(iso(n)), [], `giorno ${n}: niente più orari`);
+    assert.ok((await slots(iso(3))).length > 0, 'il giorno dopo è libero');
+
+    // si vede in agenda (calendario e giorno), con i pulsanti per toglierlo
+    const month = iso(0).slice(0, 7);
+    const page = await (await admin(`/admin?v=cal&m=${month}&d=${iso(0)}`)).text();
+    assert.match(page, /Tour privato, famiglia Rossi/);
+    assert.match(page, /Tour privato fuori dal sito · tel\. 333 000 000/);
+    assert.match(page, /Elimina tutti i giorni/);
+    assert.match(page, /Un tour preso fuori dal sito\?/);
+    assert.match(await (await admin(`/admin/availability?m=${month}`)).text(), /Tour privato, famiglia Rossi/, 'anche fra gli impegni esterni');
+
+    // solo alcune ore: le altre restano prenotabili
+    const day = iso(5);
+    const all = await slots(day);
+    assert.equal(loc(await admin('/admin/agenda/private', form({ title: 'Visita', from: day, start: '09:00', end: '12:00' }))).includes('ok=private'), true);
+    const after = await slots(day);
+    assert.deepEqual([all, after], [['09:30', '14:30'], ['14:30']], 'la partenza delle 09:30 cade nell’impegno, quella del pomeriggio resta');
+
+    // chi ha già una prenotazione in quelle ore viene avvisato
+    const bday = iso(8);
+    s.app.db.prepare(`INSERT INTO bookings(ref, token, tour_slug, date, start_time, end_time, participants, channel, name, email, total_cents, status, payment_method, payment_status, free_cancel_until, created_at) VALUES('VE-PRIV01','t1','san-marco-rialto',?,'09:30','12:00',2,'b2c','Anna','anna@example.com',7000,'confirmed','onsite','unpaid','2020-01-01','2020-01-01')`).run(bday);
+    const over = await admin('/admin/agenda/private', form({ title: 'Sovrapposto', from: bday, allDay: '1' }));
+    assert.match(loc(over), /ok=privateOver/);
+    assert.match(await (await admin(loc(over))).text(), /si sovrappone a prenotazioni già presenti/);
+
+    // dati sbagliati: non si aggiunge nulla
+    const n = s.app.db.prepare('SELECT COUNT(*) n FROM blocks').get().n;
+    for (const bad of [{ title: '', from: iso(10), allDay: '1' }, { title: 'x', from: 'boh', allDay: '1' }, { title: 'x', from: iso(10), to: iso(9), allDay: '1' }, { title: 'x', from: iso(10), start: '12:00', end: '10:00' }, { title: 'x', from: iso(10), to: iso(200), allDay: '1' }]) {
+      assert.match(loc(await admin('/admin/agenda/private', form(bad))), /ok=privateBad/, JSON.stringify(bad));
+    }
+    assert.equal(s.app.db.prepare('SELECT COUNT(*) n FROM blocks').get().n, n);
+    assert.equal(loc(await anon('/admin/agenda/private', form({ title: 'x', from: iso(10), allDay: '1' }))), '/admin/login');
+
+    // toglierne uno solo, poi tutta la serie
+    const mid = rows[1];
+    assert.match(loc(await admin(`/admin/agenda/block/${mid.id}/delete`, form({ d: mid.date }))), /ok=privateDeleted/);
+    assert.ok((await slots(iso(1))).length > 0, 'quel giorno torna libero');
+    assert.deepEqual(await slots(iso(0)), []);
+    await admin(`/admin/agenda/block/${rows[0].id}/delete`, form({ all: '1', d: rows[0].date }));
+    assert.deepEqual(await slots(iso(0)), before, 'tutta la serie tolta: tutto com’era');
+    assert.equal(s.app.db.prepare("SELECT COUNT(*) n FROM blocks WHERE series = ?").get(rows[0].series).n, 0);
+  } finally {
+    s.close();
+  }
+});

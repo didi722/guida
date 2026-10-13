@@ -5,7 +5,7 @@ import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
-import { LANGS, pick } from '../langs.js';
+import { LANGS, LANG_META, pick } from '../langs.js';
 import { openTo, rateRows } from '../rates.js';
 import { formatMoney } from '../util.js';
 import { paymentsFrom } from '../opening.js';
@@ -216,6 +216,7 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
     persons: t('w.persons'), person1: t('w.person1'), personN: t('w.personN'), pickDate: t('w.pickDate'), pickTime: t('w.pickTime'), noSlots: t('w.noSlots'), noMonth: t('w.noMonth'),
     total: t('w.total'), cont: t('w.continue'), left: t('w.left'), joined: t('w.joined'), perPerson: t('price.perPerson'), perGroup: t('price.perGroup'), prev: t('w.prev'), next: t('w.next'), loading: t('w.loading'), error: t('w.error'),
     legend: t('w.legend'), selected: t('w.selected'), minPeople: t('w.min'), maxPeople: t('w.max'),
+    inLang: t('w.inLang', { lang: '{lang}' }), langNames: Object.fromEntries(tour.languages.map((l) => [l, LANG_META[l].name])),
   };
 
   const hourly = tour.pricing === 'hourly';
@@ -242,6 +243,7 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
       <button type="button" data-pax-minus aria-label="−">−</button><output data-pax aria-live="polite">2</output><button type="button" data-pax-plus aria-label="+">+</button>
     </div>
   </div>
+  ${tour.languages.length > 1 ? html`<label class="field"><span class="label">${t('w.tourLang')}</span><select data-tour-lang>${tour.languages.map((l) => html`<option value="${l}" ${l === (tour.languages.includes(lang) ? lang : tour.languages[0]) ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}</select></label>` : ''}
   <div class="cal" data-cal><p class="muted small">${t('w.loading')}</p></div>
   <div class="slots-wrap" data-slots hidden></div>
   <div class="book-summary" data-summary hidden></div>

@@ -94,6 +94,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour B2C** vuol dire «t
 
 ## 4. Ogni giorno: cinque minuti
 
+0. **Un tour preso fuori dal sito?** In fondo all'**Agenda**, *Un tour preso fuori dal sito?*: scrivi cosa è (per esempio «Tour privato, famiglia Rossi»), il giorno (o da—a se dura più giorni), *tutto il giorno* oppure le ore, e le note (contatto, punto d'incontro). Quelle ore **spariscono subito dalle disponibilità del sito**. Compare in agenda (calendario ed elenco) con la scritta *Non prenotabile*; se si sovrappone a una prenotazione già presente il sito te lo dice. Per toglierlo, **Elimina** (quel giorno) o **Elimina tutti i giorni**.
 1. **Agenda** (la prima schermata): in alto vedi quanti servizi hai oggi, i programmi da preparare, i partner da approvare, le **opzioni** aperte e i pagamenti in corso. Sotto c'è l'agenda: si apre come **Calendario** del mese (tocca un giorno per vederlo qui sotto; le opzioni delle agenzie sono tratteggiate) e con **Elenco, 14 giorni** passi all'elenco dei prossimi 14 giorni con tutte le prenotazioni e le giornate dei programmi; il pannello ricorda la tua scelta. Se c'è un avviso rosso (calendario che non si sincronizza, voci da fatturare oltre i 12 giorni) toccalo: ti porta dove risolvere.
 2. **Partner da approvare**: se c'è un numero, apri **Clienti › Partner** e rispondi (vedi [sezione 14](#14-partner-agenzie-dmc-tour-operator)). Il partner è avvisato per email.
 3. **Programmi da preparare**: richieste di più giorni in attesa di una tua proposta ([sezione 12](#12-prenotazioni-annulli-e-programmi-di-più-giorni)).
@@ -124,7 +125,7 @@ Ogni elenco mostra il prezzo (o il rimando alle tariffe a ore) e lo stato (*visi
    - **Visibile sul sito e prenotabile**: se lo togli il tour sparisce dal sito (per un tour B2B: dall'area delle agenzie); le prenotazioni già fatte restano.
    - **In evidenza**: la home ha due schede, *Guida privata* e *Tour di gruppo*; per ciascuna mostra la foto del tour «in evidenza» (se ce ne sono più d'uno, il primo; se nessuno, il primo dell'elenco).
    - **Tipo di servizio**:
-     - *Partenze fisse, prezzo a persona*: tour in piccolo gruppo con orari stabiliti (per esempio 09:30 e 14:30). Più clienti possono prenotare la stessa partenza fino alla **capienza massima**.
+     - *Partenze fisse, prezzo a persona*: tour in piccolo gruppo con orari stabiliti (per esempio 09:30 e 14:30). Più clienti possono prenotare la stessa partenza fino alla **capienza massima**. **La lingua del primo che prenota vincola la partenza**: se il primo sceglie *English*, quella partenza si può prenotare solo in inglese (nell'elenco si legge «in English»), così nel gruppo non finiscono persone che parlano lingue diverse. Se tutti annullano, la partenza torna libera per qualunque lingua. Una partenza diversa dello stesso tour può avere un'altra lingua.
      - *Servizio privato, prezzo a gruppo*: il cliente prenota tutta la fascia. Con **Orario libero** sceglie lui quando iniziare (ogni 30 minuti, nei tuoi orari di lavoro).
    - **Orari di partenza**: solo per le partenze fisse, separati da virgola: `09:30, 14:30`.
    - **Giorni in cui si svolge**: spunta i giorni della settimana.
@@ -134,7 +135,7 @@ Ogni elenco mostra il prezzo (o il rimando alle tariffe a ore) e lo stato (*visi
    - **Prezzo al pubblico** (tour B2C) o **Tariffa agenzie** (tour B2B): a persona o a gruppo, secondo il tipo. Scrivi `35` o `35,50`. Il prezzo è **uno solo**. Per un tour B2B, i prezzi **dedicati a un singolo partner** si impostano nella sua scheda ([sezione 14](#14-partner-agenzie-dmc-tour-operator)).
    - **Cancellazione gratuita (ore prima)**: vale solo per questo tour; vuoto = la regola generale (**Sito › Impostazioni › Regole di prenotazione**).
    - **Si può pagare sul posto**: conta solo se il pagamento sul posto è consentito nelle Impostazioni (di default non lo è).
-   - **Lingue in cui offri questo servizio**: compaiono nella scheda del tour.
+   - **Lingue in cui offri questo servizio**: compaiono nella scheda del tour e sono quelle tra cui il cliente sceglie la **lingua del tour** (nel calendario del tour e al pagamento, per i privati come per le agenzie). La *lingua della conferma* (quella delle email) è un'altra scelta: si può prenotare un tour in inglese e ricevere le email in italiano.
 4. **Immagine di copertina**: scegli una foto già caricata o caricane una ([sezione 10](#10-immagini)). Senza foto il sito usa un'illustrazione.
 5. **Testi** (una scheda per lingua: Italiano, English, Español, 日本語)
    - **Titolo**, **Sottotitolo**, **Riassunto** (una o due frasi: compare negli elenchi e su Google), **Punto d'incontro**, **Link alla mappa** (indirizzo Google Maps).
@@ -225,6 +226,7 @@ Le percentuali dei supplementi si calcolano sul prezzo base (già scontato, per 
 
 ### Codici sconto e buoni regalo
 **Clienti › Sconti**:
+- **Invita un amico**: i clienti privati che hanno prenotato un **tour condiviso a posti** vedono, nella pagina della prenotazione (e in un invito nell'email di conferma), il riquadro *Invita un amico*, finché la partenza non è iniziata e c'è ancora posto. Ogni invito è un **codice sconto tutto suo** (tipo `AMICO-7K2XQ9`), valido **una sola volta**, solo per **quel tour e quel giorno**, e non vale per chi lo ha mandato. Se il cliente scrive l'email dell'amico, la spedisce il sito (nella lingua del tour, con il collegamento che porta dritto a quella partenza con il codice già inserito); altrimenti copia il collegamento o lo manda su WhatsApp. L'amico si unisce nella stessa lingua del gruppo. Lo sconto, il numero di inviti per prenotazione e l'interruttore sono in **Sito › Impostazioni › Invita un amico**; i codici sono automatici e in questo elenco compare solo il conteggio.
 - **Nuovo codice sconto**: percentuale o importo fisso, periodo di validità, tour a cui si applica, importo minimo, numero massimo di usi. Il cliente lo scrive al pagamento (*Hai un codice sconto o un buono regalo?*). Puoi anche mandare un link del tipo `…/book/checkout?…&promo=CODICE`.
 - **Nuovo buono regalo**: per un buono venduto di persona o in omaggio. Quelli acquistati online compaiono da soli. Dalla scheda del buono: **PDF del buono**, **Reinvia** all'acquirente o al destinatario, **Rettifica il saldo**, **Cambia** la scadenza, **Annulla buono**, e l'elenco dei **Movimenti**.
 - Durata dei buoni e importo minimo/massimo: **Sito › Impostazioni › Buoni regalo, programmi e recensioni**.

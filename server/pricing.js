@@ -51,6 +51,13 @@ export const splitGiftCodes = (s) => [...new Set(String(s ?? '').split(/[\s,;]+/
 export const formatGiftCode = (code) => String(code).replace(/(.{4})(?=.)/g, '$1-');
 
 // ───────────── codici sconto ─────────────
+/** Il codice di un invito («Invita un amico», vedi invites.js) non vale per chi lo ha mandato: sarebbe uno sconto su una seconda prenotazione sua. */
+function isOwnInvite(db, promoId, email) {
+  if (!email) return false;
+  const r = db.prepare('SELECT b.email FROM invites i JOIN bookings b ON b.id = i.booking_id WHERE i.promo_code_id = ?').get(promoId);
+  return !!r && r.email.toLowerCase() === String(email).trim().toLowerCase();
+}
+
 /** Quante prenotazioni attive usano il codice (le "held" scadute non contano). */
 export function promoUses(db, promoId, nowMs, { email = null, ignoreBookingId = null } = {}) {
   let sql = `SELECT COUNT(*) n FROM bookings WHERE promo_code_id = ? AND (status = 'confirmed' OR (status = 'held' AND hold_expires_at > ?))`;
@@ -84,6 +91,7 @@ export function checkPromo(db, rawCode, { tour, date, listCents, email, nowMs, i
   if (promo.min_total_cents && listCents < promo.min_total_cents) return { ok: false, reason: 'min_total' };
   if (promo.max_uses != null && promoUses(db, promo.id, nowMs, { ignoreBookingId }) >= promo.max_uses) return { ok: false, reason: 'exhausted' };
   if (promo.one_per_email && email && promoUses(db, promo.id, nowMs, { email, ignoreBookingId }) > 0) return { ok: false, reason: 'email_used' };
+  if (isOwnInvite(db, promo.id, email)) return { ok: false, reason: 'own_invite' }; // il codice dell'invito è per l'amico, non per chi l'ha mandato
   const discountCents = promo.kind === 'percent' ? Math.round((listCents * promo.value) / 100) : Math.min(promo.value, listCents);
   return { ok: true, promo, discountCents };
 }

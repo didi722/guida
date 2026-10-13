@@ -8,9 +8,10 @@ import { fmtDate, fmtInstant } from './time.js';
 import { formatMoney } from './util.js';
 import { formatGiftCode } from './pricing.js';
 import { makeT } from './i18n.js';
-import { normLang, pick } from './langs.js';
+import { LANG_META, normLang, pick } from './langs.js';
 import { parseServiceRecord, serviceNote, timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
+import { inviteOffer } from './invites.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
 const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,', ja: name ? `${name} 様` : 'お客様' }, lang);
@@ -169,6 +170,7 @@ function summaryRows(app, b, lang, { option = false } = {}) {
     [tr.people, String(b.participants)],
     [tr.meeting, ti.meetingPoint],
   ];
+  if (b.tour_lang && LANG_META[b.tour_lang]) rows.splice(5, 0, [makeT(lang)('s.tourLang'), LANG_META[b.tour_lang].name]);
   if (b.discount_cents) rows.push([tr.discount(b.promo_code), `−${formatMoney(b.discount_cents, lang, b.currency)}`]);
   if (b.gift_cents) rows.push([tr.giftUsed, `−${formatMoney(b.gift_cents, lang, b.currency)}`]);
   rows.push([b.discount_cents || b.gift_cents ? tr.due : tr.total, option ? formatMoney(bookingDue(b), lang, b.currency) : `${formatMoney(bookingDue(b), lang, b.currency)} (${tr.pay[b.payment_method]})`]);
@@ -243,11 +245,13 @@ export async function sendBookingConfirmed(app, b, nowMs = Date.now()) {
   const tr = T[lang];
   const ti = tourText(app, b.tour_slug, lang);
   const pol = policyLine(b, lang, nowMs);
+  // tour condiviso con posti liberi: un invito per un amico, dalla pagina della prenotazione
+  const inviteLine = inviteOffer(app, b, nowMs).ok ? `${makeT(lang)('invite.mailHint')} ${bookingUrl(app, b, lang)}#invita` : '';
   await app.mail.send({
     to: b.email,
     subject: tr.confirmedSubject(b.ref, ti.title, fmtDate(b.date, lang, 'short')),
-    text: textBody(app, b, lang, tr.confirmedIntro, [pol, tr.addCal, '']),
-    html: String(bodyHtml(app, b, lang, tr.confirmedIntro, html`<p style="font-size:14px;color:#444">${pol}</p><p style="font-size:13px;color:#666">${tr.addCal}</p>`)),
+    text: textBody(app, b, lang, tr.confirmedIntro, [pol, tr.addCal, ...(inviteLine ? ['', inviteLine] : []), '']),
+    html: String(bodyHtml(app, b, lang, tr.confirmedIntro, html`<p style="font-size:14px;color:#444">${pol}</p><p style="font-size:13px;color:#666">${tr.addCal}</p>${inviteLine ? html`<p style="font-size:13px;color:#666">${makeT(lang)('invite.mailHint')} <a href="${bookingUrl(app, b, lang)}#invita">${makeT(lang)('invite.title')}</a></p>` : ''}`)),
     attachments: [
       { filename: `${b.ref}.ics`, content: icsFor(app, b, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' },
       ...(await pdfAttachment(`voucher-${b.ref}.pdf`, (pdf) => pdf.renderVoucherPdf(app, b, { lang, nowMs }), 'voucher')),
@@ -298,6 +302,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
     `${label} ${b.ref} (${b.channel.toUpperCase()})`,
     `${tour.i18n.it.title}`,
     `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${b.participants} pers.`,
+    b.tour_lang && LANG_META[b.tour_lang] ? `Lingua del tour: ${LANG_META[b.tour_lang].name}` : null,
     parseServiceRecord(b.service_json) ? `Servizio a ore: ${serviceNote(parseServiceRecord(b.service_json))}` : null,
     `${b.name} <${b.email}>${b.phone ? ' · ' + b.phone : ''}`,
     b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
@@ -1144,3 +1149,36 @@ export async function sendInvoiceCopy(app, inv, to, { includeXml = false } = {})
 
 /** I dizionari per lingua, esposti ai test: ogni lingua deve avere le stesse chiavi e gli stessi segnaposto. */
 export const EMAIL_TEXTS = { T, P, G, R, PG };
+
+/** «Invita un amico»: l'email all'amico, con il suo codice sconto e il collegamento alla partenza. Nella lingua del tour (è quella in cui si svolgerà). */
+export async function sendInviteEmail(app, b, invite, link, nowMs = Date.now()) {
+  if (!invite.friend_email) return false;
+  const lang = normLang(b.tour_lang ?? b.lang);
+  const ti = tourText(app, b.tour_slug, lang);
+  const percent = app.db.prepare('SELECT value FROM promo_codes WHERE id = ?').get(invite.promo_code_id)?.value ?? app.cfg.invite.percent;
+  const when = `${fmtDate(b.date, lang)} · ${b.start_time}`;
+  const who = b.name;
+  const subject = pick({
+    it: `${who} ti invita: ${ti.title}, ${fmtDate(b.date, lang, 'short')}`,
+    en: `${who} invites you: ${ti.title}, ${fmtDate(b.date, lang, 'short')}`,
+    es: `${who} te invita: ${ti.title}, ${fmtDate(b.date, lang, 'short')}`,
+    ja: `${who}さんからのご招待：${ti.title}（${fmtDate(b.date, lang, 'short')}）`,
+  }, lang);
+  const intro = pick({
+    it: `${who} ha prenotato «${ti.title}» (${when}) e ti invita a unirti. Con il codice qui sotto hai il ${percent}% di sconto: vale una sola volta e solo per questa partenza.`,
+    en: `${who} has booked “${ti.title}” (${when}) and invites you to join. With the code below you get ${percent}% off: it can be used once and only for this departure.`,
+    es: `${who} ha reservado «${ti.title}» (${when}) y te invita a unirte. Con el código de abajo tienes un ${percent}% de descuento: vale una sola vez y solo para esta salida.`,
+    ja: `${who}さんが「${ti.title}」（${when}）を予約し、あなたをご招待しています。下のコードで${percent}%割引になります（この出発のみ、1回限り有効）。`,
+  }, lang);
+  const cta = pick({ it: 'Prenota il tuo posto', en: 'Book your place', es: 'Reserva tu plaza', ja: 'お席を予約する' }, lang);
+  const codeLabel = pick({ it: 'Il tuo codice', en: 'Your code', es: 'Tu código', ja: 'あなたのコード' }, lang);
+  await app.mail.send({
+    to: invite.friend_email,
+    subject,
+    text: [greet(lang), '', intro, '', `${codeLabel}: ${invite.code}`, `${cta}: ${link}`, '', `${bye(lang)} ${app.cfg.site.name}`].join('\n'),
+    html: String(layout(app, lang, html`<p>${greet(lang)}</p><p>${intro}</p><p style="font-size:20px;letter-spacing:2px"><strong>${codeLabel}: ${invite.code}</strong></p><p><a href="${link}" style="display:inline-block;background:#d6bb51;color:#1c1c1c;padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:bold">${cta}</a></p><p>${bye(lang)} ${app.cfg.site.name}</p>`)),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+  app.db.prepare('UPDATE invites SET sent_at = ? WHERE id = ?').run(new Date(nowMs).toISOString(), invite.id);
+  return true;
+}

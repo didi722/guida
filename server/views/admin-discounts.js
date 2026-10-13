@@ -14,12 +14,13 @@ function giftState(card, today) {
   return GIFT_STATUS[card.status] ?? [card.status, ''];
 }
 
-export function discountsPage(ctx, { tab, promos, gifts, tours, today, flash, error }) {
+export function discountsPage(ctx, { tab, promos, invites = { n: 0, used: 0 }, gifts, tours, today, flash, error }) {
   const tabs = [['promos', 'Codici sconto'], ['gifts', 'Buoni regalo']];
   const body = html`
 <div class="tabs">${tabs.map(([k, l]) => html`<a href="/admin/discounts?tab=${k}" ${tab === k ? raw('aria-current="page"') : ''}>${l}</a>`)}</div>
 ${tab === 'promos'
   ? html`
+${invites.n ? html`<p class="muted"><strong>Inviti a un amico:</strong> ${invites.n} codic${invites.n === 1 ? 'e creato' : 'i creati'}, ${invites.used} già usat${invites.used === 1 ? 'o' : 'i'} (sconto e regole in <a href="/admin/settings">Impostazioni › Invita un amico</a>). Sono codici automatici, non compaiono nell’elenco qui sotto.</p>` : ''}
 <div class="card pad">
   <h2>Nuovo codice sconto</h2>
   <form method="post" action="/admin/discounts/promos" class="form">

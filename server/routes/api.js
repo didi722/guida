@@ -20,7 +20,8 @@ export function apiRouter(app) {
     const tour = content.tour(String(req.query.tour ?? ''));
     const pax = Number.parseInt(req.query.pax, 10);
     if (!tour?.active || tour.pricing === 'hourly' || !openTo(app.rates.get(), tour, channelOf(req.acct)) || !Number.isInteger(pax) || pax < 1 || pax > tour.maxParticipants) return null; // i servizi a ore hanno la loro pagina (/hourly)
-    return { tour, pax };
+    const tl = String(req.query.tl ?? '');
+    return { tour, pax, tourLang: tour.languages.includes(tl) ? tl : null }; // «tl»: la lingua del tour che si vuole; le partenze già in un'altra lingua non compaiono
   }
 
   r.get('/api/availability', noStore, (req, res) => {
@@ -30,7 +31,7 @@ export function apiRouter(app) {
     if (!p || !isMonth(month)) return res.status(400).json({ error: 'bad request' });
     const today = nowRome().date;
     if (month < today.slice(0, 7) || month > `${Number(today.slice(0, 4)) + 2}-12`) return res.json({ month, days: {} });
-    res.json({ month, days: monthAvailability(db, cfg, p.tour, month, { pax: p.pax, channel: channelOf(req.acct), nowMs: Date.now() }) });
+    res.json({ month, days: monthAvailability(db, cfg, p.tour, month, { pax: p.pax, channel: channelOf(req.acct), nowMs: Date.now(), tourLang: p.tourLang }) });
   });
 
   r.get('/api/slots', noStore, (req, res) => {
@@ -39,7 +40,7 @@ export function apiRouter(app) {
     const date = String(req.query.date ?? '');
     if (!p || !isDate(date)) return res.status(400).json({ error: 'bad request' });
     const channel = channelOf(req.acct);
-    const slots = daySlots(db, cfg, p.tour, date, { pax: p.pax, channel, nowMs: Date.now() }).map((s) => ({ ...s, totalCents: priceFor(p.tour, p.pax, channel, req.acct) }));
+    const slots = daySlots(db, cfg, p.tour, date, { pax: p.pax, channel, nowMs: Date.now(), tourLang: p.tourLang }).map((s) => ({ ...s, totalCents: priceFor(p.tour, p.pax, channel, req.acct) }));
     res.json({ date, slots });
   });
 

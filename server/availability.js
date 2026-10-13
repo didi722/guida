@@ -4,7 +4,10 @@
 //  - Un servizio occupa [inizio, fine + pausa). Due servizi non possono sovrapporsi.
 //  - Eccezione: i tour "a persona" (model: person) con la stessa partenza (stesso tour, stesso
 //    orario) si sommano fino a `maxParticipants`.
+//  - In una partenza condivisa la lingua del primo che prenota vincola quella partenza: chi viene dopo può unirsi solo nella stessa lingua
+//    (così non si mescolano nello stesso gruppo persone che parlano lingue diverse).
 //  - Un tour "a gruppo" (model: group, privato) blocca la fascia per chiunque altro.
+//  - Una prenotazione, anche di una sola persona, occupa la sua fascia (più la pausa): gli orari degli altri tour che si sovrapporrebbero spariscono.
 //  - Si può prenotare solo dentro gli orari di lavoro (modello settimanale + giorni speciali),
 //    fuori dalle fasce bloccate e con il preavviso minimo.
 
@@ -55,7 +58,7 @@ export function loadAvailabilityContext(db, cfg, fromDate, toDate, nowMs, { igno
   const bookings = groupBy(
     db
       .prepare(
-        `SELECT id, tour_slug, date, start_time, end_time, buffer_min, participants FROM bookings
+        `SELECT id, tour_slug, date, start_time, end_time, buffer_min, participants, tour_lang FROM bookings
          WHERE date BETWEEN ? AND ? AND ${LIVE_BOOKING_SQL}`, // confermate, in pagamento e opzioni non scadute
       )
       .all(fromDate, toDate, new Date(nowMs).toISOString(), new Date(nowMs).toISOString()),
@@ -78,9 +81,10 @@ export function minNoticeHours(cfg, channel) {
 
 /**
  * Orari prenotabili di un tour in un giorno.
- * @returns {{time:string,end:string,left:number,joined:boolean}[]}
+ * `tourLang`: se c'è, restano solo le partenze in cui si può prenotare in quella lingua (libere, oppure già in quella lingua).
+ * @returns {{time:string,end:string,left:number,joined:boolean,lang:string|null}[]} `lang`: la lingua che vincola la partenza (solo se qualcuno ha già prenotato)
  */
-export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', nowMs, ignoreId = null, skipNotice = false, durationMin = null }) {
+export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', nowMs, ignoreId = null, skipNotice = false, durationMin = null, tourLang = null }) {
   if (!tour.weekdays.includes(dayOfWeek(date))) return [];
   const win = dayWindow(ctx, date);
   if (!win) return [];
@@ -115,12 +119,16 @@ export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', no
 
     let conflict = false;
     let taken = 0;
+    let lang = null;
     for (const b of dayBookings) {
       if (b.id === ignoreId) continue;
       const bs = toMin(b.start_time);
       const be = toMin(b.end_time) + b.buffer_min;
       if (!(s < be && bs < eb)) continue;
-      if (tour.model === 'person' && b.tour_slug === tour.slug && b.start_time === start) taken += b.participants;
+      if (tour.model === 'person' && b.tour_slug === tour.slug && b.start_time === start) {
+        taken += b.participants;
+        lang ??= b.tour_lang ?? null;
+      }
       else {
         conflict = true;
         break;
@@ -137,18 +145,19 @@ export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', no
 
     const left = tour.maxParticipants - taken;
     if (pax > left) continue;
-    out.push({ time: start, end: fromMin(e), left, joined: taken > 0 });
+    if (tourLang && lang && lang !== tourLang) continue; // la partenza è già in un'altra lingua
+    out.push({ time: start, end: fromMin(e), left, joined: taken > 0, lang });
   }
   return out;
 }
 
 /** Numero di orari prenotabili per ogni giorno del mese (per colorare il calendario). */
-export function monthAvailability(db, cfg, tour, month, { pax = 1, channel = 'b2c', nowMs, durationMin = null }) {
+export function monthAvailability(db, cfg, tour, month, { pax = 1, channel = 'b2c', nowMs, durationMin = null, tourLang = null }) {
   const dates = monthDates(month);
   const ctx = loadAvailabilityContext(db, cfg, dates[0], dates.at(-1), nowMs);
   const days = {};
   for (const d of dates) {
-    const n = slotsForDay(ctx, cfg, tour, d, { pax, channel, nowMs, durationMin }).length;
+    const n = slotsForDay(ctx, cfg, tour, d, { pax, channel, nowMs, durationMin, tourLang }).length;
     if (n) days[d] = n;
   }
   return days;
