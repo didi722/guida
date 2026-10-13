@@ -36,7 +36,7 @@ const dayWords = (t, lang, text, sundays = false) =>
   [
     ...(sundays ? [t('hourly.sup.sundays')] : []),
     ...parseDayList(text).tokens.map((tok) => (tok === 'pasqua' ? t('hourly.day.pasqua') : tok === 'pasquetta' ? t('hourly.day.pasquetta') : new Intl.DateTimeFormat(localeOf(lang), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, Number(tok.slice(0, 2)) - 1, Number(tok.slice(3))))))),
-  ].join(', ');
+  ].join(lang === 'ja' ? '、' : ', ');
 
 /** Una tabella di tariffe (scaglioni + ora in più) per un servizio. `discountPercent`: sconto del partner, già applicato. */
 export function rateCard(ctx, { service, channel, discountPercent = 0 }) {

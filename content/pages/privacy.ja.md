@@ -34,7 +34,7 @@ description: 当サイトを通じて収集する個人データの取扱いに�
 ご予約、ギフトカード、請求書に関するデータは、税務上および会計上の義務により求められる期間（通常は10年）保存いたします。確定していないプログラムのご依頼、お問い合わせメッセージ、ご感想は、ご返信およびサービスの改善に必要な期間保存いたします。パートナーアカウントは、閉鎖されるまで保存いたします。
 
 ### お客様の権利
-お客様は、[{{email}}](mailto:{{email}})宛てにご連絡いただくことで、アクセス、訂正、消去、取扱いの制限、データポータビリティ、異議申立てを求めることができます。また、イタリア個人データ保護機関（Garante per la protezione dei dati personali、[garanteprivacy.it](https://www.garanteprivacy.it)）に苦情を申し立てる権利もあります。
+お客様は、[{{email}}](mailto:{{email}})宛てにご連絡いただくことで、データへのアクセス、訂正、消去、取扱いの制限、データポータビリティを求めること、および取扱いに異議を述べることができます。また、イタリア個人データ保護機関（Garante per la protezione dei dati personali、[garanteprivacy.it](https://www.garanteprivacy.it)）に苦情を申し立てる権利もあります。
 
 ### Cookie
 [Cookieポリシー](/ja/cookies)をご覧ください。

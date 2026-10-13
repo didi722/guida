@@ -750,8 +750,9 @@ body.admin { --header-h: 64px; }
 .quote-card .summary-list > div, .summary-list .row-line { flex-direction: row !important; } .quote-card .summary-list dd, .summary-list .row-line dd { text-align: right !important; }
 
 /* giapponese: caratteri di sistema (nessun font di terzi), interlinea più larga e a capo più curati */
-:lang(ja) { font-family: 'Josefin Sans', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', 'Meiryo', 'Noto Sans JP', 'Noto Sans CJK JP', system-ui, sans-serif; line-break: strict; word-break: auto-phrase; }
+:lang(ja) { font-family: 'Josefin Sans', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', 'Meiryo', 'Noto Sans JP', 'Noto Sans CJK JP', system-ui, sans-serif; line-break: strict; word-break: auto-phrase; overflow-wrap: anywhere; }
 html:lang(ja) body { line-height: 1.85; }
 :lang(ja) h1, :lang(ja) h2, :lang(ja) h3, :lang(ja) h4 { line-height: 1.4; letter-spacing: 0; text-wrap: balance; }
+:lang(ja) h1 { font-size: clamp(1.8rem, 5.2vw, 3.1rem); }
 :lang(ja) .eyebrow, :lang(ja) .btn, :lang(ja) .chip { letter-spacing: 0.05em; }
 :lang(ja) .lead { font-weight: 400; }

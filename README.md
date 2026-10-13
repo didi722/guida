@@ -1,6 +1,6 @@
 # Guida Venezia — sito di prenotazione
 
-Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **guida privata a ore** (con assistente, tour leader e meet & greet per le agenzie), **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese e spagnolo**, pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
+Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**, **guida privata a ore** (con assistente, tour leader e meet & greet per le agenzie), **programmi di più giorni**, **area B2B per DMC e tour operator**, **buoni regalo**, **blog** e **Chi sono**, in **italiano, inglese, spagnolo e giapponese**, pensato prima di tutto per il telefono. Lo stile riprende [davidetomio.it](https://davidetomio.it) (Josefin Sans, oro e bronzo, header traslucido, dark mode).
 
 > 📖 **Come si usa il sito** (tour, prezzi, blog, foto, partner, fatture, statistiche, backup…): [`docs/GUIDA.md`](docs/GUIDA.md), che trovi anche nel pannello in **Aiuto › Guida**.
 
@@ -31,7 +31,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - **Agenda** dei prossimi 14 giorni con prenotazioni **e giornate dei programmi**; elenco prenotazioni con ricerca e **annullamento/rimborso** (a percentuale, con penale per chi paga a fattura).
 - **Disponibilità**: orari di lavoro, chiusure, orari speciali, blocchi orari e **calendari collegati** (Google Calendar e simili): gli impegni segnati «Occupato» bloccano da soli gli slot, evitando sovrapposizioni.
 - **Programmi**: richieste, costruttore della proposta (giornate, prezzi, acconto, date trattenute), avvisi se una giornata si sovrappone a qualcos'altro, accettazione, acconto, annullo con rimborso.
-- **Sito**: **tour** (crea, modifica, nascondi, duplica; testi e domande frequenti in italiano, inglese e spagnolo), **listino** con tutti i prezzi in una tabella, **tariffe a ore** (scaglioni, ora extra, supplementi, giorni festivi), **blog** (bozze, copertine, foto nel testo), **pagine** fisse, **testi dell'interfaccia** per lingua, **libreria immagini** (foto di tour, articoli, home, ritratto, anteprima social) e **impostazioni** (contatti, regole di prenotazione, buoni regalo, dati fiscali).
+- **Sito**: **tour** (crea, modifica, nascondi, duplica; testi e domande frequenti in italiano, inglese, spagnolo e giapponese), **listino** con tutti i prezzi in una tabella, **tariffe a ore** (scaglioni, ora extra, supplementi, giorni festivi), **blog** (bozze, copertine, foto nel testo), **pagine** fisse, **testi dell'interfaccia** per lingua, **libreria immagini** (foto di tour, articoli, home, ritratto, anteprima social) e **impostazioni** (contatti, regole di prenotazione, buoni regalo, dati fiscali).
 - **Partner**: approvazione, **listino dedicato** per ciascuno, **sconto**, pagamento a fattura e **politica di annullo a scaglioni** per ciascuno (rimborsi parziali, penali).
 - **Statistiche**: venduto, scontrino medio, incassato e da incassare, annulli, andamento, per tour/partner/canale/pagamento/lingua/giorno, portafoglio futuro, con confronto sul periodo precedente ed esportazione CSV.
 - **Fatture**: voci da fatturare, bozze, **fattura elettronica XML (FatturaPA)** con numerazione progressiva, copia PDF, invio al cliente, trasmissione a SdI via PEC, note di credito, registro CSV.
@@ -71,10 +71,11 @@ I test sui contenuti dei PDF usano `pdftotext` (poppler) e si saltano da soli se
 
 ## Lingue
 
-Il sito è in **italiano, inglese e spagnolo** (`/it`, `/en`, `/es`); la lingua si sceglie dal menu in alto e, alla prima visita, dalla lingua del browser. La lingua della prenotazione decide anche lingua di email, voucher PDF e buoni regalo; le notifiche per te restano in italiano.
+Il sito è in **italiano, inglese, spagnolo e giapponese** (`/it`, `/en`, `/es`, `/ja`); la lingua si sceglie dal menu in alto e, alla prima visita, dalla lingua del browser. La lingua della prenotazione decide anche lingua di email, voucher PDF e buoni regalo; le notifiche per te restano in italiano.
 
-- Un tour manca di una traduzione spagnola? Il sito mostra la versione inglese (il test `test/i18n.test.js` ti avvisa).
-- Per **aggiungere una lingua**: una riga in `server/langs.js`, una colonna in `server/strings.json`, il blocco della lingua nei tour, i file `.xx.md` di blog e pagine, le voci nei dizionari di `server/emails.js`; poi `npm test` indica cosa manca.
+- Un tour manca di una traduzione spagnola o giapponese? Il sito mostra la versione inglese (il test `test/i18n.test.js` ti avvisa).
+- **Giapponese**: nei PDF (voucher, buono regalo, proposta) si usa Noto Sans JP, incorporato solo quando un testo ha kana o ideogrammi (anche il nome di un cliente scritto in giapponese in un voucher inglese o italiano); il file è un sottoinsieme in `server/fonts/` con la sua licenza (OFL) e le istruzioni per rigenerarlo. Il sito usa i caratteri di sistema (nessun font di terzi). Le pagine legali giapponesi sono traduzioni delle bozze: vanno riviste insieme alle altre.
+- Per **aggiungere una lingua**: una riga in `server/langs.js`, una colonna in `server/strings.json`, il blocco della lingua nei tour, i file `.xx.md` di blog e pagine, le voci nei dizionari di `server/emails.js` (e, se serve un alfabeto diverso, il font dei PDF in `server/pdf.js`); poi `npm test` indica cosa manca.
 - Le **lingue offerte** per ogni tour sono nel campo `languages` di `content/tours/*.yml` (compaiono nella scheda del tour); l'abilitazione per ciascuna lingua va indicata in `GUIDE_LICENSE`.
 
 ## Dove si cambiano le cose

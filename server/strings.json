@@ -3999,13 +3999,13 @@
   "Festivi: {days}",
   "Holidays: {days}",
   "Festivos: {days}",
-  "日曜・祝祭日：{days}"
+  "割増の対象（日曜・祝祭日）：{days}"
  ],
  "hourly.sup.superfestivo": [
   "Superfestivi: {days}",
   "Peak holidays: {days}",
   "Superfestivos: {days}",
-  "特別祝祭日：{days}"
+  "特別割増の対象：{days}"
  ],
  "hourly.sup.sundays": [
   "domeniche",

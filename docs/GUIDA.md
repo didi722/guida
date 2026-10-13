@@ -124,7 +124,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
    - **Si può pagare sul posto**: conta solo se il pagamento sul posto è consentito nelle Impostazioni (di default non lo è).
    - **Lingue in cui offri questo servizio**: compaiono nella scheda del tour.
 4. **Immagine di copertina**: scegli una foto già caricata o caricane una ([sezione 10](#10-immagini)). Senza foto il sito usa un'illustrazione.
-5. **Testi** (una scheda per lingua: Italiano, English, Español)
+5. **Testi** (una scheda per lingua: Italiano, English, Español, 日本語)
    - **Titolo**, **Sottotitolo**, **Riassunto** (una o due frasi: compare negli elenchi e su Google), **Punto d'incontro**, **Link alla mappa** (indirizzo Google Maps).
    - **Descrizione**: testo lungo; puoi formattarlo con i pulsanti *Grassetto, Corsivo, Titolo, Elenco, Link, Foto* ([appendice](#21-appendice-formattare-un-testo)) e controllare il risultato con **Anteprima**.
    - **Punti salienti**, **Incluso**, **Non incluso**: **uno per riga**. **Note utili**: testo libero.
@@ -138,8 +138,8 @@ Le indicazioni di percorso si leggono così: **Sito › Tour** vuol dire «tocca
      Circa 3 km, a ritmo rilassato.
      ```
 
-     Se per una lingua non scrivi nulla, il sito mostra quelle dell'inglese (per lo spagnolo) o dell'italiano. Idee: cosa si visita dentro e fuori, quanto si cammina, accessibilità, cosa portare, cosa succede se piove, se si può prenotare per una persona sola.
-   - L'**italiano** è obbligatorio. Se una traduzione manca, il sito mostra al suo posto l'inglese (per lo spagnolo) oppure l'italiano: nell'elenco dei tour vedi un avviso *manca EN* o *manca ES*.
+     Se per una lingua non scrivi nulla, il sito mostra quelle dell'inglese (per spagnolo e giapponese) o dell'italiano. Idee: cosa si visita dentro e fuori, quanto si cammina, accessibilità, cosa portare, cosa succede se piove, se si può prenotare per una persona sola.
+   - L'**italiano** è obbligatorio. Se una traduzione manca, il sito mostra al suo posto l'inglese (per spagnolo e giapponese) oppure l'italiano: nell'elenco dei tour vedi un avviso con le lingue che mancano.
 6. Tocca **Crea il tour**. Apri **Vedi sul sito** per controllare come appare.
 
 ### Modificare, nascondere, duplicare, eliminare
@@ -248,7 +248,7 @@ Le percentuali si calcolano sul prezzo base (già scontato, per un'agenzia con s
 I testi dell'interfaccia — titolo e frasi della home, pulsanti, messaggi, domande frequenti, testi dei PDF, ecc. — si cambiano in **Sito › Testi**, **per ogni lingua**.
 
 1. Trova il testo: cerca una parola (*Cerca*) oppure scegli la sezione (Home, Menu, Prenota, Domande frequenti…).
-2. Cambia il testo nella lingua che vuoi (Italiano, English, Español).
+2. Cambia il testo nella lingua che vuoi (Italiano, English, Español, 日本語).
 3. **Salva i testi di questa pagina**.
 
 Regole:
