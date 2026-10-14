@@ -16,7 +16,7 @@ import { renderVoucherPdf } from '../pdf.js';
 import { loginPage, registerPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { hourlyPage } from '../views/hourly.js';
-import { hourOptions, minHours, openTo } from '../rates.js';
+import { extraHourOptions, hourOptions, minHours, openTo } from '../rates.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
 import { LANG_META, normLang, pick } from '../langs.js';
 import { featuredQuotes, feedbackStats } from '../reviews.js';
@@ -169,7 +169,9 @@ export function publicRouter(app) {
     const date = isDate(req.query.date) && req.query.date >= minDate ? req.query.date : null;
     const pax = clampInt(req.query.pax, 1, product.maxParticipants, 2);
     const asked = Number(req.query.hours);
-    const hours = product.chooseHours ? (hourOptions(product.service).includes(asked) ? asked : Math.max(product.durationMin / 60, hourOptions(product.service)[0])) : product.durationMin / 60;
+    const extraOptions = extraHourOptions(product, channel);
+    const extra = extraOptions.includes(Number(req.query.extra)) ? Number(req.query.extra) : 0;
+    const hours = product.chooseHours ? (hourOptions(product.service).includes(asked) ? asked : Math.max(product.durationMin / 60, hourOptions(product.service)[0])) : product.durationMin / 60 + extra;
     const earpieces = req.query.earpieces === '1';
     const account = channel === 'b2b' ? req.acct : null;
     const quote = hourlyQuote(app, product, { pax, channel, account, date, time: null, hours, earpieces });
@@ -181,7 +183,7 @@ export function publicRouter(app) {
         .map((s) => ({ ...s, quote: hourlyQuote(app, product, { pax, channel, account, date, time: s.time, hours, earpieces }) }))
         .filter((s) => s.quote.ok);
     }
-    send(res, hourlyPage(ctx, { products, product, channel, values: { date, hours, pax, earpieces }, quote, slots, minDate }));
+    send(res, hourlyPage(ctx, { products, product, channel, values: { date, hours, pax, earpieces, extra }, extraOptions, quote, slots, minDate }));
   });
 
   // ───── checkout ─────
@@ -194,6 +196,11 @@ export function publicRouter(app) {
     const p = { tour, pax, date: src.date, time: src.time, hours: null, earpieces: false, durationMin: null };
     if (tour.pricing === 'hourly') {
       p.hours = tour.chooseHours ? Number(src.hours) : tour.durationMin / 60;
+      const extra = tour.chooseHours ? 0 : Number(src.extra) || 0; // ore extra (solo agenzie, su un servizio a durata fissa)
+      if (extra) {
+        if (!extraHourOptions(tour, channel).includes(extra)) return null;
+        p.hours += extra;
+      }
       p.earpieces = src.earpieces === '1' || src.earpieces === 'on';
       if (!hourlyQuote(app, tour, { pax, channel, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces }).ok) return null;
       p.durationMin = Math.round(p.hours * 60);

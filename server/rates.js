@@ -133,6 +133,21 @@ export function openTo(rates, tour, channel) {
 }
 export const minHours = (service) => BRACKETS[service][0];
 
+/**
+ * Le ore extra che un'agenzia può aggiungere a un servizio a durata fissa (2 ore → 1; 4 ore → 1, 2 o 3; 8 ore → nessuna):
+ * si resta sotto lo scaglione successivo. Vale solo per i servizi con la durata di uno scaglione (non per gli itinerari).
+ */
+export function extraHourOptions(tour, channel) {
+  if (channel !== 'b2b' || tour?.pricing !== 'hourly' || tour.chooseHours) return [];
+  const base = tour.durationMin / 60;
+  const brackets = BRACKETS[tour.service] ?? [];
+  if (!brackets.includes(base)) return [];
+  const top = (brackets.find((b) => b > base) ?? MAX_HOURS + 1) - 1; // durata massima restando in questo scaglione
+  const out = [];
+  for (let h = base + 1; h <= Math.min(top, MAX_HOURS); h += 1) out.push(h - base);
+  return out;
+}
+
 /** Le durate che si possono scegliere: dal minimo del servizio fino a 8 ore, di mezz'ora in mezz'ora. */
 export function hourOptions(service) {
   const out = [];

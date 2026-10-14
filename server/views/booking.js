@@ -13,7 +13,7 @@ import { icon, page } from './layout.js';
 import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
 import { quoteLines } from './hourly.js';
-import { parseServiceRecord } from '../rates.js';
+import { extraHourOptions, parseServiceRecord } from '../rates.js';
 
 const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
 
@@ -77,6 +77,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
 
 // ───────────────────────── Checkout ─────────────────────────
 export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, error = '', channel, pricing, option = null, hours: serviceHours = null, earpieces = false }) {
+  const extraOptions = extraHourOptions(tour, channel);
   const { t, lang, u, app, acct } = ctx;
   const { cfg } = app;
   const hourly = tour.pricing === 'hourly';
@@ -182,6 +183,9 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
         <div><dt>${t('s.date')}</dt><dd>${fmtDate(date, lang)}</dd></div>
         <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${hourly ? hoursLabel(t, lang, serviceHours) : fmtDuration(duration, lang)})</span></dd></div>
         <div><dt><label for="pax-select">${t('s.guests')}</label></dt><dd><select name="pax" id="pax-select" form="checkout-form" class="pax-select">${Array.from({ length: Math.max(pax, Math.min(25, tour.maxParticipants, slot.left ?? tour.maxParticipants)) }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select><noscript> <button class="btn btn-outline btn-sm" type="submit" name="apply" value="1" form="checkout-form" formnovalidate>${t('checkout.update')}</button></noscript></dd></div>
+        ${extraOptions.length
+          ? html`<div><dt><label for="extra-select">${t('hourly.f.extra')}</label></dt><dd><select name="extra" id="extra-select" form="checkout-form" data-apply><option value="0">${t('hourly.extra.none')}</option>${extraOptions.map((n) => html`<option value="${n}" ${n === serviceHours - tour.durationMin / 60 ? raw('selected') : ''}>+ ${hoursLabel(t, lang, n)}</option>`)}</select></dd></div>`
+          : ''}
         <div><dt>${t('s.meeting')}</dt><dd>${tour.meetingChoice ? t('meeting.summary') : ti.meetingPoint}</dd></div>
         ${offered.length > 1 || slot.lang ? html`<div><dt>${t('s.tourLang')}</dt><dd>${LANG_META[tourLang].name}</dd></div>` : ''}
         ${pricing.quote?.ok ? quoteLines(t, lang, pricing.quote, { total: false }) : ''}

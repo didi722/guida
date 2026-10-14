@@ -11,7 +11,7 @@ import { confirmPaid, createBooking, expireBooking, getBooking } from '../server
 import { createConfig, ROOT } from '../server/config.js';
 import { meetingOf, pickupText } from '../server/choices.js';
 import { openDb } from '../server/db.js';
-import { dayClass, normalizeRates, parseServiceRecord } from '../server/rates.js';
+import { dayClass, extraHourOptions, normalizeRates, parseServiceRecord } from '../server/rates.js';
 import { addDays, dayOfWeek, nowRome } from '../server/time.js';
 import { addAccount } from './helpers.js';
 
@@ -278,6 +278,46 @@ test('servizi a ore: prenotazione di un cliente privato (ore, supplementi, orari
     // durate o auricolari impossibili
     const bad = (extra) => anon(`/it/book/checkout?tour=guida-a-ore&date=${plainDay(15)}&time=10:00&pax=2&${extra}`);
     for (const extra of ['hours=1', 'hours=2.25', 'hours=13', 'hours=abc', '']) assert.equal((await bad(extra)).status, 400, extra || 'senza ore');
+  } finally {
+    s.close();
+  }
+});
+
+test('servizi a ore per agenzie: ore extra su un servizio a durata fissa (2 ore → 1; 4 ore → 1-3; 8 ore → nessuna)', async () => {
+  const s = await start();
+  try {
+    const { app, partner, anon } = s;
+    const svc = app.content.tour('assistente-a-ore');
+    for (const [hours, expected] of [[2, [1]], [4, [1, 2, 3]], [8, []]]) {
+      Object.assign(svc, { chooseHours: false, durationMin: hours * 60 });
+      assert.deepEqual(extraHourOptions(svc, 'b2b'), expected, `${hours} ore`);
+    }
+    assert.deepEqual(extraHourOptions(svc, 'b2c'), [], 'solo per le agenzie');
+    Object.assign(svc, { durationMin: 240 });
+    const date = plainDay(14);
+    const q = (extra) => `tour=assistente-a-ore&date=${date}&time=10:00&pax=4${extra}`;
+    const base = nb(await (await partner(`/it/book/checkout?${q('')}`)).text());
+    assert.match(base, /name="extra"[^>]*data-apply/);
+    assert.match(base, /<option value="3" >\+ 3 ore<\/option>/);
+    assert.ok(!/<option value="4" >\+/.test(base), 'oltre le 7 ore ci sarebbe lo scaglione successivo');
+    const longer = nb(await (await partner(`/it/book/checkout?${q('&extra=2')}`)).text());
+    assert.match(longer, /10:00–16:00 <span class="muted">\(6 ore\)<\/span>/);
+    assert.match(longer, /<option value="2" selected>/);
+    assert.equal((await partner(`/it/book/checkout?${q('&extra=4')}`)).status, 400, 'extra non ammesse');
+    // la prenotazione conserva le ore totali
+    const res = await partner('/it/book/checkout', post({ tour: 'assistente-a-ore', date, time: '10:00', pax: '4', extra: '2', name: 'Giulia Bianchi', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', consent: '1' }));
+    assert.equal(res.status, 303);
+    const b = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
+    assert.equal(b.end_time, '16:00');
+    assert.equal(parseServiceRecord(b.service_json).hours, 6);
+    // i privati non possono allungare un servizio fisso
+    const noExtra = await anon('/it/book/checkout?tour=guida-a-ore&date=' + date + '&time=10:00&pax=2&extra=1');
+    assert.ok(noExtra.status === 400 || !(await noExtra.text()).includes('name="extra"'));
+    // pagina del preventivo: la scelta compare solo per l'agenzia, e il totale segue
+    const page = nb(await (await partner(`/it/hourly?product=assistente-a-ore&date=${date}&pax=4&extra=2`)).text());
+    assert.match(page, /name="extra"/);
+    assert.match(page, /<option value="2" selected>\+ 2 ore<\/option>/);
+    assert.match(page, /Servizio, 6 ore/, "il preventivo segue le ore extra");
   } finally {
     s.close();
   }

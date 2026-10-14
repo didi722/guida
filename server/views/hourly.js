@@ -94,14 +94,14 @@ export function ratesBlock(ctx, { channel, services, discountPercent = 0 }) {
  * products: i servizi prenotabili (tour a ore); product: quello scelto; values: { date, hours, pax, earpieces };
  * quote: il preventivo (anche senza data); slots: [{ time, end, quote }] per la data scelta; channel: 'b2c' | 'b2b'.
  */
-export function hourlyPage(ctx, { products, product, channel, values, quote, slots, minDate, error = '' }) {
+export function hourlyPage(ctx, { products, product, channel, values, quote, slots, minDate, extraOptions = [], error = '' }) {
   const { t, lang, u, app } = ctx;
   const isB2b = channel === 'b2b';
   const rates = app.rates.get();
   const title = isB2b ? t('hourly.titleB2b') : t('hourly.title');
   const lead = isB2b ? t('hourly.leadB2b') : t('hourly.lead');
   const services = [...new Set(products.map((p) => p.service))];
-  const slotUrl = (time) => `${u('/book/checkout')}?tour=${encodeURIComponent(product.slug)}&date=${values.date}&time=${time}&pax=${values.pax}${product.chooseHours ? `&hours=${values.hours}` : ''}`;
+  const slotUrl = (time) => `${u('/book/checkout')}?tour=${encodeURIComponent(product.slug)}&date=${values.date}&time=${time}&pax=${values.pax}${product.chooseHours ? `&hours=${values.hours}` : ''}${values.extra ? `&extra=${values.extra}` : ''}`;
 
   const body = products.length
     ? html`
@@ -121,7 +121,8 @@ export function hourlyPage(ctx, { products, product, channel, values, quote, slo
     <div class="dyn" data-dyn="hours">
     ${product.chooseHours
       ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select name="hours">${hourOptions(product.service).map((h) => html`<option value="${h}" ${h === values.hours ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>${product.roundHours ? html`<small class="muted">${t('hourly.note.round')}</small>` : ''}</label>`
-      : html`<p class="field"><span class="label">${t('hourly.f.hours')}</span><strong>${hoursLabel(t, lang, product.durationMin / 60)}</strong></p>`}
+      : html`<p class="field"><span class="label">${t('hourly.f.hours')}</span><strong>${hoursLabel(t, lang, product.durationMin / 60)}</strong></p>
+      ${extraOptions.length ? html`<label class="field"><span class="label">${t('hourly.f.extra')}</span><select name="extra"><option value="0">${t('hourly.extra.none')}</option>${extraOptions.map((n) => html`<option value="${n}" ${n === values.extra ? raw('selected') : ''}>+ ${hoursLabel(t, lang, n)}</option>`)}</select></label>` : ''}`}
     </div>
     <div class="dyn" data-dyn="pax"><label class="field"><span class="label">${t('quick.guests')}</span><input type="number" name="pax" min="1" max="${product.maxParticipants}" value="${values.pax}" inputmode="numeric" required></label></div>
     <button class="btn btn-gold" type="submit" data-go>${t('hourly.f.go')}</button>

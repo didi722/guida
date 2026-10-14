@@ -5374,5 +5374,17 @@
   "Overview",
   "Resumen",
   "概要"
+ ],
+ "hourly.f.extra": [
+  "Ore extra",
+  "Extra hours",
+  "Horas extra",
+  "追加時間"
+ ],
+ "hourly.extra.none": [
+  "Nessuna",
+  "None",
+  "Ninguna",
+  "なし"
  ]
 }

@@ -1,5 +1,5 @@
 // Prezzi, codici sconto e buoni regalo (solo database, nessuna rete).
-import { applyPartnerDiscount } from './rates.js';
+import { applyPartnerDiscount, extraHourOptions } from './rates.js';
 import { nowRome } from './time.js';
 
 /** Prezzo unitario. B2B: tariffa B2B del tour, meno lo sconto extra dell'account. */
@@ -33,7 +33,8 @@ export function unitPriceFor(tour, channel, account = null) {
 
 /** Preventivo di un servizio a ore: le ore sono quelle scelte dal cliente, oppure la durata del tour se è fissa. */
 export function hourlyQuote(app, tour, { pax = 1, channel, account = null, date = null, time = null, hours = null, earpieces = false }) {
-  const h = tour.chooseHours ? Number(hours) : tour.durationMin / 60;
+  const base = tour.durationMin / 60;
+  const h = tour.chooseHours ? Number(hours) : extraHourOptions(tour, channel).includes(Number(hours) - base) ? Number(hours) : base; // le agenzie possono allungare un servizio fisso con ore extra
   return app.rates.quote({ service: tour.service, channel, hours: h, date, time, pax, earpieces, roundHours: !!tour.roundHours, discountPercent: channel === 'b2b' ? (account?.discount_percent ?? 0) : 0 });
 }
 
