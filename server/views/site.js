@@ -42,7 +42,6 @@ export function homePage(ctx, { departures = [], quotes = [], reviewStats = null
   const cover = (list) => list.find((x) => x.featured) ?? list[0] ?? null; // la foto di ogni scheda: il tour «in evidenza», altrimenti il primo
   const guideTour = privateTours.find((x) => x.pricing === 'hourly' && x.service === 'guide' && x.chooseHours) ?? privateTours.find((x) => x.pricing === 'hourly' && x.service === 'guide') ?? null;
   const discount = channel === 'b2b' ? Number(ctx.acct?.discount_percent) || 0 : 0;
-  const guideRates = guideTour ? rateRows(rates, 'guide', channel, discount) : null;
   const privateCover = cover(privateTours);
   const groupCover = cover(groupTours);
   const fromGroup = groupTours.length ? priceParts(ctx, groupTours.reduce((a, b) => (unitPriceFor(b, channel, ctx.acct) < unitPriceFor(a, channel, ctx.acct) ? b : a))) : null;
@@ -74,8 +73,6 @@ ${privateCover || groupCover ? html`<section class="section tight choose">
         <div class="choice-body">
           <h3>${t('home.private.title')}</h3>
           <p class="muted">${t('home.private.p')}</p>
-          ${guideRates ? html`<ul class="plain rate-mini">${guideRates.rows.map((r) => html`<li><span>${t(`hourly.b.${r.hours}`)}</span><strong>${formatMoney(r.cents, lang)}</strong></li>`)}</ul>
-          <p class="small muted">${t('hourly.note.group', { max: 25 })} ${t('home.private.sup')}</p>` : ''}
           <p class="btn-row"><a class="btn btn-gold" href="${u('/tours')}?kind=private">${t('home.private.cta')}</a></p>
         </div>
       </article>` : ''}

@@ -176,9 +176,7 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     assert.ok(home.indexOf('id="private"') < home.indexOf('id="group"'), 'prima la guida privata');
     // guida privata: tariffe al pubblico a colpo d'occhio e collegamento al calcolatore
     assert.match(priv, /Guida privata/);
-    assert.match(priv, /2 ore<\/span><strong>200 €/);
-    assert.match(priv, /Mezza giornata · 4 ore<\/span><strong>380 €/);
-    assert.match(priv, /Giornata intera · 8 ore<\/span><strong>700 €/);
+    assert.ok(!/rate-mini|200 €|380 €|700 €/.test(priv), 'nella home niente prezzi orari');
     assert.match(priv, /href="\/it\/tours\?kind=private">Scegli il tuo tour/);
     assert.ok(!priv.includes('160 €'), 'niente tariffe per agenzie');
     // tour di gruppo: prezzo «da», prossime partenze (al massimo tre) e collegamento a «Prenota»
@@ -195,11 +193,8 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     assert.match(await (await anon('/en/')).text(), /How would you like to discover Venice\?[^]*?Private guide[^]*?Group tours/);
     assert.match(await (await anon('/es/')).text(), /¿Cómo quieres descubrir Venecia\?[^]*?Guía privado[^]*?Tours en grupo/);
 
-    // un partner con lo sconto del 15% vede le sue tariffe: 160 → 136 → 140, 300 → 255, 560 → 476 → 480
-    const ph = await (await partner('/it/')).text().then(nb);
-    const ppriv = /id="private">([^]*?)<\/article>/.exec(ph)?.[1] ?? '';
-    for (const price of ['140 €', '255 €', '480 €']) assert.ok(ppriv.includes(price), price);
-    assert.ok(!ppriv.includes('200 €'));
+    // le tariffe orarie non stanno nella home (nemmeno per i partner: le vedono in cima alla loro area riservata)
+    assert.ok(!/rate-mini/.test(await (await partner('/it/')).text()));
 
     // pagina Tour: prima la guida privata, poi i gruppi
     const tours = await (await anon('/it/tours')).text().then(nb);
