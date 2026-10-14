@@ -28,6 +28,7 @@ Per i soggiorni di più giorni ricevi una proposta su misura con date, orari, co
 ### Cancellazione e rimborsi
 - **Clienti privati:** cancellazione gratuita con rimborso integrale fino a **{{b2cHours}}** prima dell'inizio del servizio (per alcuni servizi può essere diverso: è indicato in fase di prenotazione). Oltre tale termine non è previsto rimborso.
 - **Agenzie, DMC e tour operator:** cancellazione gratuita fino a **{{b2bHours}}** prima dell'inizio (salvo accordi diversi indicati nell'account partner). Oltre tale termine il servizio è dovuto per intero.
+- **«Porta un amico»:** se chi ha invitato annulla dopo che l'amico ha prenotato con il suo link, dal rimborso si trattiene lo sconto che l'amico ha ottenuto (se la prenotazione non è ancora stata pagata, quell'importo resta dovuto). I link di invito non ancora usati non sono più validi.
 - La cancellazione si effettua dal link ricevuto via email o dall'area partner. I rimborsi avvengono sul metodo di pagamento originale.
 - Per i servizi di svago con data specifica non si applica il diritto di recesso previsto dal Codice del Consumo (art. 59).
 
@@ -38,7 +39,7 @@ Dopo il servizio potremmo scriverti una sola volta per chiederti un'opinione: è
 I tour si svolgono anche con pioggia. In caso di condizioni davvero avverse (allerta meteo, acqua alta eccezionale, scioperi o altre cause di forza maggiore) si concorda con voi una nuova data oppure si rimborsa integralmente.
 
 ### Puntualità e comportamento
-Presentati al punto d'incontro all'orario indicato: la guida attende al massimo 15 minuti. Chi arriva in ritardo non ha diritto a rimborso. I minori devono essere accompagnati e restano sotto la responsabilità dei genitori o dell'accompagnatore. Per rispetto del luogo e degli altri partecipanti, la guida può interrompere il servizio in caso di comportamenti scorretti.
+Presentati al punto d'incontro all'orario indicato: la guida attende al massimo 15 minuti. Chi arriva in ritardo non ha diritto a rimborso. I minori devono essere accompagnati e restano sotto la responsabilità dei genitori o dell'accompagnatore. Per rispetto del luogo e degli altri partecipanti, la guida può interrompere il servizio in caso di comportamenti scorretti. Nei servizi in cui indichi tu il punto d'incontro (per esempio il tuo hotel), se non scrivi nulla ci vediamo a Campo San Luca.
 
 ### Reclami
 Scrivi a [{{email}}](mailto:{{email}}): cercheremo sempre una soluzione condivisa. Resta ferma la possibilità di rivolgersi alle autorità competenti.

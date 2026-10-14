@@ -28,6 +28,7 @@ Para las estancias de varios días recibes una propuesta a medida con fechas, ho
 ### Cancelación y reembolsos
 - **Clientes particulares:** cancelación gratuita con reembolso íntegro hasta **{{b2cHours}}** antes del inicio del servicio (en algunos servicios puede ser distinto: se indica al hacer la reserva). Pasado ese plazo no se prevé reembolso.
 - **Agencias, DMC y operadores turísticos:** cancelación gratuita hasta **{{b2bHours}}** antes del inicio (salvo acuerdos distintos indicados en la cuenta de socio). Pasado ese plazo, el servicio se debe por completo.
+- **«Trae a un amigo»:** si quien envió la invitación cancela después de que el amigo haya reservado con su enlace, del reembolso se retiene el descuento que recibió el amigo (si la reserva aún no se ha pagado, ese importe sigue siendo debido). Los enlaces de invitación aún no usados dejan de ser válidos.
 - La cancelación se realiza desde el enlace recibido por correo electrónico o desde el área de socios. Los reembolsos se efectúan mediante el método de pago original.
 - A los servicios de ocio con fecha específica no se aplica el derecho de desistimiento previsto en el Código del Consumo italiano (Codice del Consumo, art. 59).
 
@@ -38,7 +39,7 @@ Después del servicio podemos escribirte una sola vez para pedirte tu opinión: 
 Los tours se realizan también con lluvia. En caso de condiciones realmente adversas (alerta meteorológica, mareas altas excepcionales o «acqua alta», huelgas u otras causas de fuerza mayor) se acuerda contigo una nueva fecha o se reembolsa el importe íntegro.
 
 ### Puntualidad y comportamiento
-Preséntate en el punto de encuentro a la hora indicada: el guía espera 15 minutos como máximo. Quien llegue tarde no tiene derecho a reembolso. Los menores deben ir acompañados y quedan bajo la responsabilidad de sus padres o del acompañante. Por respeto al lugar y a los demás participantes, el guía puede interrumpir el servicio en caso de comportamientos inadecuados.
+Preséntate en el punto de encuentro a la hora indicada: el guía espera 15 minutos como máximo. Quien llegue tarde no tiene derecho a reembolso. Los menores deben ir acompañados y quedan bajo la responsabilidad de sus padres o del acompañante. Por respeto al lugar y a los demás participantes, el guía puede interrumpir el servicio en caso de comportamientos inadecuados. En los servicios en los que tú indicas el punto de encuentro (por ejemplo tu hotel), si no escribes nada nos vemos en Campo San Luca.
 
 ### Reclamaciones
 Escribe a [{{email}}](mailto:{{email}}): siempre buscaremos una solución consensuada. Queda a salvo la posibilidad de acudir a las autoridades competentes.

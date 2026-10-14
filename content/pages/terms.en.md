@@ -28,6 +28,7 @@ For stays of several days you receive a tailor-made proposal with dates, times, 
 ### Cancellation and refunds
 - **Private customers:** free cancellation with a full refund up to **{{b2cHours}}** before the service starts (some services may differ: this is shown when booking). After that, no refund applies.
 - **Agencies, DMCs and tour operators:** free cancellation up to **{{b2bHours}}** before the start (unless different terms are shown in the partner account). After that the service is due in full.
+- **“Bring a friend”:** if the person who sent the invitation cancels after the friend has booked with their link, the discount the friend received is deducted from the refund (if the booking has not been paid yet, that amount remains due). Invitation links not yet used are no longer valid.
 - Cancellations are made from the link in your email or from the partner area. Refunds go back to the original payment method.
 - For leisure services on a specific date, the statutory right of withdrawal under the Italian Consumer Code (art. 59) does not apply.
 
@@ -38,7 +39,7 @@ After the service we may write to you once to ask for your opinion: it is option
 Tours run in the rain. In truly adverse conditions (weather warnings, exceptional high water, strikes or other force majeure) we agree a new date with you or refund in full.
 
 ### Punctuality and conduct
-Please arrive at the meeting point on time: the guide waits 15 minutes at most. Late arrivals are not entitled to a refund. Minors must be accompanied and remain the responsibility of their parents or carers. Out of respect for the place and other guests, the guide may end the service in case of improper behaviour.
+Please arrive at the meeting point on time: the guide waits 15 minutes at most. Late arrivals are not entitled to a refund. Minors must be accompanied and remain the responsibility of their parents or carers. Out of respect for the place and other guests, the guide may end the service in case of improper behaviour. For services where you choose the meeting point (for example your hotel), if you write nothing we meet at Campo San Luca.
 
 ### Complaints
 Write to [{{email}}](mailto:{{email}}): we will always look for a shared solution. You remain free to contact the competent authorities.
