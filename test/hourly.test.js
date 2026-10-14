@@ -469,7 +469,7 @@ test('tour dal pannello: servizio a ore (prezzo dalle tariffe) e prezzo fisso, l
     // durata che non va con il servizio (il tour leader parte da 4 ore)
     const bad = await admin('/admin/tours', post({ ...TOUR, slug: 'leader-corto', service: 'leader', durH: '2' }));
     assert.equal(bad.status, 400);
-    assert.match(await bad.text().then(nb), /va da 4 a 12 ore/);
+    assert.match(await bad.text().then(nb), /va da 4 a 8 ore/);
     // un prezzo fisso senza prezzo non è valido
     const noPrice = await admin('/admin/tours', post({ ...TOUR, slug: 'senza-prezzo', pricing: 'fixed', service: 'guide' }));
     assert.equal(noPrice.status, 400);

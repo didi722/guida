@@ -92,19 +92,19 @@ test('tariffe: assistente, tour leader e meet & greet esistono solo per le agenz
   assert.equal(eur(quote(R, { service: 'assistant', channel: 'b2b', hours: 2 }).totalCents), 80);
   assert.equal(eur(quote(R, { service: 'assistant', channel: 'b2b', hours: 8 }).totalCents), 200);
   assert.equal(eur(quote(R, { service: 'leader', channel: 'b2b', hours: 4 }).totalCents), 140);
-  assert.equal(eur(quote(R, { service: 'leader', channel: 'b2b', hours: 9 }).totalCents), 286, '250 + 1 ora extra da 36 €');
+  assert.equal(eur(quote(R, { service: 'leader', channel: 'b2b', hours: 8 }).totalCents), 250, 'scaglione da 8 ore');
   assert.equal(eur(quote(R, { service: 'meetgreet', channel: 'b2b', hours: 1 }).totalCents), 50);
   assert.equal(eur(quote(R, { service: 'meetgreet', channel: 'b2b', hours: 2.5 }).totalCents), 95);
   assert.deepEqual(quote(R, { service: 'assistant', channel: 'b2c', hours: 4 }), { ok: false, reason: 'channel' });
   assert.deepEqual(quote(R, { service: 'leader', channel: 'b2b', hours: 2 }), { ok: false, reason: 'hours' }, 'il tour leader parte da 4 ore');
   assert.deepEqual(quote(R, { service: 'guide', channel: 'b2b', hours: 2.25 }), { ok: false, reason: 'hours' });
-  assert.deepEqual(quote(R, { service: 'guide', channel: 'b2b', hours: 13 }), { ok: false, reason: 'hours' });
+  assert.deepEqual(quote(R, { service: 'guide', channel: 'b2b', hours: 9 }), { ok: false, reason: 'hours' });
   assert.deepEqual(quote(R, { service: 'driver', channel: 'b2b', hours: 4 }), { ok: false, reason: 'service' });
   assert.equal(fromPrice(R, 'guide', 'b2c').cents, 20000);
   assert.deepEqual(fromPrice(R, 'guide', 'b2b', 15), { hours: 2, cents: 14000 });
   assert.equal(fromPrice(R, 'assistant', 'b2c'), null);
   assert.deepEqual(hourOptions('meetgreet').slice(0, 3), [1, 1.5, 2]);
-  assert.equal(hourOptions('guide').at(-1), 12);
+  assert.equal(hourOptions('guide').at(-1), 8);
 });
 
 test('tariffe: cifre salvate rovinate tornano ai valori iniziali', () => {

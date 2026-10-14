@@ -9,7 +9,7 @@ import { parseEuros } from './util.js';
 export const SERVICES = ['guide', 'assistant', 'leader', 'meetgreet'];
 /** Le ore comprese in ogni scaglione (fisse): il pannello cambia i prezzi, non gli scaglioni. */
 export const BRACKETS = { guide: [2, 4, 8], assistant: [2, 4, 8], leader: [4, 8], meetgreet: [1] };
-export const MAX_HOURS = 12;
+export const MAX_HOURS = 8;
 export const HOUR_STEP = 0.5;
 
 /**
@@ -133,7 +133,7 @@ export function openTo(rates, tour, channel) {
 }
 export const minHours = (service) => BRACKETS[service][0];
 
-/** Le durate che si possono scegliere: dal minimo del servizio fino a 12 ore, di mezz'ora in mezz'ora. */
+/** Le durate che si possono scegliere: dal minimo del servizio fino a 8 ore, di mezz'ora in mezz'ora. */
 export function hourOptions(service) {
   const out = [];
   for (let h = minHours(service); h <= MAX_HOURS; h += HOUR_STEP) out.push(h);

@@ -184,7 +184,7 @@ Il servizio privato **non ha un prezzo fisso**: il cliente (o l'agenzia) sceglie
 
 Per ogni servizio scrivi, per il **Pubblico** e per le **Agenzie**, il prezzo di ogni scaglione e quanto costa **Ogni ora in più**: sono euro **per l'intero gruppo**. Se lasci vuota la colonna *Pubblico*, quel servizio non è offerto ai privati.
 
-**Come si calcola.** Il prezzo di *N* ore è quello dello scaglione più grande che non supera *N*, più le ore in più × «Ogni ora in più», senza mai superare lo scaglione successivo. Si prenota a mezz'ore, fino a 12 ore. Con le cifre iniziali: 5 ore di guida per un'agenzia = 300 € (4 ore) + 70 € = **370 €**; 3 ore al pubblico = 200 € + 90 € = **290 €**.
+**Come si calcola.** Il prezzo di *N* ore è quello dello scaglione più grande che non supera *N*, più le ore in più × «Ogni ora in più», senza mai superare lo scaglione successivo. Si prenota a mezz'ore, fino a 8 ore (una giornata). Con le cifre iniziali: 5 ore di guida per un'agenzia = 300 € (4 ore) + 70 € = **370 €**; 3 ore al pubblico = 200 € + 90 € = **290 €**.
 
 **Supplementi.** Si sommano al prezzo base e li calcola il sito dalla data e dall'orario scelti:
 - **Festivo** (+20%) per domeniche e festività; **Superfestivo** (+50%) lo sostituisce a Natale, Capodanno e Pasqua. I giorni si elencano in *Quali giorni sono festivi* (giorno e mese, per esempio `25-04 01-05`; «pasqua» e «pasquetta» si calcolano da sole).
