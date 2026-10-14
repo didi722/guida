@@ -225,7 +225,7 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   const hourly = tour.pricing === 'hourly';
   const hoursDefault = hourly && tour.chooseHours ? startHours(tour) : null;
   const widget = html`
-<aside class="book-card" id="book" data-widget ${hourly ? raw('data-hourly') : ''} data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-unit="${p.unit}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
+<aside class="book-card" id="book" data-widget ${hourly ? raw('data-hourly') : ''} data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-duration="${tour.durationMin}" data-unit="${p.unit}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
   <div class="book-head">
     <p class="price-big">${p.money}<small> / ${p.per}</small></p>
     ${channel === 'b2b' ? html`<span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}

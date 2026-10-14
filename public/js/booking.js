@@ -130,9 +130,9 @@
     slotsEl.replaceChildren(el('p', 'label', L.pickTime), wrap);
   }
 
-  // orario di inizio e di fine (servizio a ore: l'inizio più le ore scelte)
+  // orario di inizio e di fine (l'inizio più le ore scelte, o la durata del tour)
   function timeSpan() {
-    var h = hoursSel ? Number(hoursSel.value) : 0;
+    var h = hoursSel ? Number(hoursSel.value) : Number(root.dataset.duration) / 60;
     if (!h || !/^\d\d:\d\d$/.test(state.time)) return state.time;
     var m = Number(state.time.slice(0, 2)) * 60 + Number(state.time.slice(3)) + Math.round(h * 60);
     var p = function (n) { return (n < 10 ? '0' : '') + n; };
