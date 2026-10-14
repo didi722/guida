@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BookingError, cancelBooking, createBooking } from '../server/bookings.js';
+import { BookingError, cancelBooking, createBooking, inviteDiscountOwed } from '../server/bookings.js';
 import { sendInviteEmail } from '../server/emails.js';
 import { createInvite, invitePercentFor, inviteLink, inviteOffer, invitesOf } from '../server/invites.js';
 import { previewPricing } from '../server/pricing.js';
@@ -144,5 +144,45 @@ test('invita un amico: l’etichetta «Porta un amico» c’è solo sui tour con
     shared.inviteEnabled = null;
   } finally {
     app.close?.();
+  }
+});
+
+test('invita un amico: se chi invita annulla dopo che l’amico ha prenotato, si trattiene lo sconto dell’amico; gli inviti non usati si spengono', () => {
+  const app = makeApp();
+  try {
+    const tour = app.content.tour('shared');
+    const mine = book(app, { email: 'anna@example.com', pax: 1 });
+    const { invite } = createInvite(app, mine, { email: 'luca@example.com', nowMs: NOW });
+    const spare = createInvite(app, mine, { nowMs: NOW }).invite;
+    const friend = book(app, { email: 'luca@example.com', promoCode: invite.code });
+    assert.ok(friend.discount_cents > 0, 'l’amico ha lo sconto');
+    assert.equal(inviteDiscountOwed(app.db, mine.id, NOW), friend.discount_cents);
+    // pagata con carta: annullare in periodo gratuito rimborsa tutto meno lo sconto dell'amico
+    app.db.prepare("UPDATE bookings SET payment_status = 'paid' WHERE id = ?").run(mine.id);
+    const paid = mine.total_cents - mine.gift_cents;
+    const res = cancelBooking(app, mine.id, { by: 'customer' }, NOW);
+    assert.equal(res.percent, 100);
+    assert.equal(res.inviteRetainedCents, friend.discount_cents);
+    assert.equal(res.refundCents, paid - friend.discount_cents);
+    assert.equal(res.retainedCents, friend.discount_cents);
+    // l'invito non usato non vale più
+    const again = previewPricing(app, { tour, pax: 1, channel: 'b2c', date: DAY, time: '09:30', email: 'z@example.com', promoCode: spare.code, nowMs: NOW });
+    assert.ok(again.errors.promo, 'invito spento');
+    // la prenotazione dell'amico resta valida
+    assert.equal(app.db.prepare('SELECT status FROM bookings WHERE id = ?').get(friend.id).status, 'confirmed');
+
+    // l'amministratore può azzerare la penale (rimborso completo)
+    const other = book(app, { email: 'bea@example.com', date: '2027-01-13' });
+    const inv2 = createInvite(app, other, { nowMs: NOW }).invite;
+    book(app, { email: 'carlo@example.com', date: '2027-01-13', promoCode: inv2.code });
+    app.db.prepare("UPDATE bookings SET payment_status = 'paid' WHERE id = ?").run(other.id);
+    const full = cancelBooking(app, other.id, { by: 'admin', refund: 'full' }, NOW);
+    assert.equal(full.inviteRetainedCents, 0);
+    assert.equal(full.retainedCents, 0);
+    // senza inviti usati non cambia nulla
+    const plain = book(app, { email: 'dino@example.com', date: '2027-01-14' });
+    assert.equal(cancelBooking(app, plain.id, { by: 'customer' }, NOW).inviteRetainedCents, 0);
+  } finally {
+    app.cleanup();
   }
 });

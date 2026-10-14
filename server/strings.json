@@ -5398,5 +5398,17 @@
   "After booking you get a link to send to a friend.",
   "Tras reservar recibes un enlace para enviar a un amigo.",
   "ご予約後、ご友人に送れるリンクをお届けします。"
+ ],
+ "booking.inviteOwed": [
+  "Hai invitato un amico che ha già prenotato con il tuo invito: se annulli, ti trattieniamo lo sconto che ha ottenuto ({amount}) e ti rimborsiamo il resto come da condizioni.",
+  "You invited a friend who has already booked with your invitation: if you cancel, we keep the discount they received ({amount}) and refund the rest as per the conditions.",
+  "Has invitado a un amigo que ya ha reservado con tu invitación: si cancelas, retenemos el descuento que ha recibido ({amount}) y te reembolsamos el resto según las condiciones.",
+  "ご招待したご友人がすでにご予約済みです。キャンセルされる場合、ご友人が受けた割引額（{amount}）を差し引き、残りは規定どおり返金します。"
+ ],
+ "booking.confirmCancelInvite": [
+  "Annullando, ti trattieniamo {amount}: lo sconto che ha ottenuto il tuo amico. Vuoi annullare?",
+  "If you cancel, we keep {amount}: the discount your friend received. Do you want to cancel?",
+  "Al cancelar, retenemos {amount}: el descuento que recibió tu amigo. ¿Quieres cancelar?",
+  "キャンセルすると、ご友人が受けた割引額 {amount} を差し引きます。キャンセルしますか？"
  ]
 }

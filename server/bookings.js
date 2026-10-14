@@ -267,12 +267,29 @@ export function cancellationState(b, nowMs = Date.now()) {
 }
 
 /**
+ * Lo sconto che gli amici invitati da questa prenotazione hanno ottenuto (prenotazioni ancora valide): se chi invita annulla,
+ * questa somma gli viene trattenuta dal rimborso, così non conviene invitare sé stessi per poi annullare il posto a prezzo pieno.
+ */
+export function inviteDiscountOwed(db, bookingId, nowMs = Date.now()) {
+  return (
+    db
+      .prepare(
+        `SELECT COALESCE(SUM(x.discount_cents), 0) AS cents
+           FROM invites i JOIN bookings x ON x.promo_code_id = i.promo_code_id
+          WHERE i.booking_id = ? AND (x.status = 'confirmed' OR (x.status = 'held' AND x.hold_expires_at > ?))`,
+      )
+      .get(bookingId, new Date(nowMs).toISOString()).cents ?? 0
+  );
+}
+
+/**
  * Annulla la prenotazione (solo DB). Calcola quanto va rimborsato e quanto resta dovuto (penale):
  * refund: 'auto' (percentuale dello scaglione in cui ci si trova) | 'full' (nessuna penale) | 'none' (penale per l'intero importo).
  * Il rimborso riguarda la quota pagata con carta; chi non ha ancora pagato (fattura, sul posto) deve la penale.
  * La quota pagata con buoni regalo torna sul buono solo se il rimborso è totale.
  * Una prenotazione ancora in attesa di pagamento non ha incassato nulla e non deve nulla: i buoni tornano sempre disponibili.
- * @returns {{booking: object, refundCents: number, retainedCents: number, percent: number, giftRestoredCents: number}}
+ * Se un amico ha prenotato con un invito di questa prenotazione, dal rimborso si trattiene lo sconto che ha ottenuto (`inviteRetainedCents`).
+ * @returns {{booking: object, refundCents: number, retainedCents: number, percent: number, giftRestoredCents: number, inviteRetainedCents?: number}}
  */
 export function cancelBooking(app, bookingId, { by, reason = null, refund = 'auto' }, nowMs = Date.now()) {
   const { db } = app;
@@ -287,8 +304,18 @@ export function cancelBooking(app, bookingId, { by, reason = null, refund = 'aut
     }
 
     const percent = refund === 'full' ? 100 : refund === 'none' ? 0 : cancellationState(b, nowMs).percent;
-    const { refundCents, retainedCents } = b.status === 'confirmed' ? splitAmounts({ paidCents: b.payment_status === 'paid' ? bookingDue(b) : 0, dueCents: bookingDue(b) }, percent) : { refundCents: 0, retainedCents: 0 };
+    let { refundCents, retainedCents } = b.status === 'confirmed' ? splitAmounts({ paidCents: b.payment_status === 'paid' ? bookingDue(b) : 0, dueCents: bookingDue(b) }, percent) : { refundCents: 0, retainedCents: 0 };
 
+    // «Invita un amico»: chi annulla dopo che un amico ha prenotato col suo invito restituisce lo sconto dell'amico (si trattiene dal rimborso)
+    const owed = b.status === 'confirmed' && refund !== 'full' && percent > 0 ? inviteDiscountOwed(db, b.id, nowMs) : 0;
+    let inviteRetainedCents = 0;
+    if (owed) {
+      const paid = b.payment_status === 'paid';
+      inviteRetainedCents = Math.min(owed, paid ? refundCents : Math.max(0, bookingDue(b) - retainedCents));
+      if (paid) refundCents -= inviteRetainedCents;
+      retainedCents += inviteRetainedCents;
+    }
+    db.prepare(`UPDATE promo_codes SET active = 0 WHERE id IN (SELECT promo_code_id FROM invites WHERE booking_id = ?)`).run(b.id); // gli inviti non ancora usati non valgono più
     db.prepare(`UPDATE bookings SET status = 'cancelled', cancelled_at = ?, cancelled_by = ?, cancel_reason = ?, cancel_percent = ?, retained_cents = ?, hold_expires_at = NULL WHERE id = ?`).run(
       new Date(nowMs).toISOString(),
       by,
@@ -297,8 +324,8 @@ export function cancelBooking(app, bookingId, { by, reason = null, refund = 'aut
       retainedCents,
       b.id,
     );
-    const giftRestoredCents = b.status === 'held' || percent === 100 ? restoreGifts(db, b.id, nowMs) : 0;
-    return { booking: getBooking(db, b.id), refundCents, retainedCents, percent, giftRestoredCents };
+    const giftRestoredCents = b.status === 'held' || (percent === 100 && !inviteRetainedCents) ? restoreGifts(db, b.id, nowMs) : 0;
+    return { booking: getBooking(db, b.id), refundCents, retainedCents, percent, giftRestoredCents, inviteRetainedCents };
   });
 }
 

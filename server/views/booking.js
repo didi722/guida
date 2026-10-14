@@ -1,5 +1,5 @@
 import { html, raw } from '../html.js';
-import { bookingDue, cancellationState, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
+import { bookingDue, cancellationState, inviteDiscountOwed, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
 import { freeHoursOf, hasFreeTier, policyFor, refundPercentAt } from '../policy.js';
 import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
@@ -246,6 +246,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   const ti = tour.i18n[lang];
   const meet = meetingOf(tour, b, lang);
   const st = cancellationState(b);
+  const inviteOwed = b.status === 'confirmed' ? inviteDiscountOwed(app.db, b.id) : 0; // sconto già dato a un amico invitato: si trattiene se si annulla
   const q = `?t=${b.token}`;
   const base = `/${lang}/booking/${b.ref}`;
   const service = parseServiceRecord(b.service_json);
@@ -324,8 +325,9 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
           ${wallet.apple ? html`<a class="btn btn-dark" href="${base}/wallet/apple.pkpass${q}">${icon('wallet')} ${t('wallet.apple')}</a>` : ''}
           ${wallet.google ? html`<a class="btn btn-dark" href="${base}/wallet/google${q}">${icon('wallet')} ${t('wallet.google')}</a>` : ''}</p></div>`
         : ''}
+      ${st.percent > 0 && inviteOwed > 0 ? html`<p class="policy-box warn small">${t('booking.inviteOwed', { amount: formatMoney(inviteOwed, lang, b.currency) })}</p>` : ''}
       ${st.percent > 0
-        ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${st.percent < 100 && b.payment_status !== 'paid' ? t('booking.confirmCancelFee') : t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
+        ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${inviteOwed > 0 ? t('booking.confirmCancelInvite', { amount: formatMoney(inviteOwed, lang, b.currency) }) : st.percent < 100 && b.payment_status !== 'paid' ? t('booking.confirmCancelFee') : t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
         : st.started ? '' : html`<p class="small muted">${t('booking.contactForChanges')} <a href="mailto:${cfg.site.email}">${cfg.site.email}</a>${cfg.site.whatsapp ? html` · <a href="https://wa.me/${cfg.site.whatsapp}">WhatsApp</a>` : ''}</p>`}`
       : invoiceBtn ? html`<p class="btn-row">${invoiceBtn}</p>` : ''}
     ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && !invoice ? html`<p class="small muted">${t('partner.docs.invoiceLater')}</p>` : ''}
