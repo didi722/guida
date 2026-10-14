@@ -642,9 +642,9 @@
   "出発日時が決まっていて、料金はお一人様ごと。少人数のグループに加わってご参加いただきます。"
  ],
  "tours.privateTitle": [
-  "guida privata",
-  "private guide",
-  "guía privado",
+  "Guida privata",
+  "Private guide",
+  "Guía privado",
   "プライベートガイド"
  ],
  "tours.privateLead": [
@@ -3870,9 +3870,9 @@
   "時間制ガイド"
  ],
  "hourly.title": [
-  "guida privata",
-  "private guide",
-  "guía privado",
+  "Guida privata",
+  "Private guide",
+  "Guía privado",
   "プライベートガイド"
  ],
  "hourly.titleB2b": [
