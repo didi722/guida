@@ -1,7 +1,7 @@
 // Istanza di PROVA con dati d'esempio, separata dai dati veri.
 //
 //   npm run sandbox             avvia il sito di prova su http://localhost:3200 (la prima volta crea i dati d'esempio)
-//   npm run sandbox -- --reset  cancella la prova e ricomincia da zero
+//   npm run sandbox -- --reset  ricomincia da zero (i dati di prima NON si cancellano: restano in una cartella data-sandbox.copia-AAAAMMGG-HHMMSS/)
 //
 // Usa la cartella data-sandbox/ (mai data/), pagamenti simulati, email non spedite (le leggi in /admin/mail),
 // password admin «admin» e dati fiscali finti: non tocca nulla di quello che usi per il sito vero.
@@ -17,7 +17,13 @@ if (process.env.NODE_ENV === 'production') {
   console.error('Questo script è solo per le prove: non si usa con NODE_ENV=production.');
   process.exit(1);
 }
-if (process.argv.includes('--reset')) fs.rmSync(DIR, { recursive: true, force: true });
+if (process.argv.includes('--reset') && fs.existsSync(DIR)) {
+  // mai cancellare: tariffe, tour e testi provati lì sono lavoro vero. Si sposta tutto in una cartella accanto, da cui si può recuperare.
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
+  const copy = `${DIR}.copia-${stamp}`;
+  fs.renameSync(DIR, copy);
+  console.log(`I dati di prima sono salvati in ${path.relative(ROOT, copy) || copy}/ (per tornare indietro: elimina data-sandbox/ e rinomina questa cartella in data-sandbox).`);
+}
 const fresh = !fs.existsSync(path.join(DIR, 'guida.sqlite'));
 
 // Le variabili già presenti nell'ambiente hanno la precedenza sul file .env: così la prova ignora le impostazioni vere.

@@ -5,3 +5,4 @@ data/
 .DS_Store
 test-results/
 data-sandbox/
+data-sandbox.copia-*/

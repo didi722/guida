@@ -70,7 +70,7 @@ I test sui contenuti dei PDF usano `pdftotext` (poppler) e si saltano da soli se
 
 ## Provare tutto senza rischi
 
-`npm run sandbox` avvia un sito di prova con dati d'esempio (partner, prenotazioni, buoni, programma) su `http://localhost:3200`, separato dai dati veri; oppure un secondo servizio online con pagamenti simulati. Registrazione di un'azienda, approvazione, sconti e scadenze di rimborso dedicate, annulli e fatture, passo per passo: [`docs/SIMULAZIONI.md`](docs/SIMULAZIONI.md). Le email che il sito non può spedire (senza SMTP) si leggono in **Admin → Email**.
+`npm run sandbox` avvia un sito di prova con dati d'esempio (partner, prenotazioni, buoni, programma) su `http://localhost:3200`, separato dai dati veri; oppure un secondo servizio online con pagamenti simulati. Registrazione di un'azienda, approvazione, sconti e scadenze di rimborso dedicate, annulli e fatture, passo per passo: [`docs/SIMULAZIONI.md`](docs/SIMULAZIONI.md). Le email che il sito non può spedire (senza SMTP) si leggono in **Admin → Email**. `npm run sandbox -- --reset` ricomincia da zero **senza cancellare**: i dati di prima restano in `data-sandbox.copia-AAAAMMGG-HHMMSS/` (per tornare indietro basta rinominarla `data-sandbox`).
 
 ## Lingue
 
