@@ -95,6 +95,9 @@ export function splitLegacyTour(slug, d) {
   if (def.audience === 'b2b') return { def, twin: null };
   const twin = structuredClone(def);
   twin.audience = 'b2b';
+  delete twin.roundHours; // la copia per le agenzie non ha scelte tematiche né ore intere: sono cose del tour per i privati
+  delete twin.themeOther;
+  for (const k of Object.keys(twin)) if (twin[k] && typeof twin[k] === 'object' && !Array.isArray(twin[k]) && 'themes' in twin[k]) delete twin[k].themes;
   twin.featured = false;
   if (!hourly) twin.price = d.b2bPrice ?? d.price;
   return { def, twin: { slug: `${slug}-agenzie`, def: twin } };
@@ -162,6 +165,7 @@ export function normalizeTour(slug, d, where = slug) {
       descriptionHtml: md(x.description),
       highlights: list(x.highlights),
       includes: list(x.includes),
+      themes: list(x.themes),
       excludes: list(x.excludes),
       notes: x.notes ?? '',
       languagesLabel: x.languagesLabel ?? '',
@@ -169,6 +173,8 @@ export function normalizeTour(slug, d, where = slug) {
       fallback, // senza traduzione propria
     };
   }
+  // le scelte tematiche devono essere le stesse, nello stesso ordine, in ogni lingua: se una lingua ne ha un numero diverso si usano quelle italiane
+  for (const l of LANGS) if (i18n[l].themes.length !== i18n.it.themes.length) i18n[l].themes = i18n.it.themes;
   const languages = list(d.languages).filter((l) => LANGS.includes(l));
   return {
     slug,
@@ -184,6 +190,8 @@ export function normalizeTour(slug, d, where = slug) {
     pricing: hourly ? 'hourly' : 'fixed', // 'hourly': il prezzo viene dalle tariffe a ore
     service: hourly ? d.service : null, // guide | assistant | leader | meetgreet
     audience: audienceOf(d), // 'b2c' (privati) oppure 'b2b' (solo partner approvati): un tour è dell'uno o dell'altro, con un solo prezzo
+    roundHours: hourly && !!d.chooseHours && !!d.roundHours, // il cliente sceglie le ore, ma si paga a ore intere (2,5 ore = 3)
+    themeOther: !!d.themeOther, // tra le scelte tematiche c'è anche «Altro», con un testo libero per la guida
     chooseHours: hourly && !!d.chooseHours, // il cliente sceglie quante ore; altrimenti la durata è quella del tour
     priceCents: hourly ? 0 : cents(d.price), // dei privati se il tour è B2C; la tariffa agenzie (prima dello sconto del partner) se è B2B
     cancelHours: d.cancelHours == null || d.cancelHours === '' ? null : Number(d.cancelHours),

@@ -13,6 +13,7 @@ import { isSimplePolicy, tierSentences } from './policyText.js';
 import { formatGiftCode } from './pricing.js';
 import { fmtDate, fmtInstant, nowRome } from './time.js';
 import { formatMoney } from './util.js';
+import { themeText } from './choices.js';
 
 export const PAGE = { w: 595.28, h: 841.89, m: 48 };
 export const CW = PAGE.w - PAGE.m * 2; // larghezza utile
@@ -291,6 +292,7 @@ export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = 
     [t('s.time'), timeRange(b, lang).replace('–', ' – '), { bold: true }],
     [t('s.guests'), String(b.participants)],
     [t('s.meeting'), ti.meetingPoint, ti.meetingUrl ? { sub: { text: t('tour.openMap'), url: ti.meetingUrl } } : {}],
+    ...(themeText(b, lang) ? [[t('f.theme'), themeText(b, lang)]] : []),
     ...(b.tour_lang && LANG_META[b.tour_lang] ? [[t('s.tourLang'), LANG_META[b.tour_lang].name]] : []),
     // sul voucher B2B, che l'agenzia può girare al cliente, non compaiono i recapiti di chi ha prenotato
     [t('s.name'), b2b ? b.name : [b.name, b.email, b.phone].filter(Boolean).join('  ·  ')],

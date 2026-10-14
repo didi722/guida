@@ -12,7 +12,7 @@ export { hoursLabel };
 export function lineLabel(t, lang, line, hours) {
   switch (line.key) {
     case 'base':
-      return t('hourly.line.base', { hours: hoursLabel(t, lang, hours) });
+      return t('hourly.line.base', { hours: hoursLabel(t, lang, line.hours ?? hours) }); // con le «ore intere» la voce dice quante ore si pagano
     case 'festivo':
     case 'superfestivo':
       return t(`hourly.line.${line.key}`, { pct: line.pct });
@@ -119,7 +119,7 @@ export function hourlyPage(ctx, { products, product, channel, values, quote, slo
       : html`<input type="hidden" name="product" value="${product.slug}">`}
     <label class="field"><span class="label">${t('quick.date')}</span><input type="date" name="date" min="${minDate}" value="${values.date ?? ''}"></label>
     ${product.chooseHours
-      ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select name="hours">${hourOptions(product.service).map((h) => html`<option value="${h}" ${h === values.hours ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select></label>`
+      ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select name="hours">${hourOptions(product.service).map((h) => html`<option value="${h}" ${h === values.hours ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>${product.roundHours ? html`<small class="muted">${t('hourly.note.round')}</small>` : ''}</label>`
       : html`<p class="field"><span class="label">${t('hourly.f.hours')}</span><strong>${hoursLabel(t, lang, product.durationMin / 60)}</strong></p>`}
     <label class="field"><span class="label">${t('quick.guests')}</span><input type="number" name="pax" min="1" max="${product.maxParticipants}" value="${values.pax}" inputmode="numeric" required></label>
     ${product.service === 'guide' && rates.surcharges.earpieceCents > 0

@@ -243,7 +243,7 @@ test('servizi a ore: prenotazione di un cliente privato (ore, supplementi, orari
     assert.equal(apply.status, 200);
     assert.match(await apply.text().then(nb), /Totale<\/dt><dd>456 €/);
 
-    const res = await anon('/it/book/checkout', post({ tour: 'guida-a-ore', date, time: '09:00', pax: '10', hours: '4', earpieces: '1', name: 'Anna Verdi', email: 'anna@example.com', lang: 'it', paymentMethod: 'card', consent: '1' }));
+    const res = await anon('/it/book/checkout', post({ tour: 'guida-a-ore', theme: '0', date, time: '09:00', pax: '10', hours: '4', earpieces: '1', name: 'Anna Verdi', email: 'anna@example.com', lang: 'it', paymentMethod: 'card', consent: '1' }));
     assert.equal(res.status, 303);
     const b = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
     assert.equal(b.tour_slug, 'guida-a-ore');
@@ -269,7 +269,7 @@ test('servizi a ore: prenotazione di un cliente privato (ore, supplementi, orari
     const times = [...again.matchAll(/class="slot" href="[^"]+"><strong>(\d\d:\d\d)<\/strong>/g)].map((m) => m[1]);
     assert.ok(!times.includes('09:00') && !times.includes('12:00') && !times.includes('13:00'), times.join(' '));
     assert.ok(times.includes('13:30'), 'dopo la pausa si può prenotare');
-    assert.equal((await anon('/it/book/checkout', post({ tour: 'guida-a-ore', date, time: '10:00', pax: '2', hours: '2', name: 'Bob', email: 'bob@example.com', lang: 'it', paymentMethod: 'card', consent: '1' }))).status, 409);
+    assert.equal((await anon('/it/book/checkout', post({ tour: 'guida-a-ore', theme: '1', date, time: '10:00', pax: '2', hours: '2', name: 'Bob', email: 'bob@example.com', lang: 'it', paymentMethod: 'card', consent: '1' }))).status, 409);
 
     // durate o auricolari impossibili
     const bad = (extra) => anon(`/it/book/checkout?tour=guida-a-ore&date=${plainDay(15)}&time=10:00&pax=2&${extra}`);
@@ -339,7 +339,7 @@ test('servizi a ore: se un pagamento scade, alla conferma si ricontrolla la dura
   try {
     const date = plainDay(20);
     const now = Date.now();
-    const common = { tourSlug: 'guida-a-ore', date, pax: 4, name: 'Anna Verdi', email: 'anna@example.com', lang: 'it', paymentMethod: 'card' };
+    const common = { tourSlug: 'guida-a-ore', theme: '0', date, pax: 4, name: 'Anna Verdi', email: 'anna@example.com', lang: 'it', paymentMethod: 'card' };
     const a = createBooking(app, { ...common, time: '09:00', hours: 4 }, now); // 09:00-13:00 con pagamento in sospeso
     expireBooking(app.db, a.id, now);
     createBooking(app, { ...common, email: 'bob@example.com', time: '12:00', hours: 2 }, now); // 12:00-14:00 occupa la parte finale
@@ -506,6 +506,87 @@ test('tariffe a ore e tour a ore: il prezzo dei tour segue sempre la tabella, e 
     assert.match(await (await admin('/admin/tours')).text().then(nb), /Gondola privata[^]*?160 €<br><small[^>]*>prezzo fisso/);
     // il prezzo fisso di un tour a persona (condiviso) non ha l'avviso: non c'è una tariffa oraria equivalente
     assert.ok(!(await (await admin('/admin/tours/san-marco-rialto')).text().then(nb)).includes('Prezzo fisso su un servizio privato'));
+  } finally {
+    s.close();
+  }
+});
+
+test('guida privata B2C su misura: ore scelte dal cliente (a ore intere), festivo/notturno automatici, scelta tematica con «Altro» e testo per la guida', async () => {
+  const s = await start();
+  try {
+    const { app, anon } = s;
+    const t = app.content.tour('guida-a-ore');
+    assert.deepEqual([t.roundHours, t.themeOther, t.i18n.it.themes.length], [true, true, 2]);
+    assert.equal(app.content.tour('guida-a-ore-agenzie').i18n.it.themes.length, 0, 'la copia per le agenzie non ha scelte tematiche');
+    assert.equal(app.content.tour('guida-a-ore-agenzie').roundHours, false);
+    const date = plainDay(21); // un giorno feriale
+    const base = { tour: 'guida-a-ore', date, time: '10:00', pax: '2', hours: '2.5' };
+    // il modulo: la scelta tematica con «Altro» e la durata a mezze ore pagata a ore intere
+    const co = await (await anon(`/it/book/checkout?${new URLSearchParams(base)}`)).text().then(nb);
+    assert.match(co, /Che tipo di tour vuoi\?/);
+    assert.match(co, /name="theme" value="0"[^]*?Classici imperdibili \(must-see\)/);
+    assert.match(co, /name="theme" value="1"[^]*?Angoli nascosti \(hidden gems\)/);
+    assert.match(co, /name="theme" value="other"/);
+    assert.match(co, /<textarea name="themeNote"/);
+    assert.match(await (await anon(`/it/hourly?product=guida-a-ore&date=${date}&hours=2.5&pax=2`)).text().then(nb), /Si paga a ore intere: per esempio 2,5 ore costano come 3/);
+    assert.match(co, /Servizio, 3 ore/, 'si pagano 3 ore');
+    assert.match(co, /Totale<\/dt><dd>290 €/);
+    assert.match(co, /10:00–12:30/, 'ma il servizio dura 2,5 ore');
+    // senza scegliere non si prenota; «Altro» senza testo nemmeno
+    const form = (over = {}) => post({ ...base, name: 'Anna', email: 'anna@example.com', lang: 'it', paymentMethod: 'onsite', consent: '1', ...over });
+    const none = await anon('/it/book/checkout', form());
+    assert.equal(none.status, 400);
+    assert.match(await none.text().then(nb), /Scegli che tipo di tour vuoi/);
+    assert.equal((await anon('/it/book/checkout', form({ theme: 'other', themeNote: ' ' }))).status, 400);
+    assert.equal((await anon('/it/book/checkout', form({ theme: '7' }))).status, 400);
+    // «Altro» con il testo
+    const other = await anon('/it/book/checkout', form({ theme: 'other', themeNote: 'Vorrei vedere i luoghi di Casanova, con calma.' }));
+    assert.equal(other.status, 303);
+    const b = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
+    assert.equal(b.total_cents, 29000);
+    assert.equal(b.end_time, '12:30');
+    assert.equal(b.theme_note, 'Vorrei vedere i luoghi di Casanova, con calma.');
+    assert.equal(parseServiceRecord(b.service_json).hours, 2.5);
+    // la guida, il pannello e il cliente lo leggono
+    assert.match(app.mail.sent.find((m) => m.to === 'guida@example.com' && /Nuova prenotazione/.test(m.subject)).text, /Scelta del cliente: Altro: Vorrei vedere i luoghi di Casanova, con calma\./);
+    assert.match(await (await s.admin(`/admin/bookings/${b.id}`)).text().then(nb), /Scelta del cliente<\/dt><dd>Altro: Vorrei vedere i luoghi di Casanova/);
+    assert.match(await (await anon(`/it/booking/${b.ref}?t=${b.token}`)).text().then(nb), /Che tipo di tour vuoi\?<\/dt><dd>Altro: Vorrei vedere/);
+    // una voce della lista, in inglese: la guida la legge in italiano, il cliente nella sua lingua
+    const date2 = plainDay(22);
+    const en = await anon('/en/book/checkout', post({ ...base, date: date2, name: 'Mark', email: 'mark@example.com', lang: 'en', theme: '1', paymentMethod: 'onsite', consent: '1' }));
+    assert.equal(en.status, 303);
+    const b2 = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
+    assert.equal(b2.theme_note, null);
+    assert.match(app.mail.sent.find((m) => m.to === 'guida@example.com' && b2.ref && /Nuova prenotazione/.test(m.subject) && m.text.includes(b2.ref)).text, /Scelta del cliente: Angoli nascosti \(hidden gems\)/);
+    assert.match(await (await anon(`/en/booking/${b2.ref}?t=${b2.token}`)).text().then(nb), /What kind of tour would you like\?<\/dt><dd>Hidden gems/);
+    // domenica: festivo automatico, sempre sulle ore intere
+    const sun = await anon(`/it/book/checkout?${new URLSearchParams({ ...base, date: sunday() })}`);
+    assert.match(await sun.text().then(nb), /Supplemento festivo \(20%\)<\/dt><dd>58 €/);
+    // i tour senza scelte tematiche non le chiedono
+    assert.ok(!(await (await anon(`/it/book/checkout?tour=venezia-oriente-occidente&date=${date}&time=15:00&pax=2`)).text()).includes('name="theme"'));
+  } finally {
+    s.close();
+  }
+});
+
+test('tour dal pannello: ore intere, scelta tematica e «Altro» si salvano e si rileggono', async () => {
+  const s = await start();
+  try {
+    const TOUR = { slug: 'su-misura', title_it: 'Su misura', summary_it: 'Costruiamo insieme il tuo giro.', audience: 'b2c', model: 'group', pricing: 'hourly', service: 'guide', chooseHours: '1', roundHours: '1', themeOther: '1', flexible: '1', wd: ['0', '1', '2', '3', '4', '5', '6'], durH: '2', durM: '0', maxParticipants: '12', active: '1', payOnSite: '1', langs: ['it', 'en'], themes_it: 'Classici\nAngoli nascosti', title_en: 'Tailor-made', summary_en: 'We build your walk together.', themes_en: 'Classics\nHidden gems' };
+    assert.equal(loc(await s.admin('/admin/tours', post(TOUR))), '/admin/tours/su-misura?ok=created');
+    const t = s.app.content.tour('su-misura');
+    assert.deepEqual([t.roundHours, t.themeOther, t.i18n.it.themes, t.i18n.en.themes], [true, true, ['Classici', 'Angoli nascosti'], ['Classics', 'Hidden gems']]);
+    assert.deepEqual(t.i18n.es.themes, ['Classics', 'Hidden gems'], 'una lingua senza testi usa quelli inglesi, come il resto del tour');
+    const form = await (await s.admin('/admin/tours/su-misura')).text().then(nb);
+    assert.match(form, /name="roundHours" value="1" checked/);
+    assert.match(form, /name="themeOther" value="1" checked/);
+    assert.match(form, /name="themes_it"[^>]*>Classici\nAngoli nascosti<\/textarea>/);
+    // un numero diverso di voci in una lingua: valgono quelle italiane (stessi indici per tutti)
+    assert.equal(loc(await s.admin('/admin/tours/su-misura', post({ ...TOUR, themes_en: 'Only one' }))), '/admin/tours/su-misura?ok=saved');
+    assert.deepEqual(s.app.content.tour('su-misura').i18n.en.themes, ['Classici', 'Angoli nascosti']);
+    // «ore intere» vale solo se il cliente sceglie le ore
+    await s.admin('/admin/tours/su-misura', post({ ...TOUR, chooseHours: '' }));
+    assert.equal(s.app.content.tour('su-misura').roundHours, false);
   } finally {
     s.close();
   }

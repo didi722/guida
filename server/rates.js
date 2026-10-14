@@ -174,7 +174,7 @@ export function fromPrice(rates, service, channel, discountPercent = 0) {
  * Preventivo. `date` e `time` (facoltativi) servono per festivo e notturno; `earpieces` solo per il servizio guida.
  * @returns {{ok:true, ...}|{ok:false, reason:'service'|'channel'|'hours'}}
  */
-export function quote(rates, { service, channel = 'b2c', hours, date = null, time = null, pax = 1, earpieces = false, discountPercent = 0 }) {
+export function quote(rates, { service, channel = 'b2c', hours, date = null, time = null, pax = 1, earpieces = false, discountPercent = 0, roundHours = false }) {
   if (!SERVICES.includes(service)) return { ok: false, reason: 'service' };
   const key = channel === 'b2b' ? 'b2b' : 'public';
   const rate = rateFor(rates, service, channel, discountPercent);
@@ -183,9 +183,10 @@ export function quote(rates, { service, channel = 'b2c', hours, date = null, tim
   if (!(h >= minHours(service) && h <= MAX_HOURS && Math.round(h / HOUR_STEP) * HOUR_STEP === h)) return { ok: false, reason: 'hours' };
 
   const disc = channel === 'b2b' ? Math.min(100, Math.max(0, Number(discountPercent) || 0)) : 0;
-  const baseCents = basePrice(service, rate, h); // lo sconto del partner è già nella tariffa (partnerRate)
+  const billed = roundHours ? Math.ceil(h) : h; // «ore intere»: 2,5 ore si pagano come 3
+  const baseCents = basePrice(service, rate, billed); // lo sconto del partner è già nella tariffa (partnerRate)
   const s = rates.surcharges;
-  const lines = [{ key: 'base', cents: baseCents }];
+  const lines = [{ key: 'base', cents: baseCents, hours: billed }];
 
   const klass = date ? dayClass(date, rates) : 'feriale';
   if (klass === 'superfestivo' && s.superFestivoPct > 0) lines.push({ key: 'superfestivo', cents: roundEuro((baseCents * s.superFestivoPct) / 100), pct: s.superFestivoPct });

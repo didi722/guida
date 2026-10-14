@@ -6,6 +6,7 @@ import { openTo, serviceRecord } from './rates.js';
 import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
 import { LANGS, normLang } from './langs.js';
+import { themeChoice } from './choices.js';
 import { freeHoursOf, hasFreeTier, parseTiers, policyFor, refundPercentAt, singleTier, splitAmounts } from './policy.js';
 import { isPreOpening } from './opening.js';
 import { maxActiveOptions, optionWindow, reminderAt } from './optionPolicy.js';
@@ -110,6 +111,13 @@ export function createBooking(app, input, nowMs = Date.now()) {
     const asked = input.tourLang ? String(input.tourLang) : '';
     if (asked && !offered.includes(asked)) throw new BookingError('invalid', 'tourLang');
     const confirmLang = normLang(input.lang);
+    let theme = null;
+    try {
+      theme = themeChoice(tour, input.theme, input.themeNote); // la scelta tematica, se il tour la prevede
+    } catch (e) {
+      if (e.reason) throw new BookingError('invalid', 'theme');
+      throw e;
+    }
     const tourLang = asked || slot.lang || (offered.includes(confirmLang) ? confirmLang : offered[0]);
     if (slot.lang && slot.lang !== tourLang) throw new BookingError('language', slot.lang); // il gruppo parla già un'altra lingua
     if (pricing.errors.promo) throw new BookingError('promo', pricing.errors.promo);
@@ -149,6 +157,8 @@ export function createBooking(app, input, nowMs = Date.now()) {
       phone: cleanText(input.phone, 40) || null,
       lang: confirmLang,
       tour_lang: tourLang,
+      theme_json: theme?.json ?? null,
+      theme_note: theme?.note ?? null,
       notes: cleanText(input.notes, 1000) || null,
       client_ref: cleanText(input.clientRef, 120) || null,
       billing_json: input.billing ? JSON.stringify(input.billing) : null,

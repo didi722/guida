@@ -160,3 +160,19 @@ test('tariffe: testi brevi per email, voucher e fatture, e conto conservato nell
   assert.equal(timeRange({ start_time: '09:00', end_time: '13:00', service_json: JSON.stringify(rec) }, 'en'), '09:00–13:00 (4 hours)');
   assert.equal(timeRange({ start_time: '09:00', end_time: '11:30', service_json: null }, 'it'), '09:00–11:30', 'i tour a prezzo fisso non cambiano');
 });
+
+test('tariffe: «ore intere» — 2,5 ore si pagano come 3; senza l’opzione le mezze ore restano proporzionali', () => {
+  const half = quote(R, { service: 'guide', channel: 'b2c', hours: 2.5 });
+  const whole = quote(R, { service: 'guide', channel: 'b2c', hours: 2.5, roundHours: true });
+  assert.equal(eur(half.totalCents), 245, '200 + mezza ora in più (45)');
+  assert.equal(eur(whole.totalCents), 290, 'come 3 ore: 200 + 90');
+  assert.equal(whole.hours, 2.5, 'la durata resta 2,5 ore (fine servizio, calendario)');
+  assert.equal(whole.lines[0].hours, 3, 'la voce del conto dice quante ore si pagano');
+  assert.equal(eur(quote(R, { service: 'guide', channel: 'b2c', hours: 4, roundHours: true }).totalCents), 380, 'un numero intero non cambia');
+  assert.equal(eur(quote(R, { service: 'guide', channel: 'b2c', hours: 4.5, roundHours: true }).totalCents), 380 + 90, '4,5 → 5 ore');
+  // festivo e notturno restano automatici, sul prezzo a ore intere
+  const sun = quote(R, { service: 'guide', channel: 'b2c', hours: 2.5, roundHours: true, date: '2027-01-03', time: '10:00' });
+  assert.deepEqual(sun.lines.map((l) => [l.key, eur(l.cents)]), [['base', 290], ['festivo', 58]]);
+  const night = quote(R, { service: 'guide', channel: 'b2c', hours: 2.5, roundHours: true, date: '2027-06-15', time: '19:00' });
+  assert.ok(night.lines.some((l) => l.key === 'night'), 'dalle 20:00 scatta il notturno');
+});

@@ -34,7 +34,7 @@ export function unitPriceFor(tour, channel, account = null) {
 /** Preventivo di un servizio a ore: le ore sono quelle scelte dal cliente, oppure la durata del tour se è fissa. */
 export function hourlyQuote(app, tour, { pax = 1, channel, account = null, date = null, time = null, hours = null, earpieces = false }) {
   const h = tour.chooseHours ? Number(hours) : tour.durationMin / 60;
-  return app.rates.quote({ service: tour.service, channel, hours: h, date, time, pax, earpieces, discountPercent: channel === 'b2b' ? (account?.discount_percent ?? 0) : 0 });
+  return app.rates.quote({ service: tour.service, channel, hours: h, date, time, pax, earpieces, roundHours: !!tour.roundHours, discountPercent: channel === 'b2b' ? (account?.discount_percent ?? 0) : 0 });
 }
 
 /** Prezzo di listino in centesimi: a persona (× partecipanti) oppure a gruppo. Per i servizi a ore vale `previewPricing`. */

@@ -8,8 +8,8 @@ import { adminLayout } from './admin.js';
 import { uploadControl } from './admin-media.js';
 import { mdEditor } from './md-editor.js';
 
-export const TEXT_FIELDS = ['title', 'subtitle', 'summary', 'meetingPoint', 'meetingUrl', 'description', 'highlights', 'includes', 'excludes', 'notes', 'faq'];
-export const LIST_FIELDS = ['highlights', 'includes', 'excludes'];
+export const TEXT_FIELDS = ['title', 'subtitle', 'summary', 'meetingPoint', 'meetingUrl', 'description', 'highlights', 'includes', 'excludes', 'themes', 'notes', 'faq'];
+export const LIST_FIELDS = ['highlights', 'includes', 'excludes', 'themes'];
 const ART_LABEL = { dome: 'Cupole e campanile', bridge: 'Ponte', ghetto: 'Case del Ghetto', arsenal: 'Arsenale', eastwest: 'Oriente e Occidente', islands: 'Isole della laguna', walk: 'Passeggiata', piles: 'Pali e fondamenta', bacaro: 'Bacaro' };
 const DAYS = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Gio'], [5, 'Ven'], [6, 'Sab'], [0, 'Dom']];
 const euroText = (n) => (n == null || n === '' ? '' : String(Number(n).toFixed(2)).replace(/\.00$/, '').replace('.', ','));
@@ -35,6 +35,8 @@ export function defToValues(def = {}, slug = '') {
     pricing: def.pricing === 'hourly' ? 'hourly' : 'fixed',
     service: def.service ?? 'guide',
     chooseHours: def.chooseHours ? '1' : '',
+    roundHours: def.roundHours ? '1' : '',
+    themeOther: def.themeOther ? '1' : '',
     audience: audienceOf(def),
     langs: Array.isArray(def.languages) && def.languages.length ? def.languages : [...LANGS],
     art: def.art ?? 'dome',
@@ -148,6 +150,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
     <div class="form-grid">
       <label class="field"><span class="label">Servizio a ore <em>(solo se «A ore»)</em></span><select name="service">${[['guide', 'Servizio guida'], ['assistant', 'Assistente in loco'], ['leader', 'Tour leader'], ['meetgreet', 'Meet & greet']].map(([k, l]) => html`<option value="${k}" ${v.service === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
       <label class="check"><input type="checkbox" name="chooseHours" value="1" ${v.chooseHours ? raw('checked') : ''}> Il cliente sceglie quante ore (altrimenti la durata sopra è fissa)</label>
+      <label class="check"><input type="checkbox" name="roundHours" value="1" ${v.roundHours ? raw('checked') : ''}> Si paga a ore intere: 2,5 ore costano come 3 <em>(solo se il cliente sceglie le ore)</em></label>
     </div>
     <div class="form-grid">
       ${field(`${aud === 'b2b' ? 'Tariffa agenzie' : 'Prezzo al pubblico'} (€ ${v.model === 'person' ? 'a persona' : 'a gruppo'})`, 'price', v.price, { hint: `solo per i prezzi fissi; es. 35 oppure 35,50${aud === 'b2b' ? '; lo sconto % di un partner si toglie da qui' : ''}`, attrs: 'inputmode="decimal"' })}
@@ -169,6 +172,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
       </div>
       <p>${uploadControl('Carica una nuova foto')}</p>
     </div>
+    <label class="check"><input type="checkbox" name="themeOther" value="1" ${v.themeOther ? raw('checked') : ''}> Tra le scelte tematiche c’è anche «Altro», con un testo libero per te <em>(vale se hai scritto le scelte tematiche, nei testi qui sotto)</em></label>
     <label class="field"><span class="label">Illustrazione (si usa se non c’è una foto)</span><select name="art">${ART_KEYS.map((k) => html`<option value="${k}" ${v.art === k ? raw('selected') : ''}>${ART_LABEL[k] ?? k}</option>`)}</select></label>
   </div>
 
@@ -183,6 +187,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
     ${field('Punti salienti', `highlights_${l}`, v[`highlights_${l}`], { hint: 'uno per riga', rows: 4 })}
     ${field('Incluso', `includes_${l}`, v[`includes_${l}`], { hint: 'uno per riga', rows: 4 })}
     ${field('Non incluso', `excludes_${l}`, v[`excludes_${l}`], { hint: 'uno per riga', rows: 3 })}
+    ${field('Scelta tematica del cliente', `themes_${l}`, v[`themes_${l}`], { hint: 'facoltativa, una voce per riga (es. Classici imperdibili / Angoli nascosti): il cliente ne sceglie una al pagamento. Stesso numero di voci, nello stesso ordine, in ogni lingua', rows: 3 })}
     ${field('Note utili', `notes_${l}`, v[`notes_${l}`], { rows: 3 })}
     ${field('Domande frequenti', `faq_${l}`, v[`faq_${l}`], { rows: 8, hint: 'una domanda per blocco: prima riga = domanda, righe sotto = risposta; separa le domande con una riga vuota', placeholder: 'Si entra in Basilica?\nIl tour la vede dall’esterno: l’ingresso non è incluso, ti aiuto a prenotarlo.\n\nQuanto si cammina?\nCirca 3 km, a ritmo rilassato.' })}
   </details>`)}

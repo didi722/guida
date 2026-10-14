@@ -5,6 +5,8 @@ model: group
 pricing: hourly
 service: guide
 chooseHours: true        # il cliente sceglie la durata
+roundHours: true         # si paga a ore intere: 2,5 ore costano come 3
+themeOther: true         # tra le scelte tematiche c'è anche «Altro», con un testo libero per la guida
 flexible: true           # e l'orario di inizio
 duration: 120            # durata minima (minuti)
 maxParticipants: 25
@@ -14,6 +16,9 @@ languages: [it, en, es, ja]
 
 it:
   title: Guida privata
+  themes:
+    - Classici imperdibili (must-see)
+    - Angoli nascosti (hidden gems)
   subtitle: Scegli tu giorno, orario e durata
   summary: "Una guida abilitata tutta per te e il tuo gruppo, per il tempo che ti serve: da 2 ore a una giornata intera."
   meetingPoint: Concordato con te (hotel, molo, terminal)
@@ -36,6 +41,9 @@ it:
 
 en:
   title: private guide
+  themes:
+    - Must-see classics
+    - Hidden gems
   subtitle: You choose the day, the start time and the length
   summary: "A licensed guide just for you and your group, for as long as you need: from 2 hours to a full day."
   meetingPoint: Agreed with you (hotel, pier, terminal)
@@ -58,6 +66,9 @@ en:
 
 es:
   title: guía privado
+  themes:
+    - Imprescindibles (must-see)
+    - Rincones ocultos (hidden gems)
   subtitle: Tú eliges el día, la hora y la duración
   summary: "Un guía habilitado solo para ti y tu grupo, el tiempo que necesites: de 2 horas a una jornada completa."
   meetingPoint: A convenir contigo (hotel, muelle, terminal)
@@ -80,6 +91,9 @@ es:
 
 ja:
   title: プライベートガイド
+  themes:
+    - 定番の見どころ（must-see）
+    - 隠れた名所（hidden gems）
   subtitle: 日付・開始時間・時間数をお選びいただけます
   summary: "お客様のグループだけのために、公認ガイドが必要な時間だけご案内します。2時間から1日（8時間）までお選びいただけます。"
   meetingPoint: ご相談のうえ決定（ホテル、桟橋、ターミナル）

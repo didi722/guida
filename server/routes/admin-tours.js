@@ -52,6 +52,7 @@ export function bodyToDef(body, existing = {}, { nextOrder = 100 } = {}) {
     audience: body.audience === 'b2b' ? 'b2b' : 'b2c', // un tour è dei privati o delle agenzie, con un solo prezzo
     cancelHours: int('cancelHours'),
     payOnSite: !!body.payOnSite,
+    themeOther: !!body.themeOther,
     art: String(body.art ?? 'dome'),
     image: String(body.image ?? '').trim() || null,
     languages: [].concat(body.langs ?? []).filter((l) => LANGS.includes(l)),
@@ -60,6 +61,7 @@ export function bodyToDef(body, existing = {}, { nextOrder = 100 } = {}) {
     def.pricing = 'hourly';
     def.service = String(body.service ?? 'guide');
     def.chooseHours = !!body.chooseHours;
+    def.roundHours = !!body.chooseHours && !!body.roundHours;
     delete def.price;
   }
   if (existing.category) def.category = existing.category;
@@ -121,6 +123,8 @@ export function adminToursRouter(app) {
     v.featured = body.featured ? '1' : '';
     v.flexible = body.flexible ? '1' : '';
     v.chooseHours = body.chooseHours ? '1' : '';
+    v.roundHours = body.roundHours ? '1' : '';
+    v.themeOther = body.themeOther ? '1' : '';
     v.payOnSite = body.payOnSite ? '1' : '';
     v.wd = [].concat(body.wd ?? []).map(String);
     v.langs = [].concat(body.langs ?? []);

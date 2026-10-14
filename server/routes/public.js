@@ -236,7 +236,7 @@ export function publicRouter(app) {
     const p = readSlotParams(b, channel);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(b.tour ?? '')), date: null, pax: 2 }), 400);
     if (!b.apply) await app.calendars.ensureFresh(); // riallinea il calendario personale prima di prenotare
-    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), tourLang: p.tour.languages.includes(String(b.tourLang)) ? String(b.tourLang) : '', notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
+    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), tourLang: p.tour.languages.includes(String(b.tourLang)) ? String(b.tourLang) : '', theme: String(b.theme ?? ''), themeNote: cleanText(b.themeNote, 500), notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {
       const slot = openSlot(p, channel);
@@ -255,7 +255,7 @@ export function publicRouter(app) {
       if (e.code === 'promo' || e.code === 'gift') return rerender('');
       if (e.code === 'language') return rerender(t('err.tourLang', { lang: LANG_META[e.message]?.name ?? e.message }), 409);
       if (e.code === 'option') return rerender(t(`option.err.${['tooClose', 'limit'].includes(e.message) ? e.message : 'disabled'}`));
-      return rerender(e.code === 'payment' ? t('err.payment') : t('err.fields'));
+      return rerender(e.code === 'payment' ? t('err.payment') : e.message === 'theme' ? t('err.theme') : t('err.fields'));
     }
   });
 

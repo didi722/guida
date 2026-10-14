@@ -12,6 +12,7 @@ import { LANG_META, normLang, pick } from './langs.js';
 import { parseServiceRecord, serviceNote, timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
 import { inviteOffer } from './invites.js';
+import { themeText } from './choices.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
 const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,', ja: name ? `${name} 様` : 'お客様' }, lang);
@@ -171,6 +172,7 @@ function summaryRows(app, b, lang, { option = false } = {}) {
     [tr.meeting, ti.meetingPoint],
   ];
   if (b.tour_lang && LANG_META[b.tour_lang]) rows.splice(5, 0, [makeT(lang)('s.tourLang'), LANG_META[b.tour_lang].name]);
+  if (themeText(b, lang)) rows.splice(5, 0, [makeT(lang)('f.theme'), themeText(b, lang)]);
   if (b.discount_cents) rows.push([tr.discount(b.promo_code), `−${formatMoney(b.discount_cents, lang, b.currency)}`]);
   if (b.gift_cents) rows.push([tr.giftUsed, `−${formatMoney(b.gift_cents, lang, b.currency)}`]);
   rows.push([b.discount_cents || b.gift_cents ? tr.due : tr.total, option ? formatMoney(bookingDue(b), lang, b.currency) : `${formatMoney(bookingDue(b), lang, b.currency)} (${tr.pay[b.payment_method]})`]);
@@ -302,6 +304,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
     `${label} ${b.ref} (${b.channel.toUpperCase()})`,
     `${tour.i18n.it.title}`,
     `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${b.participants} pers.`,
+    themeText(b, 'it') ? `Scelta del cliente: ${themeText(b, 'it')}` : null,
     b.tour_lang && LANG_META[b.tour_lang] ? `Lingua del tour: ${LANG_META[b.tour_lang].name}` : null,
     parseServiceRecord(b.service_json) ? `Servizio a ore: ${serviceNote(parseServiceRecord(b.service_json))}` : null,
     `${b.name} <${b.email}>${b.phone ? ' · ' + b.phone : ''}`,

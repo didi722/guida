@@ -5272,5 +5272,35 @@
   "There is still room on this departure: you can invite a friend with their own personal discount code.",
   "Quedan plazas libres en esta salida: puedes invitar a un amigo con su código de descuento personal.",
   "この出発にはまだ空きがあります。専用の割引コードで友だちを招待できます。"
+ ],
+ "f.theme": [
+  "Che tipo di tour vuoi?",
+  "What kind of tour would you like?",
+  "¿Qué tipo de tour quieres?",
+  "どんなツアーがよいですか？"
+ ],
+ "f.themeOther": [
+  "Altro",
+  "Other",
+  "Otro",
+  "その他"
+ ],
+ "f.themeNote": [
+  "Raccontami cosa vorresti vedere o fare",
+  "Tell me what you would like to see or do",
+  "Cuéntame qué te gustaría ver o hacer",
+  "見たいこと・したいことを教えてください"
+ ],
+ "err.theme": [
+  "Scegli che tipo di tour vuoi (se scegli «Altro», scrivimi due righe).",
+  "Choose what kind of tour you would like (if you choose “Other”, write me a few words).",
+  "Elige qué tipo de tour quieres (si eliges «Otro», escríbeme unas líneas).",
+  "ツアーの種類を選んでください（「その他」の場合は内容を少し書いてください）。"
+ ],
+ "hourly.note.round": [
+  "Si paga a ore intere: per esempio 2,5 ore costano come 3.",
+  "Billed in whole hours: for example 2.5 hours cost the same as 3.",
+  "Se paga por horas completas: por ejemplo, 2,5 horas cuestan como 3.",
+  "料金は1時間単位で計算します（例：2.5時間は3時間分）。"
  ]
 }

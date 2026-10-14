@@ -8,6 +8,7 @@ import { formatMoney } from '../util.js';
 import { LANG_META, langName, normLang } from '../langs.js';
 import { parseServiceRecord, serviceNote } from '../rates.js';
 import { quoteLines } from './hourly.js';
+import { themeText } from '../choices.js';
 
 // Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
 export const ADMIN_GROUPS = [
@@ -229,6 +230,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       <div><dt>Data</dt><dd>${fmtDate(b.date, 'it')}</dd></div>
       <div><dt>Orario</dt><dd>${b.start_time}–${b.end_time}</dd></div>
       <div><dt>Persone</dt><dd>${b.participants}</dd></div>
+      ${themeText(b, 'it') ? html`<div><dt>Scelta del cliente</dt><dd>${themeText(b, 'it')}</dd></div>` : ''}
       ${b.tour_lang && LANG_META[b.tour_lang] ? html`<div><dt>Lingua del tour</dt><dd>${LANG_META[b.tour_lang].name}</dd></div>` : ''}
       ${service ? html`<div><dt>Servizio a ore</dt><dd>${serviceNote(service)}</dd></div>${quoteLines(makeT('it'), 'it', service, { total: false })}` : ''}
       ${b.status === 'option' ? html`<div><dt>Opzione</dt><dd>data trattenuta fino al <strong>${untilIt(b.option_expires_at)}</strong>${Date.parse(b.option_expires_at) - Date.now() < 48 * 3600_000 ? html` <span class="chip chip-warn">scade a breve</span>` : ''}<br><small class="muted">L’agenzia non ha pagato nulla: se non conferma entro la scadenza, la data si libera da sola.</small></dd></div>`

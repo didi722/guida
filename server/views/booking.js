@@ -8,6 +8,7 @@ import { isEditable } from '../partner.js';
 import { formatMoney } from '../util.js';
 import { LANG_META } from '../langs.js';
 import { inviteLink } from '../invites.js';
+import { hasThemes, themeText } from '../choices.js';
 import { icon, page } from './layout.js';
 import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
@@ -129,6 +130,12 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       ${tourLangField}
       <label class="field"><span class="label">${t('f.lang')}</span><select name="lang">${langOptions(v('lang', lang))}</select></label>
     </div>
+    ${hasThemes(tour)
+      ? html`<fieldset class="field themes"><legend class="label">${t('f.theme')}</legend>
+        ${ti.themes.map((x, i) => html`<label class="check"><input type="radio" name="theme" value="${i}" required ${v('theme') === String(i) ? raw('checked') : ''}> <span>${x}</span></label>`)}
+        ${tour.themeOther ? html`<label class="check"><input type="radio" name="theme" value="other" required ${v('theme') === 'other' ? raw('checked') : ''}> <span>${t('f.themeOther')}</span></label>
+          <textarea name="themeNote" rows="3" maxlength="500" placeholder="${t('f.themeNote')}" aria-label="${t('f.themeNote')}">${v('themeNote')}</textarea>` : ''}</fieldset>`
+      : ''}
     ${isB2b ? html`<label class="field"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${v('clientRef')}" placeholder="${t('f.clientRefHint')}"></label>` : ''}
     <label class="field"><span class="label">${t('f.notes')} <em>${t('f.optional')}</em></span><textarea name="notes" rows="3" maxlength="1000" placeholder="${isB2b ? t('f.notesHintB2b') : t('f.notesHint')}">${v('notes')}</textarea></label>
 
@@ -286,6 +293,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       <div><dt>${t('s.guests')}</dt><dd>${b.participants}</dd></div>
       <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}${ti.meetingUrl ? html` · <a href="${ti.meetingUrl}" target="_blank" rel="noopener">${t('tour.openMap')}</a>` : ''}</dd></div>
       ${b.tour_lang && LANG_META[b.tour_lang] ? html`<div><dt>${t('s.tourLang')}</dt><dd>${LANG_META[b.tour_lang].name}</dd></div>` : ''}
+      ${themeText(b, lang) ? html`<div><dt>${t('f.theme')}</dt><dd>${themeText(b, lang)}</dd></div>` : ''}
       <div><dt>${t('s.name')}</dt><dd>${b.name} · ${b.email}${b.phone ? ' · ' + b.phone : ''}</dd></div>
       ${b.client_ref ? html`<div><dt>${t('f.clientRef')}</dt><dd>${b.client_ref}</dd></div>` : ''}
       ${b.notes ? html`<div><dt>${t('f.notes')}</dt><dd>${b.notes}</dd></div>` : ''}

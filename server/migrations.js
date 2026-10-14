@@ -401,6 +401,12 @@ CREATE TABLE invites (
 CREATE INDEX invites_booking ON invites(booking_id);
 `;
 
+const V16_THEME = `
+-- Scelta tematica del cliente in un tour (voci in tutte le lingue come {"labels":{"it":…}} oppure {"other":true} + testo libero per la guida).
+ALTER TABLE bookings ADD COLUMN theme_json TEXT;
+ALTER TABLE bookings ADD COLUMN theme_note TEXT;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -432,6 +438,8 @@ export const MIGRATIONS = [
   V14_REVIEW_TRANSLATIONS,
   // v15 — lingua del tour, impegni privati in agenda, inviti a un amico
   V15_LANG_PRIVATE_INVITES,
+  // v16 — scelta tematica del cliente
+  V16_THEME,
 ];
 
 export function migrate(db) {
