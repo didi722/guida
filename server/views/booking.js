@@ -36,20 +36,13 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
 </div></section>
 
 <section class="section tight"><div class="wrap">
-  <form class="card pad search-card ${kinds.shown ? 'has-kinds' : ''}" method="get" action="${u('/book')}">
+  <form class="card pad search-card" method="get" action="${u('/book')}">
     <label class="field"><span class="label">${t('quick.date')}</span><input type="date" name="date" min="${minDate}" value="${date ?? ''}" required></label>
     <label class="field"><span class="label">${t('quick.guests')}</span><input type="number" name="pax" min="1" max="25" value="${pax}" inputmode="numeric" required></label>
     <label class="field"><span class="label">${t('book.tour')}</span>
       <select name="tour"><option value="">${t('book.allTours')}</option>${tours.map((x) => html`<option value="${x.slug}" ${x.slug === tourSlug ? raw('selected') : ''}>${x.i18n[lang].title}</option>`)}</select>
     </label>
     <button class="btn btn-gold" type="submit">${t('quick.go')}</button>
-    ${kinds.shown
-      ? html`<fieldset class="kinds" aria-label="${t('book.kind.label')}"><legend class="sr-only">${t('book.kind.label')}</legend>
-        <input type="hidden" name="kinds" value="1">
-        <label class="check"><input type="checkbox" name="kind" value="private" ${kinds.private ? raw('checked') : ''}> <span>${t('book.kind.private')}</span></label>
-        <label class="check"><input type="checkbox" name="kind" value="shared" ${kinds.shared ? raw('checked') : ''}> <span>${t('book.kind.shared')}</span></label>
-      </fieldset>`
-      : ''}
   </form>
   ${hourly && channel !== 'b2b' ? html`<p class="hourly-hint">${t('book.hourlyHint')} <a href="${u('/hourly')}">${t('book.hourlyLink')} →</a></p>` : ''}
 

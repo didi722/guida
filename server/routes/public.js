@@ -110,15 +110,12 @@ export function publicRouter(app) {
    */
   const readKinds = (q, channel) => {
     if (channel !== 'b2b') return { private: true, shared: true, shown: false };
-    if (q.kinds !== '1') return { private: true, shared: false, shown: true };
-    const picked = new Set([].concat(q.kind ?? []).map(String));
-    if (!picked.has('private') && !picked.has('shared')) return { private: true, shared: true, shown: true };
-    return { private: picked.has('private'), shared: picked.has('shared'), shown: true };
+    return { private: true, shared: true, shown: false }; // le agenzie vedono tutto: tour privati, condivisi e servizi a ore
   };
   const isShared = (x) => x.model === 'person';
   const isPrivateTour = (x) => x.model === 'group' && (x.pricing !== 'hourly' || x.service === 'guide'); // assistente, tour leader e meet & greet sono servizi, non tour
   /** I tour che compaiono nella ricerca: i privati e/o i condivisi per le agenzie; per i privati cittadini i tour a prezzo fisso. */
-  const searchable = (channel, kinds) => (channel === 'b2b' ? visible(channel).filter((x) => (kinds.shared && isShared(x)) || (kinds.private && isPrivateTour(x))) : selectable(channel));
+  const searchable = (channel, kinds) => (channel === 'b2b' ? visible(channel) : selectable(channel));
   /** Ore con cui si cerca la disponibilità di un servizio a ore: la durata fissa del tour, o il minimo del servizio. */
   const searchHours = (tour) => (tour.chooseHours ? minHours(tour.service) : tour.durationMin / 60);
 
@@ -128,7 +125,7 @@ export function publicRouter(app) {
     const asked = content.tour(String(req.query.tour ?? ''));
     // standard di prenotazione per i privati: si sceglie il tour e da lì calendario, persone, orari e prezzo (la ricerca per data resta per le agenzie)
     if (channel !== 'b2b' && !isDate(req.query.date)) return res.redirect(302, asked?.active && openTo(app.rates.get(), asked, channel) ? `/${req.lang}/tours/${asked.slug}` : `/${req.lang}/tours`);
-    if (asked?.pricing === 'hourly' && !(channel === 'b2b' && isPrivateTour(asked))) return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
+    if (asked?.pricing === 'hourly' && channel !== 'b2b') return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
     const kinds = readKinds(req.query, channel);
     const pax = clampInt(req.query.pax, 1, 25, 2);
     const list0 = searchable(channel, kinds);
@@ -154,7 +151,7 @@ export function publicRouter(app) {
     }
     // senza una data in mente: le prossime partenze, prenotabili con un tocco
     const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : list0.filter(isShared), nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
-    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, kinds, tours: channel === 'b2b' ? visible(channel).filter((x) => isShared(x) || isPrivateTour(x)) : selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
+    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, kinds, tours: channel === 'b2b' ? visible(channel) : selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
   });
 
   // ───── servizi a ore: preventivo e orari liberi ─────

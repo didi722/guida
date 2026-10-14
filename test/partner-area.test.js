@@ -470,21 +470,19 @@ test('fatture: l’agenzia vede e scarica solo le sue (PDF), dall’elenco e dal
   }
 });
 
-test('prenotare da agenzia: «Cerca» ha tour privati (attivo) e condivisi (spento); la barra resta quella dell’area agenzie fino al pagamento', async () => {
+test('prenotare da agenzia: «Cerca» mostra tutti i tour e i servizi a ore (senza spunte); la barra resta quella dell’area agenzie fino al pagamento', async () => {
   const s = await start();
   try {
     const f = await s.login('giulia@lagoon.example');
     const date = day(12);
     const titles = (html) => [...html.matchAll(/<h3><a href="\/it\/tours\/([a-z0-9-]+)"/g)].map((m) => m[1]);
     const page = nb(await (await f(`/it/book?date=${date}&pax=4`)).text());
-    assert.match(page, /name="kind" value="private" checked/);
-    assert.ok(!/name="kind" value="shared" checked/.test(page), 'condivisi spenti di default');
-    // l'agenzia vede solo i tour B2B (con il suo indirizzo «-agenzie»), mai quelli dei privati
-    assert.ok(titles(page).includes('guida-a-ore-agenzie') && !titles(page).includes('cannaregio-ghetto-agenzie') && !titles(page).includes('guida-a-ore'), `privati: ${titles(page)}`);
-    const shared = nb(await (await f(`/it/book?date=${date}&pax=4&kinds=1&kind=shared`)).text());
-    assert.ok(titles(shared).includes('cannaregio-ghetto-agenzie') && !titles(shared).includes('guida-a-ore-agenzie') && !titles(shared).includes('cannaregio-ghetto'), `condivisi: ${titles(shared)}`);
-    const both = nb(await (await f(`/it/book?date=${date}&pax=4&kinds=1&kind=shared&kind=private`)).text());
-    assert.ok(titles(both).includes('cannaregio-ghetto-agenzie') && titles(both).includes('guida-a-ore-agenzie'));
+    assert.ok(!page.includes('name="kind"'), 'niente spunte privati/condivisi: l’agenzia vede tutto');
+    // l'agenzia vede solo i tour B2B (con il suo indirizzo «-agenzie»), mai quelli dei privati: privati, condivisi e servizi insieme
+    assert.ok(titles(page).includes('guida-a-ore-agenzie') && titles(page).includes('cannaregio-ghetto-agenzie'), `tutti: ${titles(page)}`);
+    assert.ok(!titles(page).includes('cannaregio-ghetto') && !titles(page).includes('guida-a-ore'));
+    const options = [...page.matchAll(/<option value="([a-z0-9-]+)"/g)].map((m) => m[1]);
+    for (const svc of ['assistente-a-ore', 'tour-leader', 'meet-and-greet']) assert.ok(options.includes(svc), `${svc} nell'elenco dei servizi`);
     // pagina di checkout: stessa barra
     const checkout = await (await f(`/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${date}&time=10:00&pax=2`)).text();
     assert.match(checkout, /partner-area/);
