@@ -438,7 +438,9 @@ test('tour dal pannello: servizio a ore (prezzo dalle tariffe) e prezzo fisso, l
     const { admin } = s;
     const list = await (await admin('/admin/tours')).text().then(nb);
     assert.match(list, /Servizio guida · a ore \(il cliente sceglie le ore\)/);
-    assert.match(list, /href="\/admin\/rates">tariffe a ore/);
+    assert.match(list, /href="\/admin\/rates">dalle tariffe a ore/);
+    assert.match(list, /Servizio guida · a ore \(il cliente sceglie le ore\)[^]*?da 200 €/, 'il prezzo di oggi, dalla tabella');
+    assert.match(list, /Venezia tra Oriente e Occidente[^]*?290 €/, 'durata fissa: il prezzo della tabella per 3 ore');
     const listB2b = await (await admin('/admin/tours-b2b')).text().then(nb);
     assert.match(listB2b, /Assistente in loco · a ore/);
     assert.ok(!list.includes('Assistente in loco'), 'sono in sezioni diverse');
@@ -474,6 +476,36 @@ test('tour dal pannello: servizio a ore (prezzo dalle tariffe) e prezzo fisso, l
     assert.equal(loc(await admin('/admin/tours/serata-a-ore', post({ ...TOUR, audience: 'b2b' }))), '/admin/tours/serata-a-ore?ok=saved');
     assert.equal(s.app.content.tour('serata-a-ore').audience, 'b2b');
     assert.equal((await s.anon('/it/tours/serata-a-ore')).status, 404);
+  } finally {
+    s.close();
+  }
+});
+
+test('tariffe a ore e tour a ore: il prezzo dei tour segue sempre la tabella, e il pannello lo mostra', async () => {
+  const s = await start();
+  try {
+    const { admin, anon } = s;
+    // le tariffe elencano i tour che le usano, con il prezzo di oggi
+    const rates = await (await admin('/admin/rates')).text().then(nb);
+    assert.match(rates, /Usano queste tariffe[^]*?Venezia tra Oriente e Occidente<\/a> · Tour B2C · 3 ore fisse → <strong>290 €<\/strong>/);
+    assert.match(rates, /Assistente in loco<\/a> · Tour B2B · ore a scelta → <strong>da 80 € \(2 ore\)<\/strong>/);
+    assert.ok(!rates.includes('prezzo fisso e non'), 'nessun avviso: non ci sono servizi privati a prezzo fisso');
+    // cambio la guida di 2 ore e l'ora in più: il tour a durata fissa (3 ore) e il preventivo seguono da soli
+    const r = s.app.rates.get();
+    s.app.rates.save({ ...r, services: { ...r.services, guide: { ...r.services.guide, public: { prices: [18000, ...r.services.guide.public.prices.slice(1)], extra: 10000 } } } });
+    assert.match(await (await admin('/admin/rates')).text().then(nb), /Venezia tra Oriente e Occidente<\/a> · Tour B2C · 3 ore fisse → <strong>280 €<\/strong>/, '180 + 100');
+    assert.match(await (await admin('/admin/tours')).text().then(nb), /Venezia tra Oriente e Occidente[^]*?280 €/);
+    assert.match(await (await anon('/it/tours')).text().then(nb), /da 180 €<small> \/ 2 ore<\/small>/);
+    const form1 = await (await admin('/admin/tours/venezia-oriente-occidente')).text().then(nb);
+    assert.match(form1, /Prezzo di oggi, dalle tariffe a ore: <strong>280 €<\/strong> per 3 ore \(durata fissa\)/);
+    // un servizio privato a prezzo fisso non segue la tabella: il pannello lo dice, nel tour e nelle tariffe
+    const TOUR = { slug: 'gondola-privata', title_it: 'Gondola privata', summary_it: 'Un’ora in gondola.', audience: 'b2c', model: 'group', pricing: 'fixed', price: '160', flexible: '1', wd: ['0', '1', '2', '3', '4', '5', '6'], durH: '2', durM: '0', maxParticipants: '5', active: '1', payOnSite: '1', langs: ['it'] };
+    assert.equal(loc(await admin('/admin/tours', post(TOUR))), '/admin/tours/gondola-privata?ok=created');
+    assert.match(await (await admin('/admin/tours/gondola-privata')).text().then(nb), /Prezzo fisso su un servizio privato\.<\/strong> Non segue le tariffe a ore/);
+    assert.match(await (await admin('/admin/rates')).text().then(nb), /Attenzione:[^]*?non segue[^]*?Gondola privata<\/a> \(160 €\)/);
+    assert.match(await (await admin('/admin/tours')).text().then(nb), /Gondola privata[^]*?160 €<br><small[^>]*>prezzo fisso/);
+    // il prezzo fisso di un tour a persona (condiviso) non ha l'avviso: non c'è una tariffa oraria equivalente
+    assert.ok(!(await (await admin('/admin/tours/san-marco-rialto')).text().then(nb)).includes('Prezzo fisso su un servizio privato'));
   } finally {
     s.close();
   }

@@ -1,7 +1,9 @@
 // Sito › Tariffe a ore: il modulo con tutte le cifre (scaglioni, ora extra, supplementi, giorni festivi).
 import { html, raw } from '../html.js';
 import { BRACKETS, SERVICES, extraFieldName, priceFieldName } from '../rates.js';
+import { formatMoney } from '../util.js';
 import { adminLayout } from './admin.js';
+import { hourlyPriceText } from './admin-tours.js';
 
 const SERVICE_LABEL = { guide: 'Servizio guida', assistant: 'Assistente in loco', leader: 'Tour leader', meetgreet: 'Meet & greet' };
 const SERVICE_HINT = {
@@ -23,9 +25,19 @@ export function ratesPage(ctx, { rates, values = null, errors = {}, custom = fal
   };
   const s = rates.surcharges;
   const d = rates.days;
+  // i tour «A ore» prendono il prezzo da queste cifre: qui si vede quali sono e quanto costano oggi
+  const hourlyTours = ctx.app.content.allTours.filter((t) => t.pricing === 'hourly');
+  const usedBy = (service) => {
+    const list = hourlyTours.filter((t) => t.service === service);
+    return list.length
+      ? html`<div class="used-by"><p class="small"><strong>Usano queste tariffe</strong> (si aggiornano da sole quando le cambi):</p><ul class="plain small">${list.map((t) => html`<li><a href="/admin/tours/${t.slug}">${t.i18n.it.title}</a> · ${t.audience === 'b2b' ? 'Tour B2B' : 'Tour B2C'} · ${t.chooseHours ? 'ore a scelta' : `${t.durationMin / 60} ore fisse`} → <strong>${hourlyPriceText(ctx.app, t) ?? 'nessuna tariffa'}</strong></li>`)}</ul></div>`
+      : html`<p class="muted small">Nessun tour usa ancora queste tariffe.</p>`;
+  };
+  const fixedPrivate = ctx.app.content.allTours.filter((t) => t.pricing !== 'hourly' && t.model === 'group');
 
   const body = html`
 <p class="muted">Qui scrivi le tue <strong>tariffe a ore</strong>: valgono per le <strong>nuove</strong> prenotazioni (quelle già fatte conservano il loro conto). Gli importi sono <strong>per l’intero gruppo</strong>, in euro. Il sito calcola da solo festivi, notturno e auricolari dalla data e dall’orario scelti dal cliente.</p>
+${fixedPrivate.length ? html`<div class="notice notice-err" role="alert"><strong>Attenzione:</strong> ${fixedPrivate.length === 1 ? 'questo servizio privato ha' : 'questi servizi privati hanno'} un <strong>prezzo fisso</strong> e non ${fixedPrivate.length === 1 ? 'segue' : 'seguono'} le tariffe a ore: ${fixedPrivate.map((t, i) => html`${i ? ', ' : ''}<a href="/admin/tours/${t.slug}">${t.i18n.it.title}</a> (${formatMoney(t.priceCents, 'it')})`)}. Se cambi le tariffe, quel prezzo resta com’è: per farlo seguire la tabella, apri il tour e scegli <em>A ore</em>.</div>` : ''}
 ${custom ? '' : html`<div class="notice notice-ok" role="note">Stai usando le <strong>cifre iniziali</strong>, un punto di partenza pensato guardando le tariffe di altre guide e associazioni di Venezia: controllale e adattale a te, con il tuo commercialista.</div>`}
 <form method="post" action="/admin/rates" class="form rates-form">
   ${SERVICES.map((service) => {
@@ -39,6 +51,7 @@ ${custom ? '' : html`<div class="notice notice-ok" role="note">Stai usando le <s
         <tr><td>Ogni ora in più</td><td class="num">${priceInput(service, 'public', 'extra', pub?.extra)}</td><td class="num">${priceInput(service, 'b2b', 'extra', b2b?.extra)}</td></tr>
       </tbody></table></div>
       <p class="muted small">Tra uno scaglione e l’altro il prezzo cresce con l’ora in più, senza mai superare lo scaglione successivo (esempio: 3 ore = 2 ore + 1 ora in più).</p>
+      ${usedBy(service)}
     </div>`;
   })}
 

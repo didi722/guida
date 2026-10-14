@@ -82,7 +82,7 @@
     var grid = el('div', 'cal-grid'); grid.setAttribute('role', 'grid');
     var dows = { it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'], es: ['L', 'M', 'X', 'J', 'V', 'S', 'D'], ja: ['月', '火', '水', '木', '金', '土', '日'] }[lang] || ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     dows.forEach(function (d) { grid.append(el('span', 'cal-dow', d)); });
-    for (var i = 0; i < offset; i++) grid.append(el('span'));
+    for (var i = 0; i < offset; i++) grid.append(el('span', 'cal-blank'));
     for (var d = 1; d <= count; d++) {
       var iso = state.month + '-' + pad(d);
       var avail = state.days[iso];
@@ -96,11 +96,11 @@
       if (iso === state.date) b.setAttribute('aria-pressed', 'true');
       grid.append(b);
     }
-    var foot = null;
-    if (state.loading) foot = el('p', 'muted small', L.loading);
-    else if (state.error) foot = el('p', 'muted small', L.error);
-    else if (!Object.keys(state.days).length) foot = el('p', 'muted small', L.noMonth);
-    cal.replaceChildren.apply(cal, [head, grid].concat(foot ? [foot] : []));
+    // sempre sei righe e una riga di avviso: il calendario ha sempre la stessa altezza, qualunque sia il mese
+    for (var k = offset + count; k < 42; k++) grid.append(el('span', 'cal-blank'));
+    var msg = state.loading ? L.loading : state.error ? L.error : !Object.keys(state.days).length ? L.noMonth : '';
+    var foot = el('p', 'muted small cal-foot', msg);
+    cal.replaceChildren(head, grid, foot);
     cal.classList.toggle('is-loading', state.loading);
   }
 

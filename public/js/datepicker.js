@@ -79,6 +79,10 @@
     if (native.form) native.form.addEventListener('reset', () => setTimeout(refresh, 0));
     native.addEventListener('focus', () => { wrap.classList.add('is-focus'); if (!current || current.native !== native) open(); }); // etichetta toccata o campo obbligatorio vuoto: si apre il calendario
     native.addEventListener('blur', () => wrap.classList.remove('is-focus'));
+    // il calendario del browser non deve aprirsi mai (nemmeno toccando l'icona o l'etichetta): il campo vero resta solo per il modulo
+    native.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); });
+    native.addEventListener('mousedown', (e) => e.preventDefault());
+    if (typeof native.showPicker === 'function') native.showPicker = () => {};
     refresh();
 
     function commit(value) {

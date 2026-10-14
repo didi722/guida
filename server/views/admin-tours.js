@@ -51,6 +51,16 @@ export const AUDIENCE = {
   b2b: { label: 'Tour B2B', noun: 'tour B2B', add: 'Nuovo tour B2B', path: '/admin/tours-b2b', short: 'B2B', who: 'le agenzie con account partner (la loro area riservata)', price: 'Tariffa agenzie' },
 };
 export const sectionOf = (audience) => AUDIENCE[audience === 'b2b' ? 'b2b' : 'b2c'];
+/** Il prezzo di un tour a ore, preso dalle tariffe di oggi (per il suo pubblico): «200 €» se la durata è fissa, «da 200 €» se il cliente sceglie le ore. null se la tabella non ha la tariffa. */
+export function hourlyPriceText(app, t) {
+  const channel = t.audience === 'b2b' ? 'b2b' : 'b2c';
+  if (t.chooseHours) {
+    const f = app.rates.fromPrice(t.service, channel);
+    return f ? `da ${formatMoney(f.cents, 'it')} (${f.hours} ore)` : null;
+  }
+  const q = app.rates.quote({ service: t.service, channel, hours: t.durationMin / 60 });
+  return q.ok ? formatMoney(q.totalCents, 'it') : null;
+}
 const kindLabel = (t) =>
   t.pricing === 'hourly'
     ? `${SERVICE_LABEL[t.service] ?? 'Servizio'} · a ore${t.chooseHours ? ' (il cliente sceglie le ore)' : ''}`
@@ -73,7 +83,9 @@ ${tours.length
         <span class="move-btns"><button type="button" data-move="-1" aria-label="Sposta su «${t.i18n.it.title}»" title="Su">▲</button><button type="button" data-move="1" aria-label="Sposta giù «${t.i18n.it.title}»" title="Giù">▼</button></span></td>
       <td><a href="/admin/tours/${t.slug}"><strong>${t.i18n.it.title}</strong></a><br><small class="muted">${kindLabel(t)} · ${Math.floor(t.durationMin / 60)}h${String(t.durationMin % 60).padStart(2, '0')} · max ${t.maxParticipants}${upcoming[t.slug] ? ` · ${upcoming[t.slug]} prenotazion${upcoming[t.slug] === 1 ? 'e' : 'i'} future` : ''}</small>
       <br>${LANGS.filter((l) => t.i18n[l].fallback).map((l) => html`<span class="chip chip-warn" title="Il sito mostra il testo di un'altra lingua">manca ${LANG_META[l].short}</span> `)}</td>
-      ${t.pricing === 'hourly' ? html`<td class="num muted"><a href="/admin/rates">tariffe a ore</a></td>` : html`<td class="num">${formatMoney(t.priceCents, 'it')}</td>`}
+      ${t.pricing === 'hourly'
+        ? html`<td class="num">${hourlyPriceText(ctx.app, t) ?? html`<span class="muted">—</span>`}<br><small class="muted"><a href="/admin/rates">dalle tariffe a ore</a></small></td>`
+        : html`<td class="num">${formatMoney(t.priceCents, 'it')}${t.model === 'group' ? html`<br><small class="muted" title="Un servizio privato a prezzo fisso non segue le tariffe a ore: se cambi le tariffe, questo prezzo resta com’è.">prezzo fisso</small>` : ''}</td>`}
       <td><span class="chip ${t.active ? 'chip-ok' : 'chip-warn'}">${t.active ? 'visibile' : 'nascosto'}</span></td>
       <td class="actions"><a class="btn btn-outline btn-sm" href="/admin/tours/${t.slug}">Modifica</a>
         <form method="post" action="/admin/tours/${t.slug}/toggle" class="inline-form"><button class="btn btn-outline btn-sm" type="submit">${t.active ? 'Nascondi' : 'Mostra'}</button></form></td></tr>`)}
@@ -128,6 +140,11 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
       <label class="check"><input type="radio" name="pricing" value="fixed" ${v.pricing === 'hourly' ? '' : raw('checked')}> <strong>Prezzo fisso</strong> (lo scrivi qui sotto)</label>
       <label class="check"><input type="radio" name="pricing" value="hourly" ${v.pricing === 'hourly' ? raw('checked') : ''}> <strong>A ore</strong>: il prezzo viene dalle <a href="/admin/rates">Tariffe a ore</a> (scaglioni, ore extra, festivi, notturno): la colonna ${aud === 'b2b' ? '«Agenzie»' : '«Pubblico»'} per questo tour. Vale solo per i servizi privati.</label>
     </fieldset>
+    ${tour && tour.pricing === 'hourly'
+      ? html`<p class="notice notice-ok" role="note">Prezzo di oggi, dalle tariffe a ore: <strong>${hourlyPriceText(ctx.app, tour) ?? 'nessuna tariffa per questo pubblico'}</strong>${tour.chooseHours ? '' : ` per ${tour.durationMin / 60} ore (durata fissa)`}. Se cambi le tariffe, cambia da solo anche qui.</p>`
+      : tour && tour.model === 'group'
+        ? html`<p class="notice notice-err" role="note"><strong>Prezzo fisso su un servizio privato.</strong> Non segue le tariffe a ore: se cambi quelle (per esempio la guida di 2 ore), questo prezzo resta com’è. Se è lo stesso servizio di una tariffa a ore, scegli <em>A ore</em> e lascia la durata fissa: il prezzo sarà sempre quello della tabella.</p>`
+        : ''}
     <div class="form-grid">
       <label class="field"><span class="label">Servizio a ore <em>(solo se «A ore»)</em></span><select name="service">${[['guide', 'Servizio guida'], ['assistant', 'Assistente in loco'], ['leader', 'Tour leader'], ['meetgreet', 'Meet & greet']].map(([k, l]) => html`<option value="${k}" ${v.service === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
       <label class="check"><input type="checkbox" name="chooseHours" value="1" ${v.chooseHours ? raw('checked') : ''}> Il cliente sceglie quante ore (altrimenti la durata sopra è fissa)</label>

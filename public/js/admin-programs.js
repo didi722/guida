@@ -33,6 +33,15 @@
       var rows = box.querySelectorAll('.prow');
       var last = rows[rows.length - 1];
       var copy = last.cloneNode(true);
+      // il selettore di date (datepicker.js) si rimette da solo sui campi nuovi: dalla copia si toglie quello della riga di partenza
+      copy.querySelectorAll('.dp').forEach(function (wrap) {
+        var n = wrap.querySelector('input');
+        n.classList.remove('dp-native');
+        n.removeAttribute('data-dp-ready');
+        n.removeAttribute('aria-hidden');
+        n.removeAttribute('tabindex');
+        wrap.replaceWith(n);
+      });
       copy.querySelectorAll('input, textarea').forEach(function (el) {
         if (el.name === 'd_date') el.value = nextDay(last.querySelector('[name="d_date"]').value);
         else if (el.name === 'd_start' || el.name === 'd_end') el.value = last.querySelector('[name="' + el.name + '"]').value;

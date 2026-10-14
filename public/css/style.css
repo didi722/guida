@@ -305,7 +305,7 @@ a.card:hover .arrow { transform: translateX(5px); }
 .tour-banner { border-radius: 18px; overflow: hidden; aspect-ratio: 16 / 7; margin: 0 0 1.6rem; border: 1px solid var(--line); box-shadow: var(--shadow); }
 .tour-banner svg, .tour-banner img { width: 100%; height: 100%; object-fit: cover; }
 .tour-layout { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 48px; padding-top: 32px; padding-bottom: 80px; align-items: start; }
-.tour-side { position: sticky; top: calc(var(--header-h) + 14px); }
+.tour-side { position: sticky; top: calc(var(--header-h) + 14px); max-height: calc(100vh - var(--header-h) - 28px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 6px 6px 14px; margin: -6px; } /* il pannello di prenotazione scorre da solo, se è più alto dello schermo */
 .facts { list-style: none; padding: 0; margin: 0 0 1.8rem; display: grid; grid-template-columns: repeat(4, auto); gap: 10px 28px; justify-content: start; padding-block: 16px; border-block: 1px solid var(--line); }
 .facts li { display: flex; flex-direction: column; }
 .fact-k { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
@@ -345,6 +345,8 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 .cal-nav:hover:not(:disabled) { border-color: var(--bronze); background: var(--gold-soft); } .cal-nav:disabled { opacity: 0.3; cursor: not-allowed; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .cal-dow { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 4px 0; letter-spacing: 0.06em; }
+.cal-blank { display: block; aspect-ratio: 1; }
+.cal-foot { min-height: 1.5em; margin: 8px 0 0; }
 .cal-day { aspect-ratio: 1; border: 1.5px solid transparent; background: transparent; border-radius: 10px; font: inherit; font-size: 0.98rem; color: var(--muted); cursor: pointer; padding: 0; opacity: 0.4; }
 .cal-day.is-avail { opacity: 1; background: var(--gold-soft); border-color: rgba(214, 187, 81, 0.6); color: var(--text); font-weight: 700; }
 .cal-day.is-avail:hover { background: var(--gold); color: var(--ink); }
@@ -540,7 +542,7 @@ body.admin { --header-h: 64px; }
   .hero { padding-bottom: 36px; }
   .hero-art { aspect-ratio: 16 / 9; order: -1; }
   .tour-layout { grid-template-columns: 1fr; padding-bottom: 110px; }
-  .tour-side { position: static; }
+  .tour-side { position: static; max-height: none; overflow: visible; padding: 0; margin: 0; }
   .summary-card { position: static; order: -1; }
   .mobile-cta { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 20px calc(10px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.12); }
   .mobile-cta strong { font-size: 1.3rem; } .mobile-cta small { color: var(--muted); }
@@ -947,6 +949,7 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 /* ───────── Selettore di date (public/js/datepicker.js) ───────── */
 .dp { position: relative; display: block; }
 .dp-native { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
+.dp-native::-webkit-calendar-picker-indicator { display: none; }
 .dp-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; font: inherit; font-size: 1rem; color: var(--text); background: var(--field); border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 14px; cursor: pointer; text-align: left; transition: border-color 0.2s, box-shadow 0.2s; }
 .dp-field:hover { border-color: var(--bronze); }
 .dp-field:focus-visible, .dp.is-focus .dp-field, .dp.is-open .dp-field { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(214, 187, 81, 0.3); }
