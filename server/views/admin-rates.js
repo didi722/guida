@@ -64,7 +64,7 @@ ${custom ? '' : html`<div class="notice notice-ok" role="note">Stai usando le <s
       <label class="field"><span class="label">Notturno (+ %)</span><input type="text" name="nightPct" inputmode="decimal" value="${val('nightPct', s.nightPct)}">${err('nightPct')}</label>
       <div class="field"><span class="label">Fascia notturna</span><div class="inline-fields"><span>dalle</span><input type="time" name="nightFrom" value="${val('nightFrom', s.nightFrom)}" required> <span>alle</span><input type="time" name="nightTo" value="${val('nightTo', s.nightTo)}" required></div>${err('nightFrom')}${err('nightTo')}</div>
       <label class="field"><span class="label">Auricolari (€ a persona)</span><input class="price-input" name="earpieceCents" inputmode="decimal" value="${val('earpieceCents', euro(s.earpieceCents))}">${err('earpieceCents')}</label>
-      <label class="field"><span class="label">Auricolari: da quante persone</span><input type="number" name="earpieceFromPax" min="1" max="100" value="${val('earpieceFromPax', s.earpieceFromPax)}">${err('earpieceFromPax')}</label>
+      <label class="field"><span class="label">Auricolari obbligatori: da quante persone</span><input type="number" name="earpieceFromPax" min="1" max="100" value="${val('earpieceFromPax', s.earpieceFromPax)}">${err('earpieceFromPax')}</label>
     </div>
     <p class="muted small">Per offrire servizi serali o all’alba allarga gli orari in <a href="/admin/availability">Agenda › Disponibilità</a>: oggi il cliente può scegliere solo orari dentro il tuo orario di lavoro.</p>
   </div>

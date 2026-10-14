@@ -24,7 +24,7 @@
         var q = doc.querySelector('[data-quote]');
         if (q) quoteBox.replaceChildren.apply(quoteBox, Array.prototype.slice.call(q.childNodes));
         if (swapFields) {
-          ['hours', 'pax', 'ear'].forEach(function (k) {
+          ['hours', 'pax'].forEach(function (k) {
             var from = doc.querySelector('[data-dyn="' + k + '"]'), to = form.querySelector('[data-dyn="' + k + '"]');
             if (from && to) to.replaceWith(from);
           });

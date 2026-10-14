@@ -4020,10 +4020,10 @@
   "夜間（{from}〜{to}）：この時間帯に含まれる時間に適用"
  ],
  "hourly.sup.earpieces": [
-  "Auricolari: {price} a persona, da {n} persone",
-  "Audio headsets: {price} per person, from {n} people",
-  "Auriculares: {price} por persona, desde {n} personas",
-  "イヤホン（受信機）：1名{price}、{n}名様から"
+  "Auricolari (obbligatori): {price} a persona, da {n} persone",
+  "Audio headsets (required): {price} per person, from {n} people",
+  "Auriculares (obligatorios): {price} por persona, desde {n} personas",
+  "イヤホン（受信機・必須）：1名{price}、{n}名様から"
  ],
  "hourly.day.pasqua": [
   "Pasqua",

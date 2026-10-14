@@ -79,11 +79,12 @@ test('tariffe: notturno in proporzione alle ore nella fascia 20:00-07:00', () =>
   assert.equal(b2b(4, { date: '2027-06-15' }).nightMinutes, 0);
 });
 
-test('tariffe: auricolari solo per la guida, da 8 persone, a persona', () => {
+test('tariffe: auricolari solo per la guida, obbligatori da 9 persone, a persona', () => {
   assert.equal(eur(b2b(4, { pax: 12, earpieces: true }).lines.find((l) => l.key === 'earpieces').cents), 48);
-  assert.equal(b2b(4, { pax: 7, earpieces: true }).lines.length, 1, 'sotto le 8 persone non si applicano');
-  assert.equal(b2b(4, { pax: 8, earpieces: true }).earpieces, true);
-  assert.equal(b2b(4, { pax: 12, earpieces: false }).lines.length, 1, 'solo se richiesti');
+  assert.equal(b2b(4, { pax: 8 }).lines.length, 1, 'fino a 8 persone non si applicano');
+  assert.equal(b2b(4, { pax: 9 }).earpieces, true, 'da 9 persone sono obbligatori e si sommano da soli');
+  assert.equal(eur(b2b(4, { pax: 12 }).lines.find((l) => l.key === 'earpieces').cents), 48);
+  assert.equal(b2b(4, { pax: 12, earpieces: false }).earpieces, true, 'non è una scelta del cliente');
   const assistant = quote(R, { service: 'assistant', channel: 'b2b', hours: 4, pax: 20, earpieces: true });
   assert.equal(assistant.lines.length, 1, 'per assistente, tour leader e meet & greet non esistono');
 });
@@ -113,7 +114,7 @@ test('tariffe: cifre salvate rovinate tornano ai valori iniziali', () => {
   assert.deepEqual(broken.services.guide.public, { prices: [100, 200, 300], extra: 50 });
   assert.equal(broken.surcharges.festivoPct, 20);
   assert.equal(broken.surcharges.nightFrom, '20:00');
-  assert.equal(broken.surcharges.earpieceFromPax, 8);
+  assert.equal(broken.surcharges.earpieceFromPax, 9);
   assert.equal(broken.days.holidays, DEFAULT_RATES.days.holidays);
   assert.deepEqual(normalizeRates('boh'), DEFAULT_RATES);
 });

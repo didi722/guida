@@ -101,7 +101,7 @@ export function hourlyPage(ctx, { products, product, channel, values, quote, slo
   const title = isB2b ? t('hourly.titleB2b') : t('hourly.title');
   const lead = isB2b ? t('hourly.leadB2b') : t('hourly.lead');
   const services = [...new Set(products.map((p) => p.service))];
-  const slotUrl = (time) => `${u('/book/checkout')}?tour=${encodeURIComponent(product.slug)}&date=${values.date}&time=${time}&pax=${values.pax}${product.chooseHours ? `&hours=${values.hours}` : ''}${values.earpieces ? '&earpieces=1' : ''}`;
+  const slotUrl = (time) => `${u('/book/checkout')}?tour=${encodeURIComponent(product.slug)}&date=${values.date}&time=${time}&pax=${values.pax}${product.chooseHours ? `&hours=${values.hours}` : ''}`;
 
   const body = products.length
     ? html`
@@ -124,11 +124,6 @@ export function hourlyPage(ctx, { products, product, channel, values, quote, slo
       : html`<p class="field"><span class="label">${t('hourly.f.hours')}</span><strong>${hoursLabel(t, lang, product.durationMin / 60)}</strong></p>`}
     </div>
     <div class="dyn" data-dyn="pax"><label class="field"><span class="label">${t('quick.guests')}</span><input type="number" name="pax" min="1" max="${product.maxParticipants}" value="${values.pax}" inputmode="numeric" required></label></div>
-    <div class="dyn" data-dyn="ear">
-    ${product.service === 'guide' && rates.surcharges.earpieceCents > 0
-      ? html`<label class="check"><input type="checkbox" name="earpieces" value="1" ${values.earpieces ? raw('checked') : ''}> <span>${t('hourly.f.earpieces')} <small class="muted">(${t('hourly.sup.earpieces', { price: formatMoney(rates.surcharges.earpieceCents, lang), n: rates.surcharges.earpieceFromPax })})</small></span></label>`
-      : ''}
-    </div>
     <button class="btn btn-gold" type="submit" data-go>${t('hourly.f.go')}</button>
   </form>
 

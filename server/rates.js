@@ -25,7 +25,7 @@ export const DEFAULT_RATES = {
     leader: { b2b: { prices: [14000, 25000], extra: 3600 } },
     meetgreet: { b2b: { prices: [5000], extra: 3000 } },
   },
-  surcharges: { festivoPct: 20, superFestivoPct: 50, nightPct: 30, nightFrom: '20:00', nightTo: '07:00', earpieceCents: 400, earpieceFromPax: 8 },
+  surcharges: { festivoPct: 20, superFestivoPct: 50, nightPct: 30, nightFrom: '20:00', nightTo: '07:00', earpieceCents: 400, earpieceFromPax: 9 },
   days: { sundays: true, holidays: '01-06 04-25 05-01 06-02 08-15 11-01 12-08 12-26 pasquetta', superHolidays: '12-25 01-01 pasqua' },
 };
 
@@ -171,7 +171,7 @@ export function fromPrice(rates, service, channel, discountPercent = 0) {
 }
 
 /**
- * Preventivo. `date` e `time` (facoltativi) servono per festivo e notturno; `earpieces` solo per il servizio guida.
+ * Preventivo. `date` e `time` (facoltativi) servono per festivo e notturno; gli auricolari (servizio guida) sono obbligatori da `earpieceFromPax` persone: si aggiungono da soli.
  * @returns {{ok:true, ...}|{ok:false, reason:'service'|'channel'|'hours'}}
  */
 export function quote(rates, { service, channel = 'b2c', hours, date = null, time = null, pax = 1, earpieces = false, discountPercent = 0, roundHours = false }) {
@@ -196,7 +196,7 @@ export function quote(rates, { service, channel = 'b2c', hours, date = null, tim
   if (night > 0) lines.push({ key: 'night', cents: roundEuro((baseCents * s.nightPct * night) / (h * 60) / 100), pct: s.nightPct, minutes: night });
 
   const people = Math.max(1, Number(pax) || 1);
-  if (service === 'guide' && earpieces && s.earpieceCents > 0 && people >= s.earpieceFromPax) lines.push({ key: 'earpieces', cents: s.earpieceCents * people, unitCents: s.earpieceCents, pax: people });
+  if (service === 'guide' && s.earpieceCents > 0 && people >= s.earpieceFromPax) lines.push({ key: 'earpieces', cents: s.earpieceCents * people, unitCents: s.earpieceCents, pax: people });
 
   return { ok: true, service, channel: key === 'b2b' ? 'b2b' : 'b2c', hours: h, discountPercent: disc, dayClass: klass, nightMinutes: night, earpieces: lines.some((l) => l.key === 'earpieces'), lines, baseCents, totalCents: lines.reduce((t, l) => t + l.cents, 0) };
 }

@@ -189,7 +189,7 @@ Per ogni servizio scrivi, per il **Pubblico** e per le **Agenzie**, il prezzo di
 **Supplementi.** Si sommano al prezzo base e li calcola il sito dalla data e dall'orario scelti:
 - **Festivo** (+20%) per domeniche e festività; **Superfestivo** (+50%) lo sostituisce a Natale, Capodanno e Pasqua. I giorni si elencano in *Quali giorni sono festivi* (giorno e mese, per esempio `25-04 01-05`; «pasqua» e «pasquetta» si calcolano da sole).
 - **Notturno** (+30%) solo per le ore che cadono nella fascia (all'inizio dalle 20:00 alle 07:00), in proporzione. Per offrire orari serali o all'alba allarga gli orari in **Agenda › Disponibilità**.
-- **Auricolari** (4 € a persona, da 8 persone, solo servizio guida): il cliente li spunta al pagamento.
+- **Auricolari** (4 € a persona, solo servizio guida): sono **obbligatori da 9 persone in su** (fino a 8 non si pagano) e si sommano da soli al totale: non è una scelta del cliente. Il numero da cui scattano si cambia in *Tariffe a ore* (*Auricolari obbligatori: da quante persone*; le cifre già salvate restano quelle che hai impostato).
 
 Le percentuali dei supplementi si calcolano sul prezzo base (già scontato, per un'agenzia con sconto) e si arrotondano all'euro. In fondo alla pagina, **Prova il calcolatore** apre quello che vedono i clienti.
 

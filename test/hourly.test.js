@@ -85,14 +85,14 @@ test('servizi a ore: il pubblico vede la guida a ore con le tariffe al pubblico,
     assert.match(page, /Festivi: domeniche, 6 gen, 25 apr/);
     assert.match(page, /Superfestivi: 25 dic, 1 gen, Pasqua/);
     assert.match(page, /Notturno, dalle 20:00 alle 07:00[^]*?\+30%/);
-    assert.match(page, /Auricolari: 4 € a persona, da 8 persone/);
+    assert.match(page, /Auricolari \(obbligatori\): 4 € a persona, da 9 persone/);
     assert.ok(!page.includes('Assistente in loco') && !page.includes('Tour leader'), 'i servizi per agenzie non si vedono');
     assert.ok(!page.includes('160 €'), 'né le tariffe agenzie');
     assert.match(page, /Operazione senza IVA \(regime forfettario\)/);
 
     // giorno feriale, 4 ore, 10 persone con auricolari: 380 + 40
     const date = plainDay();
-    const q = await (await anon(`/it/hourly?product=guida-a-ore&date=${date}&hours=4&pax=10&earpieces=1`)).text().then(nb);
+    const q = await (await anon(`/it/hourly?product=guida-a-ore&date=${date}&hours=4&pax=10`)).text().then(nb);
     assert.match(q, /Servizio, 4 ore<\/dt><dd>380 €/);
     assert.match(q, /Auricolari \(10 × 4 €\)<\/dt><dd>40 €/);
     assert.match(q, /Totale<\/dt><dd>420 €/);
@@ -102,7 +102,7 @@ test('servizi a ore: il pubblico vede la guida a ore con le tariffe al pubblico,
     assert.ok(slots.some(([, , time]) => time === '09:00'));
     const first = slots.find(([, , time]) => time === '09:30');
     assert.equal(first[3].trim(), '420 €');
-    assert.match(first[1], new RegExp(`/it/book/checkout\\?tour=guida-a-ore&amp;date=${date}&amp;time=09:30&amp;pax=10&amp;hours=4&amp;earpieces=1`));
+    assert.match(first[1], new RegExp(`/it/book/checkout\\?tour=guida-a-ore&amp;date=${date}&amp;time=09:30&amp;pax=10&amp;hours=4`));
     // un orario serale: 4 ore dalle 16:00 sconfinano nella fascia notturna (20:00-24:00 = 2 ore su 4, +30% su metà di 380)
     const late = slots.find(([, , time]) => time === '15:30');
     if (late) assert.match(late[3], /(?:\d+\s)?€/);
@@ -232,7 +232,7 @@ test('servizi a ore: prenotazione di un cliente privato (ore, supplementi, orari
   try {
     const { app, anon } = s;
     const date = sunday(12);
-    const q = `tour=guida-a-ore&date=${date}&time=09:00&pax=10&hours=4&earpieces=1`;
+    const q = `tour=guida-a-ore&date=${date}&time=09:00&pax=10&hours=4`;
     const page = await (await anon(`/it/book/checkout?${q}`)).text().then(nb);
     assert.match(page, /09:00–13:00 <span class="muted">\(4 ore\)<\/span>/);
     assert.match(page, /Servizio, 4 ore<\/dt><dd>380 €/);
@@ -241,12 +241,13 @@ test('servizi a ore: prenotazione di un cliente privato (ore, supplementi, orari
     assert.match(page, /Totale<\/dt><dd>496 €/);
     assert.match(page, /name="hours" value="4"/);
 
-    // il cliente toglie gli auricolari (cambio che ricalcola senza prenotare)
-    const apply = await anon('/it/book/checkout', post({ tour: 'guida-a-ore', date, time: '09:00', pax: '10', hours: '4', name: 'Anna', email: 'anna@example.com', lang: 'it', paymentMethod: 'card', apply: '1' }));
+    // gli auricolari non sono una scelta: con meno di 9 persone spariscono da soli (cambio che ricalcola senza prenotare)
+    const apply = await anon('/it/book/checkout', post({ tour: 'guida-a-ore', date, time: '09:00', pax: '8', hours: '4', name: 'Anna', email: 'anna@example.com', lang: 'it', paymentMethod: 'card', apply: '1' }));
     assert.equal(apply.status, 200);
-    assert.match(await apply.text().then(nb), /Totale<\/dt><dd>456 €/);
+    assert.match(await apply.text().then(nb), /Totale<\/dt><dd>456 €/); // 380 + 76 festivo, senza auricolari
+    assert.ok(!page.includes('name="earpieces"'), 'niente spunta auricolari');
 
-    const res = await anon('/it/book/checkout', post({ tour: 'guida-a-ore', theme: '0', date, time: '09:00', pax: '10', hours: '4', earpieces: '1', name: 'Anna Verdi', email: 'anna@example.com', lang: 'it', paymentMethod: 'card', consent: '1' }));
+    const res = await anon('/it/book/checkout', post({ tour: 'guida-a-ore', theme: '0', date, time: '09:00', pax: '10', hours: '4', name: 'Anna Verdi', email: 'anna@example.com', lang: 'it', paymentMethod: 'card', consent: '1' }));
     assert.equal(res.status, 303);
     const b = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
     assert.equal(b.tour_slug, 'guida-a-ore');
@@ -398,7 +399,7 @@ test('tariffe a ore nel pannello: modulo, salvataggio, errori, ripristino, e eff
     assert.match(await (await admin('/admin/rates?ok=saved')).text().then(nb), /Tariffe salvate/);
     const pub = await (await anon(`/it/hourly?date=${plainDay()}`)).text().then(nb);
     assert.ok(pub.includes('210 €'), 'nuova tariffa 2 ore'); assert.ok(pub.includes('400,50 €'), 'nuova tariffa 4 ore');
-    assert.match(pub, /Auricolari: 3,50 € a persona/);
+    assert.match(pub, /Auricolari \(obbligatori\): 3,50 € a persona/);
     assert.ok(!/Notturno, dalle/.test(pub), 'supplemento a zero: non compare');
     assert.match(await (await anon(`/it/hourly?date=${sunday()}&hours=2&pax=2`)).text().then(nb), /Supplemento festivo \(25%\)<\/dt><dd>53 €/, '25% di 210 € = 52,5 → 53 €');
     // il tour a durata fissa segue le nuove tariffe
