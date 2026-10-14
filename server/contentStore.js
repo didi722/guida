@@ -247,7 +247,17 @@ export function createContentStore({ db, root }) {
       return changed;
     },
     deleteTour(slug) {
-      if (db.prepare('SELECT 1 FROM bookings WHERE tour_slug = ? LIMIT 1').get(slug)) throw new ContentError('Il tour ha delle prenotazioni: nascondilo invece di eliminarlo (resta nello storico).');
+      const rows = db.prepare('SELECT channel, status, date >= ? AS upcoming, COUNT(*) AS n FROM bookings WHERE tour_slug = ? GROUP BY channel, status, upcoming').all(nowIso().slice(0, 10), slug);
+      if (rows.length) {
+        const n = (f) => rows.filter(f).reduce((t, r) => t + r.n, 0);
+        const parts = [
+          [n((r) => ['confirmed', 'held', 'option'].includes(r.status) && r.upcoming), 'future'],
+          [n((r) => ['confirmed', 'held', 'option'].includes(r.status) && !r.upcoming), 'passate'],
+          [n((r) => ['cancelled', 'expired'].includes(r.status)), 'annullate o scadute'],
+        ].filter(([c]) => c);
+        const b2b = n((r) => r.channel === 'b2b');
+        throw new ContentError(`Il tour ha ${n(() => true) === 1 ? '1 prenotazione' : `${n(() => true)} prenotazioni`} nello storico (${parts.map(([c, l]) => `${c} ${l}`).join(', ')}${b2b ? `; ${b2b} di agenzie` : ''}): se lo eliminassi, resterebbero senza tour. Nascondilo: sparisce dal sito e lo storico resta intatto.`);
+      }
       if (db.prepare(`SELECT 1 FROM promo_codes WHERE tours LIKE ? LIMIT 1`).get(`%"${slug}"%`)) throw new ContentError('Il tour è citato in un codice sconto: modifica o elimina prima il codice.');
       db.prepare('DELETE FROM content_tours WHERE slug = ?').run(slug);
       reload();

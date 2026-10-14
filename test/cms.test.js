@@ -164,7 +164,7 @@ test('tour dal pannello: creare, modificare, nascondere, duplicare, eliminare; i
 
     // eliminazione: impossibile con prenotazioni, possibile senza
     s.app.db.prepare(`INSERT INTO bookings(ref, token, tour_slug, date, start_time, end_time, participants, channel, name, email, total_cents, status, payment_method, payment_status, free_cancel_until, created_at) VALUES('VE-TESTXX','t','cannaregio-ghetto','2030-01-01','10:00','12:30',2,'b2c','A','a@example.com',7000,'confirmed','card','paid','2030-01-01T00:00:00Z','2029-01-01T00:00:00Z')`).run();
-    assert.match(decodeURIComponent(loc(await admin('/admin/tours/cannaregio-ghetto/delete', form({})))), /ha delle prenotazioni/);
+    assert.match(decodeURIComponent(loc(await admin('/admin/tours/cannaregio-ghetto/delete', form({})))), /ha 1 prenotazione nello storico \(1 future\)[^]*Nascondilo/);
     assert.ok(s.app.content.tour('cannaregio-ghetto'));
     assert.equal(loc(await admin('/admin/tours/gondola-al-tramonto/delete', form({}))), '/admin/tours?ok=deleted');
     assert.equal(s.app.content.tour('gondola-al-tramonto'), undefined);
