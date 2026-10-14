@@ -848,7 +848,7 @@ body.admin { --header-h: 64px; }
 .notes-list li { margin: 0 0 4px; }
 .hourly-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; }
 .hourly-form .field, .hourly-form .check { margin: 0; } .hourly-form .wide, .hourly-form .check, .hourly-form .btn, .hourly-form .notice { grid-column: 1 / -1; }
-.hourly-form .btn { justify-self: start; }
+.hourly-form .btn { justify-self: start; } .hourly-form .dyn { display: contents; }
 .quote-card { margin-top: 18px; } .quote-card h2 { margin-top: 0; }
 .summary-list .row-extra dt::before { content: '+ '; }
 .quote-card .summary-list > div, .summary-list .row-line { flex-direction: row !important; } .quote-card .summary-list dd, .summary-list .row-line dd { text-align: right !important; }

@@ -112,41 +112,45 @@ export function hourlyPage(ctx, { products, product, channel, values, quote, slo
 </div></section>
 
 <section class="section tight"><div class="wrap">
-  <form class="card pad hourly-form" method="get" action="${u('/hourly')}">
+  <form class="card pad hourly-form" method="get" action="${u('/hourly')}" data-hourly-live>
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
     ${products.length > 1
       ? html`<label class="field wide"><span class="label">${t('hourly.f.product')}</span><select name="product">${products.map((p) => html`<option value="${p.slug}" ${p.slug === product.slug ? raw('selected') : ''}>${p.i18n[lang].title}</option>`)}</select></label>`
       : html`<input type="hidden" name="product" value="${product.slug}">`}
     <label class="field"><span class="label">${t('quick.date')}</span><input type="date" name="date" min="${minDate}" value="${values.date ?? ''}"></label>
+    <div class="dyn" data-dyn="hours">
     ${product.chooseHours
       ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select name="hours">${hourOptions(product.service).map((h) => html`<option value="${h}" ${h === values.hours ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>${product.roundHours ? html`<small class="muted">${t('hourly.note.round')}</small>` : ''}</label>`
       : html`<p class="field"><span class="label">${t('hourly.f.hours')}</span><strong>${hoursLabel(t, lang, product.durationMin / 60)}</strong></p>`}
-    <label class="field"><span class="label">${t('quick.guests')}</span><input type="number" name="pax" min="1" max="${product.maxParticipants}" value="${values.pax}" inputmode="numeric" required></label>
+    </div>
+    <div class="dyn" data-dyn="pax"><label class="field"><span class="label">${t('quick.guests')}</span><input type="number" name="pax" min="1" max="${product.maxParticipants}" value="${values.pax}" inputmode="numeric" required></label></div>
+    <div class="dyn" data-dyn="ear">
     ${product.service === 'guide' && rates.surcharges.earpieceCents > 0
       ? html`<label class="check"><input type="checkbox" name="earpieces" value="1" ${values.earpieces ? raw('checked') : ''}> <span>${t('hourly.f.earpieces')} <small class="muted">(${t('hourly.sup.earpieces', { price: formatMoney(rates.surcharges.earpieceCents, lang), n: rates.surcharges.earpieceFromPax })})</small></span></label>`
       : ''}
-    <button class="btn btn-gold" type="submit">${t('hourly.f.go')}</button>
+    </div>
+    <button class="btn btn-gold" type="submit" data-go>${t('hourly.f.go')}</button>
   </form>
 
-  ${quote?.ok
+  <div data-quote>${quote?.ok
     ? html`<div class="card pad quote-card">
         <h2 class="h-sub">${t('hourly.quote.title')}</h2>
         <p class="muted small">${product.i18n[lang].title}</p>
         <dl class="summary-list">${quoteLines(t, lang, quote)}</dl>
         ${values.date ? '' : html`<p class="small muted">${t('hourly.quote.estimate')}</p>`}
       </div>`
-    : ''}
+    : ''}</div>
 
-  ${values.date && quote?.ok
+  <div data-slots>${values.date && quote?.ok
     ? html`<h2 class="h-sub spaced">${t('hourly.quote.times')}</h2>
       ${slots.length
         ? html`<div class="slot-list">${slots.map((s) => html`<a class="slot" href="${slotUrl(s.time)}"><strong>${s.time}</strong><small>${formatMoney(s.quote.totalCents, lang)}</small></a>`)}</div>`
         : html`<div class="card pad empty"><p>${t('hourly.quote.none')}</p><p class="small muted"><a href="${u('/contact')}">${t('nav.contact')}</a></p></div>`}`
-    : quote?.ok ? html`<p class="muted spaced">${t('hourly.quote.pickDate')}</p>` : ''}
+    : quote?.ok ? html`<p class="muted spaced">${t('hourly.quote.pickDate')}</p>` : ''}</div>
 
   <h2 class="h-sub spaced">${isB2b ? t('hourly.ratesYours') : t('hourly.rates')}</h2>
   ${ratesBlock(ctx, { channel, services: isB2b ? services : [product.service], discountPercent: isB2b ? (ctx.acct?.discount_percent ?? 0) : 0 })}
 </div></section>`
     : html`<section class="page-head"><div class="wrap narrow center"><h1>${title}</h1><p class="lead">${t('hourly.err.service')}</p><p class="btn-row center"><a class="btn btn-gold" href="${u('/contact')}">${t('nav.contact')}</a></p></div></section>`;
-  return page(ctx, { title, description: lead, path: `/${lang}/hourly`, body, activeNav: isB2b ? 'book' : 'tours', area: areaOf(ctx) });
+  return page(ctx, { title, description: lead, path: `/${lang}/hourly`, body, scripts: raw(`<script src="/js/hourly.js?v=${app.assetVersion}" defer></script>`), activeNav: isB2b ? 'book' : 'tours', area: areaOf(ctx) });
 }

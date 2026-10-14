@@ -4092,10 +4092,10 @@
   "グループ用イヤホン（受信機）"
  ],
  "hourly.f.go": [
-  "Calcola e vedi gli orari",
-  "Calculate and see times",
-  "Calcular y ver horarios",
-  "計算して空き時間を見る"
+  "Vedi gli orari",
+  "See available times",
+  "Ver horarios disponibles",
+  "空き時間を見る"
  ],
  "hourly.hours1": [
   "1 ora",
