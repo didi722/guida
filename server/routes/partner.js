@@ -10,7 +10,7 @@ import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBooking
 import { renderInvoicePdf } from '../pdf-invoice.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { cleanText } from '../util.js';
-import { accountPage, bookingStatusText, invoicesPage, ratesPage } from '../views/b2b.js';
+import { accountPage, bookingStatusText, bookingsPage, invoicesPage, ratesPage } from '../views/b2b.js';
 import { bookingPage } from '../views/booking.js';
 
 export function partnerRouter(app) {
@@ -40,17 +40,23 @@ export function partnerRouter(app) {
   // «Elenco» o «Calendario»: la scelta si ricorda (cookie); cercare, filtrare o cambiare scheda porta sempre all'elenco
   const VIEW_COOKIE = 'pv';
   const YEAR = 365 * 24 * 3600;
+  // la prima pagina: tariffe e condizioni (i vecchi link con ricerca, schede o calendario portano alle prenotazioni)
   r.get('/b2b/account', (req, res) => {
     if (!req.acct) return toLogin(req, res);
     const ctx = res.locals.ctx;
-    if (req.acct.status !== 'approved') return send(res, accountPage(ctx, { acct: req.acct }));
+    if (req.acct.status === 'approved' && ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page', 'v', 'm', 'd'].some((k) => req.query[k] !== undefined)) return res.redirect(302, `/${req.lang}/b2b/bookings?${new URLSearchParams(req.query)}`);
+    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? '') }));
+  });
+
+  r.get('/b2b/bookings', needPartner, (req, res) => {
+    const ctx = res.locals.ctx;
     const nowMs = Date.now();
     const asked = ['cal', 'list'].includes(req.query.v) ? req.query.v : null;
     const listParams = ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page'].some((k) => req.query[k] !== undefined);
     const mode = asked ?? (listParams ? 'list' : parseCookies(req.headers.cookie)[VIEW_COOKIE] === 'cal' ? 'cal' : 'list');
     if (asked) setCookie(res, cfg, VIEW_COOKIE, asked, { maxAgeSec: YEAR });
     const filters = parseFilters(req.query);
-    send(res, accountPage(ctx, {
+    send(res, bookingsPage(ctx, {
       acct: req.acct, mode, filters, summary: partnerSummary(app, req.acct.id, nowMs), flash: String(req.query.flash ?? ''),
       list: mode === 'list' ? partnerBookings(app, req.acct.id, filters, { nowMs }) : null,
       calendar: mode === 'cal' ? partnerCalendar(app, req.acct.id, { month: req.query.m, selected: req.query.d }, nowMs) : null,

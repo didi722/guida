@@ -174,8 +174,8 @@ test('opzione dalla pagina della pratica: conferma (a fattura o con carta) e ril
 
     // rilascio: la data si libera, senza annulli né penali; si può tornare alla dashboard
     const d = make(day(32));
-    const rel = await partner(`/it/booking/${d.ref}/option/release`, form({ t: d.token, next: '/it/b2b/account' }));
-    assert.equal(loc(rel), '/it/b2b/account?flash=option-released');
+    const rel = await partner(`/it/booking/${d.ref}/option/release`, form({ t: d.token, next: '/it/b2b/bookings' }));
+    assert.equal(loc(rel), '/it/b2b/bookings?flash=option-released');
     assert.equal(row(s, d.ref).status, 'expired');
     assert.equal(row(s, d.ref).cancelled_by, 'customer', 'registra chi l’ha rilasciata');
     assert.equal(row(s, d.ref).retained_cents, 0, 'nessuna penale');

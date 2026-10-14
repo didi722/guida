@@ -5368,5 +5368,11 @@
   "From {dur}",
   "Desde {dur}",
   "{dur}〜"
+ ],
+ "partner.nav.home": [
+  "Panoramica",
+  "Overview",
+  "Resumen",
+  "概要"
  ]
 }

@@ -121,7 +121,7 @@ function agencyCalendar(ctx, cal) {
   const { t, lang, u, app } = ctx;
   const { month, prev, next, cells, selected, selectedItems } = cal;
   const today = nowRome().date;
-  const base = u('/b2b/account');
+  const base = u('/b2b/bookings');
   const href = (m, d = '') => `${base}?v=cal&m=${m}${d ? `&d=${d}` : ''}`;
   const dows = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(localeOf(lang), { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, 0, 1 + i)))); // lunedì…domenica
   const title = (b) => app.content.tour(b.tour_slug)?.i18n[lang].title ?? b.tour_slug;
@@ -184,15 +184,39 @@ function tariffario(ctx, acct) {
 }
 
 /**
- * La dashboard dell'agenzia: riepilogo, ricerca e filtri, elenco delle prenotazioni con le azioni di ogni giorno.
+ * La prima pagina dell'area agenzie: tariffe e condizioni dell'agenzia, con i pulsanti per prenotare e per andare alle prenotazioni.
+ * Per un account non ancora approvato mostra la pagina di stato.
+ */
+export function accountPage(ctx, { acct, flash = '' }) {
+  if (acct.status !== 'approved') return pendingPage(ctx, acct);
+  const { t, u } = ctx;
+  const canQuote = hasHourlyProducts(ctx, 'b2b'); // senza servizi a ore prenotabili il calcolatore non avrebbe nulla da mostrare
+  const body = html`
+<section class="page-head partner-head"><div class="wrap">
+  <div class="account-head">
+    <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${acct.contact_name} · ${acct.email}</p></div>
+    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a>${canQuote ? html`<a class="btn btn-outline btn-lg" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline btn-lg" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a></div>
+  </div>
+</div></section>
+<section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">
+  ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
+  <details class="terms-strip card"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>
+    ${termsFacts(ctx, acct)}
+    <p class="small"><a href="${u('/b2b/rates')}">${t('partner.terms.all')} →</a></p>
+  </details>
+  ${tariffario(ctx, acct)}
+</div></section>`;
+  return page(ctx, { title: t('partner.nav.home'), path: `/${ctx.lang}/b2b/account`, body, noindex: true, activeNav: 'b2b-account', area: 'partner' });
+}
+
+/**
+ * Le prenotazioni dell'agenzia: riepilogo, ricerca e filtri, elenco con le azioni di ogni giorno (o calendario).
  * list: { rows, counts, total, page, pages, view } · summary: vedi partnerSummary · filters: vedi parseFilters.
  */
-export function accountPage(ctx, { acct, filters, list, summary, flash = '', mode = 'list', calendar = null }) {
-  if (acct.status !== 'approved') return pendingPage(ctx, acct);
+export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mode = 'list', calendar = null }) {
   const { t, lang, u, app } = ctx;
   const { content } = app;
-  const base = u('/b2b/account');
-  const canQuote = hasHourlyProducts(ctx, 'b2b'); // senza servizi a ore prenotabili il calcolatore non avrebbe nulla da mostrare
+  const base = u('/b2b/bookings');
   const searching = hasSearch(filters);
   // link che conservano ricerca e date e cambiano solo ciò che serve (scheda, pagina)
   const qs = (over = {}) => {
@@ -210,16 +234,12 @@ export function accountPage(ctx, { acct, filters, list, summary, flash = '', mod
   const body = html`
 <section class="page-head partner-head"><div class="wrap">
   <div class="account-head">
-    <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${acct.contact_name} · ${acct.email}</p></div>
-    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a>${canQuote ? html`<a class="btn btn-outline btn-lg" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}</div>
+    <div><p class="eyebrow">${acct.company}</p><h1>${t('partner.nav.bookings')}</h1></div>
+    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a></div>
   </div>
 </div></section>
-<section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">
-  ${flashKey ? html`<div class="notice notice-${/error|expired|locked/.test(flash) ? 'err' : 'ok'}" role="status">${t(flashKey)}</div>` : ''}
-  ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
-  ${tariffario(ctx, acct)}
-</div></section>
 <section class="section tight"><div class="wrap">
+  ${flashKey ? html`<div class="notice notice-${/error|expired|locked/.test(flash) ? 'err' : 'ok'}" role="status">${t(flashKey)}</div>` : ''}
 
   <div class="kpis">
     ${kpi(`${base}?view=upcoming`, t('partner.kpi.upcoming'), summary.upcoming.count, t('partner.kpi.pax', { n: summary.upcoming.pax }))}
@@ -228,10 +248,6 @@ export function accountPage(ctx, { acct, filters, list, summary, flash = '', mod
     ${kpi(`${u('/b2b/invoices')}`, t('partner.kpi.due'), formatMoney(summary.due.cents, lang), summary.due.cents ? t('partner.kpi.dueNote') : t('partner.kpi.dueNone'), summary.due.cents ? 'kpi-due' : '')}
   </div>
 
-  <details class="terms-strip card"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>
-    ${termsFacts(ctx, acct)}
-    <p class="small"><a href="${u('/b2b/rates')}">${t('partner.terms.all')} →</a></p>
-  </details>
 
   <div class="agenda-head spaced"><h2 class="h-sub">${t('b2b.myBookings')}</h2>
     <nav class="tabs view-tabs" aria-label="${t('partner.view.aria')}"><a href="${base}?v=list" ${mode === 'list' ? raw('aria-current="page"') : ''}>${t('partner.view.list')}</a><a href="${base}?v=cal" ${mode === 'cal' ? raw('aria-current="page"') : ''}>${t('partner.view.cal')}</a></nav></div>
@@ -294,7 +310,7 @@ export function accountPage(ctx, { acct, filters, list, summary, flash = '', mod
         <p class="btn-row center">${searching ? html`<a class="btn btn-outline" href="${base}?view=${filters.view}">${t('partner.filter.clear')}</a>` : html`<a class="btn btn-gold" href="${u('/book')}">${t('partner.nav.new')}</a>`}</p>
       </div>`}`}
 </div></section>`;
-  return page(ctx, { title: t('partner.nav.bookings'), path: `/${lang}/b2b/account`, body, noindex: true, activeNav: 'b2b-account', area: 'partner' });
+  return page(ctx, { title: t('partner.nav.bookings'), path: `/${lang}/b2b/bookings`, body, noindex: true, activeNav: 'b2b-bookings', area: 'partner' });
 }
 
 /** Tariffe e condizioni dell'account: solo ciò che vale per l'agenzia (mai i prezzi al pubblico). */

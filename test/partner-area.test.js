@@ -109,7 +109,7 @@ test('area agenzie: barra semplice (niente blog, chi sono, programmi, tour), «E
       const html = await res.text();
       assert.match(html, /<body class="[^"]*partner-area/, `${p}: barra dell’area agenzie`);
       const nav = navOf(html);
-      assert.ok(nav.includes('/it/b2b/account') && nav.includes('/it/b2b/rates') && nav.includes('/it/b2b/invoices'), `${p}: voci di lavoro`);
+      assert.ok(nav.includes('/it/b2b/account') && nav.includes('/it/b2b/bookings') && nav.includes('/it/b2b/rates') && nav.includes('/it/b2b/invoices'), `${p}: voci di lavoro`);
       for (const pub of NAV_PUBLIC) assert.ok(!html.includes(`href="${pub}"`), `${p}: nessun link a ${pub}`);
       assert.ok(html.includes('action="/it/b2b/logout"'), `${p}: c’è «Esci»`);
       assert.ok(!html.includes('footer-grid'), `${p}: piè di pagina ridotto`);
@@ -158,7 +158,7 @@ test('area agenzie: elenco per schede, ricerca per cliente o pratica, filtri per
     const altrui = book(app, blue, { ref: 'Gruppo Altrui', name: 'Luca Neri', kind: 'card', date: day(11) });
 
     const f = await s.login('giulia@lagoon.example');
-    const get = async (qs = '') => nb(await (await f(`/it/b2b/account${qs}`)).text());
+    const get = async (qs = '') => nb(await (await f(`/it/b2b/bookings${qs}`)).text());
     const refsIn = (html) => [rossi, verdi, conti, annullata, passata, altrui].filter((b) => html.includes(b.ref)).map((b) => b.ref);
     const refs = (...bs) => bs.map((b) => b.ref).sort();
 
@@ -197,7 +197,7 @@ test('area agenzie: elenco per schede, ricerca per cliente o pratica, filtri per
     assert.deepEqual(refsIn(await get(`?to=${day(-1)}`)), refs(passata));
     assert.deepEqual(refsIn(await get(`?bto=${day(-10)}`)), refs(passata), 'prenotata due settimane fa');
     assert.deepEqual(refsIn(await get(`?bfrom=${day(0)}&view=all`)).sort(), refs(rossi, verdi, conti, annullata));
-    assert.equal((await f('/it/b2b/account?from=zz&to=2027-13-45&bfrom=1&page=-3&q=' + 'x'.repeat(500))).status, 200, 'valori malformati non rompono nulla');
+    assert.equal((await f('/it/b2b/bookings?from=zz&to=2027-13-45&bfrom=1&page=-3&q=' + 'x'.repeat(500))).status, 200, 'valori malformati non rompono nulla');
     assert.deepEqual(refsIn(await get('?from=zz&to=2027-13-45')).sort(), refs(rossi, verdi, conti), 'date non valide ignorate');
     assert.match(await get(`?from=${day(15)}`), /<details class="filters-more" open>/, 'con le date attive il riquadro resta aperto');
 
@@ -216,7 +216,7 @@ test('area agenzie: elenco per schede, ricerca per cliente o pratica, filtri per
     assert.match(p2, /Pagina 2 di 2/);
     assert.equal((p2.match(/<tr class="pb-/g) ?? []).length, 7, '27 in arrivo − 20');
     assert.match(await get('?view=upcoming&page=99'), /Pagina 2 di 2/, 'oltre l’ultima: l’ultima');
-    assert.match(p1, /href="\/it\/b2b\/account\?view=upcoming&amp;page=2"/);
+    assert.match(p1, /href="\/it\/b2b\/bookings\?view=upcoming&amp;page=2"/);
   } finally {
     s.close();
   }
@@ -232,16 +232,16 @@ test('area agenzie: vista Calendario del mese con le sue pratiche (mai quelle di
     cancelBooking(app, annullata.id, { by: 'admin', refund: 'full' });
     book(app, blue, { ref: 'Gruppo Altrui', kind: 'card', date: day(11) });
     const f = await s.login('giulia@lagoon.example');
-    const get = async (qs = '') => nb(await (await f(`/it/b2b/account${qs}`)).text());
+    const get = async (qs = '') => nb(await (await f(`/it/b2b/bookings${qs}`)).text());
 
     // predefinito: l'elenco (è lo strumento di lavoro); il calendario è a un tocco e la scelta si ricorda
     const first = await get();
     assert.ok(!first.includes('class="acal"') && first.includes('class="tabs-bar"'));
-    assert.match(first, /<a href="\/it\/b2b\/account\?v=list" aria-current="page">Elenco<\/a><a href="\/it\/b2b\/account\?v=cal" >Calendario<\/a>/);
+    assert.match(first, /<a href="\/it\/b2b\/bookings\?v=list" aria-current="page">Elenco<\/a><a href="\/it\/b2b\/bookings\?v=cal" >Calendario<\/a>/);
     const cal = await get('?v=cal');
     assert.match(cal, /class="acal"/);
     assert.ok(!cal.includes('class="tabs-bar"') && !cal.includes('class="filters"'), 'niente elenco né filtri nel calendario');
-    assert.match(cal, /<a href="\/it\/b2b\/account\?v=cal" aria-current="page">Calendario<\/a>/);
+    assert.match(cal, /<a href="\/it\/b2b\/bookings\?v=cal" aria-current="page">Calendario<\/a>/);
     // le sue pratiche nella data giusta; non quelle annullate né di altre agenzie
     const month = day(10).slice(0, 7);
     const m10 = await get(`?v=cal&m=${day(10).slice(0, 7)}&d=${day(10)}`);
@@ -260,10 +260,10 @@ test('area agenzie: vista Calendario del mese con le sue pratiche (mai quelle di
     assert.ok((await get('?v=list')).includes('class="tabs-bar"'));
     assert.ok((await get()).includes('class="tabs-bar"'), 'tornata all’elenco, ricorda l’elenco');
     // mesi e giorni strani non rompono nulla
-    for (const q of ['?v=cal&m=2027-13', '?v=cal&m=boh&d=zz', `?v=cal&m=${month}&d=1999-01-01`, '?v=zzz', '?v=cal&m=2027-02-30']) assert.equal((await f(`/it/b2b/account${q}`)).status, 200, q);
+    for (const q of ['?v=cal&m=2027-13', '?v=cal&m=boh&d=zz', `?v=cal&m=${month}&d=1999-01-01`, '?v=zzz', '?v=cal&m=2027-02-30']) assert.equal((await f(`/it/b2b/bookings${q}`)).status, 200, q);
     assert.match(await get('?v=cal&m=2031-05'), /maggio 2031/);
     // in inglese: nomi dei giorni e testi nella lingua
-    const en = nb(await (await f('/en/b2b/account?v=cal')).text());
+    const en = nb(await (await f('/en/b2b/bookings?v=cal')).text());
     assert.match(en, /Previous month/);
     assert.match(en, /<span class="acal-dow">Mon<\/span>/);
   } finally {
@@ -342,7 +342,7 @@ test('scheda della pratica: solo la propria; si cambia il nominativo (la guida l
     assert.match(sent()[0].text, /Telefono: — → \+39 333 111/);
     assert.match(sent()[0].text, /Note: — → Una carrozzina/);
     assert.match(nb(await (await f(`/it/b2b/bookings/${mia.ref}?flash=edited`)).text()), /Modifiche salvate/);
-    assert.match(nb(await (await f('/it/b2b/account')).text()), /Pratica 12<\/a><small class="muted">Famiglia Conti/);
+    assert.match(nb(await (await f('/it/b2b/bookings')).text()), /Pratica 12<\/a><small class="muted">Famiglia Conti/);
 
     // solo il riferimento pratica (interno all’agenzia): nessun avviso alla guida
     await f(`/it/b2b/bookings/${mia.ref}/edit`, post({ name: 'Famiglia Conti', clientRef: 'Pratica 12-bis', phone: '+39 333 111', notes: 'Una carrozzina' }));
@@ -392,23 +392,23 @@ test('opzioni dall’elenco: «Conferma» porta alla scheda, «Rilascia» libera
     const { app, lagoon } = s;
     const opt = book(app, lagoon, { ref: 'Preventivo Conti', date: day(40), kind: 'option' });
     const f = await s.login('giulia@lagoon.example');
-    const list = nb(await (await f('/it/b2b/account?view=options')).text());
+    const list = nb(await (await f('/it/b2b/bookings?view=options')).text());
     assert.match(list, new RegExp(`href="/it/b2b/bookings/${opt.ref}#option">Conferma</a>`));
     assert.match(list, new RegExp(`action="/it/booking/${opt.ref}/option/release"[^>]*data-confirm`));
-    assert.match(list, new RegExp(`name="next" value="/it/b2b/account"`));
+    assert.match(list, new RegExp(`name="next" value="/it/b2b/bookings"`));
     // dalla scheda: conferma e rilascio con la scelta del pagamento
     const detail = nb(await (await f(`/it/b2b/bookings/${opt.ref}`)).text());
     assert.match(detail, /id="option"/);
     assert.match(detail, new RegExp(`action="/it/booking/${opt.ref}/option/confirm"`));
 
-    const res = await f(`/it/booking/${opt.ref}/option/release`, post({ t: opt.token, next: '/it/b2b/account' }));
+    const res = await f(`/it/booking/${opt.ref}/option/release`, post({ t: opt.token, next: '/it/b2b/bookings' }));
     assert.equal(res.status, 303);
-    assert.equal(loc(res), '/it/b2b/account?flash=option-released');
+    assert.equal(loc(res), '/it/b2b/bookings?flash=option-released');
     assert.equal(app.db.prepare('SELECT status FROM bookings WHERE id = ?').get(opt.id).status, 'expired', 'la data torna libera, senza annulli');
-    assert.match(nb(await (await f('/it/b2b/account?flash=option-released')).text()), /Data rilasciata|rilasciata/i);
-    assert.ok(!(await (await f('/it/b2b/account?flash=<script>alert(1)</script>')).text()).includes('<script>alert(1)'), 'il messaggio non si può inventare');
+    assert.match(nb(await (await f('/it/b2b/bookings?flash=option-released')).text()), /Data rilasciata|rilasciata/i);
+    assert.ok(!(await (await f('/it/b2b/bookings?flash=<script>alert(1)</script>')).text()).includes('<script>alert(1)'), 'il messaggio non si può inventare');
     // l’opzione rilasciata resta visibile tra le annullate/scadute come «Opzione scaduta»
-    assert.match(nb(await (await f('/it/b2b/account?view=cancelled')).text()), /Opzione scaduta/);
+    assert.match(nb(await (await f('/it/b2b/bookings?view=cancelled')).text()), /Opzione scaduta/);
   } finally {
     s.close();
   }
@@ -453,11 +453,18 @@ test('fatture: l’agenzia vede e scarica solo le sue (PDF), dall’elenco e dal
     assert.equal((await s.anon(`/it/b2b/invoices/${invMia.id}/pdf`)).status, 302);
 
     // dall’elenco delle prenotazioni e dalla scheda
-    const dash = nb(await (await f('/it/b2b/account')).text());
+    const dash = nb(await (await f('/it/b2b/bookings')).text());
     assert.match(dash, new RegExp(`href="/it/b2b/invoices/${invMia.id}/pdf"[^>]*>Fattura ${invMia.number}</a>`));
     assert.equal((dash.match(/Fattura \d+\/\d{4}<\/a>/g) ?? []).length, 1, 'solo la pratica fatturata');
     assert.match(nb(await (await f(`/it/b2b/bookings/${mia.ref}`)).text()), new RegExp(`href="/it/b2b/invoices/${invMia.id}/pdf"`));
     assert.match(nb(await (await f(`/it/b2b/bookings/${bozza.ref}`)).text()), /La fattura comparirà qui/, 'ancora da emettere');
+    // la prima pagina (tariffe e condizioni) e le prenotazioni (riepilogo ed elenco) sono pagine separate
+    const home = nb(await (await f('/it/b2b/account')).text());
+    assert.ok(home.includes('terms-strip') && home.includes('id="tariffario"') && !home.includes('class="kpis"') && !dash.includes('terms-strip'), 'tariffe a casa, prenotazioni nell’elenco');
+    assert.ok(dash.includes('class="kpis"') && !dash.includes('id="tariffario"'));
+    const old = await f('/it/b2b/account?view=options');
+    assert.equal(old.status, 302);
+    assert.equal(old.headers.get('location'), '/it/b2b/bookings?view=options', 'i vecchi link portano all’elenco');
   } finally {
     s.close();
   }

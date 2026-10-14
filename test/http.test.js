@@ -413,7 +413,7 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     assert.equal(b.total_cents, 18500);
     assert.equal(b.payment_method, 'invoice');
     assert.equal(Date.parse(b.free_cancel_until), localToInstant(date, '09:00') - 120 * 3600_000, 'partner con 120 h di cancellazione gratuita');
-    assert.match(await (await partner('/it/b2b/account')).text(), /PRATICA 42|VE-/);
+    assert.match(await (await partner('/it/b2b/bookings')).text(), /PRATICA 42|VE-/);
 
     // l'admin vede la prenotazione e può annullarla
     const detail = await (await admin(`/admin/bookings/${b.id}`)).text();

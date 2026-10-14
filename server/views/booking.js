@@ -281,7 +281,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
 
   const body = html`
 <section class="page-head"><div class="wrap narrow">
-  ${owner ? html`<p class="back-link"><a href="${u('/b2b/account')}">← ${t('partner.back')}</a></p>` : ''}
+  ${owner ? html`<p class="back-link"><a href="${u('/b2b/bookings')}">← ${t('partner.back')}</a></p>` : ''}
   ${flash ? html`<div class="notice notice-${/error|expired|locked/.test(flash) ? 'err' : 'ok'}" role="status">${t(`booking.flash.${flash}`)}</div>` : ''}
   <div class="status status-${tone}"><span class="status-dot" aria-hidden="true"></span><div><h1>${title}</h1><p class="lead">${text}</p></div></div>
 </div></section>

@@ -31,7 +31,8 @@ const NAV = [
 
 /** La barra dell'area agenzie: poche voci, tutte per lavorare (niente blog, tour, programmi). «Nuova prenotazione» è il pulsante in evidenza. */
 const PARTNER_NAV = [
-  ['b2b-account', '/b2b/account', 'partner.nav.bookings'],
+  ['b2b-account', '/b2b/account', 'partner.nav.home'],
+  ['b2b-bookings', '/b2b/bookings', 'partner.nav.bookings'],
   ['b2b-rates', '/b2b/rates', 'partner.nav.rates'],
   ['b2b-invoices', '/b2b/invoices', 'partner.nav.invoices'],
 ];
