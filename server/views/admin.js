@@ -165,6 +165,7 @@ ${view === 'cal' && calendar
     ? days.filter((d) => d.items.length).map((d) => html`<section class="agenda-day"><h3>${fmtDate(d.date, 'it')}${d.date === today ? html` <span class="chip chip-accent">Oggi</span>` : ''}</h3><div class="card">${d.items.map((b) => agendaRow(ctx, b))}</div></section>`)
     : html`<p class="muted">Nessuna prenotazione nei prossimi 14 giorni.</p>`}
 <h2 class="h-sub spaced" id="privato">Un tour preso fuori dal sito?</h2>
+<p class="card pad"><strong>Lo ha preso un’agenzia?</strong> <a class="btn btn-outline btn-sm" href="/admin/agenda/agency?date=${selectedDay}">Registra una prenotazione di un’agenzia</a> <span class="muted small">con il prezzo concordato: compare nell’agenda e nell’area dell’agenzia, come se l’avesse fatta online.</span></p>
 <form class="card pad form" method="post" action="/admin/agenda/private">
   <p class="muted">Un cliente che ti ha scritto, una prenotazione di persona, un’altra agenzia: scrivila qui e quelle ore (o quei giorni) spariscono dalle disponibilità del sito, così nessuno le prenota per sbaglio.</p>
   <label class="field"><span class="label">Cosa è</span><input name="title" required maxlength="120" placeholder="es. Tour privato, famiglia Rossi"></label>

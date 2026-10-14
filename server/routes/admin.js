@@ -11,6 +11,7 @@ import { cleanText, safeEqual } from '../util.js';
 import { loginAdmin, logoutAdmin, send, sendPdf, tooMany } from '../http.js';
 import { parseCookies, setCookie } from '../auth.js';
 import { renderVoucherPdf } from '../pdf.js';
+import { adminAgencyBookingRouter } from './admin-agency-booking.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
 import { adminMailRouter } from './admin-mail.js';
@@ -118,6 +119,7 @@ export function adminRouter(app) {
   });
 
   r.use(adminDiscountsRouter(app));
+  r.use(adminAgencyBookingRouter(app));
   r.use(adminProgramsRouter(app));
   r.use(adminInvoicesRouter(app));
   r.use(adminMailRouter(app));

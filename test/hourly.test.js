@@ -282,6 +282,66 @@ test('servizi a ore: prenotazione di un cliente privato (ore, supplementi, orari
   }
 });
 
+test('prenotazione di un’agenzia registrata dall’admin: agenda, area dell’agenzia, prezzo concordato, nuova agenzia con password provvisoria', async () => {
+  const s = await start();
+  try {
+    const { app, admin, partner, partnerRow } = s;
+    const date = plainDay(14);
+    const form = await (await admin('/admin/agenda/agency')).text().then(nb);
+    assert.match(form, new RegExp(`<option value="${partnerRow.id}"[^>]*>[^<]*${partnerRow.company}`));
+    assert.match(form, /＋ Nuova agenzia/);
+    assert.match(form, /data-agency-search/);
+    assert.ok(!form.includes('value="guida-a-ore"'), 'solo i servizi per le agenzie');
+    assert.equal(loc(await s.anon('/admin/agenda/agency')), '/admin/login', 'solo per l’admin');
+
+    // agenzia già registrata, con il prezzo concordato
+    const post1 = { agency: String(partnerRow.id), tour: 'guida-a-ore-agenzie', date, time: '10:00', pax: '4', hours: '4', price: '350,50', clientRef: 'Pratica 77', sendMail: '1' };
+    const ok = await admin('/admin/agenda/agency', post(post1));
+    assert.equal(ok.status, 200);
+    assert.match(await ok.text().then(nb), /Registrata\.[^]*?350,50 €[^]*?da fatturare/);
+    const b = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
+    assert.deepEqual([b.channel, b.account_id, b.status, b.total_cents, b.payment_method, b.payment_status, b.client_ref, b.start_time, b.end_time], ['b2b', partnerRow.id, 'confirmed', 35050, 'invoice', 'unpaid', 'Pratica 77', '10:00', '14:00']);
+    assert.ok(app.mail.sent.some((m) => m.to === partnerRow.email && /confermata/i.test(m.subject)), 'conferma all’agenzia');
+    // l'agenzia la vede nelle sue prenotazioni; l'admin nell'agenda
+    const mine = nb(await (await partner('/it/b2b/bookings?view=all')).text());
+    assert.match(mine, /Pratica 77/);
+    assert.match(mine, /350,50 €/);
+    assert.match(nb(await (await admin(`/admin/bookings/${b.id}`)).text()), /Pratica 77/);
+    // già pagata, e nessun controllo sulle disponibilità: stesso orario di nuovo
+    const again = await admin('/admin/agenda/agency', post({ ...post1, clientRef: 'Pratica 78', price: '', paid: '1', sendMail: '' }));
+    assert.equal(again.status, 200);
+    const b2 = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
+    assert.equal(b2.payment_status, 'paid');
+    assert.ok(b2.total_cents > 0 && b2.total_cents !== 35050, 'senza prezzo vale la tariffa dell’agenzia');
+
+    // errori: prezzo, servizio dei privati, agenzia mancante, ore mancanti
+    const n0 = app.db.prepare('SELECT COUNT(*) n FROM bookings').get().n;
+    assert.equal((await admin('/admin/agenda/agency', post({ ...post1, price: 'boh' }))).status, 400);
+    assert.equal((await admin('/admin/agenda/agency', post({ ...post1, tour: 'guida-a-ore' }))).status, 400);
+    assert.equal((await admin('/admin/agenda/agency', post({ ...post1, agency: '' }))).status, 400);
+    assert.equal((await admin('/admin/agenda/agency', post({ ...post1, agency: '99999' }))).status, 400);
+    assert.equal(app.db.prepare('SELECT COUNT(*) n FROM bookings').get().n, n0, 'nessuna prenotazione creata');
+
+    // nuova agenzia: account approvato con password provvisoria che funziona
+    const fresh = await admin('/admin/agenda/agency', post({ agency: 'new', company: 'Nuova Viaggi Srl', contact_name: 'Marta Neri', email: 'marta@nuova.example', phone: '333 1', discount: '10', tour: 'guida-a-ore-agenzie', date, time: '15:00', pax: '2', hours: '2', price: '200' }));
+    assert.equal(fresh.status, 200);
+    const html = await fresh.text().then(nb);
+    const temp = /Password provvisoria[^<]*<code>([^<]+)<\/code>/.exec(html)?.[1];
+    assert.ok(temp && temp.length >= 10, 'password provvisoria mostrata una volta');
+    const acct = app.db.prepare("SELECT * FROM accounts WHERE email = 'marta@nuova.example'").get();
+    assert.deepEqual([acct.status, acct.company, acct.discount_percent], ['approved', 'Nuova Viaggi Srl', 10]);
+    const login = await s.anon('/it/b2b/login', post({ email: 'marta@nuova.example', password: temp }));
+    assert.equal(loc(login), '/it/b2b/account', 'la nuova agenzia entra con la password provvisoria');
+    assert.equal(app.db.prepare('SELECT COUNT(*) n FROM bookings WHERE account_id = ?').get(acct.id).n, 1);
+    // stessa email di nuovo: errore, niente doppioni; un errore nella prenotazione non lascia l'agenzia creata a metà
+    assert.equal((await admin('/admin/agenda/agency', post({ agency: 'new', company: 'X', contact_name: 'Y', email: 'marta@nuova.example', tour: 'guida-a-ore-agenzie', date, time: '15:00', pax: '2', hours: '2' }))).status, 400);
+    assert.equal((await admin('/admin/agenda/agency', post({ agency: 'new', company: 'Zeta', contact_name: 'Z', email: 'zeta@nuova.example', tour: 'guida-a-ore-agenzie', date, time: '15:00', pax: '999', hours: '2' }))).status, 400);
+    assert.equal(app.db.prepare("SELECT COUNT(*) n FROM accounts WHERE email = 'zeta@nuova.example'").get().n, 0);
+  } finally {
+    s.close();
+  }
+});
+
 test('servizi a ore per agenzie: ore extra su un servizio a durata fissa (2 ore → 1; 4 ore → 1-3; 8 ore → nessuna)', async () => {
   const s = await start();
   try {

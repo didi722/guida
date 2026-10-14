@@ -1,7 +1,7 @@
 // Logica di business delle prenotazioni (solo database, nessuna rete).
 import { tx } from './db.js';
 import { daySlots, loadAvailabilityContext, slotsForDay } from './availability.js';
-import { isDate, isTime, localToInstant, toMin } from './time.js';
+import { fromMin, isDate, isTime, localToInstant, toMin } from './time.js';
 import { openTo, serviceRecord } from './rates.js';
 import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
@@ -72,6 +72,9 @@ export function getBookingByRef(db, ref) {
  * - option   → (`input.option`, solo partner) status "option": la data resta trattenuta senza pagare fino a `option_expires_at`;
  *              si conferma (fattura o carta) o si rilascia; altrimenti si libera da sola
  * Codici sconto e buoni regalo (`promoCode`, `giftCodes`) valgono solo per i clienti privati.
+ * - manual   → (`input.manual`, dal pannello) una prenotazione già concordata fuori dal sito, registrata a nome di un'agenzia:
+ *              confermata e fatturata, senza controllare disponibilità e preavviso; `manual.totalCents` è il prezzo di vendita concordato
+ *              (se manca vale la tariffa dell'agenzia), `manual.paid` la segna già pagata.
  */
 export function createBooking(app, input, nowMs = Date.now()) {
   const { db, cfg, content } = app;
@@ -104,7 +107,11 @@ export function createBooking(app, input, nowMs = Date.now()) {
     if (pricing.quote && !pricing.quote.ok) throw new BookingError('invalid', `hours (${pricing.quote.reason})`);
     const durationMin = pricing.quote ? Math.round(pricing.quote.hours * 60) : null;
 
-    const slot = slotsForDay(ctx, cfg, tour, input.date, { pax, channel, nowMs, durationMin }).find((s) => s.time === input.time);
+    const manual = input.manual ?? null;
+    if (manual && !(channel === 'b2b' && account)) throw new BookingError('invalid', 'manual booking needs an agency');
+    const slot = manual
+      ? { time: input.time, end: fromMin(Math.min(24 * 60 - 1, toMin(input.time) + (durationMin ?? tour.durationMin))), lang: null, left: 0 } // già concordata: nessun controllo sulle disponibilità
+      : slotsForDay(ctx, cfg, tour, input.date, { pax, channel, nowMs, durationMin }).find((s) => s.time === input.time);
     if (!slot) throw new BookingError('unavailable', 'slot not available');
     // lingua del tour: tra quelle offerte; in una partenza condivisa già iniziata vale quella di chi ha prenotato per primo
     const offered = tour.languages?.length ? tour.languages : LANGS;
@@ -134,12 +141,14 @@ export function createBooking(app, input, nowMs = Date.now()) {
     }
 
     let method = input.paymentMethod;
-    if (wantsOption) method = account.allow_invoice ? 'invoice' : 'card'; // come pagherà si sceglie alla conferma
+    if (manual) method = 'invoice';
+    else if (wantsOption) method = account.allow_invoice ? 'invoice' : 'card'; // come pagherà si sceglie alla conferma
     else if (pricing.dueCents === 0) method = pricing.giftCents > 0 ? 'giftcard' : 'free';
     else if (!paymentOptions(app, tour, channel, account, nowMs).includes(method)) throw new BookingError('payment', 'payment method not allowed');
 
     const status = wantsOption ? 'option' : method === 'card' ? 'held' : 'confirmed';
     const prepaid = !wantsOption && (method === 'giftcard' || method === 'free');
+    const total = manual && Number.isInteger(manual.totalCents) ? manual.totalCents : pricing.totalCents; // prezzo di vendita concordato
     const now = new Date(nowMs).toISOString();
     const row = {
       ref: newRef(),
@@ -164,15 +173,15 @@ export function createBooking(app, input, nowMs = Date.now()) {
       client_ref: cleanText(input.clientRef, 120) || null,
       billing_json: input.billing ? JSON.stringify(input.billing) : null,
       list_cents: pricing.listCents,
-      discount_cents: pricing.discountCents,
+      discount_cents: manual && total !== pricing.totalCents ? Math.max(0, pricing.listCents - total) : pricing.discountCents,
       promo_code_id: pricing.promo?.id ?? null,
       promo_code: pricing.promo?.code ?? null,
       gift_cents: pricing.giftCents,
-      total_cents: pricing.totalCents,
+      total_cents: total,
       currency: cfg.policy.currency,
       status,
       payment_method: method,
-      payment_status: prepaid ? 'paid' : 'unpaid',
+      payment_status: prepaid || manual?.paid ? 'paid' : 'unpaid',
       hold_expires_at: status === 'held' ? new Date(nowMs + cfg.policy.holdMinutes * 60_000).toISOString() : null,
       option_expires_at: optionExpires,
       free_cancel_until: hasFreeTier(tiers) ? new Date(startInstant - freeHoursOf(tiers) * HOUR).toISOString() : now, // senza periodo gratuito: già scaduto
