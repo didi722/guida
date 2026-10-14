@@ -40,7 +40,7 @@ it:
   notes: Prezzo per l'intero gruppo, a tariffa oraria. Festivi e orari serali o notturni hanno un supplemento; auricolari a richiesta per i gruppi.
 
 en:
-  title: private guide
+  title: Private guide
   themes:
     - Must-see classics
     - Hidden gems
@@ -65,7 +65,7 @@ en:
   notes: Price for the whole group, at an hourly rate. Holidays and evening or night hours carry a supplement; audio headsets available on request for groups.
 
 es:
-  title: guía privado
+  title: Guía privado
   themes:
     - Imprescindibles (must-see)
     - Rincones ocultos (hidden gems)

@@ -79,7 +79,7 @@ test('servizi a ore: il pubblico vede la guida a ore con le tariffe al pubblico,
   try {
     const { anon } = s;
     const page = await (await anon(`/it/hourly?date=${plainDay()}`)).text().then(nb);
-    assert.match(page, /<h1>guida privata<\/h1>/);
+    assert.match(page, /<h1>Guida privata<\/h1>/);
     assert.match(page, /Mezza giornata · 4 ore[^]*?380 €/, 'tariffa al pubblico per 4 ore');
     for (const price of ['200 €', '700 €', '90 €']) assert.ok(page.includes(price), price);
     assert.match(page, /Festivi: domeniche, 6 gen, 25 apr/);
@@ -121,7 +121,7 @@ test('servizi a ore: il pubblico vede la guida a ore con le tariffe al pubblico,
     // durata o servizio non validi tornano a valori ammessi, senza errori
     assert.equal((await anon(`/it/hourly?product=meet-and-greet&hours=abc&pax=0&date=${plainDay()}`)).status, 200);
     assert.equal((await anon(`/en/hourly?date=${plainDay()}`)).status, 200);
-    assert.match(await (await anon(`/en/hourly?date=${plainDay()}`)).text().then(nb), /private guide/);
+    assert.match(await (await anon(`/en/hourly?date=${plainDay()}`)).text().then(nb), /Private guide/);
   } finally {
     s.close();
   }
@@ -205,7 +205,7 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     // pagina Tour: prima la guida privata, poi i gruppi
     const tours = await (await anon('/it/tours')).text().then(nb);
     assert.ok(tours.indexOf('id="private"') > 0 && tours.indexOf('id="private"') < tours.indexOf('id="group"'));
-    assert.match(tours, /guida privata<\/h2>[^]*?Venezia tra Oriente e Occidente[^]*?Tour di gruppo a posti liberi<\/h2>[^]*?Cannaregio/);
+    assert.match(tours, /Guida privata<\/h2>[^]*?Venezia tra Oriente e Occidente[^]*?Tour di gruppo a posti liberi<\/h2>[^]*?Cannaregio/);
     assert.ok(!tours.includes('Assistente in loco'), 'i servizi per agenzie non si vedono al pubblico');
     assert.match(await (await partner('/it/tours')).text(), /Assistente in loco/);
 
@@ -513,7 +513,7 @@ test('tariffe a ore e tour a ore: il prezzo dei tour segue sempre la tabella, e 
   }
 });
 
-test('guida privata B2C su misura: ore scelte dal cliente (a ore intere), festivo/notturno automatici, scelta tematica con «Altro» e testo per la guida', async () => {
+test('Guida privata B2C su misura: ore scelte dal cliente (a ore intere), festivo/notturno automatici, scelta tematica con «Altro» e testo per la guida', async () => {
   const s = await start();
   try {
     const { app, anon } = s;
