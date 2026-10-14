@@ -8,7 +8,7 @@ import { hoursLabel } from './components.js';
 import { DEFAULT_MEETING } from '../choices.js';
 import { invitePercentFor } from '../invites.js';
 import { durationText, startHours } from './components.js';
-import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
+import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, LANG_META, pick } from '../langs.js';
 import { hourOptions, minHours, openTo, rateRows } from '../rates.js';
 import { formatMoney } from '../util.js';
@@ -30,7 +30,7 @@ function faqItems(ctx, keys) {
 }
 
 // ───────────────────────── Home ─────────────────────────
-export function homePage(ctx, { departures = [], quotes = [], reviewStats = null } = {}) {
+export function homePage(ctx, { quotes = [], reviewStats = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { content, cfg } = app;
   const rates = app.rates.get();
@@ -84,9 +84,6 @@ ${privateCover || groupCover ? html`<section class="section tight choose">
         <div class="choice-body">
           <h3>${t('home.group.title')}</h3>
           <p class="muted">${t('home.group.p')}${fromGroup ? html` <strong>${t('home.group.from', { price: fromGroup.money })}</strong>` : ''}</p>
-          ${departures.length
-            ? html`<p class="eyebrow small">${t('home.group.next')}</p>${departuresList(ctx, departures.slice(0, 3))}`
-            : html`<p class="small muted">${t('home.group.none')}</p>`}
           <p class="btn-row"><a class="btn ${privateCover ? 'btn-outline' : 'btn-gold'}" href="${u('/tours')}?kind=group">${t('home.group.cta')}</a></p>
         </div>
       </article>` : ''}

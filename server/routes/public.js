@@ -49,9 +49,7 @@ export function publicRouter(app) {
   const hourlyProducts = (channel) => visible(channel).filter((x) => x.pricing === 'hourly');
 
   r.get('/', (req, res) => {
-    const nowMs = Date.now();
-    const departures = nextDepartures(db, cfg, selectable(channelOf(req.acct)), nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 3 });
-    send(res, homePage(res.locals.ctx, { departures, quotes: featuredQuotes(db, { limit: 3, lang: req.lang }), reviewStats: feedbackStats(db) }));
+    send(res, homePage(res.locals.ctx, { quotes: featuredQuotes(db, { limit: 3, lang: req.lang }), reviewStats: feedbackStats(db) }));
   });
   r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx, { kind: ['private', 'group'].includes(req.query.kind) ? req.query.kind : null })));
   r.get('/tours/:slug', (req, res, next) => {

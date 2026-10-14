@@ -10,6 +10,7 @@ import { makeT } from '../server/i18n.js';
 import { createPayments } from '../server/payments.js';
 import { normalizeRates, openTo } from '../server/rates.js';
 import { addDays, localToInstant, nowRome } from '../server/time.js';
+import { nextDepartures } from '../server/availability.js';
 import { addAccount, base as bookingBase, isPdf, loadContentWithFixedServices } from './helpers.js';
 import { hashPassword } from '../server/auth.js';
 import { validateInvoiceXml } from './xsd.js';
@@ -1214,16 +1215,16 @@ test('accesso admin: la password si tollera con spazi attorno; da variabile d’
   }
 });
 
-test('prossime partenze: in home, con prezzo, posti e collegamento diretto al pagamento', async () => {
+test('partenza scelta: collegamento diretto al pagamento, con il numero di persone da cambiare in pagina', async () => {
   const s = await start();
   try {
     const f = s.jar();
     const home = await (await f('/it/')).text();
-    assert.match(home, /Prossime partenze/);
-    const hrefs = (html) => [...html.matchAll(/class="dep" href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
-    const links = hrefs(home);
-    assert.ok(links.length >= 1 && links.length <= 4, `${links.length} partenze in home`);
-    assert.match(home, /class="dep-price"><strong>[^<]*€/);
+    assert.ok(!home.includes('Prossime partenze') && !home.includes('class="dep"'), 'la home non elenca le partenze');
+    assert.match(home, /Tour di gruppo/);
+    const dep = nextDepartures(s.app.db, s.app.cfg, s.app.content.tours.filter((t) => t.audience === 'b2c' && t.pricing !== 'hourly'), nowRome(Date.now()).date, { limit: 1, nowMs: Date.now() })[0];
+    assert.ok(dep, 'una partenza libera');
+    const links = [`/it/book/checkout?tour=${dep.tour.slug}&date=${dep.date}&time=${dep.time}&pax=2`];
     // il collegamento porta a un pagamento valido per quella partenza
     const checkout = await f(links[0]);
     assert.equal(checkout.status, 200);
@@ -1243,7 +1244,6 @@ test('prossime partenze: in home, con prezzo, posti e collegamento diretto al pa
     assert.equal(book.status, 302);
     assert.equal(book.headers.get('location'), '/en/tours');
     assert.equal((await f('/en/hourly')).headers.get('location'), '/en/tours?kind=private');
-    assert.match(await (await f('/es/')).text(), /Próximas salidas/);
   } finally {
     s.close();
   }

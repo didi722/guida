@@ -9,7 +9,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 ## Cosa fa
 
 **Per i clienti (B2C)**
-- La home propone **due strade**: la **guida privata** (con le tariffe a colpo d'occhio e il calcolatore del preventivo) e i **tour di gruppo a posti liberi** (con le prossime partenze, prenotabili con un tocco). La pagina *Tour* è divisa nello stesso modo.
+- La home propone **due strade**: la **guida privata** e i **tour di gruppo a posti liberi**, due schede pulite (senza elenchi di partenze né prezzi orari) che portano all'elenco dei tour. La pagina *Tour* è divisa nello stesso modo.
 - Scelgono il tour, la **lingua del tour** (in un tour condiviso a posti, la lingua del primo che prenota vincola quella partenza: niente gruppi con lingue miste) e vedono un **calendario con le date libere** e gli orari, e il prezzo: è lo **standard di prenotazione dei privati**, da qualsiasi punto del sito (menu, pulsanti «Prenota», `/it/book`, `/it/hourly` rimandano all'elenco o al tour; la ricerca per data resta per le agenzie). Dove si sceglie una data (sito e pannello) c'è un **selettore di date proprio**, più curato di quello del browser (mese con frecce, «Oggi», giorni non disponibili in grigio, a tutta larghezza sul telefono; senza JavaScript resta il campo data standard).
 - Nei tour con punto d'incontro «concordato» il cliente scrive al pagamento il suo hotel o un altro punto; se lascia vuoto vale **Campo San Luca** (riportato in pagina, email, voucher, calendario, wallet e avviso alla guida).
 - Per la **guida privata** (pagina del tour) scelgono giorno, ora, ore e persone e vedono subito il totale, con festivo, notturno e auricolari (obbligatori da 9 persone) calcolati dal sito.

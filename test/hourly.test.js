@@ -185,11 +185,10 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     assert.ok(!/rate-mini|200 €|380 €|700 €/.test(priv), 'nella home niente prezzi orari');
     assert.match(priv, /href="\/it\/tours\?kind=private">Scegli il tuo tour/);
     assert.ok(!priv.includes('160 €'), 'niente tariffe per agenzie');
-    // tour di gruppo: prezzo «da», prossime partenze (al massimo tre) e collegamento a «Prenota»
+    // tour di gruppo: prezzo «da» e collegamento all'elenco, senza elenco di partenze (fanno confusione)
     assert.match(group, /Tour di gruppo/);
     assert.match(group, /Da 35 € a persona/);
-    const deps = [...group.matchAll(/class="dep" href="/g)].length;
-    assert.ok(deps >= 1 && deps <= 3, `${deps} partenze`);
+    assert.ok(!group.includes('class="dep"') && !group.includes('Prossime partenze'), 'niente prossime partenze nella card');
     assert.match(group, /href="\/it\/tours\?kind=group">Scegli il tuo tour/);
     // niente più elenco di tour in home e niente ricerca per data nella prima schermata
     assert.ok(!home.includes('tour-card'), 'nessuna scheda di tour in home');
