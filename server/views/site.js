@@ -223,16 +223,6 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   };
 
   const hourly = tour.pricing === 'hourly';
-  const hourlyCard = html`
-<aside class="book-card" id="book">
-  <div class="book-head">
-    <p class="price-big">${p.money}<small> / ${p.per}</small></p>
-    ${channel === 'b2b' ? html`<span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}
-  </div>
-  <p class="muted">${t('hourly.card.note')}</p>
-  <a class="btn btn-gold btn-block" href="${u('/hourly')}?product=${tour.slug}">${t('hourly.card.cta')}</a>
-  <p class="small muted policy-note">${cancellationLine(ctx, tour, channel)}</p>
-</aside>`;
   const hoursDefault = hourly && tour.chooseHours ? startHours(tour) : null;
   const widget = html`
 <aside class="book-card" id="book" data-widget ${hourly ? raw('data-hourly') : ''} data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-unit="${p.unit}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
@@ -299,7 +289,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
   </article>
   <div class="tour-side">${widget}</div>
 </div>
-<div class="mobile-cta"><div><strong>${p.money}</strong><small> / ${p.per}</small></div>${hourly ? html`<a class="btn btn-gold btn-sm" href="${u('/hourly')}?product=${tour.slug}">${t('hourly.card.cta')}</a>` : html`<a class="btn btn-gold btn-sm" href="#book">${t('w.pickDate')}</a>`}</div>`;
+<div class="mobile-cta"><div><strong>${p.money}</strong><small> / ${p.per}</small></div><a class="btn btn-gold btn-sm" href="#book">${t('w.pickDate')}</a></div>`;
 
   const ld = {
     '@context': 'https://schema.org',

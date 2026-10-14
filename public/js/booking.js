@@ -130,12 +130,21 @@
     slotsEl.replaceChildren(el('p', 'label', L.pickTime), wrap);
   }
 
+  // orario di inizio e di fine (servizio a ore: l'inizio più le ore scelte)
+  function timeSpan() {
+    var h = hoursSel ? Number(hoursSel.value) : 0;
+    if (!h || !/^\d\d:\d\d$/.test(state.time)) return state.time;
+    var m = Number(state.time.slice(0, 2)) * 60 + Number(state.time.slice(3)) + Math.round(h * 60);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return state.time + '–' + p(Math.floor(m / 60) % 24) + ':' + p(m % 60);
+  }
+
   function update() {
     paxOut.textContent = String(state.pax);
     if (state.date && state.time) {
       summary.hidden = false;
       var dateStr = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(state.date + 'T12:00:00Z'));
-      summary.replaceChildren(el('span', null, dateStr + ' · ' + state.time + ' · ' + (state.pax === 1 ? L.person1 : fill(L.personN, { n: state.pax }))), el('strong', null, L.total + ' ' + money.format(total() / 100)));
+      summary.replaceChildren(el('span', null, dateStr + ' · ' + timeSpan() + ' · ' + (state.pax === 1 ? L.person1 : fill(L.personN, { n: state.pax }))), el('strong', null, L.total + ' ' + money.format(total() / 100)));
       cont.href = bookUrl + '?tour=' + encodeURIComponent(tour) + '&date=' + state.date + '&time=' + state.time + '&pax=' + state.pax + tlParam();
       cont.setAttribute('aria-disabled', 'false');
     } else {
