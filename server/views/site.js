@@ -6,6 +6,7 @@ import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
 import { hoursLabel } from './components.js';
 import { DEFAULT_MEETING } from '../choices.js';
+import { invitePercentFor } from '../invites.js';
 import { durationText, startHours } from './components.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, LANG_META, pick } from '../langs.js';
@@ -230,6 +231,7 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
     <p class="price-big">${p.money}<small> / ${p.per}</small></p>
     ${channel === 'b2b' ? html`<span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}
   </div>
+  ${channel !== 'b2b' && invitePercentFor(ctx.app, tour) ? html`<p class="invite-note"><span class="chip chip-accent">${t('tour.inviteTag', { percent: invitePercentFor(ctx.app, tour) })}</span> <small class="muted">${t('tour.inviteNote')}</small></p>` : ''}
   <h2 class="sr-only">${t('w.title')}</h2>
   <div class="field stepper-field">
     <span class="label" id="lbl-pax">${t('w.persons')}</span>

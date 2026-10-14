@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BookingError, cancelBooking, createBooking } from '../server/bookings.js';
 import { sendInviteEmail } from '../server/emails.js';
-import { createInvite, inviteLink, inviteOffer, invitesOf } from '../server/invites.js';
+import { createInvite, invitePercentFor, inviteLink, inviteOffer, invitesOf } from '../server/invites.js';
 import { previewPricing } from '../server/pricing.js';
 import { addAccount, base, makeApp, NOW } from './helpers.js';
 
@@ -126,5 +126,23 @@ test('invita un amico: ogni tour condiviso ha il suo interruttore e il suo scont
     t.inviteEnabled = undefined;
     t.invitePercent = undefined;
     app.cleanup();
+  }
+});
+
+test('invita un amico: l’etichetta «Porta un amico» c’è solo sui tour condivisi dei privati che lo permettono', () => {
+  const app = makeApp();
+  try {
+    const shared = app.content.tour('shared');
+    assert.equal(invitePercentFor(app, shared), 10);
+    assert.equal(invitePercentFor(app, app.content.tour('private')), null, 'non sui tour privati');
+    assert.equal(invitePercentFor(app, app.content.tour('shared-agenzie')), null, 'non sui tour per le agenzie');
+    shared.invitePercent = 15;
+    assert.equal(invitePercentFor(app, shared), 15, 'lo sconto del tour');
+    shared.invitePercent = null;
+    shared.inviteEnabled = false;
+    assert.equal(invitePercentFor(app, shared), null, 'spento su questo tour');
+    shared.inviteEnabled = null;
+  } finally {
+    app.close?.();
   }
 });

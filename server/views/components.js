@@ -5,6 +5,7 @@ import { fmtDate, fmtMonth } from '../time.js';
 import { formatMoney } from '../util.js';
 import { LANGS, LANG_META, localeOf } from '../langs.js';
 import { minHours, openTo } from '../rates.js';
+import { invitePercentFor } from '../invites.js';
 import { MEDIA_NAME, smallName } from '../media.js';
 
 /** <option> di tutte le lingue del sito, con quella indicata selezionata. */
@@ -138,8 +139,9 @@ export function tourCard(ctx, tour) {
   const { t, lang, u } = ctx;
   const ti = tour.i18n[lang];
   const p = priceParts(ctx, tour);
+  const invite = ctx.acct?.status === 'approved' ? null : invitePercentFor(ctx.app, tour); // lo sconto «porta un amico» è dei privati
   return html`<a class="card tour-card reveal" href="${u('/tours/' + tour.slug)}">
-    <div class="card-media">${tourMedia(ctx, tour, '')}<span class="chip chip-float">${tour.pricing === 'hourly' ? t('tour.kindHourly') : tour.model === 'person' ? t('tour.kindGroup') : t('tour.kindPrivate')}</span></div>
+    <div class="card-media">${tourMedia(ctx, tour, '')}<span class="chip chip-float">${tour.pricing === 'hourly' ? t('tour.kindHourly') : tour.model === 'person' ? t('tour.kindGroup') : t('tour.kindPrivate')}</span>${invite ? html`<span class="chip chip-accent chip-invite">${t('tour.inviteTag', { percent: invite })}</span>` : ''}</div>
     <div class="card-body">
       <h3>${ti.title}</h3>
       <p class="muted">${ti.summary}</p>

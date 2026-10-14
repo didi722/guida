@@ -5386,5 +5386,17 @@
   "None",
   "Ninguna",
   "なし"
+ ],
+ "tour.inviteTag": [
+  "Porta un amico: −{percent}%",
+  "Bring a friend: −{percent}%",
+  "Trae a un amigo: −{percent}%",
+  "ご友人と：−{percent}%"
+ ],
+ "tour.inviteNote": [
+  "Dopo la prenotazione ricevi un link da mandare a un amico.",
+  "After booking you get a link to send to a friend.",
+  "Tras reservar recibes un enlace para enviar a un amigo.",
+  "ご予約後、ご友人に送れるリンクをお届けします。"
  ]
 }

@@ -22,6 +22,14 @@ export function invitesOf(db, bookingId, nowMs = Date.now()) {
     .map((r) => ({ ...r, used: !!r.used }));
 }
 
+/** Lo sconto «porta un amico» di un tour condiviso per i privati (in percentuale), o null se non c'è: serve a pubblicizzarlo sulla card. */
+export function invitePercentFor(app, tour) {
+  const cfg = app.cfg.invite;
+  const percent = tour?.invitePercent ?? cfg?.percent;
+  if (!cfg?.enabled || !tour || tour.model !== 'person' || tour.audience === 'b2b' || tour.pricing === 'hourly' || tour.inviteEnabled === false || !(percent > 0)) return null;
+  return percent;
+}
+
 /**
  * Questa prenotazione può invitare un amico? Solo i clienti privati, per un tour condiviso a posti, finché la partenza non è iniziata
  * e c'è ancora almeno un posto libero (meno gli inviti non ancora usati). `reason` dice perché no.

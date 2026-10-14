@@ -164,7 +164,8 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
     </div>
     ${v.model === 'person' && aud === 'b2c'
       ? html`<div class="form-grid"><label class="check"><input type="checkbox" name="inviteEnabled" value="1" ${v.inviteEnabled ? raw('checked') : ''}> Chi prenota può <strong>invitare un amico</strong> con un codice sconto tutto suo (solo se la partenza ha ancora posto)</label>
-        ${field('Sconto per l’amico (%)', 'invitePercent', v.invitePercent, { type: 'number', hint: 'vuoto = quello generale (Sito › Impostazioni › Invita un amico)', attrs: 'min="1" max="90"' })}</div>`
+        ${field('Sconto per l’amico (%)', 'invitePercent', v.invitePercent, { type: 'number', hint: 'vuoto = quello generale (Sito › Impostazioni › Invita un amico)', attrs: 'min="1" max="90"' })}
+        <p class="muted small">Sulla card del tour compare in automatico l’etichetta «Porta un amico: −X%». Consiglio: ripeti l’offerta anche nella <strong>descrizione</strong>, per esempio con una frase in fondo, nel punto in cui parli del gruppo, come <em>«Porta un amico: dopo la prenotazione ricevi un link con il suo sconto del X%»</em>.</p></div>`
       : ''}
     <fieldset class="field"><legend class="label">Lingue in cui offri questo servizio</legend><div class="check-row">${LANGS.map((l) => html`<label class="check"><input type="checkbox" name="langs" value="${l}" ${v.langs.includes(l) ? raw('checked') : ''}> ${LANG_META[l].name}</label>`)}</div></fieldset>
     ${aud === 'b2b' ? html`<p class="muted small">I prezzi dedicati ai singoli partner si impostano nella scheda del partner.</p>` : ''}
