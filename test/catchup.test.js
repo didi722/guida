@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ROOT } from '../server/config.js';
-import { catchUpContent, createContentStore, seedContent } from '../server/contentStore.js';
+import { catchUpContent, catchUpTerms, createContentStore, seedContent } from '../server/contentStore.js';
 import { getSetting, openDb } from '../server/db.js';
 import { hourlyQuote } from '../server/pricing.js';
 import { createRates } from '../server/rates.js';
@@ -23,7 +23,7 @@ function oldDb() {
       db.prepare(`UPDATE ${table} SET data_json = ? WHERE ${key} = ?`).run(JSON.stringify(d), row.k);
     }
   }
-  db.prepare("DELETE FROM settings WHERE key IN ('content_hourly_seeded', 'content_langs_filled')").run();
+  db.prepare("DELETE FROM settings WHERE key IN ('content_hourly_seeded', 'content_langs_filled', 'content_terms_invite')").run();
   return db;
 }
 
@@ -94,4 +94,18 @@ test('un database nuovo non ha nulla da recuperare e un database svuotato di pro
   assert.deepEqual(catchUpContent(db, ROOT), { tours: [], translations: [] });
   db.exec('DELETE FROM content_tours');
   assert.equal(createContentStore({ db, root: ROOT }).allTours.length, 0);
+});
+
+test('recupero delle condizioni: la clausola «porta un amico» e il punto d’incontro si aggiungono una volta sola, senza ripetersi e senza toccare le modifiche', () => {
+  const db = oldDb();
+  const old = { it: { title: 'Condizioni', body: "### Cancellazione e rimborsi\n- **Clienti privati:** x.\n- **Agenzie:** fino a **{{b2bHours}}** prima.\n- Altro.\n\nPresentati al punto d'incontro all'orario indicato: la guida attende 15 minuti. " }, en: { title: 'Terms', body: '- **Agencies:** up to **{{b2bHours}}**.\n\nNothing about invitations here.\n\nPlease arrive at the meeting point on time. For services where you choose, Campo San Luca.' } };
+  db.prepare("INSERT OR REPLACE INTO content_pages(name, data_json, updated_at) VALUES('terms', ?, 'x')").run(JSON.stringify(old));
+  assert.deepEqual(catchUpTerms(db).sort(), ['en', 'it']);
+  const after = JSON.parse(db.prepare("SELECT data_json FROM content_pages WHERE name = 'terms'").get().data_json);
+  assert.match(after.it.body, /\{\{b2bHours\}\}\*\* prima\.\n- \*\*«Porta un amico»:\*\*[^\n]*\n- Altro\./, 'dopo la riga delle agenzie');
+  assert.match(after.it.body, /ci vediamo a Campo San Luca\.$/);
+  assert.equal((after.en.body.match(/Campo San Luca/g) ?? []).length, 1, 'inglese: la frase c’è già, non si ripete');
+  assert.equal(after.en.body.split('\n')[1].startsWith('- **“Bring a friend”'), true, 'ma la clausola mancava');
+  assert.deepEqual(catchUpTerms(db), [], 'una volta sola');
+  assert.equal(JSON.parse(db.prepare("SELECT data_json FROM content_pages WHERE name = 'terms'").get().data_json).it.body, after.it.body);
 });

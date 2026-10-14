@@ -8,6 +8,7 @@ import { LANGS } from './langs.js';
 const nowIso = () => new Date().toISOString();
 
 const HOURLY_KEY = 'content_hourly_seeded'; // data in cui si sono controllati i servizi a ore
+const TERMS_KEY = 'content_terms_invite'; // data in cui si sono aggiunte alle condizioni la clausola «porta un amico» e il punto d'incontro
 const LANGS_KEY = 'content_langs_filled'; // lingue per cui si sono già completate le traduzioni mancanti
 
 /** Importa i file di `content/` la prima volta (database senza contenuti). Restituisce true se ha importato. */
@@ -28,6 +29,7 @@ export function seedContent(db, root) {
     // il contenuto iniziale è completo: non c'è nulla da recuperare
     setSetting(db, HOURLY_KEY, nowIso());
     setSetting(db, LANGS_KEY, [...LANGS]);
+    setSetting(db, TERMS_KEY, nowIso());
   }
   setSetting(db, 'content_seeded', nowIso());
   return imported;
@@ -93,6 +95,63 @@ export function catchUpContent(db, root) {
   return added;
 }
 
+/** Le due aggiunte alle condizioni di prenotazione, per lingua: la clausola «porta un amico» (dopo la riga delle agenzie) e la frase sul punto d'incontro. */
+const TERMS_ADDITIONS = {
+  it: {
+    has: 'Porta un amico',
+    clause: "- **«Porta un amico»:** se chi ha invitato annulla dopo che l'amico ha prenotato con il suo link, dal rimborso si trattiene lo sconto che l'amico ha ottenuto (se la prenotazione non è ancora stata pagata, quell'importo resta dovuto). I link di invito non ancora usati non sono più validi.",
+    meetLine: /^Presentati al punto d'incontro/, meet: " Nei servizi in cui indichi tu il punto d'incontro (per esempio il tuo hotel), se non scrivi nulla ci vediamo a Campo San Luca.",
+  },
+  en: {
+    has: 'Bring a friend',
+    clause: '- **“Bring a friend”:** if the person who sent the invitation cancels after the friend has booked with their link, the discount the friend received is deducted from the refund (if the booking has not been paid yet, that amount remains due). Invitation links not yet used are no longer valid.',
+    meetLine: /^Please arrive at the meeting point/, meet: ' For services where you choose the meeting point (for example your hotel), if you write nothing we meet at Campo San Luca.',
+  },
+  es: {
+    has: 'Trae a un amigo',
+    clause: '- **«Trae a un amigo»:** si quien envió la invitación cancela después de que el amigo haya reservado con su enlace, del reembolso se retiene el descuento que recibió el amigo (si la reserva aún no se ha pagado, ese importe sigue siendo debido). Los enlaces de invitación aún no usados dejan de ser válidos.',
+    meetLine: /^Preséntate en el punto de encuentro/, meet: ' En los servicios en los que tú indicas el punto de encuentro (por ejemplo tu hotel), si no escribes nada nos vemos en Campo San Luca.',
+  },
+  ja: {
+    has: 'ご友人とご一緒に',
+    clause: '- **「ご友人とご一緒に」**：招待したお客様が、ご友人がそのリンクで予約した後にキャンセルされた場合、ご友人が受けた割引額を返金額から差し引きます（未払いの場合は、その金額が請求されます）。未使用の招待リンクは無効になります。',
+    meetLine: /^指定された時刻に集合場所へ/, meet: '集合場所をお客様がご指定いただくサービス（例：ホテル）で、記入がない場合は Campo San Luca に集合します。',
+  },
+};
+
+/**
+ * Le pagine di testo si importano una volta sola, quindi un sito già in funzione non riceverebbe le nuove condizioni. Una volta sola,
+ * alla pagina «Condizioni» (per ogni lingua) si AGGIUNGONO la clausola «porta un amico» e la frase sul punto d'incontro, senza toccare
+ * nient'altro e senza ripetere ciò che c'è già (anche se il testo è stato modificato dal pannello).
+ * @returns {string[]} le lingue aggiornate
+ */
+export function catchUpTerms(db) {
+  if (getSetting(db, TERMS_KEY)) return [];
+  const done = [];
+  const row = db.prepare("SELECT data_json FROM content_pages WHERE name = 'terms'").get();
+  if (row) {
+    const data = JSON.parse(row.data_json);
+    for (const [l, add] of Object.entries(TERMS_ADDITIONS)) {
+      const body = data[l]?.body;
+      if (typeof body !== 'string') continue;
+      const lines = body.split('\n');
+      let changed = false;
+      if (!body.includes(add.has)) {
+        const i = lines.findIndex((x) => x.startsWith('- ') && x.includes('{{b2bHours}}')); // la riga delle agenzie, nelle cancellazioni
+        if (i >= 0) { lines.splice(i + 1, 0, add.clause); changed = true; }
+      }
+      if (!body.includes('Campo San Luca')) {
+        const j = lines.findIndex((x) => add.meetLine.test(x));
+        if (j >= 0) { lines[j] = lines[j].replace(/\s+$/, '') + add.meet; changed = true; }
+      }
+      if (changed) { data[l] = { ...data[l], body: lines.join('\n') }; done.push(l); }
+    }
+    if (done.length) db.prepare("UPDATE content_pages SET data_json = ?, updated_at = ? WHERE name = 'terms'").run(JSON.stringify(data), nowIso());
+  }
+  setSetting(db, TERMS_KEY, nowIso());
+  return done;
+}
+
 /**
  * Prima ogni tour aveva due tariffe (privati e agenzie); ora un tour è B2C oppure B2B, con un solo prezzo. Una volta sola, per i tour salvati
  * prima della divisione (senza «audience»), SENZA toccare nient'altro:
@@ -139,6 +198,8 @@ const parse = (rows, key) => Object.fromEntries(rows.map((r) => [r[key], JSON.pa
 export function createContentStore({ db, root }) {
   seedContent(db, root);
   const caught = catchUpContent(db, root);
+  const termsLangs = catchUpTerms(db);
+  if (termsLangs.length) console.log(`[contenuti] condizioni di prenotazione aggiornate (porta un amico, punto d'incontro): ${termsLangs.join(', ')}`);
   const split = splitLegacyAudiences(db);
   if (split.length) console.log(`[contenuti] tour divisi in B2C e B2B: create le copie per le agenzie (${split.join(', ')})`);
   if (caught.tours.length || caught.translations.length) console.log(`[contenuti] aggiunti dal contenuto iniziale: ${[...caught.tours.map((t) => `servizio ${t}`), ...(caught.translations.length ? [`${caught.translations.length} traduzioni`] : [])].join(', ')}`);
