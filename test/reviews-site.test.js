@@ -84,7 +84,7 @@ test('commenti sul sito: home e pagina del tour, con privacy, escape, limite, me
     assert.match(h, /<figcaption><strong>Laura<\/strong> · San Marco e Rialto, \w+ \d{4}<\/figcaption>/);
     assert.doesNotMatch(h, /Bianchi|cliente1@example\.com/);
     assert.match(h, /role="img" aria-label="5 su 5">★★★★★<\/div>/);
-    assert.match(h, /Commenti di clienti che hanno fatto il tour, pubblicati con il loro permesso\./);
+    assert.match(h, /Commenti reali, pubblicati con il permesso dei clienti\./);
     // media di TUTTI i voti (5,4,5,3,5,5,2 = 29/7 = 4,1) e solo da 5 voti in su
     assert.match(h, /★ 4,1 su 5 · media di 7 voti lasciati dai clienti dopo il tour/);
     assert.match(await s.get('/en/'), /★ 4\.1 out of 5 · average of 7 ratings/);

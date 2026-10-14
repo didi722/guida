@@ -175,7 +175,7 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     assert.ok(priv && group, 'le due schede ci sono');
     assert.ok(home.indexOf('id="private"') < home.indexOf('id="group"'), 'prima la guida privata');
     // guida privata: tariffe al pubblico a colpo d'occhio e collegamento al calcolatore
-    assert.match(priv, /guida privata/);
+    assert.match(priv, /Guida privata/);
     assert.match(priv, /2 ore<\/span><strong>200 €/);
     assert.match(priv, /Mezza giornata · 4 ore<\/span><strong>380 €/);
     assert.match(priv, /Giornata intera · 8 ore<\/span><strong>700 €/);
@@ -183,17 +183,17 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     assert.ok(!priv.includes('160 €'), 'niente tariffe per agenzie');
     // tour di gruppo: prezzo «da», prossime partenze (al massimo tre) e collegamento a «Prenota»
     assert.match(group, /Tour di gruppo/);
-    assert.match(group, /da 35 € a persona/);
+    assert.match(group, /Da 35 € a persona/);
     const deps = [...group.matchAll(/class="dep" href="/g)].length;
     assert.ok(deps >= 1 && deps <= 3, `${deps} partenze`);
     assert.match(group, /href="\/it\/tours\?kind=group">Scegli il tuo tour/);
     // niente più elenco di tour in home e niente ricerca per data nella prima schermata
     assert.ok(!home.includes('tour-card'), 'nessuna scheda di tour in home');
     assert.ok(!home.includes('quick-search'));
-    assert.match(home, /<a class="btn btn-gold" href="\/it\/tours\?kind=private">guida privata<\/a>\s*<a class="btn btn-outline" href="\/it\/tours\?kind=group">Tour di gruppo<\/a>/);
+    assert.match(home, /<a class="btn btn-gold" href="\/it\/tours\?kind=private">Guida privata<\/a>\s*<a class="btn btn-outline" href="\/it\/tours\?kind=group">Tour di gruppo<\/a>/);
     // in inglese e spagnolo
-    assert.match(await (await anon('/en/')).text(), /How would you like to discover Venice\?[^]*?private guide[^]*?Group tours/);
-    assert.match(await (await anon('/es/')).text(), /¿Cómo quieres descubrir Venecia\?[^]*?guía privado[^]*?Tours en grupo/);
+    assert.match(await (await anon('/en/')).text(), /How would you like to discover Venice\?[^]*?Private guide[^]*?Group tours/);
+    assert.match(await (await anon('/es/')).text(), /¿Cómo quieres descubrir Venecia\?[^]*?Guía privado[^]*?Tours en grupo/);
 
     // un partner con lo sconto del 15% vede le sue tariffe: 160 → 136 → 140, 300 → 255, 560 → 476 → 480
     const ph = await (await partner('/it/')).text().then(nb);
