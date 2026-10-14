@@ -180,7 +180,7 @@ ${partner
 </footer>`}
 <script src="/js/main.js?v=${app.assetVersion}" defer></script>
 <script src="/js/datepicker.js?v=${app.assetVersion}" defer></script>
-<script src="/js/keep-scroll.js?v=${app.assetVersion}" defer></script>
+<script src="/js/keep-scroll.js?v=${app.assetVersion}" ${partner ? raw('data-links') : ''} defer></script>
 ${scripts}
 </body>
 </html>`;

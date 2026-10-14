@@ -1,6 +1,6 @@
 // Dopo un clic che riporta alla stessa pagina (mese successivo, «Mostra/Nascondi», «Applica»…) la pagina resta dov'era invece di tornare in cima.
 // Si ricorda la posizione solo per il passaggio successivo: se la pagina che si apre è la stessa (stesso indirizzo, senza #ancora) si riporta lì.
-// Nel pannello vale anche per i collegamenti (data-links); sul sito pubblico solo per i moduli.
+// Nel pannello e nell'area agenzie vale anche per i collegamenti (data-links); sul sito pubblico solo per i moduli.
 (function () {
   'use strict';
   var KEY = 'keep-scroll';
