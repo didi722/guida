@@ -74,12 +74,18 @@ export function tourMedia(ctx, tour, label) {
   return tour.image ? mediaImg(tour.image, label ?? ti.title) : art(tour.art, { label: label ?? ti.title });
 }
 
+/** Da quante ore parte un servizio a ore dove il cliente sceglie la durata: quella indicata nel tour, non meno del minimo del servizio. */
+export const startHours = (tour) => (tour.chooseHours ? Math.max(minHours(tour.service), tour.durationMin / 60) : tour.durationMin / 60);
+
+/** La durata del tour: «2 ore», oppure «A partire da 2 ore» se il cliente sceglie quante ore. */
+export const durationText = (t, lang, tour) => (tour.pricing === 'hourly' && tour.chooseHours ? t('tour.fromDuration', { dur: fmtDuration(startHours(tour) * 60, lang) }) : fmtDuration(tour.durationMin, lang));
+
 /** "€35 / persona" oppure "€190 / gruppo", con tariffa B2B se il visitatore è un partner approvato. */
 export function priceParts(ctx, tour) {
   const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
   if (tour.pricing === 'hourly') {
     // servizi a ore: «da 200 € / 2 ore» (scegli tu la durata) oppure «290 € / 3 ore» (durata fissa); festivi e notturno si aggiungono dopo
-    const hours = tour.chooseHours ? minHours(tour.service) : tour.durationMin / 60;
+    const hours = startHours(tour);
     const q = ctx.app.rates.quote({ service: tour.service, channel, hours, pax: 1, discountPercent: channel === 'b2b' ? (ctx.acct?.discount_percent ?? 0) : 0 });
     const unit = q.ok ? q.totalCents : 0;
     const money = formatMoney(unit, ctx.lang);
@@ -138,7 +144,7 @@ export function tourCard(ctx, tour) {
       <h3>${ti.title}</h3>
       <p class="muted">${ti.summary}</p>
       <ul class="meta">
-        <li>${fmtDuration(tour.durationMin, lang)}</li>
+        <li>${durationText(t, lang, tour)}</li>
         <li>${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })}</li>
       </ul>
       <p class="card-foot"><span class="price">${p.money}<small> / ${p.per}</small></span>${p.channel === 'b2b' ? html`<span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}<span class="arrow" aria-hidden="true">→</span></p>

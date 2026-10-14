@@ -523,6 +523,9 @@ test('guida privata B2C su misura: ore scelte dal cliente (a ore intere), festiv
     assert.equal(app.content.tour('guida-a-ore-agenzie').roundHours, false);
     const date = plainDay(21); // un giorno feriale
     const base = { tour: 'guida-a-ore', date, time: '10:00', pax: '2', hours: '2.5' };
+    // la durata, dove il cliente sceglie le ore: «A partire da» quella indicata nel tour (card, elenco e pagina del tour)
+    assert.match(await (await anon('/it/tours?kind=private')).text().then(nb), /A partire da 2 ore/);
+    assert.match(await (await anon('/it/tours/guida-a-ore')).text().then(nb), /fact-v">A partire da 2 ore/);
     // il modulo: la scelta tematica con «Altro» e la durata a mezze ore pagata a ore intere
     const co = await (await anon(`/it/book/checkout?${new URLSearchParams(base)}`)).text().then(nb);
     assert.match(co, /Che tipo di tour vuoi\?/);

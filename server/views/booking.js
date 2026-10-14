@@ -11,7 +11,7 @@ import { inviteLink } from '../invites.js';
 import { DEFAULT_MEETING, hasThemes, meetingOf, themeText } from '../choices.js';
 import { icon, page } from './layout.js';
 import { walletOptions } from '../wallet.js';
-import { areaOf, breadcrumbs, departuresList, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
+import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
 import { quoteLines } from './hourly.js';
 import { parseServiceRecord } from '../rates.js';
 
@@ -67,7 +67,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
                 <h3><a href="${u('/tours/' + tour.slug)}">${ti.title}</a> ${tour.model === 'person' ? '' : html`<span class="chip">${t('tour.kindPrivate')}</span>`}</h3>
                 ${isHourly
                   ? html`<p class="muted small">${tour.chooseHours ? t('price.from', { price: formatMoney(quote.totalCents, lang) }) : formatMoney(quote.totalCents, lang)} · ${hoursLabel(t, lang, serviceHours)} · ${tour.chooseHours ? t('book.privateSlots', { hours: hoursLabel(t, lang, serviceHours) }) : t('book.forGroup')}</p>`
-                  : html`<p class="muted small">${fmtDuration(tour.durationMin, lang)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>`}
+                  : html`<p class="muted small">${durationText(t, lang, tour)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>`}
                 <div class="slot-list">${slots.map((s) => html`<a class="slot" href="${isHourly ? checkoutUrl(s.time) : slotUrl(u, tour.slug, date, s.time, pax)}"><strong>${s.time}</strong>${tour.model === 'person' ? html`<small>${s.joined ? t('book.confirmedDeparture') : t('book.newDeparture')}${s.lang ? html` · ${t('w.inLang', { lang: LANG_META[s.lang].name })}` : ''}${s.left <= 4 ? html` · ${t('w.left', { n: s.left })}` : ''}</small>` : ''}</a>`)}</div>
                 ${isHourly && tour.chooseHours ? html`<p class="small"><a href="${u('/hourly')}?product=${tour.slug}&date=${date}&pax=${pax}">${t('book.privateOther')}</a></p>` : ''}
               </div>

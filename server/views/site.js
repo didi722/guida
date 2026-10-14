@@ -6,6 +6,7 @@ import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
 import { hoursLabel } from './components.js';
 import { DEFAULT_MEETING } from '../choices.js';
+import { durationText, startHours } from './components.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, LANG_META, pick } from '../langs.js';
 import { hourOptions, minHours, openTo, rateRows } from '../rates.js';
@@ -232,7 +233,7 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   <a class="btn btn-gold btn-block" href="${u('/hourly')}?product=${tour.slug}">${t('hourly.card.cta')}</a>
   <p class="small muted policy-note">${cancellationLine(ctx, tour, channel)}</p>
 </aside>`;
-  const hoursDefault = hourly && tour.chooseHours ? Math.max(minHours(tour.service), tour.durationMin / 60) : null;
+  const hoursDefault = hourly && tour.chooseHours ? startHours(tour) : null;
   const widget = html`
 <aside class="book-card" id="book" data-widget ${hourly ? raw('data-hourly') : ''} data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-unit="${p.unit}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
   <div class="book-head">
@@ -266,7 +267,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     <h1>${ti.title}</h1>
     <p class="lead">${ti.subtitle || ti.summary}</p>
     <ul class="facts">
-      <li><span class="fact-k">${t('tour.duration')}</span><span class="fact-v">${fmtDuration(tour.durationMin, lang)}</span></li>
+      <li><span class="fact-k">${t('tour.duration')}</span><span class="fact-v">${durationText(t, lang, tour)}</span></li>
       <li><span class="fact-k">${t('tour.group')}</span><span class="fact-v">${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })}</span></li>
       <li><span class="fact-k">${t('tour.languages')}</span><span class="fact-v">${tour.languages.map((l) => t(`lang.${l}`)).join(', ')}</span></li>
       <li><span class="fact-k">${t('tour.start')}</span><span class="fact-v">${tour.flexible ? t('tour.startFlexible') : tour.times.join(' · ')}</span></li>

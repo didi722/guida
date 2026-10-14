@@ -5362,5 +5362,11 @@
   "When you book, you tell us where to meet (for example your hotel). If you leave it empty: {place}.",
   "Al reservar indicas dónde encontrarnos (por ejemplo tu hotel). Si lo dejas vacío: {place}.",
   "ご予約時に集合場所（例：ホテル）をご指定ください。未記入の場合は {place} です。"
+ ],
+ "tour.fromDuration": [
+  "A partire da {dur}",
+  "From {dur}",
+  "Desde {dur}",
+  "{dur}〜"
  ]
 }
