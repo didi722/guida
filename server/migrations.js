@@ -407,6 +407,11 @@ ALTER TABLE bookings ADD COLUMN theme_json TEXT;
 ALTER TABLE bookings ADD COLUMN theme_note TEXT;
 `;
 
+const V17_PICKUP = `
+-- Punto d'incontro scritto dal cliente (hotel o altro) nei tour in cui lo sceglie lui; vuoto = quello standard.
+ALTER TABLE bookings ADD COLUMN pickup TEXT;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -440,6 +445,8 @@ export const MIGRATIONS = [
   V15_LANG_PRIVATE_INVITES,
   // v16 — scelta tematica del cliente
   V16_THEME,
+  // v17 — punto d'incontro scelto dal cliente
+  V17_PICKUP,
 ];
 
 export function migrate(db) {

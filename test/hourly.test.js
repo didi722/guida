@@ -9,6 +9,7 @@ import { createApp } from '../server/app.js';
 import { hashPassword } from '../server/auth.js';
 import { confirmPaid, createBooking, expireBooking, getBooking } from '../server/bookings.js';
 import { createConfig, ROOT } from '../server/config.js';
+import { meetingOf, pickupText } from '../server/choices.js';
 import { openDb } from '../server/db.js';
 import { dayClass, normalizeRates, parseServiceRecord } from '../server/rates.js';
 import { addDays, dayOfWeek, nowRome } from '../server/time.js';
@@ -77,7 +78,7 @@ test('servizi a ore: il pubblico vede la guida a ore con le tariffe al pubblico,
   const s = await start();
   try {
     const { anon } = s;
-    const page = await (await anon('/it/hourly')).text().then(nb);
+    const page = await (await anon(`/it/hourly?date=${plainDay()}`)).text().then(nb);
     assert.match(page, /<h1>guida privata<\/h1>/);
     assert.match(page, /Mezza giornata · 4 ore[^]*?380 €/, 'tariffa al pubblico per 4 ore');
     for (const price of ['200 €', '700 €', '90 €']) assert.ok(page.includes(price), price);
@@ -111,11 +112,16 @@ test('servizi a ore: il pubblico vede la guida a ore con le tariffe al pubblico,
     assert.match(sun, /Supplemento festivo \(20%\)<\/dt><dd>40 €/);
     assert.match(sun, /Totale<\/dt><dd>240 €/);
     // senza data: preventivo indicativo
-    assert.match(await (await anon('/it/hourly?hours=3')).text().then(nb), /Scegli una data per vedere gli orari liberi/);
+    assert.match(await (await anon(`/it/hourly?date=${plainDay()}&hours=3`)).text().then(nb), /Scegli l’orario di inizio/);
+    // standard di prenotazione dei privati: senza una data si sceglie dal tour (elenco o pagina del tour)
+    const toTours = await anon('/it/hourly?hours=3', { redirect: 'manual' });
+    assert.equal(toTours.status, 302);
+    assert.equal(toTours.headers.get('location'), '/it/tours?kind=private');
+    assert.equal((await anon('/it/hourly?product=guida-a-ore', { redirect: 'manual' })).headers.get('location'), '/it/tours/guida-a-ore');
     // durata o servizio non validi tornano a valori ammessi, senza errori
-    assert.equal((await anon('/it/hourly?product=meet-and-greet&hours=abc&pax=0&date=boh')).status, 200);
-    assert.equal((await anon('/en/hourly')).status, 200);
-    assert.match(await (await anon('/en/hourly')).text().then(nb), /private guide/);
+    assert.equal((await anon(`/it/hourly?product=meet-and-greet&hours=abc&pax=0&date=${plainDay()}`)).status, 200);
+    assert.equal((await anon(`/en/hourly?date=${plainDay()}`)).status, 200);
+    assert.match(await (await anon(`/en/hourly?date=${plainDay()}`)).text().then(nb), /private guide/);
   } finally {
     s.close();
   }
@@ -203,8 +209,11 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     assert.ok(!tours.includes('Assistente in loco'), 'i servizi per agenzie non si vedono al pubblico');
     assert.match(await (await partner('/it/tours')).text(), /Assistente in loco/);
 
-    // «Prenota» rimanda alla guida a ore
-    assert.match(await (await anon('/it/book')).text(), /Cerchi una guida tutta per te, a ore\?[^]*?href="\/it\/hourly">Calcola il preventivo/);
+    // «Prenota» parte sempre dall'elenco dei tour (o dal tour scelto), mai da una ricerca per data
+    const goBook = await anon('/it/book', { redirect: 'manual' });
+    assert.equal(goBook.status, 302);
+    assert.equal(goBook.headers.get('location'), '/it/tours');
+    assert.equal((await anon('/it/book?tour=venezia-oriente-occidente', { redirect: 'manual' })).headers.get('location'), '/it/tours/venezia-oriente-occidente');
 
     // senza servizi privati visibili la scheda sparisce e resta solo il gruppo (il suo pulsante diventa quello principale)
     for (const slug of ['guida-a-ore', 'venezia-oriente-occidente', 'isole-murano-burano-torcello']) assert.equal(loc(await s.admin(`/admin/tours/${slug}/toggle`, post({}))), '/admin/tours?ok=toggled');
@@ -212,7 +221,6 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     assert.ok(!only.includes('id="private"') && only.includes('id="group"'));
     assert.match(only, /<a class="btn btn-gold" href="\/it\/tours\?kind=group">Tour di gruppo<\/a>/);
     assert.ok(!only.includes('href="/it/hourly"'), 'nessun pulsante verso la guida privata');
-    assert.ok(!(await (await anon('/it/book')).text()).includes('Cerchi una guida tutta per te'));
     assert.ok(!(await (await anon('/it/tours')).text()).includes('id="private"'));
   } finally {
     s.close();
@@ -382,13 +390,13 @@ test('tariffe a ore nel pannello: modulo, salvataggio, errori, ripristino, e eff
     assert.match(badHtml, /value="tanto"/);
     assert.match(badHtml, /Scrivi un importo in euro/);
     assert.match(badHtml, /Non capisco: 31-02/);
-    assert.match(await (await anon('/it/hourly')).text().then(nb), /200 €/, 'invariato');
+    assert.match(await (await anon(`/it/hourly?date=${plainDay()}`)).text().then(nb), /200 €/, 'invariato');
 
     // salvataggio: la tariffa del pubblico cambia subito sul sito
     const ok = await admin('/admin/rates', post(form({ 'guide.public.p0': '210', 'guide.public.p1': '400,50', festivoPct: '25', earpieceCents: '3,5', nightPct: '0' })));
     assert.equal(loc(ok), '/admin/rates?ok=saved');
     assert.match(await (await admin('/admin/rates?ok=saved')).text().then(nb), /Tariffe salvate/);
-    const pub = await (await anon('/it/hourly')).text().then(nb);
+    const pub = await (await anon(`/it/hourly?date=${plainDay()}`)).text().then(nb);
     assert.ok(pub.includes('210 €'), 'nuova tariffa 2 ore'); assert.ok(pub.includes('400,50 €'), 'nuova tariffa 4 ore');
     assert.match(pub, /Auricolari: 3,50 € a persona/);
     assert.ok(!/Notturno, dalle/.test(pub), 'supplemento a zero: non compare');
@@ -399,12 +407,12 @@ test('tariffe a ore nel pannello: modulo, salvataggio, errori, ripristino, e eff
     // una tariffa al pubblico non apre ai privati un tour B2B: serve un tour B2C (un tour è dell'uno o dell'altro)
     const open = await admin('/admin/rates', post(form({ 'meetgreet.public.p0': '60', 'meetgreet.public.extra': '35' })));
     assert.equal(loc(open), '/admin/rates?ok=saved');
-    assert.ok(!(await (await anon('/it/hourly')).text().then(nb)).includes('<option value="meet-and-greet"'), 'il tour meet & greet resta per le agenzie');
+    assert.ok(!(await (await anon(`/it/hourly?date=${plainDay()}`)).text().then(nb)).includes('<option value="meet-and-greet"'), 'il tour meet & greet resta per le agenzie');
     const dup = await (await admin('/admin/tours/new?from=meet-and-greet&audience=b2c')).text().then(nb);
     assert.match(dup, /<option value="b2c" selected>/, 'duplicato come tour B2C');
     const copy = await admin('/admin/tours', post({ slug: 'meet-and-greet-privati', title_it: 'Meet & greet', summary_it: 'Ti aspetto all’arrivo.', audience: 'b2c', model: 'group', pricing: 'hourly', service: 'meetgreet', flexible: '1', wd: ['0', '1', '2', '3', '4', '5', '6'], durH: '1', durM: '0', maxParticipants: '10', active: '1', payOnSite: '1', langs: ['it'] }));
     assert.equal(copy.status, 303);
-    assert.match(await (await anon('/it/hourly')).text().then(nb), /<option value="meet-and-greet-privati"/, 'ora il meet & greet è disponibile ai privati');
+    assert.match(await (await anon(`/it/hourly?date=${plainDay()}`)).text().then(nb), /<option value="meet-and-greet-privati"/, 'ora il meet & greet è disponibile ai privati');
   } finally {
     s.close();
   }
@@ -457,7 +465,7 @@ test('tour dal pannello: servizio a ore (prezzo dalle tariffe) e prezzo fisso, l
     assert.equal(t.pricing, 'hourly');
     assert.equal(t.service, 'guide');
     assert.equal(t.chooseHours, true);
-    assert.match(await (await s.anon('/it/hourly')).text().then(nb), /<option value="serata-a-ore"/);
+    assert.match(await (await s.anon(`/it/hourly?date=${plainDay()}`)).text().then(nb), /<option value="serata-a-ore"/);
     // durata che non va con il servizio (il tour leader parte da 4 ore)
     const bad = await admin('/admin/tours', post({ ...TOUR, slug: 'leader-corto', service: 'leader', durH: '2' }));
     assert.equal(bad.status, 400);
@@ -523,6 +531,8 @@ test('guida privata B2C su misura: ore scelte dal cliente (a ore intere), festiv
     assert.match(co, /name="theme" value="other"/);
     assert.match(co, /<textarea name="themeNote"/);
     assert.match(await (await anon(`/it/hourly?product=guida-a-ore&date=${date}&hours=2.5&pax=2`)).text().then(nb), /Si paga a ore intere: per esempio 2,5 ore costano come 3/);
+    assert.match(co, /<input name="pickup"[^>]*maxlength="200"/, 'il cliente può scrivere dove incontrarsi');
+    assert.match(co, /Se lasci vuoto, ci vediamo a Campo San Luca/);
     assert.match(co, /Servizio, 3 ore/, 'si pagano 3 ore');
     assert.match(co, /Totale<\/dt><dd>290 €/);
     assert.match(co, /10:00–12:30/, 'ma il servizio dura 2,5 ore');
@@ -541,21 +551,36 @@ test('guida privata B2C su misura: ore scelte dal cliente (a ore intere), festiv
     assert.equal(b.end_time, '12:30');
     assert.equal(b.theme_note, 'Vorrei vedere i luoghi di Casanova, con calma.');
     assert.equal(parseServiceRecord(b.service_json).hours, 2.5);
+    // punto d'incontro lasciato vuoto: quello standard, ovunque
+    assert.equal(b.pickup, null);
+    const bookingHtml = await (await anon(`/it/booking/${b.ref}?t=${b.token}`)).text().then(nb);
+    assert.match(bookingHtml, /Punto d’incontro<\/dt><dd>Campo San Luca · <a href="https:\/\/www\.google\.com\/maps/);
+    assert.match(app.mail.sent.find((m) => m.to === 'mario@example.com' || m.to === 'anna@example.com').text, /Campo San Luca/);
+    assert.match(app.mail.sent.find((m) => m.to === 'guida@example.com' && /Nuova prenotazione/.test(m.subject)).text, /Punto d’incontro: Campo San Luca \(standard/);
+    assert.match(await (await anon(`/it/booking/${b.ref}/calendar.ics?t=${b.token}`)).text(), /LOCATION:Campo San Luca/);
     // la guida, il pannello e il cliente lo leggono
     assert.match(app.mail.sent.find((m) => m.to === 'guida@example.com' && /Nuova prenotazione/.test(m.subject)).text, /Scelta del cliente: Altro: Vorrei vedere i luoghi di Casanova, con calma\./);
     assert.match(await (await s.admin(`/admin/bookings/${b.id}`)).text().then(nb), /Scelta del cliente<\/dt><dd>Altro: Vorrei vedere i luoghi di Casanova/);
     assert.match(await (await anon(`/it/booking/${b.ref}?t=${b.token}`)).text().then(nb), /Che tipo di tour vuoi\?<\/dt><dd>Altro: Vorrei vedere/);
     // una voce della lista, in inglese: la guida la legge in italiano, il cliente nella sua lingua
     const date2 = plainDay(22);
-    const en = await anon('/en/book/checkout', post({ ...base, date: date2, name: 'Mark', email: 'mark@example.com', lang: 'en', theme: '1', paymentMethod: 'onsite', consent: '1' }));
+    const en = await anon('/en/book/checkout', post({ ...base, date: date2, name: 'Mark', email: 'mark@example.com', lang: 'en', theme: '1', pickup: 'Hotel Danieli', paymentMethod: 'onsite', consent: '1' }));
     assert.equal(en.status, 303);
     const b2 = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
     assert.equal(b2.theme_note, null);
+    assert.equal(b2.pickup, 'Hotel Danieli');
+    assert.match(await (await anon(`/en/booking/${b2.ref}?t=${b2.token}`)).text().then(nb), /Meeting point<\/dt><dd>Hotel Danieli/);
+    assert.match(await (await s.admin(`/admin/bookings/${b2.id}`)).text().then(nb), /Punto d’incontro<\/dt><dd>Hotel Danieli/);
     assert.match(app.mail.sent.find((m) => m.to === 'guida@example.com' && b2.ref && /Nuova prenotazione/.test(m.subject) && m.text.includes(b2.ref)).text, /Scelta del cliente: Angoli nascosti \(hidden gems\)/);
     assert.match(await (await anon(`/en/booking/${b2.ref}?t=${b2.token}`)).text().then(nb), /What kind of tour would you like\?<\/dt><dd>Hidden gems/);
     // domenica: festivo automatico, sempre sulle ore intere
     const sun = await anon(`/it/book/checkout?${new URLSearchParams({ ...base, date: sunday() })}`);
     assert.match(await sun.text().then(nb), /Supplemento festivo \(20%\)<\/dt><dd>58 €/);
+    // un tour con punto d'incontro fisso non chiede dove incontrarsi e non conserva il campo
+    assert.equal(app.content.tour('cannaregio-ghetto').meetingChoice, false);
+    assert.equal(app.content.tour('guida-a-ore').meetingChoice, true);
+    assert.equal(meetingOf(app.content.tour('cannaregio-ghetto'), { pickup: 'Hotel X' }, 'it').text, app.content.tour('cannaregio-ghetto').i18n.it.meetingPoint);
+    assert.equal(pickupText(app.content.tour('cannaregio-ghetto'), 'Hotel X'), null);
     // i tour senza scelte tematiche non le chiedono
     assert.ok(!(await (await anon(`/it/book/checkout?tour=venezia-oriente-occidente&date=${date}&time=15:00&pax=2`)).text()).includes('name="theme"'));
   } finally {

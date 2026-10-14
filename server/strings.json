@@ -5332,5 +5332,35 @@
   "See all tours",
   "Ver todos los tours",
   "すべてのツアーを見る"
+ ],
+ "f.pickup": [
+  "Dove ci incontriamo?",
+  "Where shall we meet?",
+  "¿Dónde nos encontramos?",
+  "集合場所"
+ ],
+ "f.pickupHint": [
+  "Nome del tuo hotel o un altro punto di Venezia",
+  "Your hotel name or another place in Venice",
+  "Nombre de tu hotel u otro lugar de Venecia",
+  "ホテル名またはヴェネツィア市内の場所"
+ ],
+ "f.pickupNote": [
+  "Se lasci vuoto, ci vediamo a {place}.",
+  "If you leave this empty, we meet at {place}.",
+  "Si lo dejas vacío, nos vemos en {place}.",
+  "空欄の場合は {place} で集合します。"
+ ],
+ "meeting.summary": [
+  "Lo scegli qui sotto (se vuoto: Campo San Luca)",
+  "You choose it below (if empty: Campo San Luca)",
+  "Lo eliges abajo (si lo dejas vacío: Campo San Luca)",
+  "下で選べます（空欄の場合：Campo San Luca）"
+ ],
+ "tour.meetingChoice": [
+  "Al momento della prenotazione indichi tu dove incontrarci (per esempio il tuo hotel). Se non scrivi nulla: {place}.",
+  "When you book, you tell us where to meet (for example your hotel). If you leave it empty: {place}.",
+  "Al reservar indicas dónde encontrarnos (por ejemplo tu hotel). Si lo dejas vacío: {place}.",
+  "ご予約時に集合場所（例：ホテル）をご指定ください。未記入の場合は {place} です。"
  ]
 }

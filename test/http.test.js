@@ -74,7 +74,7 @@ test('pagine pubbliche, SEO e intestazioni di sicurezza', async () => {
   try {
     const f = s.jar();
     for (const lang of ['it', 'en', 'es']) {
-      for (const p of ['/', '/tours', '/book', '/gift', '/b2b', '/b2b/login', '/b2b/register', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', '/hourly', ...content.tours.filter((t) => openTo(normalizeRates(null), t, 'b2c')).map((t) => `/tours/${t.slug}`), ...content.postsFor(lang).map((x) => `/blog/${x.slug}`)]) {
+      for (const p of ['/', '/tours', '/gift', '/b2b', '/b2b/login', '/b2b/register', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.filter((t) => openTo(normalizeRates(null), t, 'b2c')).map((t) => `/tours/${t.slug}`), ...content.postsFor(lang).map((x) => `/blog/${x.slug}`)]) {
         const res = await f(`/${lang}${p}`);
         assert.equal(res.status, 200, `/${lang}${p}`);
         const html = await res.text();
@@ -1214,7 +1214,7 @@ test('accesso admin: la password si tollera con spazi attorno; da variabile d’
   }
 });
 
-test('prossime partenze: in home e in «Prenota» (senza data), con prezzo, posti e collegamento diretto al pagamento', async () => {
+test('prossime partenze: in home, con prezzo, posti e collegamento diretto al pagamento', async () => {
   const s = await start();
   try {
     const f = s.jar();
@@ -1238,14 +1238,12 @@ test('prossime partenze: in home e in «Prenota» (senza data), con prezzo, post
     assert.match(changedHtml, /<option value="4" selected>4<\/option>/);
     assert.match(changedHtml, /value="Mario Rossi"/);
     assert.equal((await f('/it/book/checkout', form({ tour: q.get('tour'), date: q.get('date'), time: q.get('time'), pax: '99', apply: '1' }))).status, 400, 'più persone dei posti: partenza non più disponibile');
-    // «Prenota» senza data: elenco (6 al massimo); con una data scelta c'è solo l'elenco degli orari
-    const book = await (await f('/en/book')).text();
-    assert.match(book, /Next departures/);
-    assert.ok(hrefs(book).length >= 1 && hrefs(book).length <= 6);
-    assert.doesNotMatch(await (await f(`/en/book?date=${day(3)}`)).text(), /class="dep-list"/);
+    // «Prenota» (senza data) porta all'elenco dei tour: da lì si sceglie il tour e il suo calendario
+    const book = await f('/en/book');
+    assert.equal(book.status, 302);
+    assert.equal(book.headers.get('location'), '/en/tours');
+    assert.equal((await f('/en/hourly')).headers.get('location'), '/en/tours?kind=private');
     assert.match(await (await f('/es/')).text(), /Próximas salidas/);
-    // se la persona ha scelto 5 persone, il collegamento le porta con sé
-    assert.ok(hrefs(await (await f('/it/book?pax=5')).text()).every((h) => /pax=5\b/.test(h)), 'pax conservato');
   } finally {
     s.close();
   }

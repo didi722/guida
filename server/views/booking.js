@@ -8,7 +8,7 @@ import { isEditable } from '../partner.js';
 import { formatMoney } from '../util.js';
 import { LANG_META } from '../langs.js';
 import { inviteLink } from '../invites.js';
-import { hasThemes, themeText } from '../choices.js';
+import { DEFAULT_MEETING, hasThemes, meetingOf, themeText } from '../choices.js';
 import { icon, page } from './layout.js';
 import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
@@ -128,6 +128,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? acct.email : '')}"></label>
       <label class="field"><span class="label">${t('f.phone')} <em>${isB2b ? t('f.phoneB2b') : t('f.optional')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', isB2b ? (acct.phone ?? '') : '')}"></label>
       ${tourLangField}
+      ${tour.meetingChoice ? html`<label class="field wide"><span class="label">${t('f.pickup')} <em>${t('f.optional')}</em></span><input name="pickup" maxlength="200" value="${v('pickup')}" placeholder="${t('f.pickupHint')}" autocomplete="off"><small class="muted">${t('f.pickupNote', { place: DEFAULT_MEETING.text[lang] })}</small></label>` : ''}
       <label class="field"><span class="label">${t('f.lang')}</span><select name="lang">${langOptions(v('lang', lang))}</select></label>
     </div>
     ${hasThemes(tour)
@@ -191,7 +192,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
         ${hourly && tour.service === 'guide' && rates.surcharges.earpieceCents > 0 && pax >= rates.surcharges.earpieceFromPax
           ? html`<div><dt>${t('hourly.f.earpieces')}</dt><dd><label class="check"><input type="checkbox" name="earpieces" value="1" form="checkout-form" data-apply ${earpieces ? raw('checked') : ''}> ${formatMoney(rates.surcharges.earpieceCents, lang)} × ${pax}</label></dd></div>`
           : hourly && earpieces ? html`<input type="hidden" name="earpieces" value="1" form="checkout-form">` : ''}
-        <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}</dd></div>
+        <div><dt>${t('s.meeting')}</dt><dd>${tour.meetingChoice ? t('meeting.summary') : ti.meetingPoint}</dd></div>
         ${offered.length > 1 || slot.lang ? html`<div><dt>${t('s.tourLang')}</dt><dd>${LANG_META[tourLang].name}</dd></div>` : ''}
         ${pricing.quote?.ok ? quoteLines(t, lang, pricing.quote, { total: false }) : ''}
         ${!pricing.quote && (pricing.discountCents || pricing.giftCents) ? html`<div><dt>${t('s.list')}</dt><dd>${formatMoney(pricing.listCents, lang)}</dd></div>` : ''}
@@ -213,7 +214,7 @@ export function slotGonePage(ctx, { tour, date, pax }) {
   const { t, lang, u } = ctx;
   const body = html`<section class="page-head"><div class="wrap narrow center">
     <h1>${t('checkout.goneTitle')}</h1><p class="lead">${t('checkout.goneText')}</p>
-    <p class="btn-row center"><a class="btn btn-gold" href="${tour?.pricing === 'hourly' ? `${u('/hourly')}?product=${tour.slug}${date ? '&date=' + date : ''}&pax=${pax}` : `${u('/book')}?${tour ? 'tour=' + tour.slug + '&' : ''}${date ? 'date=' + date + '&' : ''}pax=${pax}`}">${t('checkout.pickAnother')}</a></p></div></section>`;
+    <p class="btn-row center"><a class="btn btn-gold" href="${ctx.acct?.status === 'approved' ? (tour?.pricing === 'hourly' ? `${u('/hourly')}?product=${tour.slug}${date ? '&date=' + date : ''}&pax=${pax}` : `${u('/book')}?${tour ? 'tour=' + tour.slug + '&' : ''}${date ? 'date=' + date + '&' : ''}pax=${pax}`) : tour ? u('/tours/' + tour.slug) : u('/tours')}">${t('checkout.pickAnother')}</a></p></div></section>`;
   return page(ctx, { title: t('checkout.goneTitle'), path: `/${lang}/book/checkout`, body, noindex: true, area: areaOf(ctx) });
 }
 
@@ -249,6 +250,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   const { cfg } = app;
   const tour = app.content.tour(b.tour_slug);
   const ti = tour.i18n[lang];
+  const meet = meetingOf(tour, b, lang);
   const st = cancellationState(b);
   const q = `?t=${b.token}`;
   const base = `/${lang}/booking/${b.ref}`;
@@ -291,7 +293,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       <div><dt>${t('s.date')}</dt><dd>${fmtDate(b.date, lang)}</dd></div>
       <div><dt>${t('s.time')}</dt><dd>${b.start_time}–${b.end_time}${service ? html` <span class="muted">(${hoursLabel(t, lang, service.hours)})</span>` : ''}</dd></div>
       <div><dt>${t('s.guests')}</dt><dd>${b.participants}</dd></div>
-      <div><dt>${t('s.meeting')}</dt><dd>${ti.meetingPoint}${ti.meetingUrl ? html` · <a href="${ti.meetingUrl}" target="_blank" rel="noopener">${t('tour.openMap')}</a>` : ''}</dd></div>
+      <div><dt>${t('s.meeting')}</dt><dd>${meet.text}${meet.url ? html` · <a href="${meet.url}" target="_blank" rel="noopener">${t('tour.openMap')}</a>` : ''}</dd></div>
       ${b.tour_lang && LANG_META[b.tour_lang] ? html`<div><dt>${t('s.tourLang')}</dt><dd>${LANG_META[b.tour_lang].name}</dd></div>` : ''}
       ${themeText(b, lang) ? html`<div><dt>${t('f.theme')}</dt><dd>${themeText(b, lang)}</dd></div>` : ''}
       <div><dt>${t('s.name')}</dt><dd>${b.name} · ${b.email}${b.phone ? ' · ' + b.phone : ''}</dd></div>

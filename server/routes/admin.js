@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import express from 'express';
 import { BookingError, getBooking } from '../bookings.js';
+import { meetingOf } from '../choices.js';
 import { LIVE_BOOKING_SQL } from '../availability.js';
 import { paymentsFrom, isPreOpening } from '../opening.js';
 import { calendar, eventLines } from '../ics.js';
@@ -89,7 +90,7 @@ export function adminRouter(app) {
         end: b.end_time,
         summary: `${b.status === 'option' ? 'OPZIONE · ' : ''}${tour?.i18n.it.title ?? b.tour_slug} · ${b.participants} pers. · ${b.name}`,
         description: [b.ref, b.channel === 'b2b' ? 'B2B' : 'Privato', b.client_ref, b.phone, b.email, b.notes, `Pagamento: ${b.payment_method} (${b.payment_status})`].filter(Boolean).join('\n'),
-        location: tour?.i18n.it.meetingPoint,
+        location: meetingOf(tour, b, 'it').text,
         url: `${cfg.baseUrl}/admin/bookings/${b.id}`,
       });
     });

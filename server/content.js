@@ -194,6 +194,8 @@ export function normalizeTour(slug, d, where = slug) {
     roundHours: hourly && !!d.chooseHours && !!d.roundHours, // il cliente sceglie le ore, ma si paga a ore intere (2,5 ore = 3)
     inviteEnabled: d.inviteEnabled == null ? null : !!d.inviteEnabled, // «Invita un amico» su questo tour (null = come da impostazioni generali)
     invitePercent: d.invitePercent == null || d.invitePercent === '' ? null : Number(d.invitePercent), // sconto per l'amico su questo tour (null = quello generale)
+    // il cliente indica dove incontrarsi (hotel o altro); senza indicazione vale il punto standard. null = in automatico se il testo dice «Concordato con te»
+    meetingChoice: d.meetingChoice == null ? /concordat|agreed|convenir|相談|調整/i.test(String(d.it?.meetingPoint ?? '')) : !!d.meetingChoice,
     themeOther: !!d.themeOther, // tra le scelte tematiche c'è anche «Altro», con un testo libero per la guida
     chooseHours: hourly && !!d.chooseHours, // il cliente sceglie quante ore; altrimenti la durata è quella del tour
     priceCents: hourly ? 0 : cents(d.price), // dei privati se il tour è B2C; la tariffa agenzie (prima dello sconto del partner) se è B2B

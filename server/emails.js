@@ -12,7 +12,7 @@ import { LANG_META, normLang, pick } from './langs.js';
 import { parseServiceRecord, serviceNote, timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
 import { inviteOffer } from './invites.js';
-import { themeText } from './choices.js';
+import { meetingOf, themeText } from './choices.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
 const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,', ja: name ? `${name} 様` : 'お客様' }, lang);
@@ -169,7 +169,7 @@ function summaryRows(app, b, lang, { option = false } = {}) {
     [tr.date, fmtDate(b.date, lang)],
     [tr.time, timeRange(b, lang)],
     [tr.people, String(b.participants)],
-    [tr.meeting, ti.meetingPoint],
+    [tr.meeting, meetingOf(app.content.tour(b.tour_slug), b, lang).text],
   ];
   if (b.tour_lang && LANG_META[b.tour_lang]) rows.splice(5, 0, [makeT(lang)('s.tourLang'), LANG_META[b.tour_lang].name]);
   if (themeText(b, lang)) rows.splice(5, 0, [makeT(lang)('f.theme'), themeText(b, lang)]);
@@ -198,7 +198,7 @@ export function icsFor(app, b, lang = normLang(b.lang)) {
       end: b.end_time,
       summary: `${ti.title} (${app.cfg.site.name})`,
       description: `${b.ref} — ${b.participants} ${T[lang].people.toLowerCase()}`,
-      location: ti.meetingPoint,
+      location: meetingOf(app.content.tour(b.tour_slug), b, lang).text,
       url: bookingUrl(app, b, lang),
     }),
   ]);
@@ -305,6 +305,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
     `${tour.i18n.it.title}`,
     `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${b.participants} pers.`,
     themeText(b, 'it') ? `Scelta del cliente: ${themeText(b, 'it')}` : null,
+    tour.meetingChoice ? `Punto d’incontro: ${meetingOf(tour, b, 'it').text}${b.pickup ? '' : ' (standard: il cliente non ha indicato nulla)'}` : null,
     b.tour_lang && LANG_META[b.tour_lang] ? `Lingua del tour: ${LANG_META[b.tour_lang].name}` : null,
     parseServiceRecord(b.service_json) ? `Servizio a ore: ${serviceNote(parseServiceRecord(b.service_json))}` : null,
     `${b.name} <${b.email}>${b.phone ? ' · ' + b.phone : ''}`,
@@ -845,6 +846,7 @@ export async function sendReminder(app, b) {
   const tr = RM[lang];
   const ti = tourText(app, b.tour_slug, lang);
   const manageUrl = `${app.cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`;
+  const meet = meetingOf(app.content.tour(b.tour_slug), b, lang);
   const hasDirect = !!(app.cfg.site.phone || app.cfg.site.whatsapp);
   const contacts = contactParts(app.cfg);
   const rows = [
@@ -852,7 +854,7 @@ export async function sendReminder(app, b) {
     [tr.date, fmtDate(b.date, lang)],
     [tr.time, timeRange(b, lang)],
     [tr.people, String(b.participants)],
-    [tr.meeting, ti.meetingPoint],
+    [tr.meeting, meet.text],
     [tr.ref, b.ref],
   ];
   const text = [
@@ -861,7 +863,7 @@ export async function sendReminder(app, b) {
     tr.intro,
     '',
     ...rows.map(([k, v]) => `${k}: ${v}`),
-    ti.meetingUrl ? `${tr.map}: ${ti.meetingUrl}` : null,
+    meet.url ? `${tr.map}: ${meet.url}` : null,
     ti.notes ? `${tr.know}: ${ti.notes}` : null,
     '',
     hasDirect ? `${tr.contact} ${contacts.join(' · ')}` : tr.contactMail,
@@ -884,7 +886,7 @@ export async function sendReminder(app, b) {
         <table style="border-collapse:collapse;width:100%;font-size:15px">
           ${rows.map(([k, v]) => html`<tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top">${k}</td><td style="padding:6px 0"><strong>${v}</strong></td></tr>`)}
         </table>
-        ${ti.meetingUrl ? button(ti.meetingUrl, tr.map) : ''}
+        ${meet.url ? button(meet.url, tr.map) : ''}
         ${ti.notes ? html`<p><strong>${tr.know}.</strong> ${ti.notes}</p>` : ''}
         <p>${hasDirect ? tr.contact : tr.contactMail}${hasDirect ? html`<br><strong>${contacts.join(' · ')}</strong>` : ''}</p>
         ${button(manageUrl, tr.manage)}

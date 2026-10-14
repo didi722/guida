@@ -97,7 +97,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
         : NAV.filter(([k]) => k !== 'book').map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
     </nav>
     <div class="header-tools">
-      <a class="btn btn-sm btn-dark header-cta" href="${u('/book')}">${partner ? t('partner.nav.new') : t('nav.book')}</a>
+      <a class="btn btn-sm btn-dark header-cta" href="${u(partner ? '/book' : '/tours')}">${partner ? t('partner.nav.new') : t('nav.book')}</a>
       ${partner ? logoutForm('tool header-login header-logout', html`<span class="login-icon">${icon('logout')}</span><span class="login-label">${t('b2b.logout')}</span>`) : agencyLink}
       <details class="lang-menu">
         <summary class="tool lang-switch" aria-label="${LANG_META[lang].name}" title="${LANG_META[lang].name}">${LANG_META[lang].short}</summary>
@@ -153,7 +153,7 @@ ${partner
       <ul class="plain">
         <li><a href="${u('/tours')}">${t('nav.tours')}</a></li>
         <li><a href="${u('/programs')}">${t('nav.programs')}</a></li>
-        <li><a href="${u('/book')}">${t('nav.book')}</a></li>
+        <li><a href="${u('/tours')}">${t('nav.book')}</a></li>
         <li><a href="${u('/b2b')}">${t('nav.b2b')}</a></li>
         <li><a href="${u('/gift')}">${t('nav.gift')}</a></li>
         <li><a href="${u('/blog')}">${t('nav.blog')}</a></li>

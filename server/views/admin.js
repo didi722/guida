@@ -8,7 +8,7 @@ import { formatMoney } from '../util.js';
 import { LANG_META, langName, normLang } from '../langs.js';
 import { parseServiceRecord, serviceNote } from '../rates.js';
 import { quoteLines } from './hourly.js';
-import { themeText } from '../choices.js';
+import { meetingOf, themeText } from '../choices.js';
 
 // Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
 export const ADMIN_GROUPS = [
@@ -230,6 +230,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       <div><dt>Data</dt><dd>${fmtDate(b.date, 'it')}</dd></div>
       <div><dt>Orario</dt><dd>${b.start_time}–${b.end_time}</dd></div>
       <div><dt>Persone</dt><dd>${b.participants}</dd></div>
+      ${tour?.meetingChoice ? html`<div><dt>Punto d’incontro</dt><dd>${meetingOf(tour, b, 'it').text}${b.pickup ? '' : html` <span class="muted">(standard: il cliente non ha indicato nulla)</span>`}</dd></div>` : ''}
       ${themeText(b, 'it') ? html`<div><dt>Scelta del cliente</dt><dd>${themeText(b, 'it')}</dd></div>` : ''}
       ${b.tour_lang && LANG_META[b.tour_lang] ? html`<div><dt>Lingua del tour</dt><dd>${LANG_META[b.tour_lang].name}</dd></div>` : ''}
       ${service ? html`<div><dt>Servizio a ore</dt><dd>${serviceNote(service)}</dd></div>${quoteLines(makeT('it'), 'it', service, { total: false })}` : ''}

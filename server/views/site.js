@@ -5,6 +5,7 @@ import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
 import { hoursLabel } from './components.js';
+import { DEFAULT_MEETING } from '../choices.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, LANG_META, pick } from '../langs.js';
 import { hourOptions, minHours, openTo, rateRows } from '../rates.js';
@@ -162,7 +163,7 @@ ${posts.length
   <div class="wrap center reveal">
     <h2>${t('cta.title')}</h2>
     <p class="lead">${t('cta.lead')}</p>
-    <p class="btn-row center"><a class="btn btn-dark" href="${u('/book')}">${t('cta.book')}</a> <a class="btn btn-outline-dark" href="${u('/contact')}">${t('cta.contact')}</a></p>
+    <p class="btn-row center"><a class="btn btn-dark" href="${u('/tours')}">${t('cta.book')}</a> <a class="btn btn-outline-dark" href="${u('/contact')}">${t('cta.contact')}</a></p>
   </div>
 </section>`;
 
@@ -283,6 +284,7 @@ ${tour.image ? html`<section class="tour-hero"><div class="tour-hero-art">${tour
     <div class="info-box">
       <h3>${t('tour.meeting')}</h3>
       <p>${ti.meetingPoint}${ti.meetingUrl ? html` · <a href="${ti.meetingUrl}" target="_blank" rel="noopener">${t('tour.openMap')}</a>` : ''}</p>
+      ${tour.meetingChoice ? html`<p class="small muted">${t('tour.meetingChoice', { place: DEFAULT_MEETING.text[lang] })}</p>` : ''}
       ${ti.notes ? html`<h3>${t('tour.goodToKnow')}</h3><p>${ti.notes}</p>` : ''}
       <h3>${t('tour.cancellation')}</h3>
       <p>${cancellationLine(ctx, tour, channel)} ${t('policy.after')} <a href="${u('/terms')}">${t('policy.terms')}</a></p>

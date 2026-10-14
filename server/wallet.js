@@ -5,6 +5,7 @@
 //  - Apple Wallet: il sito costruisce il file .pkpass (zip con pass.json, immagini, manifest e firma PKCS#7) con il tuo certificato Pass Type ID.
 // Ogni piattaforma si accende da sola quando ha tutti i dati (vedi docs/GUIDA.md › «Wallet del telefono»); senza, il pulsante non compare.
 // Il pass è «fotografia» della prenotazione al momento del salvataggio: se poi viene annullata, il pass sul telefono non cambia da solo.
+import { meetingOf } from './choices.js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { writeZip } from './backup.js';
@@ -89,7 +90,7 @@ function passData(app, b, lang) {
   const startMs = localToInstant(b.date, b.start_time);
   const endMs = localToInstant(b.date, b.end_time || b.start_time);
   return {
-    t, ti, startMs, endMs, name: cfg.site.name,
+    t, ti, startMs, endMs, name: cfg.site.name, meet: meetingOf(tour, b, lang),
     when: `${fmtDate(b.date, lang)} · ${b.start_time}`,
     bookingUrl: `${cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`,
   };
@@ -106,7 +107,7 @@ export function googleSaveUrl(app, b, lang, nowMs = Date.now()) {
   const g = loadWallet(app.cfg).google;
   if (!g) return null;
   const { cfg } = app;
-  const { t, ti, startMs, endMs, name, when, bookingUrl } = passData(app, b, lang);
+  const { t, ti, meet, startMs, endMs, name, when, bookingUrl } = passData(app, b, lang);
   const text = (value) => ({ defaultValue: { language: lang, value: String(value) } });
   const classId = `${g.issuerId}.guida_booking_v1`;
   const object = {
@@ -121,7 +122,7 @@ export function googleSaveUrl(app, b, lang, nowMs = Date.now()) {
     subheader: text(when),
     barcode: { type: 'QR_CODE', value: b.ref, alternateText: b.ref },
     textModulesData: [
-      { id: 'meeting', header: t('s.meeting'), body: ti.meetingPoint },
+      { id: 'meeting', header: t('s.meeting'), body: meet.text },
       { id: 'guests', header: t('s.guests'), body: String(b.participants) },
       { id: 'ref', header: t('s.ref'), body: b.ref },
     ],
@@ -214,7 +215,7 @@ export async function applePass(app, b, lang, nowMs = Date.now()) {
   const a = loadWallet(app.cfg).apple;
   if (!a) return null;
   const { cfg } = app;
-  const { t, ti, startMs, endMs, name, when, bookingUrl } = passData(app, b, lang);
+  const { t, ti, meet, startMs, endMs, name, when, bookingUrl } = passData(app, b, lang);
   const pass = {
     formatVersion: 1,
     passTypeIdentifier: a.passTypeId,
@@ -237,7 +238,7 @@ export async function applePass(app, b, lang, nowMs = Date.now()) {
         { key: 'ref', label: t('s.ref').toUpperCase(), value: b.ref },
       ],
       backFields: [
-        { key: 'meeting', label: t('s.meeting'), value: ti.meetingPoint },
+        { key: 'meeting', label: t('s.meeting'), value: meet.text },
         { key: 'manage', label: t('wallet.manage'), value: bookingUrl },
         { key: 'contact', label: t('footer.contact'), value: [cfg.site.email, cfg.site.phone, cfg.site.whatsapp ? `https://wa.me/${cfg.site.whatsapp}` : ''].filter(Boolean).join('\n') },
       ],

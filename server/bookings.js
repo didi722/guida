@@ -6,7 +6,7 @@ import { openTo, serviceRecord } from './rates.js';
 import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
 import { LANGS, normLang } from './langs.js';
-import { themeChoice } from './choices.js';
+import { pickupText, themeChoice } from './choices.js';
 import { freeHoursOf, hasFreeTier, parseTiers, policyFor, refundPercentAt, singleTier, splitAmounts } from './policy.js';
 import { isPreOpening } from './opening.js';
 import { maxActiveOptions, optionWindow, reminderAt } from './optionPolicy.js';
@@ -159,6 +159,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
       tour_lang: tourLang,
       theme_json: theme?.json ?? null,
       theme_note: theme?.note ?? null,
+      pickup: pickupText(tour, input.pickup),
       notes: cleanText(input.notes, 1000) || null,
       client_ref: cleanText(input.clientRef, 120) || null,
       billing_json: input.billing ? JSON.stringify(input.billing) : null,

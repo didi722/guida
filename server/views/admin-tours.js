@@ -37,6 +37,7 @@ export function defToValues(def = {}, slug = '') {
     chooseHours: def.chooseHours ? '1' : '',
     roundHours: def.roundHours ? '1' : '',
     themeOther: def.themeOther ? '1' : '',
+    meetingChoice: def.meetingChoice ? '1' : '',
     inviteEnabled: def.inviteEnabled === false ? '' : '1',
     invitePercent: def.invitePercent != null ? String(def.invitePercent) : '',
     audience: audienceOf(def),
@@ -179,6 +180,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
       <p>${uploadControl('Carica una nuova foto')}</p>
     </div>
     <label class="check"><input type="checkbox" name="themeOther" value="1" ${v.themeOther ? raw('checked') : ''}> Tra le scelte tematiche c’è anche «Altro», con un testo libero per te <em>(vale se hai scritto le scelte tematiche, nei testi qui sotto)</em></label>
+    <label class="check"><input type="checkbox" name="meetingChoice" value="1" ${v.meetingChoice ? raw('checked') : ''}> Il cliente indica il punto d’incontro (nome dell’hotel o altro) al momento della prenotazione <em>(se non scrive nulla vale il punto standard: Campo San Luca)</em></label>
     <label class="field"><span class="label">Illustrazione (si usa se non c’è una foto)</span><select name="art">${ART_KEYS.map((k) => html`<option value="${k}" ${v.art === k ? raw('selected') : ''}>${ART_LABEL[k] ?? k}</option>`)}</select></label>
   </div>
 

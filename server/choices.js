@@ -33,3 +33,20 @@ export function themeText(b, lang = 'it') {
   if (rec.other) return `${makeT(lang)('f.themeOther')}${b.theme_note ? `: ${b.theme_note}` : ''}`;
   return rec.labels?.[lang] ?? rec.labels?.it ?? null;
 }
+
+/** Il punto d'incontro standard, quando il cliente non ne indica uno. */
+export const DEFAULT_MEETING = {
+  text: { it: 'Campo San Luca', en: 'Campo San Luca', es: 'Campo San Luca', ja: 'サン・ルカ広場（Campo San Luca）' },
+  url: 'https://www.google.com/maps/search/?api=1&query=Campo+San+Luca+Venezia',
+};
+
+/** Il testo da conservare: quello scritto dal cliente (solo nei tour in cui sceglie lui), altrimenti null. */
+export const pickupText = (tour, value) => (tour?.meetingChoice ? cleanText(value, 200) || null : null);
+
+/** Dove ci si incontra per questa prenotazione: l'indicazione del cliente, il punto standard o quello del tour. */
+export function meetingOf(tour, b, lang = 'it') {
+  const ti = tour?.i18n?.[lang] ?? tour?.i18n?.it ?? { meetingPoint: '', meetingUrl: '' };
+  if (!tour?.meetingChoice) return { text: ti.meetingPoint, url: ti.meetingUrl };
+  if (b?.pickup) return { text: b.pickup, url: '' };
+  return { text: DEFAULT_MEETING.text[lang] ?? DEFAULT_MEETING.text.it, url: DEFAULT_MEETING.url };
+}

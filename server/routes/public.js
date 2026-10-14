@@ -126,6 +126,8 @@ export function publicRouter(app) {
     const ctx = res.locals.ctx;
     const channel = channelOf(req.acct);
     const asked = content.tour(String(req.query.tour ?? ''));
+    // standard di prenotazione per i privati: si sceglie il tour e da lì calendario, persone, orari e prezzo (la ricerca per data resta per le agenzie)
+    if (channel !== 'b2b' && !isDate(req.query.date)) return res.redirect(302, asked?.active && openTo(app.rates.get(), asked, channel) ? `/${req.lang}/tours/${asked.slug}` : `/${req.lang}/tours`);
     if (asked?.pricing === 'hourly' && !(channel === 'b2b' && isPrivateTour(asked))) return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
     const kinds = readKinds(req.query, channel);
     const pax = clampInt(req.query.pax, 1, 25, 2);
@@ -160,6 +162,10 @@ export function publicRouter(app) {
     const ctx = res.locals.ctx;
     const channel = channelOf(req.acct);
     const products = hourlyProducts(channel);
+    if (channel !== 'b2b' && !isDate(req.query.date)) { // i privati scelgono dal tour (come per /book); con una data resta la pagina di sempre, per i link già in giro
+      const slug = String(req.query.product ?? '');
+      return res.redirect(302, products.some((x) => x.slug === slug) ? `/${req.lang}/tours/${slug}` : `/${req.lang}/tours?kind=private`);
+    }
     const product = products.find((x) => x.slug === String(req.query.product ?? '')) ?? products[0] ?? null;
     if (!product) return send(res, hourlyPage(ctx, { products: [], product: null, channel, values: {}, quote: null, slots: [], minDate: '' }));
     const minDate = minBookableDate(app, channel);
@@ -236,7 +242,7 @@ export function publicRouter(app) {
     const p = readSlotParams(b, channel);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(b.tour ?? '')), date: null, pax: 2 }), 400);
     if (!b.apply) await app.calendars.ensureFresh(); // riallinea il calendario personale prima di prenotare
-    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), tourLang: p.tour.languages.includes(String(b.tourLang)) ? String(b.tourLang) : '', theme: String(b.theme ?? ''), themeNote: cleanText(b.themeNote, 500), notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
+    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), tourLang: p.tour.languages.includes(String(b.tourLang)) ? String(b.tourLang) : '', theme: String(b.theme ?? ''), pickup: cleanText(b.pickup, 200), themeNote: cleanText(b.themeNote, 500), notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {
       const slot = openSlot(p, channel);
