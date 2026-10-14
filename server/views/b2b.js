@@ -200,11 +200,11 @@ export function accountPage(ctx, { acct, flash = '' }) {
 </div></section>
 <section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">
   ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
-  <details class="terms-strip card"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>
+  ${tariffario(ctx, acct)}
+  <details class="terms-strip card spaced"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>
     ${termsFacts(ctx, acct)}
     <p class="small"><a href="${u('/b2b/rates')}">${t('partner.terms.all')} →</a></p>
   </details>
-  ${tariffario(ctx, acct)}
 </div></section>`;
   return page(ctx, { title: t('partner.nav.home'), path: `/${ctx.lang}/b2b/account`, body, noindex: true, activeNav: 'b2b-account', area: 'partner' });
 }
