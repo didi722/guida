@@ -174,10 +174,10 @@
   "{n}時間"
  ],
  "home.eyebrow": [
-  "Guida turistica abilitata · Storico delle religioni",
-  "Licensed tour guide · Historian of religions",
-  "Guía turístico habilitado · Historiador de las religiones",
-  "公認ガイド · 宗教史家"
+  "Guida turistica abilitata · Storico di formazione",
+  "Licensed tour guide · Historian by training",
+  "Guía turístico habilitado · Historiador de formación",
+  "公認ガイド · 歴史学"
  ],
  "home.h1": [
   "Venezia, oltre la cartolina.",
@@ -210,9 +210,9 @@
   "貸切"
  ],
  "home.private.title": [
-  "guida privata",
-  "private guide",
-  "guía privado",
+  "Guida privata",
+  "Private guide",
+  "Guía privado",
   "プライベートガイド"
  ],
  "home.private.p": [
@@ -246,8 +246,8 @@
   "グループツアー"
  ],
  "home.group.p": [
-  "Partenze fisse in piccolo gruppo: scegli il tour e il tuo posto, paghi a persona.",
-  "Fixed departures in a small group: pick a tour and your seat, and pay per person.",
+  "Partenze fisse in piccolo gruppo condiviso: scegli il tour e il tuo posto, paghi a persona.",
+  "Fixed departures in a shared small group: pick a tour and your seat, and pay per person.",
   "Salidas fijas en grupo reducido: elige el tour y tu plaza, y paga por persona.",
   "出発日時が決まっている少人数のツアーです。ツアーとお席を選ぶだけ。料金はお一人様ごとにお支払いいただきます。"
  ],
@@ -270,9 +270,9 @@
   "ツアーを選ぶ"
  ],
  "home.group.from": [
-  "da {price} a persona",
-  "from {price} per person",
-  "desde {price} por persona",
+  "Da {price} a persona",
+  "From {price} per person",
+  "Desde {price} por persona",
   "お一人様 {price}から"
  ],
  "home.allTours": [
@@ -438,9 +438,9 @@
   "歴史家の視点"
  ],
  "why.1.p": [
-  "Formazione e ricerca in storia delle religioni: spiego il perché delle cose, non solo il cosa.",
-  "Training and research in the history of religions: I explain the why of things, not just the what.",
-  "Formación e investigación en historia de las religiones: explico el porqué de las cosas, no solo el qué.",
+  "Formazione e ricerca in storia delle religioni: spiego il perché delle cose.",
+  "Training and research in the history of religions: I explain the why of things.",
+  "Formación e investigación en historia de las religiones: explico el porqué de las cosas.",
   "宗教史を学び、研究してきた経験から、「何があるか」だけでなく「なぜそうなのか」をお話しします。"
  ],
  "why.2.t": [
@@ -3852,9 +3852,9 @@
   "5点満点中{avg}点 · ツアー後にお客様が付けた{n}件の評価の平均"
  ],
  "reviews.note": [
-  "Commenti di clienti che hanno fatto il tour, pubblicati con il loro permesso.",
-  "Comments from guests who took the tour, published with their permission.",
-  "Comentarios de clientes que hicieron el tour, publicados con su permiso.",
+  "Commenti reali, pubblicati con il permesso dei clienti.",
+  "Real comments, published with the guest's permission.",
+  "Comentarios reales, publicados con el permiso del los clientes.",
   "ツアーに参加されたお客様のコメントです。ご本人の許可を得て掲載しています。"
  ],
  "reviews.readAll": [
