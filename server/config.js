@@ -124,8 +124,9 @@ export function createConfig(overrides = {}) {
     },
 
     reminders: {
-      enabled: bool(e.REMINDERS_ENABLED, true), // la sera prima del tour, ai clienti privati: orario, punto d'incontro, come contattarti
+      enabled: bool(e.REMINDERS_ENABLED, true), // la sera prima del tour (clienti privati e agenzie) e, alle agenzie, prima che finisca la cancellazione gratuita: orario, punto d'incontro, come contattarti
       sendHour: num(e.REMINDER_SEND_HOUR, 18), // ora di Venezia
+      penaltyHours: num(e.PENALTY_REMINDER_HOURS, 24), // alle agenzie: così tante ore prima che la cancellazione gratuita finisca
     },
 
     // «Invita un amico» (tour condivisi): ogni invito è un codice sconto univoco, valido una volta sola per quella partenza

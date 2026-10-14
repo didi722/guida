@@ -790,6 +790,7 @@ const RM = {
     subject: (title) => `Domani: ${title} a Venezia`,
     intro: 'ti ricordo che domani ci vediamo per il tuo tour. Ecco i dettagli.',
     ref: 'Codice',
+    file: 'Pratica',
     tour: 'Servizio',
     date: 'Data',
     time: 'Orario',
@@ -806,6 +807,7 @@ const RM = {
     subject: (title) => `Tomorrow: ${title} in Venice`,
     intro: 'just a reminder that we are meeting tomorrow for your tour. Here are the details.',
     ref: 'Code',
+    file: 'File',
     tour: 'Service',
     date: 'Date',
     time: 'Time',
@@ -822,6 +824,7 @@ const RM = {
     subject: (title) => `Mañana: ${title} en Venecia`,
     intro: 'te recuerdo que mañana nos vemos para tu tour. Aquí tienes los detalles.',
     ref: 'Código',
+    file: 'Expediente',
     tour: 'Servicio',
     date: 'Fecha',
     time: 'Hora',
@@ -838,6 +841,7 @@ const RM = {
     subject: (title) => `明日：ヴェネツィアで「${title}」`,
     intro: '明日のツアーのご案内です。詳細は以下のとおりです。',
     ref: '予約番号',
+    file: '案件',
     tour: 'サービス',
     date: '日付',
     time: '時間',
@@ -859,7 +863,7 @@ export async function sendReminder(app, b) {
   const lang = normLang(b.lang);
   const tr = RM[lang];
   const ti = tourText(app, b.tour_slug, lang);
-  const manageUrl = `${app.cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`;
+  const manageUrl = b.channel === 'b2b' ? `${app.cfg.baseUrl}/${lang}/b2b/bookings/${b.ref}` : `${app.cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`; // le agenzie hanno la loro area
   const meet = meetingOf(app.content.tour(b.tour_slug), b, lang);
   const hasDirect = !!(app.cfg.site.phone || app.cfg.site.whatsapp);
   const contacts = contactParts(app.cfg);
@@ -870,6 +874,7 @@ export async function sendReminder(app, b) {
     [tr.people, String(b.participants)],
     [tr.meeting, meet.text],
     [tr.ref, b.ref],
+    ...(b.client_ref ? [[tr.file, b.client_ref]] : []),
   ];
   const text = [
     greet(lang, b.name),
@@ -905,6 +910,59 @@ export async function sendReminder(app, b) {
         <p>${hasDirect ? tr.contact : tr.contactMail}${hasDirect ? html`<br><strong>${contacts.join(' · ')}</strong>` : ''}</p>
         ${button(manageUrl, tr.manage)}
         <p style="color:#666;font-size:13px">${tr.bye}<br>${app.cfg.site.name}</p>`,
+      ),
+    ),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+const PN = {
+  it: {
+    subject: (ref, when) => `Promemoria: dal ${when} la prenotazione ${ref} non è più cancellabile gratuitamente`,
+    intro: (when) => `ti ricordo che la cancellazione gratuita di questa prenotazione termina il ${when}. Da quel momento, se annulli, si applicano le condizioni di rimborso concordate (penale): se qualcosa deve cambiare, fallo entro quel termine.`,
+    until: 'Cancellazione gratuita fino a',
+    cta: 'Vedi o annulla la prenotazione',
+  },
+  en: {
+    subject: (ref, when) => `Reminder: from ${when} booking ${ref} can no longer be cancelled for free`,
+    intro: (when) => `a reminder that free cancellation for this booking ends on ${when}. After that, if you cancel, the agreed refund conditions (cancellation fee) apply: if anything needs to change, do it before then.`,
+    until: 'Free cancellation until',
+    cta: 'View or cancel the booking',
+  },
+  es: {
+    subject: (ref, when) => `Recordatorio: desde el ${when} la reserva ${ref} ya no se puede cancelar gratis`,
+    intro: (when) => `te recuerdo que la cancelación gratuita de esta reserva termina el ${when}. Después, si cancelas, se aplican las condiciones de reembolso acordadas (penalización): si algo tiene que cambiar, hazlo antes.`,
+    until: 'Cancelación gratuita hasta',
+    cta: 'Ver o cancelar la reserva',
+  },
+  ja: {
+    subject: (ref, when) => `リマインダー：${when}以降、予約 ${ref} は無料でキャンセルできません`,
+    intro: (when) => `この予約の無料キャンセルは${when}までです。それ以降にキャンセルされる場合は、合意済みの返金条件（キャンセル料）が適用されます。変更が必要な場合は、それまでにお手続きください。`,
+    until: '無料キャンセル期限',
+    cta: '予約を確認・キャンセルする',
+  },
+};
+
+/** All'agenzia: tra poco la cancellazione gratuita finisce e si entra nella penale. */
+export async function sendPenaltyReminder(app, b) {
+  const lang = normLang(b.lang);
+  const tr = T[lang];
+  const p = PN[lang];
+  const when = fmtInstant(Date.parse(b.free_cancel_until), lang);
+  const rows = [[p.until, when], ...summaryRows(app, b, lang)];
+  const link = b.channel === 'b2b' ? `${app.cfg.baseUrl}/${lang}/b2b/bookings/${b.ref}` : bookingUrl(app, b, lang);
+  return app.mail.send({
+    to: b.email,
+    subject: p.subject(b.ref, when),
+    text: [tr.hello(b.name), '', p.intro(when), '', ...rows.map(([k, v]) => `${k}: ${v}`), '', `${p.cta}: ${link}`, '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${tr.hello(b.name)}</p><p>${p.intro(when)}</p>
+        <table style="border-collapse:collapse;width:100%;font-size:15px">${rows.map(([k, v]) => html`<tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top">${k}</td><td style="padding:6px 0"><strong>${v}</strong></td></tr>`)}</table>
+        <p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${p.cta}</a></p>
+        <p style="color:#666;font-size:13px">${tr.contactLine}<br>${tr.bye} ${app.cfg.site.name}</p>`,
       ),
     ),
     replyTo: app.cfg.mail.notifyTo || undefined,

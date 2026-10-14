@@ -100,7 +100,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour B2C** vuol dire «t
 2. **Partner da approvare**: se c'è un numero, apri **Clienti › Partner** e rispondi (vedi [sezione 14](#14-partner-agenzie-dmc-tour-operator)). Il partner è avvisato per email.
 3. **Programmi da preparare**: richieste di più giorni in attesa di una tua proposta ([sezione 12](#12-prenotazioni-annulli-e-programmi-di-più-giorni)).
 4. **Fatture** (una o due volte a settimana): le prenotazioni svolte o pagate finiscono in *Da fatturare*; il termine consigliato per emettere è **12 giorni** ([sezione 13](#13-fatture)).
-5. I clienti privati ricevono da soli un **promemoria la sera prima del tour** (alle 18:00, con orario, punto d'incontro, mappa e come contattarti): non devi fare nulla, e si spegne o si sposta in **Sito › Impostazioni › Regole di prenotazione**.
+5. I clienti privati **e le agenzie** ricevono da soli un **promemoria la sera prima del tour** (alle 18:00, con orario, punto d'incontro, mappa e come contattarti): non devi fare nulla. Alle **agenzie** arriva anche, una sola volta, il promemoria **«tra poco la cancellazione non è più gratuita»** (24 ore prima della fine del periodo gratuito, solo se la prenotazione esisteva già a quel momento) e, per le opzioni, quello di **scadenza dell'opzione**; e si spegne o si sposta in **Sito › Impostazioni › Regole di prenotazione**.
 6. Ogni nuova prenotazione, annullo o richiesta ti arriva **per email** all'indirizzo delle notifiche (si cambia in **Sito › Impostazioni › Attività e contatti**). Se le email non arrivano, guarda **Aiuto › Email**: lì il sito elenca quelle che ha tentato di inviare.
 
 **Calendario sul telefono.** In fondo all'Agenda trovi un indirizzo privato da aggiungere come *calendario in abbonamento* a Google Calendar, Apple Calendar o Outlook: vedrai le prenotazioni confermate accanto ai tuoi impegni. Non condividerlo con nessuno.
@@ -565,7 +565,7 @@ Con Posteo come mittente (`MAIL_FROM` con un indirizzo `@posteo.net`) il sito fu
 - **Aiuto › Email** mostra le email tentate. Se in alto c'è *«SMTP non configurato»* le email **non partono**: imposta le variabili `SMTP_*` e `MAIL_FROM` sul server.
 - Usa un mittente del tuo dominio con SPF/DKIM, altrimenti finiscono nello spam. Chiedi ai clienti di controllare la cartella *Posta indesiderata*.
 
-**Il cliente dice di non aver ricevuto il promemoria**: il promemoria parte solo per i clienti **privati** con prenotazione confermata fatta **almeno 24 ore prima** dell'inizio; per i partner non parte. Nella scheda della prenotazione leggi lo stato (*inviato il…*, *non verrà inviato*, *parte la sera prima*). Se le email non partono in generale, vedi sopra.
+**Il cliente dice di non aver ricevuto il promemoria**: il promemoria parte solo per prenotazioni confermate fatte **almeno 24 ore prima** dell'inizio (clienti privati e agenzie). Nella scheda della prenotazione leggi lo stato (*inviato il…*, *non verrà inviato*, *parte la sera prima*). Se le email non partono in generale, vedi sopra.
 
 **Un cliente ha pagato ma non ha la conferma**: guarda **Agenda › Prenotazioni** (tab *Tutte*, ricerca per email). I pagamenti con carta si confermano quando arriva l'avviso di Stripe (webhook): se **mai** funziona, controlla il webhook nella dashboard di Stripe. Se lo slot è stato preso nel frattempo il cliente viene **rimborsato in automatico** e avvisato.
 

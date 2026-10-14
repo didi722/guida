@@ -412,6 +412,11 @@ const V17_PICKUP = `
 ALTER TABLE bookings ADD COLUMN pickup TEXT;
 `;
 
+const V18_PENALTY_REMINDER = `
+-- Promemoria all'agenzia: la cancellazione gratuita sta per finire (si manda una volta sola).
+ALTER TABLE bookings ADD COLUMN penalty_reminded_at TEXT;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -447,6 +452,8 @@ export const MIGRATIONS = [
   V16_THEME,
   // v17 — punto d'incontro scelto dal cliente
   V17_PICKUP,
+  // v18 — promemoria di fine cancellazione gratuita
+  V18_PENALTY_REMINDER,
 ];
 
 export function migrate(db) {

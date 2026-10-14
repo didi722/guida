@@ -67,13 +67,13 @@ test('promemoria: parte la sera prima alle 18:00, una sola volta, nella lingua d
   }
 });
 
-test('promemoria: non serve per prenotazioni a ridosso, partner, annullate, o se è spento', async () => {
+test('promemoria: non serve per prenotazioni a ridosso, annullate, o se è spento (alle agenzie arriva come ai privati)', async () => {
   const app = makeApp({ policy: { allowPayOnSite: true, b2cMinNoticeHours: 2 } }); // con un preavviso breve si può prenotare anche il giorno prima
   try {
     withMeeting(app);
     // fatta il giorno prima (meno di 24 ore all'inizio): la conferma è appena arrivata → nessun promemoria
     const late = book(app, { name: 'Last Minute', email: 'late@example.com' }, localToInstant('2027-01-11', '12:00'));
-    // partner (B2B): niente promemoria al partner
+    // partner (B2B): il promemoria arriva anche a loro, con il collegamento alla loro area
     const acct = addAccount(app.db);
     const b2b = book(app, { tourSlug: 'private', channel: 'b2b', account: acct, paymentMethod: 'invoice', email: 'dmc@example.com', time: '14:30' });
     // annullata
@@ -82,10 +82,11 @@ test('promemoria: non serve per prenotazioni a ridosso, partner, annullate, o se
     // una normale, per confronto
     const ok = book(app, { name: 'Normale', email: 'ok@example.com' });
     app.mail.sent.length = 0;
-    assert.equal(await app.reminders.sweep(EVE(18)), 1);
-    assert.deepEqual(app.mail.sent.map((m) => m.to), ['ok@example.com']);
+    assert.equal(await app.reminders.sweep(EVE(18)), 2);
+    assert.deepEqual(app.mail.sent.map((m) => m.to).sort(), ['dmc@example.com', 'ok@example.com']);
+    assert.match(app.mail.sent.find((m) => m.to === 'dmc@example.com').text, /\/it\/b2b\/bookings\/VE-/, 'collegamento all’area agenzie');
     assert.equal(status(app, late.id).s, 'skipped', 'segnata come non necessaria');
-    assert.equal(status(app, b2b.id).s, null);
+    assert.equal(status(app, b2b.id).s, 'sent');
     assert.equal(status(app, gone.id).s, null);
     assert.equal(status(app, ok.id).s, 'sent');
 
@@ -179,5 +180,46 @@ test('promemoria dal pannello: stato nella prenotazione, «Invia ora», «Non in
     app.close();
     http.close();
     fs.rmSync(cfg.dataDir, { recursive: true, force: true });
+  }
+});
+
+test('promemoria alle agenzie: tra poco la cancellazione gratuita finisce (una sola volta, solo se la prenotazione esisteva già)', async () => {
+  const app = makeApp({ policy: { b2bFreeCancelHours: 72, allowPayOnSite: true } });
+  try {
+    const acct = addAccount(app.db);
+    const mk = (over = {}, at = NOW) => confirmPaid(app, createBooking(app, base({ date: DAY, time: '09:30', tourSlug: 'shared', channel: 'b2b', account: acct, paymentMethod: 'invoice', ...over }), at).id, null, at).booking;
+    const b = mk();
+    const until = Date.parse(b.free_cancel_until);
+    assert.equal(until, localToInstant(DAY, '09:30') - 72 * 3600_000);
+    const remindAt = until - 24 * 3600_000;
+    app.mail.sent.length = 0;
+    assert.equal(await app.reminders.sweepPenalty(remindAt - 60_000), 0, 'troppo presto');
+    assert.equal(await app.reminders.sweepPenalty(remindAt + 60_000), 1);
+    const m = app.mail.sent.find((x) => /non è più cancellabile gratuitamente/.test(x.subject));
+    assert.equal(m.to, b.email, 'all’email della prenotazione dell’agenzia');
+    assert.match(m.text, /Cancellazione gratuita fino a: /);
+    assert.match(m.text, /\/it\/b2b\/bookings\//);
+    assert.equal(await app.reminders.sweepPenalty(remindAt + 3600_000), 0, 'una volta sola');
+    // prenotata dopo l'ora del promemoria: la conferma dice già le condizioni → niente
+    const lateMade = mk({ time: '14:30' }, remindAt + 2 * 3600_000 > NOW ? NOW : NOW);
+    app.db.prepare('UPDATE bookings SET created_at = ? WHERE id = ?').run(new Date(Date.parse(lateMade.free_cancel_until) - 3600_000).toISOString(), lateMade.id);
+    assert.equal(await app.reminders.sweepPenalty(Date.parse(lateMade.free_cancel_until) - 1800_000), 0);
+    // i privati non lo ricevono; annullate nemmeno; spento nemmeno
+    const priv = book(app, { name: 'Privato', email: 'p@example.com', date: '2027-01-14' });
+    const gone = mk({ date: '2027-01-13' });
+    cancelBooking(app, gone.id, { by: 'customer', refund: 'full' }, NOW);
+    app.mail.sent.length = 0;
+    assert.equal(await app.reminders.sweepPenalty(Date.parse(gone.free_cancel_until) - 3600_000), 0);
+    assert.ok(priv && !app.mail.sent.some((x) => /cancellabile/.test(x.subject)));
+    const off = makeApp({ reminders: { enabled: false }, policy: { b2bFreeCancelHours: 72 } });
+    try {
+      const a2 = addAccount(off.db);
+      const ob = confirmPaid(off, createBooking(off, base({ date: DAY, time: '09:30', tourSlug: 'shared', channel: 'b2b', account: a2, paymentMethod: 'invoice' }), NOW).id, null, NOW).booking;
+      assert.equal(await off.reminders.sweepPenalty(Date.parse(ob.free_cancel_until) - 3600_000), 0, 'spento dalle impostazioni');
+    } finally {
+      off.cleanup();
+    }
+  } finally {
+    app.cleanup();
   }
 });

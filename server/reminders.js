@@ -1,8 +1,9 @@
-// Promemoria la sera prima del tour: orario, punto d'incontro e come contattarti.
+// Promemoria la sera prima del tour (clienti privati e agenzie): orario, punto d'incontro e come contattarti.
+// Alle agenzie arriva anche, una volta sola, il promemoria «tra poco la cancellazione non è più gratuita».
 //
-// Parte una sola volta, solo per i clienti privati con prenotazione confermata. Se la prenotazione è stata fatta meno
+// Il promemoria del tour parte una sola volta per ogni prenotazione confermata. Se la prenotazione è stata fatta meno
 // di 24 ore prima dell'inizio non serve (la conferma è appena arrivata) e non si manda nulla.
-import { sendReminder } from './emails.js';
+import { sendPenaltyReminder, sendReminder } from './emails.js';
 import { addDays, localToInstant, nowRome } from './time.js';
 
 const RETRY_MS = 30 * 60_000;
@@ -23,7 +24,7 @@ export function createReminderServices(app) {
     due(nowMs = Date.now()) {
       const tomorrow = addDays(nowRome(nowMs).date, 1);
       return db
-        .prepare(`SELECT * FROM bookings WHERE status = 'confirmed' AND channel = 'b2c' AND reminder_status IS NULL AND date = ? ORDER BY start_time`)
+        .prepare(`SELECT * FROM bookings WHERE status = 'confirmed' AND reminder_status IS NULL AND date = ? ORDER BY start_time`)
         .all(tomorrow)
         .filter((b) => reminderDueAt(cfg, b) <= nowMs);
     },
@@ -57,6 +58,32 @@ export function createReminderServices(app) {
       return sent;
     },
   };
+  /**
+   * Prenotazioni delle agenzie a cui va ricordato che la cancellazione gratuita sta per finire: `penaltyHours` prima, ma solo se la
+   * prenotazione esisteva già a quell'ora (altrimenti l'ha appena fatta: la conferma dice già le condizioni).
+   */
+  svc.penaltyDue = (nowMs = Date.now()) =>
+    db
+      .prepare(`SELECT * FROM bookings WHERE status = 'confirmed' AND channel = 'b2b' AND penalty_reminded_at IS NULL AND free_cancel_until > ? AND free_cancel_until > created_at`)
+      .all(new Date(nowMs).toISOString())
+      .filter((b) => {
+        const at = Date.parse(b.free_cancel_until) - cfg.reminders.penaltyHours * 3600_000;
+        return at <= nowMs && Date.parse(b.created_at) <= at && Date.parse(b.free_cancel_until) < localToInstant(b.date, b.start_time); // ha davvero un periodo gratuito prima dell'inizio
+      });
+
+  svc.sweepPenalty = async (nowMs = Date.now()) => {
+    if (!cfg.reminders.enabled || !(cfg.reminders.penaltyHours > 0)) return 0;
+    let sent = 0;
+    for (const b of svc.penaltyDue(nowMs)) {
+      const claimed = db.prepare(`UPDATE bookings SET penalty_reminded_at = ? WHERE id = ? AND penalty_reminded_at IS NULL`).run(new Date(nowMs).toISOString(), b.id).changes;
+      if (claimed !== 1) continue;
+      if (await sendPenaltyReminder(app, db.prepare('SELECT * FROM bookings WHERE id = ?').get(b.id))) sent++;
+      else db.prepare(`UPDATE bookings SET penalty_reminded_at = NULL WHERE id = ?`).run(b.id); // riprova al prossimo giro
+    }
+    return sent;
+  };
+
   app.jobs.push((nowMs) => svc.sweep(nowMs));
+  app.jobs.push((nowMs) => svc.sweepPenalty(nowMs));
   return svc;
 }
