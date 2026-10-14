@@ -1,11 +1,12 @@
+import crypto from 'node:crypto';
 import express from 'express';
 import { loadAvailabilityContext, nextAvailableDates, nextDepartures, slotsForDay } from '../availability.js';
 import { BookingError, activeOptionCount, cancellationState, getBookingByRef, slotStillOpen } from '../bookings.js';
 import { maxActiveOptions, optionWindow } from '../optionPolicy.js';
 import { onlinePaymentsOpen } from '../opening.js';
 import { hourlyQuote, previewPricing } from '../pricing.js';
-import { hashPassword, verifyPassword } from '../auth.js';
-import { sendContactMessage, sendInviteEmail, sendPartnerRegistered, icsFor } from '../emails.js';
+import { hashPassword, signToken, verifyPassword, verifyToken } from '../auth.js';
+import { sendContactMessage, sendInviteEmail, sendPartnerPasswordReset, sendPartnerRegistered, icsFor } from '../emails.js';
 import { createInvite, inviteLink, inviteOffer } from '../invites.js';
 import { isDate, isTime, localToInstant, nowRome } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
@@ -13,7 +14,7 @@ import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js'
 import { invoiceOfBooking } from '../partner.js';
 import { applePass, googleSaveUrl, walletOptions } from '../wallet.js';
 import { renderVoucherPdf } from '../pdf.js';
-import { loginPage, registerPage } from '../views/b2b.js';
+import { forgotPage, loginPage, registerPage, resetPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { hourlyPage } from '../views/hourly.js';
 import { extraHourOptions, hourOptions, minHours, openTo } from '../rates.js';
@@ -35,7 +36,7 @@ export function publicRouter(app) {
   const ip = (req) => req.ip ?? 'ip';
 
   // pagine con dati personali: mai in cache del browser o di proxy
-  r.use(['/booking', '/book/checkout', '/b2b/account', '/b2b/login', '/b2b/register'], (req, res, next) => {
+  r.use(['/booking', '/book/checkout', '/b2b/account', '/b2b/login', '/b2b/register', '/b2b/forgot', '/b2b/reset'], (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
   });
@@ -363,6 +364,42 @@ export function publicRouter(app) {
     if (!ok) return send(res, loginPage(ctx, { error: ctx.t('b2b.loginError'), email }), 401);
     loginPartner(res, cfg, acct.id);
     res.redirect(303, safeNext(req.body.next) || `/${req.lang}/b2b/account`);
+  });
+  // password dimenticata: un collegamento firmato per email (vale un'ora e smette di valere appena la password cambia)
+  const resetFingerprint = (acct) => crypto.createHash('sha256').update(acct.password_hash).digest('hex').slice(0, 24);
+  const resetAccount = (token) => {
+    const p = verifyToken(cfg.sessionSecret, token);
+    if (p?.k !== 'pwreset') return null;
+    const acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(p.id));
+    return acct && p.f === resetFingerprint(acct) ? acct : null;
+  };
+  r.get('/b2b/forgot', (req, res) => send(res, forgotPage(res.locals.ctx)));
+  r.post('/b2b/forgot', form, async (req, res) => {
+    const ctx = res.locals.ctx;
+    const email = cleanText(req.body.email, 200).toLowerCase();
+    if (!app.limits.forgot(`${ip(req)}|${email}`)) return tooMany(res);
+    const acct = isEmail(email) ? db.prepare("SELECT * FROM accounts WHERE email = ? AND status IN ('approved', 'pending')").get(email) : null;
+    if (acct) {
+      const token = signToken(cfg.sessionSecret, { k: 'pwreset', id: acct.id, f: resetFingerprint(acct), exp: Date.now() + 3600_000 });
+      try {
+        await sendPartnerPasswordReset(app, acct, `${cfg.baseUrl}/${normLang(acct.lang)}/b2b/reset/${token}`);
+      } catch (e) {
+        console.error('[b2b] email di nuova password non inviata:', e.message);
+      }
+    }
+    send(res, forgotPage(ctx, { sent: true })); // stessa risposta se l'email non esiste: non si rivela chi è registrato
+  });
+  r.get('/b2b/reset/:token', (req, res) => send(res, resetAccount(req.params.token) ? resetPage(res.locals.ctx, { token: req.params.token }) : resetPage(res.locals.ctx, { invalid: true }), resetAccount(req.params.token) ? 200 : 400));
+  r.post('/b2b/reset/:token', form, async (req, res) => {
+    const ctx = res.locals.ctx;
+    const acct = resetAccount(req.params.token);
+    if (!acct) return send(res, resetPage(ctx, { invalid: true }), 400);
+    const pw = String(req.body.password ?? '');
+    if (pw.length < 10) return send(res, resetPage(ctx, { token: req.params.token, error: ctx.t('err.password') }), 400);
+    if (pw !== String(req.body.password2 ?? '')) return send(res, resetPage(ctx, { token: req.params.token, error: ctx.t('b2b.reset.mismatch') }), 400);
+    db.prepare('UPDATE accounts SET password_hash = ? WHERE id = ?').run(await hashPassword(pw), acct.id);
+    loginPartner(res, cfg, acct.id);
+    res.redirect(303, `/${req.lang}/b2b/account`);
   });
   r.post('/b2b/logout', form, (req, res) => {
     logoutPartner(res, cfg);

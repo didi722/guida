@@ -17,6 +17,7 @@ export function createLimits() {
     contact: rateLimiter({ windowMs: 60 * 60_000, max: 6 }),
     login: rateLimiter({ windowMs: 10 * 60_000, max: 10 }),
     register: rateLimiter({ windowMs: 60 * 60_000, max: 6 }),
+    forgot: rateLimiter({ windowMs: 60 * 60_000, max: 5 }), // richieste di nuova password
     api: rateLimiter({ windowMs: 60_000, max: 150 }),
     codes: rateLimiter({ windowMs: 10 * 60_000, max: 30 }), // tentativi con codici sconto / buoni regalo
   };

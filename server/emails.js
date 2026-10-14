@@ -493,6 +493,8 @@ const P = {
     receivedBody: (n) => `Ciao ${n},\nho ricevuto la tua richiesta di accesso all'area partner. La esamino e ti rispondo di norma entro uno o due giorni lavorativi.\n`,
     approvedSubject: 'Il tuo account partner è attivo',
     approvedBody: (n, url) => `Ciao ${n},\nil tuo account partner è stato approvato: da ora puoi accedere, vedere le tariffe riservate e prenotare i servizi per i tuoi clienti.\n\nAccedi qui: ${url}\n`,
+    resetSubject: 'Nuova password per l’area partner',
+    resetBody: (n, url) => `Ciao ${n},\nhai chiesto di scegliere una nuova password per l'area partner. Usa questo collegamento (vale un'ora e una sola volta):\n\n${url}\n\nSe non sei stato tu, ignora questa email: la tua password non cambia.\n`,
     sign: 'A presto,',
   },
   en: {
@@ -500,6 +502,8 @@ const P = {
     receivedBody: (n) => `Hi ${n},\nI have received your request for partner access. I will review it and reply, usually within one or two business days.\n`,
     approvedSubject: 'Your partner account is active',
     approvedBody: (n, url) => `Hi ${n},\nyour partner account has been approved: you can now sign in, see your reserved rates and book services for your clients.\n\nSign in here: ${url}\n`,
+    resetSubject: 'New password for the partner area',
+    resetBody: (n, url) => `Hi ${n},\nyou asked to choose a new password for the partner area. Use this link (valid for one hour, one time only):\n\n${url}\n\nIf it was not you, ignore this email: your password stays the same.\n`,
     sign: 'See you soon,',
   },
   es: {
@@ -507,6 +511,8 @@ const P = {
     receivedBody: (n) => `Hola ${n},\nhe recibido tu solicitud de acceso al área de partners. La reviso y te respondo, normalmente, en uno o dos días hábiles.\n`,
     approvedSubject: 'Tu cuenta de partner está activa',
     approvedBody: (n, url) => `Hola ${n},\ntu cuenta de partner ha sido aprobada: a partir de ahora puedes acceder, consultar las tarifas reservadas y reservar servicios para tus clientes.\n\nAccede aquí: ${url}\n`,
+    resetSubject: 'Nueva contraseña para el área de partners',
+    resetBody: (n, url) => `Hola ${n},\nhas pedido elegir una nueva contraseña para el área de partners. Usa este enlace (válido una hora y una sola vez):\n\n${url}\n\nSi no has sido tú, ignora este correo: tu contraseña no cambia.\n`,
     sign: 'Hasta pronto,',
   },
   ja: {
@@ -514,6 +520,8 @@ const P = {
     receivedBody: (n) => `${n} 様\nパートナーエリアへのアクセス申請を受け付けました。内容を確認のうえ、通常1〜2営業日以内にご連絡いたします。\n`,
     approvedSubject: 'パートナーアカウントが有効になりました',
     approvedBody: (n, url) => `${n} 様\nパートナーアカウントが承認されました。今後は、ログインして専用料金をご確認いただき、お客様のためのサービスをご予約いただけます。\n\nログインはこちら：${url}\n`,
+    resetSubject: 'パートナーエリアの新しいパスワード',
+    resetBody: (n, url) => `${n} 様\nパートナーエリアの新しいパスワードの設定が依頼されました。次のリンクをご利用ください（1時間有効・1回のみ）:\n\n${url}\n\nお心当たりがない場合は、このメールを無視してください。パスワードは変更されません。\n`,
     sign: 'どうぞよろしくお願いいたします。',
   },
 };
@@ -528,6 +536,12 @@ export async function sendPartnerRegistered(app, a) {
       subject: `Nuova richiesta partner: ${a.company}`,
       text: [`${a.company} (${a.country ?? ''} ${a.vat ?? ''})`, `${a.contact_name} <${a.email}>${a.phone ? ' · ' + a.phone : ''}`, a.website ?? '', a.message ? `Messaggio: ${a.message}` : '', '', `Approva o rifiuta: ${app.cfg.baseUrl}/admin/partners/${a.id}`].filter(Boolean).join('\n'),
     });
+}
+
+/** Il collegamento per scegliere una nuova password (vale un'ora, una volta sola: dopo il cambio non funziona più). */
+export async function sendPartnerPasswordReset(app, a, url) {
+  const tr = P[normLang(a.lang)];
+  await app.mail.send({ to: a.email, subject: tr.resetSubject, text: `${tr.resetBody(a.contact_name, url)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
 }
 
 export async function sendPartnerApproved(app, a) {

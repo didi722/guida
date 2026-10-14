@@ -5410,5 +5410,71 @@
   "If you cancel, we keep {amount}: the discount your friend received. Do you want to cancel?",
   "Al cancelar, retenemos {amount}: el descuento que recibió tu amigo. ¿Quieres cancelar?",
   "キャンセルすると、ご友人が受けた割引額 {amount} を差し引きます。キャンセルしますか？"
+ ],
+ "b2b.forgot.link": [
+  "Password dimenticata?",
+  "Forgot your password?",
+  "¿Olvidaste tu contraseña?",
+  "パスワードをお忘れですか？"
+ ],
+ "b2b.forgot.title": [
+  "Password dimenticata",
+  "Forgot your password",
+  "Contraseña olvidada",
+  "パスワードをお忘れの方"
+ ],
+ "b2b.forgot.lead": [
+  "Scrivi l’email del tuo account: ti mandiamo un collegamento per scegliere una nuova password.",
+  "Enter the email of your account: we will send you a link to choose a new password.",
+  "Escribe el correo de tu cuenta: te enviaremos un enlace para elegir una nueva contraseña.",
+  "アカウントのメールアドレスを入力してください。新しいパスワードを設定するためのリンクをお送りします。"
+ ],
+ "b2b.forgot.send": [
+  "Invia il collegamento",
+  "Send the link",
+  "Enviar el enlace",
+  "リンクを送る"
+ ],
+ "b2b.forgot.sent": [
+  "Se esiste un account con questa email, ti abbiamo scritto: apri il collegamento (vale un’ora) per scegliere una nuova password.",
+  "If an account exists with this email, we have written to you: open the link (valid for one hour) to choose a new password.",
+  "Si existe una cuenta con este correo, te hemos escrito: abre el enlace (válido una hora) para elegir una nueva contraseña.",
+  "このメールアドレスのアカウントがある場合、メールをお送りしました。リンク（1時間有効）から新しいパスワードを設定してください。"
+ ],
+ "b2b.reset.title": [
+  "Scegli una nuova password",
+  "Choose a new password",
+  "Elige una nueva contraseña",
+  "新しいパスワードの設定"
+ ],
+ "b2b.reset.new": [
+  "Nuova password (almeno 10 caratteri)",
+  "New password (at least 10 characters)",
+  "Nueva contraseña (al menos 10 caracteres)",
+  "新しいパスワード（10文字以上）"
+ ],
+ "b2b.reset.repeat": [
+  "Ripeti la nuova password",
+  "Repeat the new password",
+  "Repite la nueva contraseña",
+  "新しいパスワード（確認）"
+ ],
+ "b2b.reset.save": [
+  "Salva e accedi",
+  "Save and sign in",
+  "Guardar y entrar",
+  "保存してログイン"
+ ],
+ "b2b.reset.mismatch": [
+  "Le due password non coincidono.",
+  "The two passwords do not match.",
+  "Las dos contraseñas no coinciden.",
+  "2つのパスワードが一致しません。"
+ ],
+ "b2b.reset.invalid": [
+  "Questo collegamento non è più valido (è scaduto o è già stato usato). Chiedine uno nuovo.",
+  "This link is no longer valid (it has expired or has already been used). Ask for a new one.",
+  "Este enlace ya no es válido (ha caducado o ya se ha usado). Pide uno nuevo.",
+  "このリンクは無効です（期限切れ、または使用済み）。新しいリンクをご請求ください。"
  ]
 }

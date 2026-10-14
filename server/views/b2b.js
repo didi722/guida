@@ -27,10 +27,44 @@ export function loginPage(ctx, { error = '', email = '', next = '' } = {}) {
       <label class="field"><span class="label">${t('f.password')}</span><input type="password" name="password" required autocomplete="current-password"></label>
       <button class="btn btn-gold btn-block" type="submit">${t('b2b.login')}</button>
     </form>
+    <p class="small muted center"><a href="${u('/b2b/forgot')}">${t('b2b.forgot.link')}</a></p>
     <p class="small muted center">${t('b2b.noAccount')} <a href="${u('/b2b/register')}">${t('b2b.requestAccess')}</a></p>
   </div>
 </div></section>`;
   return page(ctx, { title: t('b2b.login'), path: `/${lang}/b2b/login`, body, noindex: true, activeNav: 'b2b' });
+}
+
+export function forgotPage(ctx, { sent = false, email = '', error = '' } = {}) {
+  const { t, lang, u } = ctx;
+  const body = html`
+<section class="page-head"><div class="wrap narrow">${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.b2b'), u('/b2b')], [t('b2b.login'), u('/b2b/login')], [t('b2b.forgot.title')]])}<h1>${t('b2b.forgot.title')}</h1></div></section>
+<section class="section tight"><div class="wrap narrow"><div class="card pad">
+  ${sent
+    ? html`<div class="notice notice-ok" role="status">${t('b2b.forgot.sent')}</div><p class="btn-row"><a class="btn btn-outline" href="${u('/b2b/login')}">${t('b2b.login')}</a></p>`
+    : html`${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}<p class="muted">${t('b2b.forgot.lead')}</p>
+    <form method="post" action="${u('/b2b/forgot')}" class="form">
+      <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required autocomplete="username" value="${email}"></label>
+      <button class="btn btn-gold btn-block" type="submit">${t('b2b.forgot.send')}</button>
+    </form>`}
+</div></div></section>`;
+  return page(ctx, { title: t('b2b.forgot.title'), path: `/${lang}/b2b/forgot`, body, noindex: true, activeNav: 'b2b' });
+}
+
+export function resetPage(ctx, { token = '', invalid = false, error = '' } = {}) {
+  const { t, lang, u } = ctx;
+  const body = html`
+<section class="page-head"><div class="wrap narrow"><h1>${t('b2b.reset.title')}</h1></div></section>
+<section class="section tight"><div class="wrap narrow"><div class="card pad">
+  ${invalid
+    ? html`<div class="notice notice-err" role="alert">${t('b2b.reset.invalid')}</div><p class="btn-row"><a class="btn btn-gold" href="${u('/b2b/forgot')}">${t('b2b.forgot.title')}</a></p>`
+    : html`${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
+    <form method="post" action="${u(`/b2b/reset/${token}`)}" class="form">
+      <label class="field"><span class="label">${t('b2b.reset.new')}</span><input type="password" name="password" required minlength="10" autocomplete="new-password"></label>
+      <label class="field"><span class="label">${t('b2b.reset.repeat')}</span><input type="password" name="password2" required minlength="10" autocomplete="new-password"></label>
+      <button class="btn btn-gold btn-block" type="submit">${t('b2b.reset.save')}</button>
+    </form>`}
+</div></div></section>`;
+  return page(ctx, { title: t('b2b.reset.title'), path: `/${lang}/b2b/reset`, body, noindex: true, activeNav: 'b2b' });
 }
 
 export function registerPage(ctx, { error = '', values = {}, done = false } = {}) {

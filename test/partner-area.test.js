@@ -509,3 +509,41 @@ test('uscita dal pannello admin: «Esci» riporta alla home del sito', async () 
     s.close();
   }
 });
+
+test('password dimenticata: collegamento per email (un’ora, una volta sola), risposta uguale se l’email non c’è, nuova password e accesso', async () => {
+  const s = await start();
+  try {
+    const post = (fields) => ({ method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(fields).toString() });
+    const login = await s.anon('/it/b2b/login').then((r) => r.text());
+    assert.match(login, /href="\/it\/b2b\/forgot">Password dimenticata\?/);
+    assert.equal((await s.anon('/it/b2b/forgot')).status, 200);
+
+    const before = s.app.mail.sent.length;
+    const ok = await s.anon('/it/b2b/forgot', post({ email: 'giulia@lagoon.example' }));
+    const same = await s.anon('/it/b2b/forgot', post({ email: 'nessuno@example.com' }));
+    assert.equal(ok.status, 200);
+    assert.equal(same.status, 200);
+    assert.equal(await ok.text(), await same.text(), 'la risposta non rivela chi è registrato');
+    const mails = s.app.mail.sent.slice(before);
+    assert.equal(mails.length, 1, 'una sola email, solo per l’account che esiste');
+    assert.equal(mails[0].to, 'giulia@lagoon.example');
+    const url = /\/it\/b2b\/reset\/(\S+)/.exec(mails[0].text)[0];
+
+    assert.equal((await s.anon(url)).status, 200);
+    assert.equal((await s.anon('/it/b2b/reset/abc.def')).status, 400, 'collegamento falso');
+    const short = await s.anon(url, post({ password: 'corta', password2: 'corta' }));
+    assert.equal(short.status, 400);
+    assert.equal((await s.anon(url, post({ password: 'una-password-lunga', password2: 'un-altra-password' }))).status, 400);
+    const res = await s.anon(url, post({ password: 'nuova-password-ok', password2: 'nuova-password-ok' }));
+    assert.equal(res.status, 303);
+    assert.equal(res.headers.get('location'), '/it/b2b/account');
+    assert.match(res.headers.get('set-cookie') ?? '', /gs=/, 'entra subito');
+    // la nuova password funziona, la vecchia no, e il collegamento non vale più
+    assert.equal((await s.anon('/it/b2b/login', post({ email: 'giulia@lagoon.example', password: 'nuova-password-ok' }))).status, 303);
+    assert.equal((await s.anon('/it/b2b/login', post({ email: 'giulia@lagoon.example', password: PW }))).status, 401);
+    assert.equal((await s.anon(url)).status, 400, 'una volta sola');
+    assert.equal((await s.anon(url, post({ password: 'ancora-un-altra', password2: 'ancora-un-altra' }))).status, 400);
+  } finally {
+    s.close();
+  }
+});

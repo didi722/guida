@@ -57,7 +57,7 @@ export function agencyBookingDonePage(ctx, { booking: b, account, tour, tempPass
 <div class="card pad">
   <p><strong>Registrata.</strong> ${tour.i18n.it.title} · ${fmtDate(b.date, 'it')} ${b.start_time}–${b.end_time} · ${b.participants} pers. · ${eur(b.total_cents)}${b.payment_status === 'paid' ? ' · già pagata' : ' · da fatturare'}</p>
   <p>Agenzia: <strong>${account.company}</strong> (${account.email}). La prenotazione è nell’agenda e nella sua area, con la pratica <code>${b.ref}</code>.${mailed ? ' Le ho inviato la conferma con il voucher.' : ''}</p>
-  ${tempPassword ? html`<div class="notice notice-ok" role="status"><strong>Nuova agenzia creata.</strong> Password provvisoria (la vedi solo qui): <code>${tempPassword}</code><br>Comunicala all’agenzia: entra su <em>Area agenzie</em> con la sua email.</div>` : ''}
+  ${tempPassword ? html`<div class="notice notice-ok" role="status"><strong>Nuova agenzia creata.</strong> Password provvisoria (la vedi solo qui): <code>${tempPassword}</code><br>Comunicala all’agenzia: entra su <em>Area agenzie</em> con la sua email e, se la perde, può scegliersene una nuova con <em>Password dimenticata</em>.</div>` : ''}
   <p class="btn-row"><a class="btn btn-gold" href="/admin/bookings/${b.id}">Apri la prenotazione</a> <a class="btn btn-outline" href="/admin/agenda/agency">Registrane un’altra</a> <a class="btn btn-outline" href="/admin?v=cal&m=${b.date.slice(0, 7)}&d=${b.date}#giorno">Vedi in agenda</a></p>
 </div>`;
   return adminLayout(ctx, { title: 'Prenotazione registrata', active: '/admin', body });
