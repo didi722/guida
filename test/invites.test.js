@@ -105,3 +105,26 @@ test('invita un amico: l’email all’amico ha codice, sconto e collegamento, n
     app.cleanup();
   }
 });
+
+test('invita un amico: ogni tour condiviso ha il suo interruttore e il suo sconto', () => {
+  const app = makeApp();
+  const t = app.content.tour('shared');
+  try {
+    const b = book(app, { email: 'anna@example.com' });
+    t.invitePercent = 25;
+    assert.equal(inviteOffer(app, b, NOW).percent, 25, 'sconto del tour');
+    const { invite } = createInvite(app, b, { nowMs: NOW });
+    assert.equal(invitesOf(app.db, b.id, NOW)[0].percent, 25);
+    const preview = previewPricing(app, { tour: t, pax: 1, channel: 'b2c', date: DAY, time: '09:30', email: 'luca@example.com', promoCode: invite.code, nowMs: NOW });
+    assert.equal(preview.discountCents, 875, '25% di 35 €');
+    t.inviteEnabled = false;
+    assert.equal(inviteOffer(app, b, NOW).reason, 'off', 'spento su questo tour');
+    t.inviteEnabled = null;
+    t.invitePercent = null;
+    assert.equal(inviteOffer(app, b, NOW).percent, 10, 'senza valore proprio, quello generale');
+  } finally {
+    t.inviteEnabled = undefined;
+    t.invitePercent = undefined;
+    app.cleanup();
+  }
+});

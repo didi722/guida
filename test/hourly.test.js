@@ -158,7 +158,7 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
       assert.equal(denied.status, 400, `${slug}: prenotazione negata`);
     }
     assert.ok(!(await (await anon('/sitemap.xml')).text().then(nb)).includes('assistente-a-ore'));
-    assert.equal((await anon('/api/slots?tour=guida-a-ore&date=' + plainDay() + '&pax=2')).status, 400, 'i servizi a ore non passano dal calendario a data fissa');
+    assert.equal((await anon('/api/slots?tour=guida-a-ore&date=' + plainDay() + '&pax=2')).status, 400, 'senza le ore il prezzo non si può calcolare');
   } finally {
     s.close();
   }
@@ -179,18 +179,18 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     assert.match(priv, /2 ore<\/span><strong>200 €/);
     assert.match(priv, /Mezza giornata · 4 ore<\/span><strong>380 €/);
     assert.match(priv, /Giornata intera · 8 ore<\/span><strong>700 €/);
-    assert.match(priv, /href="\/it\/hourly">Calcola il preventivo/);
+    assert.match(priv, /href="\/it\/tours\?kind=private">Scegli il tuo tour/);
     assert.ok(!priv.includes('160 €'), 'niente tariffe per agenzie');
     // tour di gruppo: prezzo «da», prossime partenze (al massimo tre) e collegamento a «Prenota»
     assert.match(group, /Tour di gruppo/);
     assert.match(group, /da 35 € a persona/);
     const deps = [...group.matchAll(/class="dep" href="/g)].length;
     assert.ok(deps >= 1 && deps <= 3, `${deps} partenze`);
-    assert.match(group, /href="\/it\/book">Vedi tutte le partenze/);
+    assert.match(group, /href="\/it\/tours\?kind=group">Scegli il tuo tour/);
     // niente più elenco di tour in home e niente ricerca per data nella prima schermata
     assert.ok(!home.includes('tour-card'), 'nessuna scheda di tour in home');
     assert.ok(!home.includes('quick-search'));
-    assert.match(home, /<a class="btn btn-gold" href="\/it\/hourly">guida privata<\/a>\s*<a class="btn btn-outline" href="\/it\/book">Tour di gruppo<\/a>/);
+    assert.match(home, /<a class="btn btn-gold" href="\/it\/tours\?kind=private">guida privata<\/a>\s*<a class="btn btn-outline" href="\/it\/tours\?kind=group">Tour di gruppo<\/a>/);
     // in inglese e spagnolo
     assert.match(await (await anon('/en/')).text(), /How would you like to discover Venice\?[^]*?private guide[^]*?Group tours/);
     assert.match(await (await anon('/es/')).text(), /¿Cómo quieres descubrir Venecia\?[^]*?guía privado[^]*?Tours en grupo/);
@@ -215,7 +215,7 @@ test('home e pagine Tour: due categorie (guida privata e tour di gruppo), senza 
     for (const slug of ['guida-a-ore', 'venezia-oriente-occidente', 'isole-murano-burano-torcello']) assert.equal(loc(await s.admin(`/admin/tours/${slug}/toggle`, post({}))), '/admin/tours?ok=toggled');
     const only = await (await anon('/it/')).text().then(nb);
     assert.ok(!only.includes('id="private"') && only.includes('id="group"'));
-    assert.match(only, /<a class="btn btn-gold" href="\/it\/book">Tour di gruppo<\/a>/);
+    assert.match(only, /<a class="btn btn-gold" href="\/it\/tours\?kind=group">Tour di gruppo<\/a>/);
     assert.ok(!only.includes('href="/it/hourly"'), 'nessun pulsante verso la guida privata');
     assert.ok(!(await (await anon('/it/book')).text()).includes('Cerchi una guida tutta per te'));
     assert.ok(!(await (await anon('/it/tours')).text()).includes('id="private"'));
@@ -317,9 +317,8 @@ test('servizi a ore: prenotazione di un partner a fattura con sconto, itinerari 
     assert.match(await (await partner(`/it/book/checkout?tour=venezia-oriente-occidente-agenzie&date=${date}&time=15:00&pax=6&hours=8`)).text().then(nb), /\(3 ore\)/);
     // l'itinerario ha la sua scheda con «Calcola e prenota»
     const tourPage = await (await s.anon('/it/tours/venezia-oriente-occidente')).text().then(nb);
-    assert.match(tourPage, /Calcola e prenota/);
     assert.match(tourPage, /290 €<small> \/ 3 ore<\/small>/);
-    assert.ok(!tourPage.includes('data-widget'), 'niente calendario a data fissa');
+    assert.ok(tourPage.includes('data-widget data-hourly') && !tourPage.includes('data-hours'), 'calendario con orari e prezzo; la durata è fissa: niente scelta delle ore');
     // elenco tour e carta
     assert.match(await (await s.anon('/it/tours')).text().then(nb), /da 200 €<small> \/ 2 ore<\/small>/);
     // annullo secondo la politica del partner
@@ -587,6 +586,45 @@ test('tour dal pannello: ore intere, scelta tematica e «Altro» si salvano e si
     // «ore intere» vale solo se il cliente sceglie le ore
     await s.admin('/admin/tours/su-misura', post({ ...TOUR, chooseHours: '' }));
     assert.equal(s.app.content.tour('su-misura').roundHours, false);
+  } finally {
+    s.close();
+  }
+});
+
+test('tour privati e di gruppo: due elenchi separati; il tour a ore ha il suo calendario con persone, ore, orari liberi e prezzo', async () => {
+  const s = await start();
+  try {
+    const { anon } = s;
+    const priv = await (await anon('/it/tours?kind=private')).text().then(nb);
+    assert.match(priv, /<h1>Tour privati<\/h1>/);
+    assert.match(priv, /\/it\/tours\/guida-a-ore"/);
+    assert.ok(!priv.includes('/it/tours/san-marco-rialto"') && !priv.includes('/it/tours/cannaregio-ghetto"'), 'solo privati');
+    const group = await (await anon('/it/tours?kind=group')).text().then(nb);
+    assert.match(group, /<h1>Tour di gruppo<\/h1>/);
+    assert.ok(group.includes('/it/tours/san-marco-rialto"') && !group.includes('/it/tours/guida-a-ore"'), 'solo condivisi');
+    assert.match(await (await anon('/it/tours?kind=boh')).text().then(nb), /<h1>Tour e servizi<\/h1>/, 'senza filtro, tutti');
+    // la scheda del tour a ore: persone, scelta delle ore, calendario, orari con prezzo
+    const page = await (await anon('/it/tours/guida-a-ore')).text().then(nb);
+    assert.match(page, /data-widget data-hourly/);
+    assert.match(page, /<select data-hours>[^]*?<option value="2\.5" >2,5 ore<\/option>/);
+    assert.match(page, /Si paga a ore intere/);
+    const date = plainDay(21);
+    const api = async (q) => (await anon(`/api/slots?tour=guida-a-ore&date=${date}&pax=2&${q}`)).json();
+    const two = await api('hours=2');
+    assert.ok(two.slots.length > 0 && two.slots.every((x) => x.totalCents === 20000), '2 ore: 200 € (feriale)');
+    const half = await api('hours=2.5');
+    assert.ok(half.slots.every((x) => x.totalCents === 29000), '2,5 ore costano come 3: 290 €');
+    assert.ok(two.slots.some((x) => x.time === '08:30'));
+    const sun = (await (await anon(`/api/slots?tour=guida-a-ore&date=${sunday()}&pax=2&hours=2`)).json()).slots;
+    assert.ok(sun.every((x) => x.totalCents === 24000), 'domenica: +20% automatico');
+    assert.equal((await anon(`/api/slots?tour=guida-a-ore&date=${date}&pax=2&hours=13`)).status, 400);
+    assert.equal((await anon(`/api/slots?tour=guida-a-ore&date=${date}&pax=2&hours=2.25`)).status, 400);
+    const month = await (await anon(`/api/availability?tour=guida-a-ore&month=${date.slice(0, 7)}&pax=2&hours=4`)).json();
+    assert.ok(Object.keys(month.days).length > 0);
+    // durata fissa: niente parametro
+    const fixed = await (await anon(`/api/slots?tour=venezia-oriente-occidente&date=${date}&pax=2`)).json();
+    assert.ok(fixed.slots.length > 0 && fixed.slots.every((x) => x.totalCents === 29000), '3 ore fisse: 290 €');
+    assert.equal((await anon(`/api/slots?tour=guida-a-ore-agenzie&date=${date}&pax=2&hours=2`)).status, 400, 'i tour B2B non sono per i privati');
   } finally {
     s.close();
   }

@@ -53,7 +53,7 @@ export function publicRouter(app) {
     const departures = nextDepartures(db, cfg, selectable(channelOf(req.acct)), nowRome(nowMs).date, { channel: channelOf(req.acct), nowMs, limit: 3 });
     send(res, homePage(res.locals.ctx, { departures, quotes: featuredQuotes(db, { limit: 3, lang: req.lang }), reviewStats: feedbackStats(db) }));
   });
-  r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx)));
+  r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx, { kind: ['private', 'group'].includes(req.query.kind) ? req.query.kind : null })));
   r.get('/tours/:slug', (req, res, next) => {
     const tour = content.tour(req.params.slug);
     if (!tour?.active || !openTo(app.rates.get(), tour, channelOf(req.acct))) return next();

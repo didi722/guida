@@ -222,10 +222,10 @@
   "ご希望の日時に、公認ガイドが専属でご案内します。時間数を選ぶと、グループ全体の料金がすぐに表示されます。"
  ],
  "home.private.cta": [
-  "Calcola il preventivo",
-  "Calculate a quote",
-  "Calcular un presupuesto",
-  "見積りを計算する"
+  "Scegli il tuo tour",
+  "Choose your tour",
+  "Elige tu tour",
+  "ツアーを選ぶ"
  ],
  "home.private.sup": [
   "Festivi, orari serali e auricolari hanno un piccolo supplemento: lo calcola il sito.",
@@ -264,10 +264,10 @@
   "日付を選ぶと、空席のあるツアーが表示されます。"
  ],
  "home.group.cta": [
-  "Vedi tutte le partenze",
-  "See all departures",
-  "Ver todas las salidas",
-  "すべての出発日を見る"
+  "Scegli il tuo tour",
+  "Choose your tour",
+  "Elige tu tour",
+  "ツアーを選ぶ"
  ],
  "home.group.from": [
   "da {price} a persona",
@@ -5302,5 +5302,35 @@
   "Billed in whole hours: for example 2.5 hours cost the same as 3.",
   "Se paga por horas completas: por ejemplo, 2,5 horas cuestan como 3.",
   "料金は1時間単位で計算します（例：2.5時間は3時間分）。"
+ ],
+ "tours.kindPrivate.title": [
+  "Tour privati",
+  "Private tours",
+  "Tours privados",
+  "プライベートツアー"
+ ],
+ "tours.kindPrivate.lead": [
+  "Scegli il tema che ti interessa: poi indichi persone, giorno e ore, e vedi gli orari liberi e il prezzo.",
+  "Pick the theme you like: then choose people, day and hours, and see the available times and the price.",
+  "Elige el tema que te interesa: después indicas personas, día y horas, y ves los horarios libres y el precio.",
+  "お好みのテーマを選び、人数・日付・時間を指定すると、空き時間と料金が表示されます。"
+ ],
+ "tours.kindGroup.title": [
+  "Tour di gruppo",
+  "Group tours",
+  "Tours en grupo",
+  "グループツアー"
+ ],
+ "tours.kindGroup.lead": [
+  "Partenze fisse in piccolo gruppo: scegli il tour, poi indichi le persone e vedi le date e gli orari liberi.",
+  "Fixed departures in a small group: pick the tour, then choose the number of people and see the free dates and times.",
+  "Salidas fijas en grupo reducido: elige el tour, indica las personas y ve las fechas y horarios libres.",
+  "少人数グループの定期出発です。ツアーを選び、人数を指定して、空いている日時を確認してください。"
+ ],
+ "tours.allKinds": [
+  "Vedi tutti i tour",
+  "See all tours",
+  "Ver todos los tours",
+  "すべてのツアーを見る"
  ]
 }

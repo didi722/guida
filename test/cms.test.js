@@ -707,3 +707,28 @@ test('agenda: un tour preso fuori dal sito (email, di persona) toglie le ore dal
     s.close();
   }
 });
+
+test('tour condiviso dal pannello: invito amico acceso/spento e sconto per quel tour', async () => {
+  const s = await start();
+  try {
+    const { admin } = s;
+    const page = await (await admin('/admin/tours/san-marco-rialto')).text();
+    assert.match(page, /name="inviteEnabled" value="1" checked/);
+    assert.match(page, /name="invitePercent"/);
+    const raw = s.app.content.rawTour('san-marco-rialto');
+    const form1 = (over) => form({ slug: 'san-marco-rialto', title_it: 'San Marco', summary_it: 'Un giro.', audience: 'b2c', model: 'person', times: '09:30', wd: ['1'], durH: '2', durM: '30', maxParticipants: '10', price: '35', active: '1', payOnSite: '1', langs: ['it'], ...over });
+    assert.equal(loc(await admin('/admin/tours/san-marco-rialto', form1({ inviteEnabled: '1', invitePercent: '20' }))), '/admin/tours/san-marco-rialto?ok=saved');
+    let t = s.app.content.tour('san-marco-rialto');
+    assert.deepEqual([t.inviteEnabled, t.invitePercent], [true, 20]);
+    assert.equal(loc(await admin('/admin/tours/san-marco-rialto', form1({ invitePercent: '' }))), '/admin/tours/san-marco-rialto?ok=saved');
+    t = s.app.content.tour('san-marco-rialto');
+    assert.deepEqual([t.inviteEnabled, t.invitePercent], [false, null]);
+    assert.ok(!(await (await admin('/admin/tours/san-marco-rialto')).text()).includes('name="inviteEnabled" value="1" checked'));
+    assert.equal((await admin('/admin/tours/san-marco-rialto', form1({ inviteEnabled: '1', invitePercent: '95' }))).status, 400, 'oltre il 90%');
+    // un tour privato non ha l'invito
+    assert.ok(!(await (await admin('/admin/tours/guida-a-ore')).text()).includes('name="inviteEnabled"'));
+    assert.ok(raw);
+  } finally {
+    s.close();
+  }
+});

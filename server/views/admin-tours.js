@@ -37,6 +37,8 @@ export function defToValues(def = {}, slug = '') {
     chooseHours: def.chooseHours ? '1' : '',
     roundHours: def.roundHours ? '1' : '',
     themeOther: def.themeOther ? '1' : '',
+    inviteEnabled: def.inviteEnabled === false ? '' : '1',
+    invitePercent: def.invitePercent != null ? String(def.invitePercent) : '',
     audience: audienceOf(def),
     langs: Array.isArray(def.languages) && def.languages.length ? def.languages : [...LANGS],
     art: def.art ?? 'dome',
@@ -159,6 +161,10 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
       ${field('Cancellazione gratuita (ore prima)', 'cancelHours', v.cancelHours, { type: 'number', hint: 'vuoto = regola generale del sito (privati)', attrs: 'min="0" max="2000"' })}
       <label class="check"><input type="checkbox" name="payOnSite" value="1" ${v.payOnSite ? raw('checked') : ''}> Si può pagare sul posto (se il sito lo consente)</label>
     </div>
+    ${v.model === 'person' && aud === 'b2c'
+      ? html`<div class="form-grid"><label class="check"><input type="checkbox" name="inviteEnabled" value="1" ${v.inviteEnabled ? raw('checked') : ''}> Chi prenota può <strong>invitare un amico</strong> con un codice sconto tutto suo (solo se la partenza ha ancora posto)</label>
+        ${field('Sconto per l’amico (%)', 'invitePercent', v.invitePercent, { type: 'number', hint: 'vuoto = quello generale (Sito › Impostazioni › Invita un amico)', attrs: 'min="1" max="90"' })}</div>`
+      : ''}
     <fieldset class="field"><legend class="label">Lingue in cui offri questo servizio</legend><div class="check-row">${LANGS.map((l) => html`<label class="check"><input type="checkbox" name="langs" value="${l}" ${v.langs.includes(l) ? raw('checked') : ''}> ${LANG_META[l].name}</label>`)}</div></fieldset>
     ${aud === 'b2b' ? html`<p class="muted small">I prezzi dedicati ai singoli partner si impostano nella scheda del partner.</p>` : ''}
   </div>

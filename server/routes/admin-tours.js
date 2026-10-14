@@ -53,6 +53,7 @@ export function bodyToDef(body, existing = {}, { nextOrder = 100 } = {}) {
     cancelHours: int('cancelHours'),
     payOnSite: !!body.payOnSite,
     themeOther: !!body.themeOther,
+    ...(model === 'person' ? { inviteEnabled: !!body.inviteEnabled, invitePercent: int('invitePercent') } : {}),
     art: String(body.art ?? 'dome'),
     image: String(body.image ?? '').trim() || null,
     languages: [].concat(body.langs ?? []).filter((l) => LANGS.includes(l)),
@@ -125,6 +126,7 @@ export function adminToursRouter(app) {
     v.chooseHours = body.chooseHours ? '1' : '';
     v.roundHours = body.roundHours ? '1' : '';
     v.themeOther = body.themeOther ? '1' : '';
+    v.inviteEnabled = body.inviteEnabled ? '1' : '';
     v.payOnSite = body.payOnSite ? '1' : '';
     v.wd = [].concat(body.wd ?? []).map(String);
     v.langs = [].concat(body.langs ?? []);

@@ -19,13 +19,18 @@
   var paxOut = root.querySelector('[data-pax]');
 
   var langSel = root.querySelector('[data-tour-lang]');
+  var hoursSel = root.querySelector('[data-hours]'); // servizio a ore: quante ore, scelte dal cliente
+  var hourly = root.hasAttribute('data-hourly');
   var state = { tl: langSel ? langSel.value : '', pax: Math.min(2, max), month: minDate.slice(0, 7), days: {}, date: null, time: null, slots: [], loading: false };
   var seq = 0;
 
   var locale = { it: 'it-IT', es: 'es-ES', ja: 'ja-JP' }[lang] || 'en-GB';
   var money = new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 2 });
   function fill(s, vars) { return s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k]; }); }
-  function total() { return model === 'person' ? unit * state.pax : unit; }
+  function total() {
+    if (hourly) { var s = state.slots.filter(function (x) { return x.time === state.time; })[0]; return s ? s.totalCents : 0; }
+    return model === 'person' ? unit * state.pax : unit;
+  }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function monthLabel(m) {
     var p = m.split('-');
@@ -44,7 +49,7 @@
     });
   }
 
-  function tlParam() { return state.tl ? '&tl=' + encodeURIComponent(state.tl) : ''; }
+  function tlParam() { return (state.tl ? '&tl=' + encodeURIComponent(state.tl) : '') + (hoursSel ? '&hours=' + encodeURIComponent(hoursSel.value) : ''); }
 
   function loadMonth() {
     var my = ++seq;
@@ -117,7 +122,8 @@
       b.type = 'button'; b.dataset.time = s.time;
       b.append(el('strong', null, s.time));
       var note = model === 'person' ? [s.joined ? L.joined : '', s.lang && L.langNames[s.lang] ? fill(L.inLang, { lang: L.langNames[s.lang] }) : '', s.left <= 4 ? fill(L.left, { n: s.left }) : ''].filter(Boolean).join(' · ') : '';
-      if (note) b.append(el('small', null, note));
+      if (hourly && s.totalCents != null) b.append(el('small', null, money.format(s.totalCents / 100)));
+      else if (note) b.append(el('small', null, note));
       b.addEventListener('click', function () { state.time = s.time; renderSlots(); update(); });
       wrap.append(b);
     });
@@ -150,6 +156,7 @@
   root.querySelector('[data-pax-minus]').addEventListener('click', function () { setPax(state.pax - 1); });
   root.querySelector('[data-pax-plus]').addEventListener('click', function () { setPax(state.pax + 1); });
 
+  if (hoursSel) hoursSel.addEventListener('change', function () { state.time = null; update(); loadMonth(); if (state.date) loadSlots(); });
   if (langSel) langSel.addEventListener('change', function () { state.tl = langSel.value; state.time = null; update(); loadMonth(); if (state.date) loadSlots(); });
 
   update();

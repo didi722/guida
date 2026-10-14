@@ -29,8 +29,9 @@ export function invitesOf(db, bookingId, nowMs = Date.now()) {
  */
 export function inviteOffer(app, b, nowMs = Date.now()) {
   const cfg = app.cfg.invite;
-  if (!cfg?.enabled || !(cfg.percent > 0)) return { ok: false, reason: 'off' };
   const tour = app.content.tour(b.tour_slug);
+  const percent = tour?.invitePercent ?? cfg?.percent; // lo sconto può essere diverso per ogni tour
+  if (!cfg?.enabled || tour?.inviteEnabled === false || !(percent > 0)) return { ok: false, reason: 'off' };
   if (!tour || tour.model !== 'person' || b.channel !== 'b2c' || b.status !== 'confirmed') return { ok: false, reason: 'ineligible' };
   if (localToInstant(b.date, b.start_time) <= nowMs) return { ok: false, reason: 'started' };
   const invites = invitesOf(app.db, b.id, nowMs);
@@ -38,7 +39,7 @@ export function inviteOffer(app, b, nowMs = Date.now()) {
   const slot = slotStillOpen(app, tour, b.date, b.start_time, 1, 'b2c', nowMs);
   const free = slot ? slot.left - invites.filter((i) => !i.used).length : 0;
   if (free < 1) return { ok: false, reason: 'full', invites };
-  return { ok: true, percent: cfg.percent, left: slot.left, remaining: Math.min(free, cfg.maxPerBooking - invites.length), invites };
+  return { ok: true, percent, left: slot.left, remaining: Math.min(free, cfg.maxPerBooking - invites.length), invites };
 }
 
 /**

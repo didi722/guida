@@ -4,9 +4,10 @@ import { paymentOptions, unitPriceFor } from '../bookings.js';
 import { fmtDate, nowRome } from '../time.js';
 import { page, icon } from './layout.js';
 import { giftBand } from './gift.js';
+import { hoursLabel } from './components.js';
 import { breadcrumbs, cancellationLine, checkIcon, crossIcon, departuresList, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, LANG_META, pick } from '../langs.js';
-import { openTo, rateRows } from '../rates.js';
+import { hourOptions, minHours, openTo, rateRows } from '../rates.js';
 import { formatMoney } from '../util.js';
 import { paymentsFrom } from '../opening.js';
 
@@ -55,8 +56,8 @@ export function homePage(ctx, { departures = [], quotes = [], reviewStats = null
       <p class="lead">${t('home.lead')}</p>
       ${languagesBadge(ctx)}
       <p class="btn-row">
-        ${privateCover ? html`<a class="btn btn-gold" href="${guideTour ? u('/hourly') : u('/tours') + '#private'}">${t('home.private.title')}</a>` : ''}
-        ${groupCover ? html`<a class="btn ${privateCover ? 'btn-outline' : 'btn-gold'}" href="${u('/book')}">${t('home.group.title')}</a>` : ''}
+        ${privateCover ? html`<a class="btn btn-gold" href="${u('/tours')}?kind=private">${t('home.private.title')}</a>` : ''}
+        ${groupCover ? html`<a class="btn ${privateCover ? 'btn-outline' : 'btn-gold'}" href="${u('/tours')}?kind=group">${t('home.group.title')}</a>` : ''}
       </p>
       <p class="hero-links"><a href="${u('/tours')}">${t('home.allTours')} →</a> <span aria-hidden="true">·</span> <a href="${u('/b2b')}">${t('home.forAgencies')}</a></p>
     </div>
@@ -69,24 +70,24 @@ ${privateCover || groupCover ? html`<section class="section tight choose">
     ${sectionHead(t('home.choose.title'), t('home.choose.lead'))}
     <div class="choice-grid">
       ${privateCover ? html`<article class="card choice-card reveal" id="private">
-        <a class="card-media" href="${u(guideTour ? '/hourly' : '/tours')}" tabindex="-1" aria-hidden="true">${tourMedia(ctx, privateCover, '')}<span class="chip chip-float">${t('home.private.eyebrow')}</span></a>
+        <a class="card-media" href="${u('/tours')}?kind=private" tabindex="-1" aria-hidden="true">${tourMedia(ctx, privateCover, '')}<span class="chip chip-float">${t('home.private.eyebrow')}</span></a>
         <div class="choice-body">
           <h3>${t('home.private.title')}</h3>
           <p class="muted">${t('home.private.p')}</p>
           ${guideRates ? html`<ul class="plain rate-mini">${guideRates.rows.map((r) => html`<li><span>${t(`hourly.b.${r.hours}`)}</span><strong>${formatMoney(r.cents, lang)}</strong></li>`)}</ul>
           <p class="small muted">${t('hourly.note.group', { max: 25 })} ${t('home.private.sup')}</p>` : ''}
-          <p class="btn-row"><a class="btn btn-gold" href="${u(guideTour ? '/hourly' : '/tours')}">${t('home.private.cta')}</a></p>
+          <p class="btn-row"><a class="btn btn-gold" href="${u('/tours')}?kind=private">${t('home.private.cta')}</a></p>
         </div>
       </article>` : ''}
       ${groupCover ? html`<article class="card choice-card reveal" id="group">
-        <a class="card-media" href="${u('/book')}" tabindex="-1" aria-hidden="true">${tourMedia(ctx, groupCover, '')}<span class="chip chip-float">${t('home.group.eyebrow')}</span></a>
+        <a class="card-media" href="${u('/tours')}?kind=group" tabindex="-1" aria-hidden="true">${tourMedia(ctx, groupCover, '')}<span class="chip chip-float">${t('home.group.eyebrow')}</span></a>
         <div class="choice-body">
           <h3>${t('home.group.title')}</h3>
           <p class="muted">${t('home.group.p')}${fromGroup ? html` <strong>${t('home.group.from', { price: fromGroup.money })}</strong>` : ''}</p>
           ${departures.length
             ? html`<p class="eyebrow small">${t('home.group.next')}</p>${departuresList(ctx, departures.slice(0, 3))}`
             : html`<p class="small muted">${t('home.group.none')}</p>`}
-          <p class="btn-row"><a class="btn ${privateCover ? 'btn-outline' : 'btn-gold'}" href="${u('/book')}">${t('home.group.cta')}</a></p>
+          <p class="btn-row"><a class="btn ${privateCover ? 'btn-outline' : 'btn-gold'}" href="${u('/tours')}?kind=group">${t('home.group.cta')}</a></p>
         </div>
       </article>` : ''}
     </div>
@@ -182,22 +183,25 @@ ${posts.length
 }
 
 // ───────────────────────── Tour ─────────────────────────
-export function toursPage(ctx) {
+export function toursPage(ctx, { kind = null } = {}) {
   const { t, lang, app } = ctx;
   const rates = app.rates.get();
   const shown = app.content.tours.filter((x) => openTo(rates, x, ctx.acct?.status === 'approved' ? 'b2b' : 'b2c'));
-  const groups = shown.filter((x) => x.model === 'person');
-  const priv = shown.filter((x) => x.model === 'group');
+  // «?kind=private» / «?kind=group»: solo i tour privati oppure solo quelli condivisi (dalle due schede della home)
+  const groups = kind === 'private' ? [] : shown.filter((x) => x.model === 'person');
+  const priv = kind === 'group' ? [] : shown.filter((x) => x.model === 'group');
+  const headKey = kind === 'private' ? 'tours.kindPrivate' : kind === 'group' ? 'tours.kindGroup' : null;
   const body = html`
 <section class="page-head"><div class="wrap">
-  ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.tours')]])}
-  <h1>${t('tours.title')}</h1><p class="lead">${t('tours.lead')}</p>
+  ${breadcrumbs(ctx, headKey ? [[t('nav.home'), `/${lang}/`], [t('nav.tours'), ctx.u('/tours')], [t(`${headKey}.title`)]] : [[t('nav.home'), `/${lang}/`], [t('nav.tours')]])}
+  <h1>${headKey ? t(`${headKey}.title`) : t('tours.title')}</h1><p class="lead">${headKey ? t(`${headKey}.lead`) : t('tours.lead')}</p>
 </div></section>
 <section class="section"><div class="wrap">
-  ${priv.length ? html`<h2 class="h-sub" id="private">${t('tours.privateTitle')}</h2><p class="muted sub-lead">${t('tours.privateLead')}</p>
+  ${priv.length ? html`${kind ? '' : html`<h2 class="h-sub" id="private">${t('tours.privateTitle')}</h2><p class="muted sub-lead">${t('tours.privateLead')}</p>`}
   <div class="grid grid-3">${priv.map((x) => tourCard(ctx, x))}</div>` : ''}
-  ${groups.length ? html`<h2 class="h-sub ${priv.length ? 'spaced' : ''}" id="group">${t('tours.groupTitle')}</h2><p class="muted sub-lead">${t('tours.groupLead')}</p>
+  ${groups.length ? html`${kind ? '' : html`<h2 class="h-sub ${priv.length ? 'spaced' : ''}" id="group">${t('tours.groupTitle')}</h2><p class="muted sub-lead">${t('tours.groupLead')}</p>`}
   <div class="grid grid-3">${groups.map((x) => tourCard(ctx, x))}</div>` : ''}
+  ${kind ? html`<p class="center spaced reveal"><a class="btn btn-outline" href="${ctx.u('/tours')}">${t('tours.allKinds')}</a></p>` : ''}
   <p class="center spaced reveal"><a class="btn btn-outline" href="${ctx.u('/programs')}">${t('pg.toursLink')}</a></p>
 </div></section>`;
   return page(ctx, { title: t('nav.tours'), description: t('tours.lead'), path: `/${lang}/tours`, body, activeNav: 'tours' });
@@ -230,8 +234,9 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   <a class="btn btn-gold btn-block" href="${u('/hourly')}?product=${tour.slug}">${t('hourly.card.cta')}</a>
   <p class="small muted policy-note">${cancellationLine(ctx, tour, channel)}</p>
 </aside>`;
-  const widget = hourly ? hourlyCard : html`
-<aside class="book-card" id="book" data-widget data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-unit="${p.unit}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
+  const hoursDefault = hourly && tour.chooseHours ? Math.max(minHours(tour.service), tour.durationMin / 60) : null;
+  const widget = html`
+<aside class="book-card" id="book" data-widget ${hourly ? raw('data-hourly') : ''} data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-unit="${p.unit}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
   <div class="book-head">
     <p class="price-big">${p.money}<small> / ${p.per}</small></p>
     ${channel === 'b2b' ? html`<span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}
@@ -243,6 +248,7 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
       <button type="button" data-pax-minus aria-label="−">−</button><output data-pax aria-live="polite">2</output><button type="button" data-pax-plus aria-label="+">+</button>
     </div>
   </div>
+  ${hoursDefault != null ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select data-hours>${hourOptions(tour.service).map((h) => html`<option value="${h}" ${h === hoursDefault ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>${tour.roundHours ? html`<small class="muted">${t('hourly.note.round')}</small>` : ''}</label>` : ''}
   ${tour.languages.length > 1 ? html`<label class="field"><span class="label">${t('w.tourLang')}</span><select data-tour-lang>${tour.languages.map((l) => html`<option value="${l}" ${l === (tour.languages.includes(lang) ? lang : tour.languages[0]) ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}</select></label>` : ''}
   <div class="cal" data-cal><p class="muted small">${t('w.loading')}</p></div>
   <div class="slots-wrap" data-slots hidden></div>

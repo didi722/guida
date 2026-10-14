@@ -143,6 +143,7 @@ export function normalizeTour(slug, d, where = slug) {
   }
   if (!(Number.isInteger(Number(d.maxParticipants)) && Number(d.maxParticipants) > 0)) fail(where, 'il numero massimo di persone deve essere un intero maggiore di zero');
   if (!hourly && (!(Number(d.price) >= 0) || d.price === '' || d.price == null)) fail(where, 'il prezzo non è valido');
+  if (d.invitePercent != null && d.invitePercent !== '' && !(Number.isInteger(Number(d.invitePercent)) && Number(d.invitePercent) >= 1 && Number(d.invitePercent) <= 90)) fail(where, 'lo sconto per l’amico deve essere un numero intero da 1 a 90');
   if (d.cancelHours != null && d.cancelHours !== '' && !(Number(d.cancelHours) >= 0)) fail(where, 'le ore di cancellazione non sono valide');
   if (!d.it?.title || !d.it?.summary) fail(where, 'servono almeno titolo e riassunto in italiano');
   const i18n = {};
@@ -191,6 +192,8 @@ export function normalizeTour(slug, d, where = slug) {
     service: hourly ? d.service : null, // guide | assistant | leader | meetgreet
     audience: audienceOf(d), // 'b2c' (privati) oppure 'b2b' (solo partner approvati): un tour è dell'uno o dell'altro, con un solo prezzo
     roundHours: hourly && !!d.chooseHours && !!d.roundHours, // il cliente sceglie le ore, ma si paga a ore intere (2,5 ore = 3)
+    inviteEnabled: d.inviteEnabled == null ? null : !!d.inviteEnabled, // «Invita un amico» su questo tour (null = come da impostazioni generali)
+    invitePercent: d.invitePercent == null || d.invitePercent === '' ? null : Number(d.invitePercent), // sconto per l'amico su questo tour (null = quello generale)
     themeOther: !!d.themeOther, // tra le scelte tematiche c'è anche «Altro», con un testo libero per la guida
     chooseHours: hourly && !!d.chooseHours, // il cliente sceglie quante ore; altrimenti la durata è quella del tour
     priceCents: hourly ? 0 : cents(d.price), // dei privati se il tour è B2C; la tariffa agenzie (prima dello sconto del partner) se è B2B
