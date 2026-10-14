@@ -78,7 +78,7 @@ export function tourMedia(ctx, tour, label) {
 export const startHours = (tour) => (tour.chooseHours ? Math.max(minHours(tour.service), tour.durationMin / 60) : tour.durationMin / 60);
 
 /** La durata del tour: «2 ore», oppure «A partire da 2 ore» se il cliente sceglie quante ore. */
-export const durationText = (t, lang, tour) => (tour.pricing === 'hourly' && tour.chooseHours ? t('tour.fromDuration', { dur: fmtDuration(startHours(tour) * 60, lang) }) : fmtDuration(tour.durationMin, lang));
+export const durationText = (t, lang, tour) => (tour.pricing === 'hourly' && tour.chooseHours ? t('tour.fromDuration', { dur: fmtHours(t, startHours(tour)) }) : fmtDuration(tour.durationMin, lang));
 
 /** "€35 / persona" oppure "€190 / gruppo", con tariffa B2B se il visitatore è un partner approvato. */
 export function priceParts(ctx, tour) {
