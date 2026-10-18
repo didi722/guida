@@ -316,7 +316,7 @@ export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mo
       ${list.rows.map((b) => {
         const tour = content.tour(b.tour_slug);
         return html`<tr class="pb-${b.status}">
-          <td data-label="${t('partner.col.file')}"><a class="pb-title" href="${detail(b)}">${b.client_ref || b.name}</a><small class="muted">${b.client_ref ? `${b.name} · ` : ''}${b.ref}</small></td>
+          <td data-label="${t('partner.col.file')}"><a class="pb-title" href="${detail(b)}">${b.client_ref || b.name}</a><small class="muted">${b.client_ref ? `${b.name} · ` : ''}${b.ref}${b.group_ref ? html` · <a href="${u(`/b2b/packages/${b.group_ref}`)}">${t('pkg.chip', { ref: b.group_ref })}</a>` : ''}</small></td>
           <td data-label="${t('s.service')}">${tour?.i18n[lang].title ?? b.tour_slug}<small class="muted">${b.start_time}–${b.end_time}</small></td>
           <td data-label="${t('s.date')}"><strong>${fmtDate(b.date, lang, 'short')}</strong><small class="muted">${t('partner.bookedOn', { date: fmtDate(nowRome(Date.parse(b.created_at)).date, lang, 'short') })}</small></td>
           <td class="num" data-label="${t('s.guests')}">${b.participants}</td>

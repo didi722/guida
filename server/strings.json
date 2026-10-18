@@ -5560,5 +5560,533 @@
   "Recommended for far dates",
   "Recomendado para fechas lejanas",
   "先の日程におすすめ"
+ ],
+ "pkg.nav": [
+  "Pacchetto ({n})",
+  "Package ({n})",
+  "Paquete ({n})",
+  "パッケージ（{n}）"
+ ],
+ "pkg.title": [
+  "Il tuo pacchetto",
+  "Your package",
+  "Tu paquete",
+  "パッケージ"
+ ],
+ "pkg.lead": [
+  "Più servizi per lo stesso cliente, prenotati insieme: una sola opzione, un solo pagamento e una sola fattura. Le date si bloccano solo quando prenoti o opzioni il pacchetto.",
+  "Several services for the same client, booked together: one option, one payment and one invoice. Dates are only held when you book or option the package.",
+  "Varios servicios para el mismo cliente, reservados juntos: una sola opción, un solo pago y una sola factura. Las fechas solo se bloquean cuando reservas u optas por el paquete.",
+  "同じお客様の複数のサービスをまとめて予約できます。仮押さえ・お支払い・請求書はそれぞれ1回だけです。日程は、パッケージを予約または仮押さえしたときに初めて確保されます。"
+ ],
+ "pkg.add": [
+  "Aggiungi al pacchetto",
+  "Add to package",
+  "Añadir al paquete",
+  "パッケージに追加"
+ ],
+ "pkg.addHint": [
+  "Per prenotare più servizi insieme: una sola opzione, un solo pagamento, una sola fattura.",
+  "To book several services together: one option, one payment, one invoice.",
+  "Para reservar varios servicios juntos: una sola opción, un solo pago, una sola factura.",
+  "複数のサービスをまとめて予約：仮押さえ・お支払い・請求書は1回だけです。"
+ ],
+ "pkg.addAnother": [
+  "Aggiungi un altro servizio",
+  "Add another service",
+  "Añadir otro servicio",
+  "サービスを追加"
+ ],
+ "pkg.chooseService": [
+  "Scegli un servizio",
+  "Choose a service",
+  "Elige un servicio",
+  "サービスを選ぶ"
+ ],
+ "pkg.empty": [
+  "Il pacchetto è vuoto.",
+  "The package is empty.",
+  "El paquete está vacío.",
+  "パッケージは空です。"
+ ],
+ "pkg.emptyHelp": [
+  "Scegli un servizio e, nel riepilogo prima di prenotare, tocca «Aggiungi al pacchetto».",
+  "Pick a service and, on the summary before booking, tap “Add to package”.",
+  "Elige un servicio y, en el resumen antes de reservar, pulsa «Añadir al paquete».",
+  "サービスを選び、予約前の確認画面で「パッケージに追加」を押してください。"
+ ],
+ "pkg.remove": [
+  "Togli",
+  "Remove",
+  "Quitar",
+  "削除"
+ ],
+ "pkg.total": [
+  "Totale del pacchetto",
+  "Package total",
+  "Total del paquete",
+  "パッケージの合計"
+ ],
+ "pkg.details": [
+  "Dati del pacchetto",
+  "Package details",
+  "Datos del paquete",
+  "パッケージの情報"
+ ],
+ "pkg.line.unavailable": [
+  "Non più disponibile",
+  "No longer available",
+  "Ya no está disponible",
+  "空きがなくなりました"
+ ],
+ "pkg.line.overlap": [
+  "Si sovrappone a un altro servizio",
+  "Overlaps another service",
+  "Se solapa con otro servicio",
+  "他のサービスと時間が重なっています"
+ ],
+ "pkg.line.invalid": [
+  "Non più valido",
+  "No longer valid",
+  "Ya no es válido",
+  "無効になりました"
+ ],
+ "pkg.flash.added": [
+  "Servizio aggiunto al pacchetto.",
+  "Service added to the package.",
+  "Servicio añadido al paquete.",
+  "サービスをパッケージに追加しました。"
+ ],
+ "pkg.flash.removed": [
+  "Servizio tolto dal pacchetto.",
+  "Service removed from the package.",
+  "Servicio quitado del paquete.",
+  "サービスをパッケージから削除しました。"
+ ],
+ "pkg.flash.new": [
+  "Pacchetto registrato.",
+  "Package registered.",
+  "Paquete registrado.",
+  "パッケージを登録しました。"
+ ],
+ "pkg.flash.confirmed": [
+  "Pacchetto confermato: ti abbiamo mandato riepilogo e voucher.",
+  "Package confirmed: we have sent you the summary and vouchers.",
+  "Paquete confirmado: te hemos enviado el resumen y los vouchers.",
+  "パッケージが確定しました。内容とバウチャーをメールでお送りしました。"
+ ],
+ "pkg.flash.released": [
+  "Pacchetto rilasciato: le date sono tornate libere.",
+  "Package released: the dates are available again.",
+  "Paquete liberado: las fechas vuelven a estar disponibles.",
+  "パッケージの仮押さえを解除しました。日程は解放されました。"
+ ],
+ "pkg.flash.expired": [
+  "L’opzione era scaduta: le date sono state liberate.",
+  "The option had expired: the dates have been released.",
+  "La opción había caducado: las fechas se han liberado.",
+  "仮押さえの期限が切れていたため、日程は解放されました。"
+ ],
+ "pkg.flash.error": [
+  "Non è stato possibile confermare il pacchetto: scrivimi e lo sistemiamo.",
+  "We could not confirm the package: write to me and we will sort it out.",
+  "No se ha podido confirmar el paquete: escríbeme y lo arreglamos.",
+  "パッケージを確定できませんでした。ご連絡いただければ対応いたします。"
+ ],
+ "pkg.flash.cancelled": [
+  "Pacchetto annullato.",
+  "Package cancelled.",
+  "Paquete cancelado.",
+  "パッケージをキャンセルしました。"
+ ],
+ "pkg.flash.cancelPartial": [
+  "Servizi annullati. Per gli altri il termine è passato: scrivimi.",
+  "Services cancelled. For the others the deadline has passed: write to me.",
+  "Servicios cancelados. Para los demás el plazo ha pasado: escríbeme.",
+  "一部のサービスをキャンセルしました。残りはキャンセル期限を過ぎているため、ご連絡ください。"
+ ],
+ "pkg.flash.cancel-error": [
+  "Non è possibile annullare online: scrivimi.",
+  "This cannot be cancelled online: write to me.",
+  "No se puede cancelar online: escríbeme.",
+  "オンラインではキャンセルできません。ご連絡ください。"
+ ],
+ "pkg.err.invalid": [
+  "Questo servizio non è valido o non è più prenotabile.",
+  "This service is not valid or can no longer be booked.",
+  "Este servicio no es válido o ya no se puede reservar.",
+  "このサービスは無効か、すでに予約できません。"
+ ],
+ "pkg.err.unavailable": [
+  "Questo orario non è più disponibile.",
+  "This time is no longer available.",
+  "Este horario ya no está disponible.",
+  "この時間はすでに空きがありません。"
+ ],
+ "pkg.err.theme": [
+  "Scegli prima l’opzione richiesta dal servizio.",
+  "First choose the option the service asks for.",
+  "Elige primero la opción que pide el servicio.",
+  "先に、サービスで求められている選択をしてください。"
+ ],
+ "pkg.err.overlap": [
+  "Si sovrappone a un altro servizio del pacchetto: la guida è una sola.",
+  "It overlaps another service in the package: there is only one guide.",
+  "Se solapa con otro servicio del paquete: solo hay una guía.",
+  "パッケージ内の他のサービスと時間が重なっています（ガイドは1名です）。"
+ ],
+ "pkg.err.duplicate": [
+  "Questo servizio è già nel pacchetto: toglilo se vuoi cambiare le persone.",
+  "This service is already in the package: remove it if you want to change the number of people.",
+  "Este servicio ya está en el paquete: quítalo si quieres cambiar las personas.",
+  "このサービスはすでにパッケージに入っています。人数を変えるには、いったん削除してください。"
+ ],
+ "pkg.err.full": [
+  "Un pacchetto può avere al massimo {n} servizi.",
+  "A package can have at most {n} services.",
+  "Un paquete puede tener como máximo {n} servicios.",
+  "パッケージには最大{n}件までサービスを入れられます。"
+ ],
+ "pkg.err.language": [
+  "La partenza condivisa ha già un gruppo in un’altra lingua: scegli un altro orario o un’altra lingua.",
+  "The shared departure already has a group in another language: choose another time or language.",
+  "La salida compartida ya tiene un grupo en otro idioma: elige otro horario u otro idioma.",
+  "この乗り合い出発にはすでに別の言語のグループがいます。別の時間または言語を選んでください。"
+ ],
+ "pkg.err.stale": [
+  "Qualche servizio non è più disponibile: togli quelli segnati e riprova.",
+  "Some services are no longer available: remove the marked ones and try again.",
+  "Algún servicio ya no está disponible: quita los marcados e inténtalo de nuevo.",
+  "空きがなくなったサービスがあります。印の付いたものを削除して、もう一度お試しください。"
+ ],
+ "pkg.option.text": [
+  "Opziona il pacchetto: tengo tutte le date per te fino a {until} ({days}), senza pagare nulla e senza impegno. Quando il tuo cliente conferma, confermi il pacchetto dal tuo account; altrimenti si libera da solo.",
+  "Option the package: I hold all the dates for you until {until} ({days}), with nothing to pay and no commitment. When your client confirms, you confirm the package from your account; otherwise it is released by itself.",
+  "Opta por el paquete: te reservo todas las fechas hasta el {until} ({days}), sin pagar nada y sin compromiso. Cuando tu cliente confirme, confirmas el paquete desde tu cuenta; si no, se libera solo.",
+  "パッケージを仮押さえできます。{until}（{days}）まで、お支払いも義務もなく、すべての日程を確保します。お客様が確定されたら、アカウントからパッケージを確定してください。確定されない場合は自動的に解放されます。"
+ ],
+ "pkg.option.btn": [
+  "Opziona il pacchetto senza pagare",
+  "Option the package without paying",
+  "Optar por el paquete sin pagar",
+  "お支払いなしでパッケージを仮押さえ"
+ ],
+ "pkg.firm": [
+  "Per le date lontane la prenotazione diretta ha una cancellazione gratuita breve: fino a {grace}; dopo, il rimborso scende al {percent}%.",
+  "For distant dates a direct booking has a short free cancellation: until {grace}; after that, the refund drops to {percent}%.",
+  "En fechas lejanas la reserva directa tiene una cancelación gratuita corta: hasta el {grace}; después, el reembolso baja al {percent}%.",
+  "日程が先の場合、直接予約の無料キャンセルは短い期間のみです。{grace}までは無料で、その後の返金は{percent}%になります。"
+ ],
+ "pkg.optionTitle": [
+  "Date trattenute (opzione)",
+  "Dates held (option)",
+  "Fechas retenidas (opción)",
+  "日程を仮押さえ中"
+ ],
+ "pkg.optionText": [
+  "Tutte le date del pacchetto sono trattenute per te fino a {until}. Non hai pagato nulla: conferma il pacchetto quando il tuo cliente ha deciso, oppure rilascialo. Se non fai nulla, le date si liberano da sole.",
+  "All the dates in the package are held for you until {until}. You have paid nothing: confirm the package when your client has decided, or release it. If you do nothing, the dates are released automatically.",
+  "Todas las fechas del paquete están retenidas para ti hasta el {until}. No has pagado nada: confirma el paquete cuando tu cliente haya decidido, o libéralo. Si no haces nada, las fechas se liberan solas.",
+  "パッケージのすべての日程を{until}まで仮押さえしています。お支払いはまだ発生していません。お客様が決まったらパッケージを確定するか、解除してください。何もされない場合、日程は自動的に解放されます。"
+ ],
+ "pkg.heldTitle": [
+  "In attesa di pagamento",
+  "Waiting for payment",
+  "A la espera del pago",
+  "お支払い待ち"
+ ],
+ "pkg.heldText": [
+  "Le date sono riservate per te ancora {n} minuti. Completa il pagamento per confermare tutto il pacchetto.",
+  "The dates are reserved for you for another {n} minutes. Complete the payment to confirm the whole package.",
+  "Las fechas están reservadas para ti {n} minutos más. Completa el pago para confirmar todo el paquete.",
+  "日程はあと{n}分間確保されています。お支払いを完了すると、パッケージ全体が確定します。"
+ ],
+ "pkg.confirmedTitle": [
+  "Pacchetto confermato",
+  "Package confirmed",
+  "Paquete confirmado",
+  "パッケージ確定"
+ ],
+ "pkg.confirmedText": [
+  "Ti abbiamo inviato i dettagli a {email}.",
+  "We have sent the details to {email}.",
+  "Te hemos enviado los detalles a {email}.",
+  "詳細を{email}にお送りしました。"
+ ],
+ "pkg.cancelledTitle": [
+  "Pacchetto annullato",
+  "Package cancelled",
+  "Paquete cancelado",
+  "パッケージをキャンセルしました"
+ ],
+ "pkg.cancelledText": [
+  "Questo pacchetto non è più attivo.",
+  "This package is no longer active.",
+  "Este paquete ya no está activo.",
+  "このパッケージは無効になりました。"
+ ],
+ "pkg.expiredOptionTitle": [
+  "Opzione terminata",
+  "Option ended",
+  "Opción terminada",
+  "仮押さえ終了"
+ ],
+ "pkg.expiredOptionText": [
+  "L’opzione è scaduta o è stata rilasciata: le date sono tornate libere. Nessun costo.",
+  "The option expired or was released: the dates are available again. No cost.",
+  "La opción ha caducado o se ha liberado: las fechas vuelven a estar disponibles. Sin coste.",
+  "仮押さえの期限が切れたか解除されたため、日程は解放されました。費用はかかりません。"
+ ],
+ "pkg.expiredTitle": [
+  "Pacchetto scaduto",
+  "Package expired",
+  "Paquete caducado",
+  "パッケージの期限切れ"
+ ],
+ "pkg.expiredText": [
+  "Il pagamento non è stato completato e le date sono state liberate. Puoi prenotare di nuovo.",
+  "The payment was not completed and the dates have been released. You can book again.",
+  "El pago no se completó y las fechas se han liberado. Puedes reservar de nuevo.",
+  "お支払いが完了しなかったため、日程は解放されました。改めてご予約いただけます。"
+ ],
+ "pkg.confirm": [
+  "Conferma il pacchetto",
+  "Confirm the package",
+  "Confirmar el paquete",
+  "パッケージを確定する"
+ ],
+ "pkg.confirmAsk": [
+  "Confermare tutto il pacchetto? Da ora vale la tua politica di annullo per ogni servizio.",
+  "Confirm the whole package? From now on your cancellation policy applies to each service.",
+  "¿Confirmar todo el paquete? Desde ahora vale tu política de cancelación para cada servicio.",
+  "パッケージ全体を確定しますか？ 以後、各サービスにキャンセルポリシーが適用されます。"
+ ],
+ "pkg.confirmAskLate": [
+  "Confermando, alcuni servizi non sono più rimborsabili del tutto secondo la tua politica di annullo. Confermare?",
+  "By confirming, some services are no longer fully refundable under your cancellation policy. Confirm?",
+  "Al confirmar, algunos servicios dejan de ser totalmente reembolsables según tu política de cancelación. ¿Confirmar?",
+  "確定すると、一部のサービスはキャンセルポリシー上、全額返金の対象ではなくなります。確定しますか？"
+ ],
+ "pkg.release": [
+  "Rilascia le date",
+  "Release the dates",
+  "Liberar las fechas",
+  "日程を解除する"
+ ],
+ "pkg.releaseAsk": [
+  "Rilasciare tutte le date del pacchetto? Tornano disponibili per altri clienti.",
+  "Release all the dates in the package? They become available to other clients.",
+  "¿Liberar todas las fechas del paquete? Vuelven a estar disponibles para otros clientes.",
+  "パッケージのすべての日程を解除しますか？ 他のお客様が予約できるようになります。"
+ ],
+ "pkg.releaseLine": [
+  "Rilascia solo questa data",
+  "Release only this date",
+  "Liberar solo esta fecha",
+  "この日程だけ解除する"
+ ],
+ "pkg.releaseLineAsk": [
+  "Rilasciare solo questa data? Le altre del pacchetto restano trattenute.",
+  "Release only this date? The others in the package stay on hold.",
+  "¿Liberar solo esta fecha? Las demás del paquete siguen retenidas.",
+  "この日程だけ解除しますか？ パッケージの他の日程はそのまま仮押さえされます。"
+ ],
+ "pkg.inPackage": [
+  "Questa data fa parte del pacchetto {ref}: si conferma insieme alle altre.",
+  "This date is part of package {ref}: it is confirmed together with the others.",
+  "Esta fecha forma parte del paquete {ref}: se confirma junto con las demás.",
+  "この日程はパッケージ{ref}の一部です。他の日程と一緒に確定します。"
+ ],
+ "pkg.openPackage": [
+  "Apri il pacchetto",
+  "Open the package",
+  "Abrir el paquete",
+  "パッケージを開く"
+ ],
+ "pkg.chip": [
+  "Pacchetto {ref}",
+  "Package {ref}",
+  "Paquete {ref}",
+  "パッケージ {ref}"
+ ],
+ "pkg.voucherOf": [
+  "Voucher del {date} alle {time}",
+  "Voucher for {date} at {time}",
+  "Voucher del {date} a las {time}",
+  "{date} {time} のバウチャー"
+ ],
+ "pkg.cancelUntil": [
+  "annullo gratuito fino a {until}",
+  "free cancellation until {until}",
+  "cancelación gratuita hasta el {until}",
+  "{until}まで無料でキャンセル可"
+ ],
+ "pkg.cancelPercent": [
+  "oggi rimborso {percent}%",
+  "refund today: {percent}%",
+  "hoy reembolso del {percent}%",
+  "現在の返金率：{percent}%"
+ ],
+ "pkg.cancelClosed": [
+  "non più rimborsabile",
+  "no longer refundable",
+  "ya no es reembolsable",
+  "返金対象外"
+ ],
+ "pkg.cancelBtn": [
+  "Annulla i servizi del pacchetto ({n})",
+  "Cancel the services in the package ({n})",
+  "Cancelar los servicios del paquete ({n})",
+  "パッケージのサービスをキャンセル（{n}件）"
+ ],
+ "pkg.cancelAsk": [
+  "Annullare {n} servizi del pacchetto? Rimborso o penale secondo la politica di ciascuno.",
+  "Cancel {n} services in the package? Refund or fee according to each one’s policy.",
+  "¿Cancelar {n} servicios del paquete? Reembolso o penalización según la política de cada uno.",
+  "パッケージの{n}件のサービスをキャンセルしますか？ 返金またはキャンセル料は、各サービスのポリシーに従います。"
+ ],
+ "pkg.cancelKept": [
+  "Per {n} servizi il termine di annullo è passato e non si possono annullare da qui. Per cambiare qualcosa scrivimi:",
+  "For {n} services the cancellation deadline has passed and they cannot be cancelled from here. To change anything, write to me:",
+  "Para {n} servicios ha pasado el plazo de cancelación y no se pueden cancelar desde aquí. Para cambiar algo, escríbeme:",
+  "{n}件のサービスはキャンセル期限を過ぎているため、こちらからはキャンセルできません。変更はこちらまでご連絡ください："
+ ],
+ "pkg.payTitle": [
+  "Pacchetto di {n} servizi",
+  "Package of {n} services",
+  "Paquete de {n} servicios",
+  "{n}件のサービスのパッケージ"
+ ],
+ "pkg.mail.confirmedSubject": [
+  "Pacchetto confermato {ref} — {n} servizi",
+  "Package confirmed {ref} — {n} services",
+  "Paquete confirmado {ref} — {n} servicios",
+  "パッケージ確定 {ref} — {n}件のサービス"
+ ],
+ "pkg.mail.confirmedIntro": [
+  "il pacchetto è confermato. Qui sotto trovi i servizi; in allegato un voucher per ciascuno e un unico file per il calendario.",
+  "your package is confirmed. The services are listed below; attached you will find a voucher for each one and a single calendar file.",
+  "tu paquete está confirmado. Abajo tienes los servicios; adjuntos, un voucher para cada uno y un único archivo de calendario.",
+  "パッケージが確定しました。サービスの一覧は以下のとおりです。各サービスのバウチャーと、カレンダー用ファイル（1つ）を添付しています。"
+ ],
+ "pkg.mail.optionSubject": [
+  "Opzione registrata sul pacchetto {ref} — {n} servizi",
+  "Option placed on package {ref} — {n} services",
+  "Opción registrada en el paquete {ref} — {n} servicios",
+  "パッケージ {ref} を仮押さえしました — {n}件のサービス"
+ ],
+ "pkg.mail.optionIntro": [
+  "tutte le date del pacchetto sono trattenute per te fino a {until}. Non hai pagato nulla e non hai alcun impegno: entro quel termine conferma il pacchetto (dal tuo account o dal pulsante qui sotto) oppure rilascialo se il tuo cliente non conferma. Se non fai nulla, le date si liberano da sole.",
+  "all the dates in the package are held for you until {until}. You have paid nothing and there is no commitment: before then, confirm the package (from your account or the button below), or release it if your client does not confirm. If you do nothing, the dates are released automatically.",
+  "todas las fechas del paquete quedan reservadas para ti hasta el {until}. No has pagado nada y no hay ningún compromiso: antes de esa fecha confirma el paquete (desde tu cuenta o con el botón de abajo) o libéralo si tu cliente no confirma. Si no haces nada, las fechas se liberan solas.",
+  "パッケージのすべての日程を{until}まで仮押さえしました。お支払いは発生せず、義務もありません。期限までに、アカウントまたは下のボタンからパッケージを確定するか、お客様が確定されない場合は解除してください。何もされない場合、日程は自動的に解放されます。"
+ ],
+ "pkg.mail.reminderSubject": [
+  "Promemoria: l’opzione del pacchetto {ref} scade il {until}",
+  "Reminder: the option on package {ref} expires on {until}",
+  "Recordatorio: la opción del paquete {ref} caduca el {until}",
+  "リマインダー：パッケージ {ref} の仮押さえの期限は{until}です"
+ ],
+ "pkg.mail.reminderIntro": [
+  "l’opzione del pacchetto scade il {until}. Se il tuo cliente ha confermato, conferma ora il pacchetto; altrimenti rilascialo, così le date tornano libere.",
+  "the option on the package expires on {until}. If your client has confirmed, confirm the package now; otherwise release it so the dates become available again.",
+  "la opción del paquete caduca el {until}. Si tu cliente ha confirmado, confirma ahora el paquete; si no, libéralo para que las fechas vuelvan a estar disponibles.",
+  "パッケージの仮押さえの期限は{until}です。お客様が確定された場合は、今すぐパッケージを確定してください。確定されない場合は解除して、日程を解放してください。"
+ ],
+ "pkg.mail.expiredSubject": [
+  "Opzione scaduta sul pacchetto {ref}",
+  "Option expired on package {ref}",
+  "Opción caducada en el paquete {ref}",
+  "パッケージ {ref} の仮押さえの期限が切れました"
+ ],
+ "pkg.mail.expiredIntro": [
+  "il pacchetto non è stato confermato entro {until}, quindi le date sono state liberate. Nessun costo e nessun impegno. Se ti servono ancora, puoi prenotare di nuovo dal sito, se sono ancora disponibili.",
+  "the package was not confirmed by {until}, so the dates have been released. No cost and no commitment. If you still need them, you can book again on the website, if they are still available.",
+  "el paquete no se confirmó antes del {until}, así que las fechas se han liberado. Sin coste ni compromiso. Si todavía las necesitas, puedes reservar de nuevo en la web, si siguen disponibles.",
+  "{until}までに確定されなかったため、日程を解放しました。費用は発生せず、義務もありません。引き続き必要な場合は、日程が空いていれば、サイトから改めてご予約いただけます。"
+ ],
+ "pkg.mail.extendedSubject": [
+  "Opzione prorogata sul pacchetto {ref}",
+  "Option extended on package {ref}",
+  "Opción prorrogada en el paquete {ref}",
+  "パッケージ {ref} の仮押さえを延長しました"
+ ],
+ "pkg.mail.extendedIntro": [
+  "ti ho prorogato l’opzione: tutte le date del pacchetto restano trattenute fino a {until}.",
+  "I have extended your option: all the dates in the package stay held until {until}.",
+  "te he prorrogado la opción: todas las fechas del paquete quedan reservadas hasta el {until}.",
+  "仮押さえを延長しました。パッケージのすべての日程は{until}まで確保されています。"
+ ],
+ "pkg.mail.cancelledSubject": [
+  "Pacchetto annullato {ref}",
+  "Package cancelled {ref}",
+  "Paquete cancelado {ref}",
+  "パッケージをキャンセルしました {ref}"
+ ],
+ "pkg.mail.cancelledIntro": [
+  "{n} servizi del pacchetto sono stati annullati. Ecco l’esito di ciascuno.",
+  "{n} services in the package have been cancelled. Here is the outcome of each one.",
+  "se han cancelado {n} servicios del paquete. Este es el resultado de cada uno.",
+  "パッケージの{n}件のサービスをキャンセルしました。結果は以下のとおりです。"
+ ],
+ "pkg.mail.lineRefund": [
+  "rimborso {amount}, sul metodo di pagamento originale",
+  "refund {amount}, to the original payment method",
+  "reembolso {amount}, en el método de pago original",
+  "返金額 {amount}（元のお支払い方法へ）"
+ ],
+ "pkg.mail.linePenalty": [
+  "penale di {amount}, inclusa nella fattura",
+  "cancellation fee {amount}, included in the invoice",
+  "penalización de {amount}, incluida en la factura",
+  "キャンセル料 {amount}（請求書に含まれます）"
+ ],
+ "pkg.mail.lineKept": [
+  "{amount} trattenuti come penale",
+  "{amount} kept as cancellation fee",
+  "{amount} retenidos como penalización",
+  "キャンセル料として {amount} を差し引きました"
+ ],
+ "pkg.mail.lineNone": [
+  "nessun rimborso",
+  "no refund",
+  "sin reembolso",
+  "返金なし"
+ ],
+ "pkg.mail.lostSubject": [
+  "Pacchetto {ref}: una data non è più disponibile, rimborso in corso",
+  "Package {ref}: a date is no longer available, refund issued",
+  "Paquete {ref}: una fecha ya no está disponible, reembolso en curso",
+  "パッケージ {ref}：枠を確保できなかった日程があるため、返金手続き中です"
+ ],
+ "pkg.mail.lostBody": [
+  "purtroppo il pagamento è arrivato dopo la scadenza del blocco e nel frattempo una delle date è stata assegnata ad altri. Non confermiamo il pacchetto a metà: ti abbiamo rimborsato l’intero importo. Scusaci: puoi sceglierne altre sul sito o scrivermi.",
+  "unfortunately your payment arrived after the hold expired and one of the dates has meanwhile been taken. We do not confirm a package halfway: we have refunded the full amount. Sorry about that: you can pick other dates on the website or write to me.",
+  "por desgracia, el pago llegó cuando el bloqueo ya había caducado y, entretanto, una de las fechas se ha asignado a otras personas. No confirmamos el paquete a medias: te hemos reembolsado el importe íntegro. Disculpa las molestias: puedes elegir otras fechas en la web o escribirme.",
+  "誠に申し訳ありませんが、枠の確保期限を過ぎてからお支払いが届き、その間に日程の1つが他のお客様に割り当てられました。パッケージを一部だけ確定することはできないため、お支払い金額は全額返金いたしました。お手数ですが、サイトで別の日程をお選びいただくか、ご連絡ください。"
+ ],
+ "pkg.mail.until": [
+  "Opzione valida fino a",
+  "Option valid until",
+  "Opción válida hasta",
+  "仮押さえの期限"
+ ],
+ "pkg.mail.total": [
+  "Totale del pacchetto",
+  "Package total",
+  "Total del paquete",
+  "パッケージの合計"
+ ],
+ "pkg.mail.cta": [
+  "Apri il pacchetto",
+  "Open the package",
+  "Abrir el paquete",
+  "パッケージを開く"
+ ],
+ "pkg.mail.ctaOption": [
+  "Conferma o rilascia il pacchetto",
+  "Confirm or release the package",
+  "Confirmar o liberar el paquete",
+  "パッケージを確定または解除する"
  ]
 }

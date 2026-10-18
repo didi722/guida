@@ -20,6 +20,9 @@ export function createServices(app) {
   }
 
   const svc = {
+    /** Rimborsa `cents` di una prenotazione pagata con carta (e ne segna l'esito). */
+    refundBooking: doRefund,
+
     /** Crea la sessione di pagamento per una prenotazione "held". Ritorna l'URL a cui mandare il cliente. */
     async startCheckout(booking, lang, nowMs = Date.now(), attempt = 0) {
       const tour = content.tour(booking.tour_slug);
@@ -94,19 +97,20 @@ export function createServices(app) {
       return res;
     },
 
-    /** Annulla; rimborsa se dovuto. by: 'customer' | 'admin'. */
-    async cancel(bookingId, { by, reason, refund = 'auto' }, nowMs = Date.now()) {
+    /** Annulla; rimborsa se dovuto. by: 'customer' | 'admin'. Con `quiet` non manda le email. */
+    async cancel(bookingId, { by, reason, refund = 'auto', quiet = false }, nowMs = Date.now()) {
       const res = cancelBooking(app, bookingId, { by, reason, refund }, nowMs);
       if (res.already) return res;
       if (res.option) {
         // un'opzione non ha incassato nulla: «annullarla» la rilascia (nessun rimborso, nessuna penale); l'agenzia lo sa se l'ha fatto la guida
+        if (quiet) return res;
         if (by === 'admin') await sendOptionReleased(app, res.booking);
         else await notifyGuideOption(app, res.booking, 'released');
         return res;
       }
       let refunded = 0;
       if (res.refundCents) refunded = (await doRefund(res.booking, res.refundCents)) ? res.refundCents : 0;
-      await sendBookingCancelled(app, getBooking(db, bookingId), refunded);
+      if (!quiet) await sendBookingCancelled(app, getBooking(db, bookingId), refunded); // (`quiet`: lo riassume chi chiama, per esempio l'annullo di un pacchetto)
       return { ...res, refundCents: refunded, booking: getBooking(db, bookingId) };
     },
 
@@ -146,6 +150,12 @@ export function createServices(app) {
 
     /** La guida prolunga un'opzione di qualche giorno e avvisa l'agenzia. @returns {Promise<object|null>} */
     async extendOption(bookingId, days, nowMs = Date.now()) {
+      const current = getBooking(db, bookingId);
+      if (current?.group_id) {
+        // le date di un pacchetto hanno una scadenza sola: si prolungano tutte insieme, con un solo avviso
+        const done = await app.packages.extend(current.group_id, days, nowMs);
+        return done ? getBooking(db, bookingId) : null;
+      }
       const b = extendOption(app, bookingId, days, nowMs);
       if (b) await sendOptionExtended(app, b);
       return b;
@@ -154,14 +164,29 @@ export function createServices(app) {
     /** Lavoro periodico: libera le opzioni scadute (avvisando agenzia e guida) e manda i promemoria di scadenza. */
     async sweepOptions(nowMs = Date.now()) {
       let n = 0;
+      const expiredGroups = new Set();
       for (const b of expireOptions(db, nowMs)) {
         n++;
+        if (b.group_id) {
+          expiredGroups.add(b.group_id); // i servizi di un pacchetto scadono insieme: un solo avviso
+          continue;
+        }
         await sendOptionExpired(app, b);
         await notifyGuideOption(app, b, 'expired');
       }
+      for (const id of expiredGroups) await app.packages.optionExpired(id);
+      const remindedGroups = new Set();
       for (const b of optionsDueForReminder(app, nowMs)) {
         const claimed = db.prepare(`UPDATE bookings SET option_reminded_at = ? WHERE id = ? AND status = 'option' AND option_reminded_at IS NULL`).run(new Date(nowMs).toISOString(), b.id).changes;
-        if (claimed === 1) await sendOptionReminder(app, getBooking(db, b.id), nowMs);
+        if (claimed !== 1) continue;
+        if (b.group_id) {
+          if (!remindedGroups.has(b.group_id)) {
+            remindedGroups.add(b.group_id);
+            await app.packages.optionReminder(b.group_id);
+          }
+          continue;
+        }
+        await sendOptionReminder(app, getBooking(db, b.id), nowMs);
       }
       return n;
     },

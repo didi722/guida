@@ -98,6 +98,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
     if (!b) return null;
     const tour = content.tour(b.tour_slug);
     const acct = b.channel === 'b2b' ? account(b.account_id) : null;
+    const pkg = b.group_id ? db.prepare('SELECT ref FROM booking_groups WHERE id = ?').get(b.group_id) : null; // un pacchetto si fattura tutto insieme (le sue voci hanno lo stesso cliente)
     if (b.status === 'cancelled') {
       // prenotazione annullata con penale: si fattura solo quanto resta dovuto (se non c'è nulla, la voce non esiste)
       const kept = b.retained_cents ?? 0;
@@ -136,6 +137,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
       ...common,
       ref: b.ref,
       label: `${tour?.i18n.it.title ?? b.tour_slug} · ${fmtDate(b.date, 'it', 'short')} ${b.start_time} · ${b.participants} pers.`,
+      package: pkg?.ref ?? null,
       date: b.date,
       served,
       channel: b.channel,

@@ -181,6 +181,9 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
     ${option?.ok && firm.applied ? optionBox : ''}
     <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" ${method || nothingToPay ? '' : raw('disabled')}>${nothingToPay ? t('pay.none.cta') : method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
     ${option?.ok && !firm.applied ? optionBox : option && !option.ok ? html`<p class="small muted option-note">${t(`option.err.${option.reason}`)}</p>` : ''}
+    ${isB2b
+      ? html`<div class="package-add"><button class="btn btn-outline btn-block" type="submit" formaction="${u('/b2b/package/add')}" formnovalidate name="action" value="package" id="package-add">${t('pkg.add')}</button><p class="small muted">${t('pkg.addHint')}</p></div>`
+      : ''}
   </form>
 
   <aside class="card summary-card">
@@ -221,13 +224,26 @@ export function slotGonePage(ctx, { tour, date, pax }) {
 }
 
 /** Conferma o rilascia di un'opzione: dal link della prenotazione e dall'area dell'agenzia. */
-export function optionActions(ctx, b, { st, nextUrl = '' }) {
+export function optionActions(ctx, b, { st, nextUrl = '', group = null }) {
   const { t, lang, app } = ctx;
   const account = b.account_id ? app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
   const methods = paymentOptions(app, app.content.tour(b.tour_slug), 'b2b', account);
   const late = st.percent < 100; // già oltre il periodo di cancellazione gratuita: confermando non è più rimborsabile (del tutto)
   const left = Date.parse(b.option_expires_at) - Date.now();
   const base = `/${lang}/booking/${b.ref}`;
+  if (group) {
+    // la data fa parte di un pacchetto: si conferma (o si rilascia) insieme alle altre; da qui si può solo togliere questa
+    const pkgHref = nextUrl ? `/${lang}/b2b/packages/${group.ref}` : `/${lang}/packages/${group.ref}?t=${group.token}`;
+    return html`<div class="option-actions" id="option">
+    <p class="chip ${left < 48 * 3600_000 ? 'chip-warn' : ''}">${t('booking.optionLeft', { when: timeLeft(t, Math.max(0, left)) })}</p>
+    <p class="small">${t('pkg.inPackage', { ref: group.ref })}</p>
+    <p class="btn-row"><a class="btn btn-gold" href="${pkgHref}#option">${t('pkg.openPackage')}</a></p>
+    <form method="post" action="${base}/option/release" class="option-release" data-confirm="${t('pkg.releaseLineAsk')}">
+      <input type="hidden" name="t" value="${b.token}">${nextUrl ? html`<input type="hidden" name="next" value="${nextUrl}">` : ''}
+      <button class="btn btn-outline" type="submit">${t('pkg.releaseLine')}</button>
+    </form>
+  </div>`;
+  }
   return html`<div class="option-actions" id="option">
     <p class="chip ${left < 48 * 3600_000 ? 'chip-warn' : ''}">${t('booking.optionLeft', { when: timeLeft(t, Math.max(0, left)) })}</p>
     <form method="post" action="${base}/option/confirm" class="form option-confirm" data-confirm="${late ? t('booking.optionConfirmAskLate') : t('booking.optionConfirmAsk')}">
@@ -247,7 +263,7 @@ export function optionActions(ctx, b, { st, nextUrl = '' }) {
  * owner: chi guarda è l'agenzia che ha fatto la prenotazione (con il suo accesso): vede la scheda nella sua area, con fattura e modifica del nominativo.
  * invoice: la fattura emessa che contiene la prenotazione, se c'è.
  */
-export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = '', owner = false, invoice = null, invite = null } = {}) {
+export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = '', owner = false, invoice = null, invite = null, group = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { cfg } = app;
   const tour = app.content.tour(b.tour_slug);
@@ -291,7 +307,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
 <section class="section tight"><div class="wrap narrow">
   ${inviteBox(ctx, b, invite)}
   <div class="card pad">
-    <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${b.ref}</strong></p>
+    <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${b.ref}</strong>${group ? html` · <a class="chip chip-link" href="${owner ? u(`/b2b/packages/${group.ref}`) : `/${lang}/packages/${group.ref}?t=${group.token}`}">${t('pkg.chip', { ref: group.ref })}</a>` : ''}</p>
     <dl class="summary-list">
       <div><dt>${t('s.service')}</dt><dd>${ti.title}</dd></div>
       <div><dt>${t('s.date')}</dt><dd>${fmtDate(b.date, lang)}</dd></div>
@@ -314,7 +330,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       ? html`<p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${b.ref}${q}&lang=${lang}">${t('booking.payNow')}</a></p>`
       : ''}
 
-    ${b.status === 'option' ? optionActions(ctx, b, { st, nextUrl }) : ''}
+    ${b.status === 'option' ? optionActions(ctx, b, { st, nextUrl, group }) : ''}
     ${payLater ? html`<div class="pay-later"><p class="small muted">${t('booking.payOnlineHint')}</p><p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${b.ref}${q}&lang=${lang}">${t('booking.payOnlineNow')}</a></p></div>`
       : b.status === 'confirmed' && b.payment_method === 'onsite' && b.payment_status === 'unpaid' && isPreOpening(cfg) ? preOpenNotice(ctx) : ''}
 

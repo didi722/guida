@@ -5,6 +5,7 @@ import express from 'express';
 import { parseCookies, setCookie } from '../auth.js';
 import { getBookingByRef } from '../bookings.js';
 import { notifyGuideBookingEdited } from '../emails.js';
+import { getPackage } from '../packages.js';
 import { send, sendPdf } from '../http.js';
 import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerSummary } from '../partner.js';
 import { renderInvoicePdf } from '../pdf-invoice.js';
@@ -79,7 +80,7 @@ export function partnerRouter(app) {
   r.get('/b2b/bookings/:ref', needPartner, (req, res, next) => {
     const b = own(req);
     if (!b) return next();
-    send(res, bookingPage(res.locals.ctx, b, { flash: String(req.query.flash ?? ''), nextUrl: `/${req.lang}/b2b/bookings/${b.ref}`, owner: true, invoice: invoiceOfBooking(db, b.id) }));
+    send(res, bookingPage(res.locals.ctx, b, { flash: String(req.query.flash ?? ''), nextUrl: `/${req.lang}/b2b/bookings/${b.ref}`, owner: true, invoice: invoiceOfBooking(db, b.id), group: b.group_id ? getPackage(db, b.group_id) : null }));
   });
   r.get('/b2b/bookings/:ref/voucher.pdf', needPartner, async (req, res, next) => {
     const b = own(req);

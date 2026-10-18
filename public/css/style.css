@@ -1004,3 +1004,19 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .firm-note { margin-top: 16px; }
 .voucher-langs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; } .voucher-langs > span { flex-basis: 100%; }
 .tour-main { min-width: 0; } .tour-main .facts, .tour-main .prose { overflow-wrap: anywhere; }
+
+/* Pacchetto di più servizi (area agenzie) */
+.package-add { margin-top: 12px; } .package-add p { margin: 6px 0 0; text-align: center; }
+.header-cart { gap: 6px; padding: 0 12px; } .header-cart svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; } .header-cart .cart-count { font-size: 0.85rem; }
+.header-cart[aria-current] { background: var(--header-ink); color: var(--gold); }
+.table tfoot th { text-align: left; padding: 12px 14px; border-top: 2px solid var(--line); font-size: 1rem; } .table tfoot th.num { text-align: right; }
+.voucher-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.package-page .option-actions { margin-top: 16px; }
+.hamburger .menu-badge { display: none; position: absolute; top: 3px; right: 1px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--ink); color: var(--gold); font-size: 0.68rem; line-height: 18px; place-items: center; text-align: center; font-weight: 700; }
+@media (max-width: 640px) {
+  .table tfoot, .table tfoot tr { display: block; }
+  .table tfoot tr { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 14px 16px; }
+  .table tfoot th, .table tfoot th.num { display: block; padding: 0; border: 0; text-align: left; }
+  .table tfoot th:empty { display: none; }
+  .header-cart { display: none; } .hamburger .menu-badge { display: grid; }
+}

@@ -5,6 +5,8 @@ import { BookingError, activeOptionCount, cancellationState, getBookingByRef, sl
 import { maxActiveOptions, optionWindow } from '../optionPolicy.js';
 import { onlinePaymentsOpen } from '../opening.js';
 import { hourlyQuote, previewPricing } from '../pricing.js';
+import { getPackage } from '../packages.js';
+import { readSlot } from '../slotParams.js';
 import { hashPassword, signToken, verifyPassword, verifyToken } from '../auth.js';
 import { sendContactMessage, sendInviteEmail, sendPartnerPasswordReset, sendPartnerRegistered, icsFor } from '../emails.js';
 import { createInvite, inviteLink, inviteOffer } from '../invites.js';
@@ -187,26 +189,7 @@ export function publicRouter(app) {
   });
 
   // ───── checkout ─────
-  /** Servizio, persone, data e ora (e, per i servizi a ore, durata e auricolari) dai parametri; null se non sono validi. */
-  function readSlotParams(src, channel) {
-    const tour = content.tour(String(src.tour ?? ''));
-    const pax = Number.parseInt(src.pax, 10);
-    if (!tour?.active || !Number.isInteger(pax) || pax < 1 || pax > tour.maxParticipants || !isDate(src.date) || !isTime(src.time)) return null;
-    if (!openTo(app.rates.get(), tour, channel)) return null;
-    const p = { tour, pax, date: src.date, time: src.time, hours: null, earpieces: false, durationMin: null };
-    if (tour.pricing === 'hourly') {
-      p.hours = tour.chooseHours ? Number(src.hours) : tour.durationMin / 60;
-      const extra = tour.chooseHours ? 0 : Number(src.extra) || 0; // ore extra (solo agenzie, su un servizio a durata fissa)
-      if (extra) {
-        if (!extraHourOptions(tour, channel).includes(extra)) return null;
-        p.hours += extra;
-      }
-      p.earpieces = src.earpieces === '1' || src.earpieces === 'on';
-      if (!hourlyQuote(app, tour, { pax, channel, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces }).ok) return null;
-      p.durationMin = Math.round(p.hours * 60);
-    }
-    return p;
-  }
+  const readSlotParams = (src, channel) => readSlot(app, src, channel);
   const openSlot = (p, channel) => slotStillOpen(app, p.tour, p.date, p.time, p.pax, channel, Date.now(), p.durationMin);
 
   r.get('/book/checkout', async (req, res) => {
@@ -282,7 +265,7 @@ export function publicRouter(app) {
     if (req.query.paid && (b.status === 'held' || services.payableLater(b))) b = await services.syncStripe(b);
     // l'agenzia che ha fatto la prenotazione (se è entrata) la vede dentro la sua area, con fattura e modifica del nominativo
     const owner = !!req.acct && b.account_id === req.acct.id && req.acct.status === 'approved';
-    send(res, bookingPage(res.locals.ctx, b, { flash: req.query.flash ? String(req.query.flash) : '', payLater: services.payableLater(b), owner, invoice: owner ? invoiceOfBooking(db, b.id) : null, invite: inviteOffer(app, b) }));
+    send(res, bookingPage(res.locals.ctx, b, { flash: req.query.flash ? String(req.query.flash) : '', payLater: services.payableLater(b), owner, invoice: owner ? invoiceOfBooking(db, b.id) : null, invite: inviteOffer(app, b), group: b.group_id ? getPackage(db, b.group_id) : null }));
   });
   r.get('/booking/:ref/calendar.ics', (req, res, next) => {
     const b = loadBooking(req);
@@ -355,6 +338,7 @@ export function publicRouter(app) {
     if (b && b.status === 'confirmed' && b.option_expires_at) return res.redirect(303, optionBack(req, b, 'option-confirmed')); // secondo clic (o invio doppio): è già confermata
     if (b && b.status === 'held' && b.option_expires_at) return res.redirect(303, `/pay/resume/${b.ref}?t=${b.token}&lang=${req.lang}`); // sta già pagando con la carta: si riprende da lì
     if (!b || b.status !== 'option') return next();
+    if (b.group_id) return res.redirect(303, `/${req.lang}/packages/${getPackage(db, b.group_id).ref}?t=${getPackage(db, b.group_id).token}`); // le date di un pacchetto si confermano insieme, dalla sua pagina
     const result = await services.confirmOption(b.id, req.lang, { method: String(req.body.method ?? '') });
     if (result.redirect) return res.redirect(303, result.redirect);
     res.redirect(303, optionBack(req, b, { confirmed: 'option-confirmed', expired: 'option-expired' }[result.outcome] ?? 'option-error'));

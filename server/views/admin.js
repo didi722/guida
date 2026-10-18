@@ -195,7 +195,7 @@ export function bookingsPage(ctx, { items, filter, q }) {
 ${items.length
   ? html`<div class="card table-wrap"><table class="table"><thead><tr><th>Data</th><th>Servizio</th><th>Cliente</th><th class="num">Pers.</th><th>Stato</th><th class="num">Totale</th></tr></thead><tbody>
     ${items.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')}</a><br><small class="muted">${b.start_time}–${b.end_time}</small></td>
-      <td>${ctx.app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug}<br><small class="muted">${b.ref}${b.channel === 'b2b' ? ' · B2B' : ''}</small></td>
+      <td>${ctx.app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug}<br><small class="muted">${b.ref}${b.channel === 'b2b' ? ' · B2B' : ''}${b.group_ref ? ` · pacchetto ${b.group_ref}` : ''}</small></td>
       <td>${b.name}<br><small class="muted">${b.client_ref ?? b.email}</small></td><td class="num">${b.participants}</td>
       <td><span class="chip ${chipFor(b.status)}">${statusLabel(b)}</span><br><small class="muted">${b.status === 'option' ? `fino al ${untilIt(b.option_expires_at)}` : `${PAY_IT[b.payment_method]} · ${PAYSTATUS_IT[b.payment_status]}`}</small></td>
       <td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}
@@ -214,7 +214,7 @@ function cancelPreview(b, st) {
   return `Secondo la politica: oggi ${st.percent}% → ${retainedCents ? `penale ${formatMoney(retainedCents, 'it', b.currency)} da fatturare` : 'nessuna penale'}`;
 }
 
-export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
+export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, pkg = null) {
   const tour = ctx.app.content.tour(b.tour_slug);
   const st = cancellationState(b);
   const live = b.status === 'confirmed' || b.status === 'held' || b.status === 'option';
@@ -238,6 +238,8 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       ${b.status === 'option' ? html`<div><dt>Opzione</dt><dd>data trattenuta fino al <strong>${untilIt(b.option_expires_at)}</strong>${Date.parse(b.option_expires_at) - Date.now() < 48 * 3600_000 ? html` <span class="chip chip-warn">scade a breve</span>` : ''}<br><small class="muted">L’agenzia non ha pagato nulla: se non conferma entro la scadenza, la data si libera da sola.</small></dd></div>`
         : b.status === 'expired' && b.option_expires_at ? html`<div><dt>Opzione</dt><dd>terminata${b.cancelled_at ? ` il ${untilIt(b.cancelled_at)}` : ''}${b.cancel_reason ? ` · ${b.cancel_reason}` : ''}<br><small class="muted">Scadenza prevista: ${untilIt(b.option_expires_at)}. Nessun costo.</small></dd></div>`
         : b.option_expires_at ? html`<div><dt>Opzione</dt><dd>confermata dall’agenzia (scadenza prevista: ${untilIt(b.option_expires_at)})</dd></div>` : ''}
+      ${pkg ? html`<div><dt>Pacchetto</dt><dd><a href="/${normLang(pkg.group.lang)}/packages/${pkg.group.ref}?t=${pkg.group.token}"><strong>${pkg.group.ref}</strong></a> · ${pkg.bookings.length} servizi · ${formatMoney(pkg.bookings.filter((x) => ['confirmed', 'held', 'option'].includes(x.status)).reduce((a, x) => a + bookingDue(x), 0), 'it', pkg.group.currency)}
+        <ul class="plain">${pkg.bookings.map((x) => html`<li>${x.id === b.id ? html`<strong>questo</strong>` : html`<a href="/admin/bookings/${x.id}">${x.ref}</a>`} · ${fmtDate(x.date, 'it', 'short')} ${x.start_time} · <span class="chip ${chipFor(x.status)}">${statusLabel(x)}</span>${x.payment_status === 'unpaid' && x.status === 'confirmed' ? html` · da incassare` : ''}</li>`)}</ul></dd></div>` : ''}
       <div><dt>Pagina del cliente</dt><dd><a href="/${normLang(b.lang)}/booking/${b.ref}?t=${b.token}">Apri come la vede il cliente</a> <small class="muted">(da qui si prova anche l’annullo)</small></dd></div>
       ${b.discount_cents ? html`<div><dt>Sconto</dt><dd>${b.promo_code} · −${formatMoney(b.discount_cents, 'it', b.currency)} (listino ${formatMoney(b.list_cents, 'it', b.currency)})</dd></div>` : ''}
       ${b.gift_cents ? html`<div><dt>Buono regalo</dt><dd>−${formatMoney(b.gift_cents, 'it', b.currency)}</dd></div>` : ''}
@@ -276,12 +278,14 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
     <label class="field"><textarea name="admin_notes" rows="4" maxlength="2000">${b.admin_notes ?? ''}</textarea></label>
     <button class="btn btn-outline" type="submit">Salva note</button>
     ${b.status === 'confirmed' && b.payment_status === 'unpaid' ? html`<button class="btn btn-gold" type="submit" formaction="/admin/bookings/${b.id}/paid">Segna come incassata</button>` : ''}
+    ${pkg && pkg.bookings.filter((x) => x.status === 'confirmed' && x.payment_status === 'unpaid').length > 1 ? html`<button class="btn btn-gold" type="submit" formaction="/admin/bookings/${b.id}/paid" name="all" value="1">Segna incassato tutto il pacchetto</button>` : ''}
   </form>
   ${b.status === 'option'
     ? html`<div class="card pad">
     <h2>Opzione</h2>
     <form class="form inline-form" method="post" action="/admin/bookings/${b.id}/option/extend"><h3>Prolunga la scadenza</h3>
       <label class="field"><span class="label">Di quanti giorni</span><select name="days">${[1, 2, 3, 5, 7, 10, 14].map((d) => html`<option value="${d}">${d} ${d === 1 ? 'giorno' : 'giorni'}</option>`)}</select></label>
+      ${pkg ? html`<p class="small muted">Fa parte del pacchetto ${pkg.group.ref}: la proroga vale per tutti i suoi servizi in opzione.</p>` : ''}
       <button class="btn btn-outline" type="submit">Prolunga e avvisa l’agenzia</button></form>
     <form class="form" method="post" action="/admin/bookings/${b.id}/cancel" data-confirm="Rilasciare la data e avvisare l’agenzia?"><h3>Rilascia la data</h3>
       <label class="field"><span class="label">Motivo <em>(facoltativo)</em></span><input name="reason" maxlength="300"></label>

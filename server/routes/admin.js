@@ -31,6 +31,7 @@ import { feedbackStats, setFeatured } from '../reviews.js';
 import { maskUrl } from '../calendars.js';
 import { feedbackAdminPage } from '../views/admin-feedback.js';
 import { invoiceForSource } from '../invoices.js';
+import { getPackage, packageBookings } from '../packages.js';
 import { LANGS } from '../langs.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage } from '../views/admin.js';
 
@@ -200,7 +201,7 @@ export function adminRouter(app) {
     const pendingPartners = db.prepare(`SELECT COUNT(*) n FROM accounts WHERE status = 'pending'`).get().n;
     const nowIso = new Date().toISOString();
     const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(nowIso).n;
-    const options = db.prepare(`SELECT COUNT(*) n, MIN(option_expires_at) next FROM bookings WHERE status = 'option' AND option_expires_at > ?`).get(nowIso);
+    const options = db.prepare(`SELECT COUNT(DISTINCT COALESCE('g' || group_id, 'b' || id)) n, MIN(option_expires_at) next FROM bookings WHERE status = 'option' AND option_expires_at > ?`).get(nowIso); // un pacchetto è una sola opzione
     const invoicesDue = app.invoices.queue().filter((i) => i.overdue).length;
     send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, today, view, days, calendar, pendingPartners, held, options, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
   });
@@ -249,14 +250,17 @@ export function adminRouter(app) {
     const items = db
       .prepare(`SELECT * FROM bookings WHERE ${where} ${q ? 'AND (name LIKE ? OR email LIKE ? OR ref LIKE ? OR client_ref LIKE ?)' : ''} ORDER BY date ${filter === 'past' || filter === 'all' ? 'DESC' : 'ASC'}, start_time LIMIT 300`)
       .all(...(q ? [like, like, like, like] : []));
-    send(res, bookingsPage(ctxOf(req), { items, filter, q }));
+    const groupIds = [...new Set(items.map((b) => b.group_id).filter(Boolean))];
+    const refs = new Map(groupIds.length ? db.prepare(`SELECT id, ref FROM booking_groups WHERE id IN (${groupIds.map(() => '?').join(',')})`).all(...groupIds).map((g) => [g.id, g.ref]) : []);
+    send(res, bookingsPage(ctxOf(req), { items: items.map((b) => ({ ...b, group_ref: refs.get(b.group_id) ?? null })), filter, q }));
   });
 
   r.get('/bookings/:id', (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));
     if (!b) return next();
     const account = b.account_id ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
-    send(res, bookingDetailPage(ctxOf(req), b, account, flash(req), invoiceForSource(db, 'booking', b.id)));
+    const group = b.group_id ? getPackage(db, b.group_id) : null;
+    send(res, bookingDetailPage(ctxOf(req), b, account, flash(req), invoiceForSource(db, 'booking', b.id), group ? { group, bookings: packageBookings(db, group.id) } : null));
   });
   r.get('/bookings/:id/voucher.pdf', async (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));
@@ -287,7 +291,9 @@ export function adminRouter(app) {
   r.post('/bookings/:id/paid', form, (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));
     if (!b) return next();
-    db.prepare(`UPDATE bookings SET payment_status = 'paid' WHERE id = ? AND status = 'confirmed' AND payment_status = 'unpaid'`).run(b.id);
+    // «tutto il pacchetto»: il bonifico di un pacchetto copre tutti i suoi servizi
+    if (req.body.all && b.group_id) db.prepare(`UPDATE bookings SET payment_status = 'paid' WHERE group_id = ? AND status = 'confirmed' AND payment_status = 'unpaid'`).run(b.group_id);
+    else db.prepare(`UPDATE bookings SET payment_status = 'paid' WHERE id = ? AND status = 'confirmed' AND payment_status = 'unpaid'`).run(b.id);
     res.redirect(303, `/admin/bookings/${b.id}?ok=paid`);
   });
   r.post('/bookings/:id/cancel', form, async (req, res, next) => {

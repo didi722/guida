@@ -30,6 +30,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - Il partner vede le **tariffe riservate** (lo sconto % si toglie dalle tariffe B2B, arrotondato ai 5 € successivi), cerca la disponibilità tra **tour privati** (predefinito) e **condivisi**, prenota in autonomia (anche gruppi fino a 25), inserisce il **riferimento pratica** e richiede **programmi di più giorni**.
 - **Promemoria alle agenzie**: la sera prima del tour, **24 ore prima che finisca la cancellazione gratuita** (una sola volta) e, per le opzioni, prima della scadenza.
 - **Date lontane**: se l'agenzia prenota direttamente un servizio fra più di 21 giorni, la cancellazione gratuita dura solo 48 ore (poi rimborso ridotto fino al termine normale): così conviene **opzionare**, che non impegna. Tutto regolabile in Impostazioni › Opzioni per le agenzie.
+- **Pacchetti**: un'agenzia prenota **più servizi insieme** (guida, meet & greet, tour leader…) con **una sola opzione, una sola scadenza, un solo pagamento** (anche con carta, in una sessione Stripe sola) **e una sola fattura**. Tutti i servizi o nessuno; un'unica email con un voucher per servizio e un solo calendario; ogni servizio resta una prenotazione normale.
 - **Opzioni**: l'agenzia può **tenere una data senza pagare** mentre il suo cliente decide; la durata dipende da quanto manca al tour (tabella e limiti modificabili, anche per singolo partner), arriva un promemoria e, se non conferma, la data **si libera da sola**. Nessun addebito automatico: se paga a fattura il servizio si fattura dopo.
 
 **Per te (pannello `/admin`, ottimizzato per telefono)** — quasi tutto si cambia da qui, senza toccare il codice ([guida](docs/GUIDA.md))
@@ -203,6 +204,8 @@ server/
   restore.js        ripristino da una copia (controllo, anteprima, sostituzione dei dati in una transazione, copie di sicurezza)
   zipread.js        lettura sicura di uno zip caricato
   optionPolicy.js   opzioni delle agenzie: durata, limiti, promemoria (puro, testato)
+  packages.js       pacchetti di più servizi: carrello, prenotazione «tutti o nessuno», opzione unica, conferma e rilascio (solo database, testato)
+  packageServices.js pacchetti: pagamento con carta (un solo `PT-…`), email e avvisi alla guida
   opening.js        pre-apertura: «Incassi dal» (puro)
   partner.js        area agenzie: elenco con filtri, riepilogo, fatture dell'agenzia
   translate.js      traduzione automatica dei commenti (DeepL / Google), con cache nel database

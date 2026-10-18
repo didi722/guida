@@ -1,5 +1,6 @@
 import { esc, html, jsonLd, raw } from '../html.js';
 import { LANGS, LANG_META } from '../langs.js';
+import { cartCount } from '../packages.js';
 import { mediaUrl } from './components.js';
 
 const ICON = {
@@ -12,6 +13,7 @@ const ICON = {
   user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>',
   wallet: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><rect x="3" y="7" width="18" height="12" rx="2.5"/><path d="M16 13h2.5"/></svg>',
   logout: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9"/><path d="M16 8l4 4-4 4M20 12H9"/></svg>',
+  package: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/></svg>',
 };
 export const icon = (name) => raw(ICON[name] ?? '');
 
@@ -40,6 +42,7 @@ const PARTNER_NAV = [
 export function page(ctx, { title, description = '', path, body, bodyClass = '', ld = null, noindex = false, article = false, ogImage = null, activeNav = '', scripts = '', area = '' }) {
   const { app, lang, t } = ctx;
   const partner = area === 'partner' && ctx.acct?.status === 'approved'; // barra e piè di pagina dell'area agenzie
+  const cart = partner ? cartCount(app.db, ctx.acct.id) : 0; // servizi nel pacchetto in preparazione: la voce compare solo se ce ne sono
   const { cfg } = app;
   const demo = app.payments.demo; // istanza di prova (pagamenti simulati): non si indicizza e lo si dice a chiare lettere
   noindex = noindex || demo;
@@ -98,6 +101,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
         : NAV.filter(([k]) => k !== 'book').map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
     </nav>
     <div class="header-tools">
+      ${cart ? html`<a class="tool header-cart" href="${u('/b2b/package')}" aria-label="${t('pkg.nav', { n: cart })}" title="${t('pkg.nav', { n: cart })}" ${activeNav === 'b2b-package' ? raw('aria-current="page"') : ''}><span class="cart-icon">${icon('package')}</span><span class="cart-count">${cart}</span></a>` : ''}
       <a class="btn btn-sm btn-dark header-cta" href="${u(partner ? '/book' : '/tours')}">${partner ? t('partner.nav.new') : t('nav.book')}</a>
       ${partner ? logoutForm('tool header-login header-logout', html`<span class="login-icon">${icon('logout')}</span><span class="login-label">${t('b2b.logout')}</span>`) : agencyLink}
       <details class="lang-menu">
@@ -105,7 +109,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
         <ul class="lang-list">${LANGS.map((l) => html`<li><a href="${swapLang(path, lang, l)}" hreflang="${l}" lang="${l}" ${l === lang ? raw('aria-current="true"') : ''}>${LANG_META[l].name}</a></li>`)}</ul>
       </details>
       <button class="tool theme-toggle" type="button" aria-label="${t('a11y.theme')}"><span class="i-sun">${icon('sun')}</span><span class="i-moon">${icon('moon')}</span></button>
-      <button class="hamburger" type="button" aria-label="${t('a11y.menu')}" aria-expanded="false" aria-controls="side-menu"><span></span><span></span><span></span></button>
+      <button class="hamburger" type="button" aria-label="${t('a11y.menu')}" aria-expanded="false" aria-controls="side-menu"><span></span><span></span><span></span>${cart ? html`<b class="menu-badge" aria-hidden="true">${cart}</b>` : ''}</button>
     </div>
   </div>
   ${article ? raw('<div class="progress" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div></div>') : ''}
@@ -116,6 +120,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   <a class="side-agency" href="${ctx.acct ? u('/b2b/account') : u('/b2b/login')}">${icon('user')}<span>${agencyLabel}</span></a>
   ${partner
     ? html`${PARTNER_NAV.map(([k, p, label]) => html`<a href="${u(p)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
+  ${cart ? html`<a href="${u('/b2b/package')}" ${activeNav === 'b2b-package' ? raw('aria-current="page"') : ''}>${t('pkg.nav', { n: cart })}</a>` : ''}
   <a href="${u('/book')}" ${activeNav === 'book' ? raw('aria-current="page"') : ''}>${t('partner.nav.new')}</a>`
     : html`${NAV.map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
   <a href="${u('/gift')}" ${activeNav === 'gift' ? raw('aria-current="page"') : ''}>${t('nav.gift')}</a>

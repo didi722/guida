@@ -1225,6 +1225,194 @@ export async function sendInvoiceCopy(app, inv, to, { includeXml = false } = {})
   });
 }
 
+// ───────────── Pacchetti (più servizi prenotati insieme da un'agenzia) ─────────────
+export const packageUrl = (app, group, lang = normLang(group.lang)) => `${app.cfg.baseUrl}/${lang}/packages/${group.ref}?t=${group.token}`;
+
+/** Un solo file di calendario con tutti i servizi confermati del pacchetto. */
+export function icsForPackage(app, group, bookings, lang = normLang(group.lang)) {
+  const host = new URL(app.cfg.baseUrl).hostname;
+  return calendar(
+    `${app.cfg.site.name} — ${group.ref}`,
+    bookings
+      .filter((b) => b.status === 'confirmed')
+      .map((b) =>
+        eventLines({
+          uid: `${b.ref}@${host}`,
+          date: b.date,
+          start: b.start_time,
+          end: b.end_time,
+          summary: `${tourText(app, b.tour_slug, lang).title} (${app.cfg.site.name})`,
+          description: `${group.ref} · ${b.ref} — ${b.participants} ${T[lang].people.toLowerCase()}`,
+          location: meetingOf(app.content.tour(b.tour_slug), b, lang).text,
+          url: packageUrl(app, group, lang),
+        }),
+      ),
+  );
+}
+
+/** Il corpo comune delle email sul pacchetto: saluto, testo, elenco dei servizi (con il prezzo di ciascuno e il totale) e un pulsante. */
+async function sendPackageMail(app, group, bookings, { subject, intro, until = null, cta = 'pkg.mail.cta', policy = false, attachments = [], nowMs = Date.now() }) {
+  const lang = normLang(group.lang);
+  const t = makeT(lang);
+  const shown = bookings.filter((b) => ['confirmed', 'held', 'option'].includes(b.status));
+  const money = (c) => formatMoney(c, lang, group.currency);
+  const rows = shown.map((b) => ({
+    when: `${fmtDate(b.date, lang, 'short')} · ${timeRange(b, lang)}`,
+    what: `${tourText(app, b.tour_slug, lang).title} · ${b.participants} ${T[lang].people.toLowerCase()}`,
+    price: money(bookingDue(b)),
+    note: policy ? policyLine(b, lang, nowMs) : '',
+  }));
+  const total = money(shown.reduce((s, b) => s + bookingDue(b), 0));
+  const link = packageUrl(app, group, lang);
+  const text = [
+    greet(lang, group.name),
+    '',
+    intro,
+    '',
+    ...(until ? [`${t('pkg.mail.until')}: ${until}`, ''] : []),
+    ...rows.flatMap((r) => [`${r.when} — ${r.what} — ${r.price}`, ...(r.note ? [`   ${r.note}`] : [])]),
+    `${t('pkg.mail.total')}: ${total}`,
+    ...(group.client_ref ? [`${T[lang].clientRef}: ${group.client_ref}`] : []),
+    '',
+    `${t(cta)}: ${link}`,
+    '',
+    T[lang].contactLine,
+    `${bye(lang)} ${app.cfg.site.name}`,
+  ].join('\n');
+  await app.mail.send({
+    to: group.email,
+    subject,
+    text,
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${greet(lang, group.name)}</p><p>${intro}</p>
+        ${until ? html`<p><strong>${t('pkg.mail.until')}: ${until}</strong></p>` : ''}
+        <table style="border-collapse:collapse;width:100%;font-size:14px">
+          ${rows.map((r) => html`<tr><td style="padding:6px 10px 6px 0;vertical-align:top;border-bottom:1px solid #eee"><strong>${r.when}</strong></td><td style="padding:6px 10px 6px 0;vertical-align:top;border-bottom:1px solid #eee">${r.what}${r.note ? html`<br><small style="color:#666">${r.note}</small>` : ''}</td><td style="padding:6px 0;vertical-align:top;text-align:right;border-bottom:1px solid #eee">${r.price}</td></tr>`)}
+          <tr><td colspan="2" style="padding:8px 10px 0 0;text-align:right"><strong>${t('pkg.mail.total')}</strong></td><td style="padding:8px 0 0;text-align:right"><strong>${total}</strong></td></tr>
+        </table>
+        ${group.client_ref ? html`<p style="font-size:13px;color:#666">${T[lang].clientRef}: ${group.client_ref}</p>` : ''}
+        <p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t(cta)}</a></p>
+        <p style="color:#666;font-size:13px">${T[lang].contactLine}<br>${bye(lang)} ${app.cfg.site.name}</p>`,
+      ),
+    ),
+    attachments,
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+const untilGroup = (bookings, lang) => {
+  const ends = bookings.filter((b) => b.option_expires_at).map((b) => Date.parse(b.option_expires_at));
+  return ends.length ? fmtInstant(Math.min(...ends), lang) : '';
+};
+
+/** All'agenzia: il pacchetto è confermato; un voucher per ogni servizio e un solo file per il calendario. */
+export async function sendPackageConfirmed(app, group, bookings, nowMs = Date.now()) {
+  const lang = normLang(group.lang);
+  const t = makeT(lang);
+  const confirmed = bookings.filter((b) => b.status === 'confirmed');
+  const vouchers = [];
+  for (const b of confirmed) vouchers.push(...(await pdfAttachment(`voucher-${b.ref}.pdf`, (pdf) => pdf.renderVoucherPdf(app, b, { lang, nowMs }), 'voucher')));
+  await sendPackageMail(app, group, confirmed, {
+    subject: t('pkg.mail.confirmedSubject', { ref: group.ref, n: confirmed.length }),
+    intro: t('pkg.mail.confirmedIntro'),
+    policy: true,
+    nowMs,
+    attachments: [{ filename: `${group.ref}.ics`, content: icsForPackage(app, group, confirmed, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }, ...vouchers],
+  });
+}
+
+/** All'agenzia: il pacchetto è in opzione, con la scadenza comune a tutti i servizi. */
+export async function sendPackageOptionCreated(app, group, bookings) {
+  const lang = normLang(group.lang);
+  const t = makeT(lang);
+  const until = untilGroup(bookings, lang);
+  await sendPackageMail(app, group, bookings, { subject: t('pkg.mail.optionSubject', { ref: group.ref, n: bookings.length }), intro: t('pkg.mail.optionIntro', { until }), until, cta: 'pkg.mail.ctaOption' });
+}
+
+/** All'agenzia: l'opzione del pacchetto sta per scadere. */
+export async function sendPackageOptionReminder(app, group, bookings) {
+  const lang = normLang(group.lang);
+  const t = makeT(lang);
+  const until = untilGroup(bookings, lang);
+  await sendPackageMail(app, group, bookings, { subject: t('pkg.mail.reminderSubject', { ref: group.ref, until }), intro: t('pkg.mail.reminderIntro', { until }), until, cta: 'pkg.mail.ctaOption' });
+}
+
+/** All'agenzia: l'opzione del pacchetto è scaduta e le date sono libere. */
+export async function sendPackageOptionExpired(app, group, bookings) {
+  const lang = normLang(group.lang);
+  const t = makeT(lang);
+  const until = untilGroup(bookings, lang);
+  await sendPackageMail(app, group, bookings.map((b) => ({ ...b, status: 'option' })), { subject: t('pkg.mail.expiredSubject', { ref: group.ref }), intro: t('pkg.mail.expiredIntro', { until }) });
+}
+
+/** All'agenzia: la guida ha prolungato l'opzione di tutto il pacchetto. */
+export async function sendPackageOptionExtended(app, group, bookings) {
+  const lang = normLang(group.lang);
+  const t = makeT(lang);
+  const until = untilGroup(bookings, lang);
+  await sendPackageMail(app, group, bookings, { subject: t('pkg.mail.extendedSubject', { ref: group.ref }), intro: t('pkg.mail.extendedIntro', { until }), until, cta: 'pkg.mail.ctaOption' });
+}
+
+/** All'agenzia: i servizi annullati del pacchetto, con rimborso o penale di ciascuno. */
+export async function sendPackageCancelled(app, group, results) {
+  const lang = normLang(group.lang);
+  const t = makeT(lang);
+  const money = (c) => formatMoney(c, lang, group.currency);
+  const lines = results.map((r) => {
+    const b = r.booking;
+    const outcome = r.refundCents ? t('pkg.mail.lineRefund', { amount: money(r.refundCents) }) : b.retained_cents > 0 ? (b.payment_status === 'unpaid' ? t('pkg.mail.linePenalty', { amount: money(b.retained_cents) }) : t('pkg.mail.lineKept', { amount: money(b.retained_cents) })) : t('pkg.mail.lineNone');
+    return `${fmtDate(b.date, lang, 'short')} · ${b.start_time} — ${tourText(app, b.tour_slug, lang).title}: ${outcome}`;
+  });
+  const link = packageUrl(app, group, lang);
+  const intro = t('pkg.mail.cancelledIntro', { n: results.length });
+  await app.mail.send({
+    to: group.email,
+    subject: t('pkg.mail.cancelledSubject', { ref: group.ref }),
+    text: [greet(lang, group.name), '', intro, '', ...lines, '', `${t('pkg.mail.cta')}: ${link}`, '', T[lang].contactLine, `${bye(lang)} ${app.cfg.site.name}`].join('\n'),
+    html: String(layout(app, lang, html`<p>${greet(lang, group.name)}</p><p>${intro}</p><ul>${lines.map((l) => html`<li>${l}</li>`)}</ul><p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('pkg.mail.cta')}</a></p><p style="color:#666;font-size:13px">${T[lang].contactLine}<br>${bye(lang)} ${app.cfg.site.name}</p>`)),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/** All'agenzia: ha pagato dopo la scadenza e un servizio non era più libero; il pacchetto non si conferma a metà e si rimborsa tutto. */
+export async function sendPackageSlotLost(app, group, bookings) {
+  const lang = normLang(group.lang);
+  const t = makeT(lang);
+  const body = t('pkg.mail.lostBody');
+  await app.mail.send({
+    to: group.email,
+    subject: t('pkg.mail.lostSubject', { ref: group.ref }),
+    text: [greet(lang, group.name), '', body, '', `${bye(lang)} ${app.cfg.site.name}`].join('\n'),
+    html: String(layout(app, lang, html`<p>${greet(lang, group.name)}</p><p>${body}</p><p>${bye(lang)} ${app.cfg.site.name}</p>`)),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/** Avviso alla guida (in italiano) sul pacchetto: nuovo, in opzione, scaduto, rilasciato, annullato. */
+export async function notifyGuidePackage(app, group, bookings, kind, extra = '') {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const label = { new: 'Nuovo pacchetto', option: 'Nuovo pacchetto in opzione', expired: 'Pacchetto in opzione scaduto: date liberate', released: 'Pacchetto in opzione rilasciato dall’agenzia: date liberate', cancelled: 'Pacchetto annullato' }[kind];
+  const account = group.account_id ? app.db.prepare('SELECT company FROM accounts WHERE id = ?').get(group.account_id) : null;
+  const lines = [
+    `${label} ${group.ref}${account ? ` — ${account.company}` : ''}`,
+    `${group.name} <${group.email}>${group.phone ? ' · ' + group.phone : ''}`,
+    group.client_ref ? `Rif. pratica: ${group.client_ref}` : null,
+    group.notes ? `Note: ${group.notes}` : null,
+    '',
+    ...bookings.map((b) => `${fmtDate(b.date, 'it', 'short')} · ${b.start_time}–${b.end_time} · ${app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug} · ${b.participants} pers. · ${formatMoney(bookingDue(b), 'it', b.currency)} (${b.ref})`),
+    `Totale: ${formatMoney(bookings.reduce((s, b) => s + bookingDue(b), 0), 'it', group.currency)}`,
+    kind === 'option' ? `Trattenuti fino al ${untilGroup(bookings, 'it')}; se l’agenzia non conferma, si liberano da soli.` : null,
+    extra || null,
+    '',
+    `${app.cfg.baseUrl}/admin/bookings/${bookings[0]?.id ?? ''}`,
+  ].filter((x) => x !== null);
+  await app.mail.send({ to, subject: `${label}: ${group.ref} — ${bookings.length} servizi`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
+}
+
 /** I dizionari per lingua, esposti ai test: ogni lingua deve avere le stesse chiavi e gli stessi segnaposto. */
 export const EMAIL_TEXTS = { T, P, G, R, PG };
 

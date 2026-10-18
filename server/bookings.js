@@ -138,8 +138,8 @@ export function createBooking(app, input, nowMs = Date.now()) {
       const win = optionWindow({ options: cfg.options, account, startMs: startInstant, nowMs });
       if (!win.ok) throw new BookingError('option', win.reason);
       const limit = maxActiveOptions(cfg.options, account);
-      if (limit > 0 && activeOptionCount(db, account.id, nowMs) >= limit) throw new BookingError('option', 'limit');
-      optionExpires = iso(win.expiresMs);
+      if (!input.skipOptionLimit && limit > 0 && activeOptionCount(db, account.id, nowMs) >= limit) throw new BookingError('option', 'limit'); // (un pacchetto lo controlla una volta sola)
+      optionExpires = iso(input.optionExpiresMs ? Math.min(win.expiresMs, input.optionExpiresMs) : win.expiresMs); // i servizi di un pacchetto scadono tutti insieme
     }
 
     let method = input.paymentMethod;
@@ -163,6 +163,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
       participants: pax,
       channel,
       account_id: account?.id ?? null,
+      group_id: input.groupId ?? null,
       name,
       email,
       phone: cleanText(input.phone, 40) || null,
@@ -357,7 +358,8 @@ export function slotStillOpen(app, tour, date, time, pax, channel, nowMs = Date.
 // ───────────── opzioni ─────────────
 /** Quante opzioni non scadute ha aperte un partner. */
 export function activeOptionCount(db, accountId, nowMs = Date.now()) {
-  return db.prepare(`SELECT COUNT(*) n FROM bookings WHERE account_id = ? AND status = 'option' AND option_expires_at > ?`).get(accountId, iso(nowMs)).n;
+  // un pacchetto (più servizi in opzione insieme) conta come una sola opzione
+  return db.prepare(`SELECT COUNT(DISTINCT COALESCE('g' || group_id, 'b' || id)) n FROM bookings WHERE account_id = ? AND status = 'option' AND option_expires_at > ?`).get(accountId, iso(nowMs)).n;
 }
 
 /** Chiude un'opzione senza conferma (scaduta o rilasciata): lo slot si libera. Non è un annullo: nessun rimborso, nessuna penale. */

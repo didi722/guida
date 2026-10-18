@@ -47,7 +47,7 @@ ${queue.length
   ${list.map((g) => html`<tr class="group-row"><th colspan="4"><label class="check"><input type="checkbox" data-select-group="${g.key}"> <strong>${g.title}</strong> <span class="muted">· ${g.items.length} ${g.items.length === 1 ? 'voce' : 'voci'} · ${eur(g.items.reduce((a, i) => a + i.amountCents, 0))}${g.channel === 'b2b' ? ' · partner B2B' : ''}</span></label></th></tr>
     ${g.items.map((i) => html`<tr class="${i.overdue ? 'row-overdue' : ''}">
       <td><input type="checkbox" name="src" value="${i.key}" data-group="${g.key}" data-cents="${i.amountCents}" aria-label="Seleziona ${i.ref}"></td>
-      <td><a href="${SOURCE_LINK[i.type](i.id)}">${i.label}</a><br><small class="muted">${i.ref}${i.hint ? ` · il cliente ha scritto: «${i.hint}»` : ''}</small><br>${i.payments.filter((p) => p.method).map((p) => html`<span class="chip ${p.paid ? 'chip-ok' : 'chip-warn'}">${PAY_LABEL[p.method]} · ${p.paid ? 'incassato' : 'da incassare'}</span> `)}${i.payments.some((p) => !p.method) ? html`<span class="chip">Buono regalo</span>` : ''}</td>
+      <td><a href="${SOURCE_LINK[i.type](i.id)}">${i.label}</a><br><small class="muted">${i.ref}${i.package ? ` · pacchetto ${i.package}` : ''}${i.hint ? ` · il cliente ha scritto: «${i.hint}»` : ''}</small><br>${i.payments.filter((p) => p.method).map((p) => html`<span class="chip ${p.paid ? 'chip-ok' : 'chip-warn'}">${PAY_LABEL[p.method]} · ${p.paid ? 'incassato' : 'da incassare'}</span> `)}${i.payments.some((p) => !p.method) ? html`<span class="chip">Buono regalo</span>` : ''}</td>
       <td class="num">${eur(i.amountCents)}</td>
       <td class="${i.overdue ? 'field-error' : ''}">${fmtDate(i.dueBy, 'it', 'short')}${i.overdue ? html`<br><small>scaduto</small>` : ''}</td>
     </tr>`)}`)}

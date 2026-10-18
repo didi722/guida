@@ -417,6 +417,39 @@ const V18_PENALTY_REMINDER = `
 ALTER TABLE bookings ADD COLUMN penalty_reminded_at TEXT;
 `;
 
+const V19_PACKAGES = `
+-- Pacchetto: più servizi prenotati insieme da un'agenzia (stessa opzione, stesso pagamento). Ogni servizio resta una prenotazione.
+CREATE TABLE booking_groups (
+  id                    INTEGER PRIMARY KEY,
+  ref                   TEXT NOT NULL UNIQUE,            -- PT-XXXXXX
+  token                 TEXT NOT NULL,
+  account_id            INTEGER NOT NULL REFERENCES accounts(id),
+  client_ref            TEXT,
+  name                  TEXT NOT NULL,
+  email                 TEXT NOT NULL,
+  phone                 TEXT,
+  notes                 TEXT,
+  lang                  TEXT NOT NULL DEFAULT 'it',
+  currency              TEXT NOT NULL DEFAULT 'EUR',
+  due_cents             INTEGER NOT NULL DEFAULT 0,      -- quanto si chiede con la carta (serve a riconoscere il pagamento quando arriva)
+  stripe_session_id     TEXT,
+  stripe_payment_intent TEXT,
+  created_at            TEXT NOT NULL
+);
+CREATE INDEX booking_groups_account ON booking_groups(account_id);
+ALTER TABLE bookings ADD COLUMN group_id INTEGER REFERENCES booking_groups(id);
+CREATE INDEX bookings_group ON bookings(group_id);
+
+-- Il pacchetto in preparazione: i servizi aggiunti e non ancora prenotati (non trattengono nulla).
+CREATE TABLE cart_items (
+  id          INTEGER PRIMARY KEY,
+  account_id  INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  data_json   TEXT NOT NULL,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX cart_items_account ON cart_items(account_id);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -454,6 +487,8 @@ export const MIGRATIONS = [
   V17_PICKUP,
   // v18 — promemoria di fine cancellazione gratuita
   V18_PENALTY_REMINDER,
+  // v19 — pacchetti di più servizi
+  V19_PACKAGES,
 ];
 
 export function migrate(db) {

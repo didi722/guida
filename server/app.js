@@ -10,6 +10,7 @@ import { LANGS } from './i18n.js';
 import { openTo } from './rates.js';
 import { langMiddleware, makeCtx, preferredLang, sameOrigin, securityHeaders, send, sessionMiddleware } from './http.js';
 import { brandIcon } from './png.js';
+import { packagesRouter } from './routes/packages.js';
 import { partnerRouter } from './routes/partner.js';
 import { publicRouter } from './routes/public.js';
 import { featuresRouter } from './routes/features.js';
@@ -64,7 +65,7 @@ export function createApp(overrides = {}) {
   // logo quadrato per i pass del wallet (Google lo scarica da qui): disegnato dal codice, nessun file binario nel repository
   server.get('/wallet/logo.png', (req, res) => res.type('png').set('Cache-Control', 'public, max-age=86400').send(brandIcon(192)));
   server.get('/robots.txt', (req, res) =>
-    res.type('text/plain').send(app.payments.demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
+    res.type('text/plain').send(app.payments.demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/packages/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
   );
   server.get('/sitemap.xml', (req, res) => {
     const all = ['/', '/tours', '/book', '/gift', '/programs', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.filter((x) => openTo(app.rates.get(), x, 'b2c')).map((x) => `/tours/${x.slug}`), '/hourly'].map((p) => ({ p, langs: LANGS }));
@@ -81,8 +82,9 @@ export function createApp(overrides = {}) {
   server.use('/admin', adminRouter(app));
   const pub = publicRouter(app);
   const partner = partnerRouter(app);
+  const packages = packagesRouter(app);
   const features = featuresRouter(app);
-  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, features);
+  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, features);
 
   // 404 (nella lingua dell'URL se possibile)
   server.use((req, res) => {

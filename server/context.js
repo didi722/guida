@@ -6,6 +6,7 @@ import { createInvoiceServices } from './invoiceServices.js';
 import path from 'node:path';
 import { createMailer } from './mail.js';
 import { createMedia } from './media.js';
+import { createPackageServices } from './packageServices.js';
 import { createPecMailer } from './pec.js';
 import { createSettings } from './settings.js';
 import { createSiteImages } from './siteImages.js';
@@ -38,6 +39,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.payments = payments ?? createPayments(cfg);
   app.payables = createPayables(app);
   app.services = createServices(app);
+  app.packages = createPackageServices(app);
   app.gifts = createGiftServices(app);
   app.reviews = createReviewServices(app);
   app.translate = createTranslator(app, fetchImpl);

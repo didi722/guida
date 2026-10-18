@@ -108,7 +108,9 @@ export function partnerBookings(app, accountId, filters, { nowMs = Date.now(), l
     db,
     rows.map((b) => b.id),
   );
-  return { rows: rows.map((b) => ({ ...b, invoice: invoices.get(b.id) ?? null })), counts, total, page, pages, view: filters.view };
+  const groupIds = [...new Set(rows.map((b) => b.group_id).filter(Boolean))];
+  const groups = new Map(groupIds.length ? db.prepare(`SELECT id, ref FROM booking_groups WHERE id IN (${groupIds.map(() => '?').join(',')})`).all(...groupIds).map((g) => [g.id, g.ref]) : []);
+  return { rows: rows.map((b) => ({ ...b, invoice: invoices.get(b.id) ?? null, group_ref: groups.get(b.group_id) ?? null })), counts, total, page, pages, view: filters.view };
 }
 
 /**
@@ -143,7 +145,7 @@ export function partnerSummary(app, accountId, nowMs = Date.now()) {
   const monthStart = `${today.slice(0, 7)}-01`;
   const nextMonth = addMonths(monthStart, 1);
   const up = db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(participants), 0) AS pax FROM bookings WHERE account_id = ? AND status = 'confirmed' AND date >= ?`).get(accountId, today);
-  const opt = db.prepare(`SELECT COUNT(*) AS n, MIN(option_expires_at) AS next FROM bookings WHERE account_id = ? AND status = 'option'`).get(accountId);
+  const opt = db.prepare(`SELECT COUNT(DISTINCT COALESCE('g' || group_id, 'b' || id)) AS n, MIN(option_expires_at) AS next FROM bookings WHERE account_id = ? AND status = 'option'`).get(accountId); // un pacchetto è una sola opzione
   const month = db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(total_cents - gift_cents), 0) AS cents FROM bookings WHERE account_id = ? AND status = 'confirmed' AND date >= ? AND date < ?`).get(accountId, monthStart, nextMonth);
   // da saldare: servizi confermati con fattura/bonifico non ancora incassati, e penali di annullo non ancora pagate
   const due = db

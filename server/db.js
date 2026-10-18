@@ -9,9 +9,33 @@ export function openDb(file) {
   return db;
 }
 
-/** Esegue `fn` in una transazione (BEGIN IMMEDIATE: nessun altro scrittore nel frattempo). */
+const depths = new WeakMap(); // transazioni aperte, per database: dentro una transazione si usano i punti di salvataggio
+
+/**
+ * Esegue `fn` in una transazione (BEGIN IMMEDIATE: nessun altro scrittore nel frattempo).
+ * Si può annidare: la transazione interna è un punto di salvataggio, e se `fn` fallisce si annulla solo quanto ha fatto lei
+ * (serve per creare più prenotazioni tutte insieme: o ci sono tutte, o nessuna).
+ */
 export function tx(db, fn) {
+  const depth = depths.get(db) ?? 0;
+  if (depth > 0) {
+    const name = `sp${depth}`;
+    db.exec(`SAVEPOINT ${name}`);
+    depths.set(db, depth + 1);
+    try {
+      const r = fn();
+      db.exec(`RELEASE ${name}`);
+      return r;
+    } catch (e) {
+      db.exec(`ROLLBACK TO ${name}`);
+      db.exec(`RELEASE ${name}`);
+      throw e;
+    } finally {
+      depths.set(db, depth);
+    }
+  }
   db.exec('BEGIN IMMEDIATE');
+  depths.set(db, 1);
   try {
     const r = fn();
     db.exec('COMMIT');
@@ -19,6 +43,8 @@ export function tx(db, fn) {
   } catch (e) {
     db.exec('ROLLBACK');
     throw e;
+  } finally {
+    depths.set(db, 0);
   }
 }
 

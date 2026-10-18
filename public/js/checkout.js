@@ -9,6 +9,7 @@
   var optionBtn = document.getElementById('option-submit');
   if (form) form.addEventListener('submit', function (e) {
     if (e.submitter && e.submitter.name === 'apply') return; // «Applica» e cambio di persone: si ricarica la pagina, non si prenota
+    if (e.submitter && e.submitter.value === 'package') { e.submitter.classList.add('is-busy'); return; } // «Aggiungi al pacchetto»: non si prenota, si passa al pacchetto
     // niente `disabled` sul pulsante che ha inviato il modulo: il browser non ne manderebbe più nome e valore (serve a «Opziona»)
     if (!e.submitter || e.submitter === btn) btn.disabled = true;
     btn.classList.add('is-busy');

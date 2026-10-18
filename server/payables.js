@@ -1,10 +1,10 @@
-// Oggetti pagabili con Stripe (o con la pagina demo): prenotazioni, gift card, acconti dei programmi.
+// Oggetti pagabili con Stripe (o con la pagina demo): prenotazioni, gift card, acconti dei programmi, pacchetti di più servizi.
 // Ognuno si registra con un "handler"; webhook, ripresa del pagamento e pagina demo sono generici.
 //
 // Handler: { find(ref), dueCents(row), isOpen(row), title(row, lang), onPaid(row, paymentIntent, nowMs),
 //            onExpired(row), startCheckout(row, lang, nowMs, attempt), statusUrl(row, lang) }
 
-const PREFIX = { VE: 'booking', GC: 'gift', PR: 'program' };
+const PREFIX = { VE: 'booking', GC: 'gift', PR: 'program', PT: 'group' };
 
 export function kindOfRef(ref) {
   const m = /^([A-Z]{2})-/.exec(String(ref ?? ''));
