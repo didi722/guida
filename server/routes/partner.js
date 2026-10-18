@@ -90,11 +90,11 @@ export function partnerRouter(app) {
     if (!b) return next();
     const back = (flash) => res.redirect(303, `/${req.lang}/b2b/bookings/${b.ref}?flash=${flash}#edit`);
     if (!isEditable(b)) return back('edit-locked'); // a servizio iniziato (o prenotazione chiusa) non si cambia più nulla
-    const after = { name: cleanText(req.body.name, 120), clientRef: cleanText(req.body.clientRef, 120) || null, phone: cleanText(req.body.phone, 40) || null, notes: cleanText(req.body.notes, 1000) || null };
+    const after = { name: cleanText(req.body.name, 120), clientRef: cleanText(req.body.clientRef, 120) || null, phone: cleanText(req.body.phone, 40) || null, notes: cleanText(req.body.notes, 1000) || null, pickup: app.content.tour(b.tour_slug)?.meetingChoice ? cleanText(req.body.pickup, 200) || null : b.pickup };
     if (!after.name) return back('edit-error');
-    db.prepare('UPDATE bookings SET name = ?, client_ref = ?, phone = ?, notes = ? WHERE id = ?').run(after.name, after.clientRef, after.phone, after.notes, b.id);
+    db.prepare('UPDATE bookings SET name = ?, client_ref = ?, phone = ?, notes = ?, pickup = ? WHERE id = ?').run(after.name, after.clientRef, after.phone, after.notes, after.pickup, b.id);
     // alla guida interessa ciò che vede sul campo (nominativo, telefono, note); il riferimento pratica è interno all'agenzia
-    const changed = after.name !== b.name || (after.phone ?? '') !== (b.phone ?? '') || (after.notes ?? '') !== (b.notes ?? '');
+    const changed = after.name !== b.name || (after.phone ?? '') !== (b.phone ?? '') || (after.notes ?? '') !== (b.notes ?? '') || (after.pickup ?? '') !== (b.pickup ?? '');
     if (changed && b.status === 'confirmed') await notifyGuideBookingEdited(app, b, after).catch((err) => console.error('[partner] avviso modifica:', err));
     back('edited');
   });

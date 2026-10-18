@@ -849,7 +849,11 @@ body.admin { --header-h: 64px; }
 .rate-extras { margin-bottom: 14px; }
 .sup-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--line); } .sup-list li:last-child { border-bottom: 0; } .sup-list strong { white-space: nowrap; }
 .notes-list li { margin: 0 0 4px; }
-.hourly-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; }
+.hourly-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: start; }
+.hourly-form .field .label { display: block; margin-bottom: 6px; }
+.hourly-form input:not([type=hidden]), .hourly-form select, .hourly-form .dp-field { height: 48px; box-sizing: border-box; }
+.hourly-form .field strong { display: flex; align-items: center; min-height: 48px; }
+.hourly-form .form-note { grid-column: 1 / -1; margin: -4px 0 0; }
 .hourly-form .field, .hourly-form .check { margin: 0; } .hourly-form .wide, .hourly-form .check, .hourly-form .btn, .hourly-form .notice { grid-column: 1 / -1; }
 .hourly-form .btn { justify-self: start; } .hourly-form .dyn { display: contents; }
 .quote-card { margin-top: 18px; } .quote-card h2 { margin-top: 0; }

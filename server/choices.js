@@ -48,5 +48,6 @@ export function meetingOf(tour, b, lang = 'it') {
   const ti = tour?.i18n?.[lang] ?? tour?.i18n?.it ?? { meetingPoint: '', meetingUrl: '' };
   if (!tour?.meetingChoice) return { text: ti.meetingPoint, url: ti.meetingUrl };
   if (b?.pickup) return { text: b.pickup, url: '' };
+  if (b?.channel === 'b2b') return { text: ti.meetingPoint, url: ti.meetingUrl }; // le agenzie lo comunicano dopo, dalla prenotazione: nel frattempo vale il testo del servizio
   return { text: DEFAULT_MEETING.text[lang] ?? DEFAULT_MEETING.text.it, url: DEFAULT_MEETING.url };
 }

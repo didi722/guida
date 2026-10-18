@@ -162,7 +162,11 @@ test('opzione dalla pagina della pratica: conferma (a fattura o con carta) e ril
     assert.equal(row(s, a.ref).status, 'confirmed');
     assert.equal(row(s, a.ref).payment_method, 'invoice');
     assert.match(nb(await (await anon(loc(ok))).text()), /Prenotazione confermata/);
-    assert.equal((await anon(`/it/booking/${a.ref}/option/confirm`, form({ t: a.token, method: 'invoice' }))).status, 404, 'non è più un’opzione');
+    // un secondo clic (o un invio doppio) non dà errore: la conferma c'è già
+    const again = await anon(`/it/booking/${a.ref}/option/confirm`, form({ t: a.token, method: 'invoice' }));
+    assert.equal(again.status, 303);
+    assert.equal(loc(again), `/it/booking/${a.ref}?t=${a.token}&flash=option-confirmed`);
+    assert.equal((await anon(`/it/booking/${a.ref}/option/confirm`, form({ t: 'sbagliato', method: 'invoice' }))).status, 404, 'ma con il token sbagliato no');
 
     // con carta: si va a pagare (e finché non si paga resta opzione)
     const c = make(day(31));

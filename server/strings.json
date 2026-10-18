@@ -5512,5 +5512,17 @@
   "Send",
   "Enviar",
   "送信"
+ ],
+ "f.pickupNoteB2b": [
+  "Facoltativo: lo puoi indicare anche dopo, modificando la prenotazione.",
+  "Optional: you can also add it later by editing the booking.",
+  "Opcional: también puedes indicarlo más tarde, editando la reserva.",
+  "任意：後から予約の編集で追加することもできます。"
+ ],
+ "meeting.summaryB2b": [
+  "Facoltativo: qui sotto, oppure dopo dalla prenotazione",
+  "Optional: below, or later from the booking",
+  "Opcional: abajo, o más tarde desde la reserva",
+  "任意：下に入力、または後から予約で入力"
  ]
 }

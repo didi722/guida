@@ -120,11 +120,11 @@ export function hourlyPage(ctx, { products, product, channel, values, quote, slo
     <label class="field"><span class="label">${t('quick.date')}</span><input type="date" name="date" min="${minDate}" value="${values.date ?? ''}"></label>
     <div class="dyn" data-dyn="hours">
     ${product.chooseHours
-      ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select name="hours">${hourOptions(product.service).map((h) => html`<option value="${h}" ${h === values.hours ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>${product.roundHours ? html`<small class="muted">${t('hourly.note.round')}</small>` : ''}</label>`
+      ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select name="hours">${hourOptions(product.service).map((h) => html`<option value="${h}" ${h === values.hours ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select></label>${product.roundHours ? html`<p class="small muted form-note">${t('hourly.note.round')}</p>` : ''}`
       : html`<p class="field"><span class="label">${t('hourly.f.hours')}</span><strong>${hoursLabel(t, lang, product.durationMin / 60)}</strong></p>
       ${extraOptions.length ? html`<label class="field"><span class="label">${t('hourly.f.extra')}</span><select name="extra"><option value="0">${t('hourly.extra.none')}</option>${extraOptions.map((n) => html`<option value="${n}" ${n === values.extra ? raw('selected') : ''}>+ ${hoursLabel(t, lang, n)}</option>`)}</select></label>` : ''}`}
     </div>
-    <div class="dyn" data-dyn="pax"><label class="field"><span class="label">${t('quick.guests')}</span><input type="number" name="pax" min="1" max="${product.maxParticipants}" value="${values.pax}" inputmode="numeric" required></label></div>
+    <div class="dyn" data-dyn="pax"><label class="field"><span class="label">${t('quick.guests')}</span><select name="pax">${Array.from({ length: product.maxParticipants }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === values.pax ? raw('selected') : ''}>${n}</option>`)}</select></label></div>
     <button class="btn btn-gold" type="submit" data-go>${t('hourly.f.go')}</button>
   </form>
 

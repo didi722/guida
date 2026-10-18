@@ -342,6 +342,36 @@ test('prenotazione di un’agenzia registrata dall’admin: agenda, area dell’
   }
 });
 
+test('punto d’incontro per le agenzie: facoltativo, senza «Campo San Luca», si indica anche dopo dalla modifica della prenotazione', async () => {
+  const s = await start();
+  try {
+    const { app, partner, partnerRow } = s;
+    const date = plainDay(14);
+    assert.equal(app.content.tour('guida-a-ore-agenzie').meetingChoice, true);
+    const co = nb(await (await partner(`/it/book/checkout?tour=guida-a-ore-agenzie&date=${date}&time=10:00&pax=2&hours=2`)).text());
+    assert.match(co, /<input name="pickup"/);
+    assert.match(co, /lo puoi indicare anche dopo, modificando la prenotazione/);
+    assert.ok(!co.includes('Campo San Luca'), 'niente punto standard per le agenzie');
+    // senza indicarlo: vale il testo del servizio («Concordato con te…»)
+    const res = await partner('/it/book/checkout', post({ tour: 'guida-a-ore-agenzie', date, time: '10:00', pax: '2', hours: '2', name: 'Giulia', email: partnerRow.email, lang: 'it', paymentMethod: 'invoice', consent: '1' }));
+    assert.equal(res.status, 303);
+    const b = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();
+    assert.equal(b.pickup, null);
+    const page = nb(await (await partner(`/it/b2b/bookings/${b.ref}`)).text());
+    assert.match(page, /Punto d’incontro<\/dt><dd>Concordato con te/);
+    assert.ok(!page.includes('Campo San Luca'));
+    assert.match(page, /<input name="pickup"[^>]*value=""/, 'si può indicare dopo');
+    // lo indica dopo: compare ovunque
+    const edit = await partner(`/it/b2b/bookings/${b.ref}/edit`, post({ name: 'Giulia', clientRef: '', phone: '', notes: '', pickup: 'Hotel Gritti' }));
+    assert.equal(edit.status, 303);
+    assert.equal(app.db.prepare('SELECT pickup FROM bookings WHERE id = ?').get(b.id).pickup, 'Hotel Gritti');
+    assert.match(nb(await (await partner(`/it/b2b/bookings/${b.ref}`)).text()), /Punto d’incontro<\/dt><dd>Hotel Gritti/);
+    assert.match(app.mail.sent.find((m) => m.to === 'guida@example.com' && /Prenotazione modificata/.test(m.subject))?.text ?? '', /Punto d’incontro: — → Hotel Gritti/);
+  } finally {
+    s.close();
+  }
+});
+
 test('servizi a ore per agenzie: ore extra su un servizio a durata fissa (2 ore → 1; 4 ore → 1-3; 8 ore → nessuna)', async () => {
   const s = await start();
   try {

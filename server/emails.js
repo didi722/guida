@@ -475,6 +475,7 @@ export async function notifyGuideBookingEdited(app, before, after) {
     ['Nominativo', before.name, after.name],
     ['Telefono', before.phone, after.phone],
     ['Note', before.notes, after.notes],
+    ['Punto d’incontro', before.pickup, after.pickup],
   ].filter(([, a, b]) => (a ?? '') !== (b ?? ''));
   const lines = [
     `Prenotazione modificata dall’agenzia: ${before.ref}${account ? ` — ${account.company}` : ''}`,

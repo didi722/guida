@@ -85,7 +85,17 @@
 
   // Conferme (es. annulla prenotazione)
   document.querySelectorAll('form[data-confirm]').forEach(function (f) {
-    f.addEventListener('submit', function (e) { if (!window.confirm(f.getAttribute('data-confirm'))) e.preventDefault(); });
+    f.addEventListener('submit', function (e) {
+      if (!window.confirm(f.getAttribute('data-confirm'))) { e.preventDefault(); return; }
+      // l'operazione può metterci qualche secondo (email, voucher): un solo invio, con l'attesa ben visibile
+      if (f.dataset.sent) { e.preventDefault(); return; }
+      f.dataset.sent = '1';
+      f.querySelectorAll('button[type=submit]').forEach(function (b) { b.classList.add('is-busy'); b.setAttribute('aria-busy', 'true'); });
+    });
+  });
+  window.addEventListener('pageshow', function (e) { // tornando indietro con il browser i pulsanti tornano utilizzabili
+    if (!e.persisted) return;
+    document.querySelectorAll('form[data-confirm]').forEach(function (f) { delete f.dataset.sent; f.querySelectorAll('.is-busy').forEach(function (b) { b.classList.remove('is-busy'); b.removeAttribute('aria-busy'); }); });
   });
   // «Copia il link»: copia il testo del campo indicato e lo conferma sul pulsante
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
