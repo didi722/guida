@@ -12,6 +12,7 @@ import { ledgerAdd } from '../server/pricing.js';
 import { newGiftCode, newRef } from '../server/util.js';
 
 process.env.GUIDA_QUIET = '1';
+process.env.FIRM_BOOKING_RULE ??= 'false'; // i test partono senza la regola «data lontana» (c'è un test apposta che la accende)
 
 export const tour = (over = {}) => ({
   slug: 'shared',

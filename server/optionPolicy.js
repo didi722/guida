@@ -1,6 +1,8 @@
 // Opzioni delle agenzie: la data resta trattenuta (senza pagare) fino a una scadenza, poi si libera da sola.
 // Qui solo le regole, senza database né rete: quanto dura un'opzione in base a quanto manca al servizio (tabella modificabile dal
 // pannello, Sito › Impostazioni › Opzioni per le agenzie) e alle condizioni dedicate a ogni partner.
+import { freeHoursOf } from './policy.js';
+
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
 
@@ -59,4 +61,26 @@ export function reminderAt({ createdMs, expiresMs, reminderHours }) {
   const h = Number(reminderHours) || 0;
   if (h <= 0 || expiresMs - createdMs <= (h + 2) * HOUR) return null;
   return expiresMs - h * HOUR;
+}
+
+/**
+ * Prenotazione ferma di un'agenzia per una data lontana: per spingere a opzionare (che non impegna) invece di prenotare e poi
+ * dimenticarsi di annullare, liberando la data solo all'ultimo. Se il servizio è fra più di `firmFromDays` giorni, la cancellazione
+ * gratuita vale solo per `firmGraceHours` ore dalla prenotazione; poi si rimborsa `firmRefundPercent`% fino al normale termine
+ * gratuito (e dopo valgono, come sempre, gli scaglioni successivi). Vale anche quando un'opzione si conferma: da quel momento.
+ * @returns {{ tiers: Array, applied: boolean, graceUntilMs?: number, refundPercent?: number, normalUntilMs?: number }}
+ */
+export function firmTiers({ options, tiers, startMs, nowMs }) {
+  const none = { tiers, applied: false };
+  const grace = Number(options?.firmGraceHours);
+  if (!options?.firmEnabled || !(grace > 0) || (startMs - nowMs) / DAY < (Number(options.firmFromDays) || 0)) return none;
+  const freeH = freeHoursOf(tiers);
+  if (!freeH) return none;
+  const graceUntilMs = nowMs + grace * HOUR;
+  const graceH = (startMs - graceUntilMs) / HOUR;
+  if (graceH <= freeH) return none;
+  const rest = tiers.filter((t) => t.refund < 100).sort((a, b) => b.hours - a.hours);
+  const partial = Math.min(99, Math.max(Number(options.firmRefundPercent) || 0, rest[0]?.refund ?? 0));
+  const out = [{ hours: graceH, refund: 100 }, ...(partial > 0 ? [{ hours: freeH, refund: partial }] : []), ...rest];
+  return { tiers: out, applied: true, graceUntilMs: startMs - graceH * HOUR, refundPercent: partial, normalUntilMs: startMs - freeH * HOUR };
 }

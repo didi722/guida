@@ -115,6 +115,11 @@ export function createConfig(overrides = {}) {
       minReleaseHours: num(e.OPTION_MIN_RELEASE_HOURS, 48), // l'opzione scade almeno così tante ore prima del servizio
       maxActive: num(e.OPTION_MAX_ACTIVE, 5), // opzioni aperte insieme per partner (0 = nessun limite)
       reminderHours: num(e.OPTION_REMINDER_HOURS, 24), // promemoria all'agenzia così tante ore prima della scadenza
+      // prenotazione ferma per una data lontana: la cancellazione gratuita dura poco, così conviene opzionare (vedi firmTiers in optionPolicy.js)
+      firmEnabled: bool(e.FIRM_BOOKING_RULE, true),
+      firmFromDays: num(e.FIRM_FROM_DAYS, 21), // vale se il servizio è fra più di tanti giorni
+      firmGraceHours: num(e.FIRM_GRACE_HOURS, 48), // cancellazione gratuita solo per tante ore dalla prenotazione
+      firmRefundPercent: num(e.FIRM_REFUND_PERCENT, 50), // poi si rimborsa questa percentuale fino al normale termine gratuito
     },
 
     calendar: {

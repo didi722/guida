@@ -1,9 +1,10 @@
 // Opzioni delle agenzie: la data resta trattenuta senza pagare fino a una scadenza (più il tour è lontano, più dura), poi si libera da sola.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_OPTION_TIERS, maxActiveOptions, normalizeOptionTiers, optionWindow, reminderAt } from '../server/optionPolicy.js';
-import { BookingError, activeOptionCount, cancelBooking, confirmOption, confirmPaid, createBooking, expireBooking, expireHolds, expireOptions, extendOption, getBooking, optionsDueForReminder, paymentOptions, releaseOption } from '../server/bookings.js';
+import { DEFAULT_OPTION_TIERS, firmTiers, maxActiveOptions, normalizeOptionTiers, optionWindow, reminderAt } from '../server/optionPolicy.js';
+import { BookingError, activeOptionCount, cancelBooking, cancellationState, confirmOption, confirmPaid, createBooking, expireBooking, expireHolds, expireOptions, extendOption, getBooking, optionsDueForReminder, paymentOptions, releaseOption } from '../server/bookings.js';
 import { daySlots } from '../server/availability.js';
+import { freeHoursOf } from '../server/policy.js';
 import { localToInstant } from '../server/time.js';
 import { addAccount, base, makeApp, NOW } from './helpers.js';
 
@@ -270,4 +271,56 @@ test('chi ha prenotato prima dell’apertura può pagare online dopo, dalla pagi
   assert.equal(paid.stripe_payment_intent, 'pi_later');
   assert.equal(paid.status, 'confirmed');
   assert.equal(confirmPaid(app, b.id, 'pi_other', NOW).outcome, 'already', 'un secondo pagamento non cambia nulla (poi si rimborsa)');
+});
+
+const FIRM = { ...OPTIONS, firmEnabled: true, firmFromDays: 21, firmGraceHours: 48, firmRefundPercent: 50 };
+
+test('prenotazione ferma per una data lontana: cancellazione gratuita breve, poi rimborso ridotto fino al termine normale', () => {
+  const tiers = [{ hours: 72, refund: 100 }];
+  const far = firmTiers({ options: FIRM, tiers, startMs: startAt(60), nowMs: NOW });
+  assert.equal(far.applied, true);
+  assert.deepEqual(far.tiers.map((t) => [t.hours, t.refund]), [[(60 * DAY - 48 * HOUR) / HOUR, 100], [72, 50]]);
+  assert.equal(far.graceUntilMs, NOW + 48 * HOUR);
+  assert.equal(far.normalUntilMs, startAt(60) - 72 * HOUR);
+  assert.equal(far.refundPercent, 50);
+  // a 0% non c'è lo scaglione intermedio: dopo i due giorni non si rimborsa più
+  assert.deepEqual(firmTiers({ options: { ...FIRM, firmRefundPercent: 0 }, tiers, startMs: startAt(60), nowMs: NOW }).tiers.map((t) => t.refund), [100]);
+  // con scaglioni successivi, il rimborso non risale mai
+  const multi = firmTiers({ options: { ...FIRM, firmRefundPercent: 20 }, tiers: [{ hours: 72, refund: 100 }, { hours: 24, refund: 50 }], startMs: startAt(60), nowMs: NOW });
+  assert.deepEqual(multi.tiers.map((t) => t.refund), [100, 50, 50]);
+  // vicino, spento o senza periodo gratuito: nessuna modifica
+  assert.equal(firmTiers({ options: FIRM, tiers, startMs: startAt(20), nowMs: NOW }).applied, false, 'sotto i 21 giorni');
+  assert.equal(firmTiers({ options: { ...FIRM, firmEnabled: false }, tiers, startMs: startAt(60), nowMs: NOW }).applied, false);
+  assert.equal(firmTiers({ options: FIRM, tiers: [{ hours: 72, refund: 50 }], startMs: startAt(60), nowMs: NOW }).applied, false, 'senza rimborso totale non c’è nulla da accorciare');
+  assert.equal(firmTiers({ options: { ...FIRM, firmGraceHours: 24 * 59 }, tiers, startMs: startAt(60), nowMs: NOW }).applied, false, 'la finestra non supera il termine normale');
+});
+
+test('prenotazione ferma lontana: la prenotazione conserva gli scaglioni brevi; l’opzione conferma da quel momento; le vicine e le manuali no', () => {
+  const app = makeApp();
+  try {
+    app.cfg.options = { ...app.cfg.options, ...FIRM };
+    const acct = addAccount(app.db);
+    const far = new Date(NOW + 40 * DAY).toISOString().slice(0, 10);
+    const near = new Date(NOW + 10 * DAY).toISOString().slice(0, 10);
+    const mk = (date, over = {}) => createBooking(app, base({ tourSlug: 'shared', date, time: '09:30', channel: 'b2b', account: acct, paymentMethod: 'invoice', ...over }), NOW);
+    const b = mk(far);
+    assert.equal(Date.parse(b.free_cancel_until), NOW + 48 * HOUR, 'gratis solo per 48 ore dalla prenotazione');
+    assert.equal(cancellationState(b, NOW + HOUR).percent, 100);
+    assert.equal(cancellationState(b, NOW + 3 * DAY).percent, 50, 'poi il rimborso scende');
+    // vicina: come sempre (gratis fino a 72 ore prima, qui 5 giorni di margine)
+    const n = mk(near);
+    assert.equal(Date.parse(n.free_cancel_until), localToInstant(near, '09:30') - freeHoursOf(JSON.parse(n.cancel_policy_json)) * HOUR);
+    assert.ok(Date.parse(n.free_cancel_until) > NOW + 48 * HOUR);
+    // opzione: nessun cambio finché non si conferma; confermando, la finestra breve riparte da adesso
+    const o = mk(new Date(NOW + 45 * DAY).toISOString().slice(0, 10), { option: true, paymentMethod: undefined });
+    assert.equal(o.status, 'option');
+    assert.ok(Date.parse(o.free_cancel_until) > NOW + 40 * DAY, 'l’opzione non è ancora un impegno');
+    const later = NOW + 5 * DAY;
+    const res = confirmOption(app, o.id, { method: 'invoice' }, later);
+    assert.equal(res.outcome, 'confirmed');
+    assert.equal(Date.parse(res.booking.free_cancel_until), later + 48 * HOUR);
+    assert.equal(cancellationState(res.booking, later + 3 * DAY).percent, 50);
+  } finally {
+    app.cleanup();
+  }
 });

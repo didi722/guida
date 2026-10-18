@@ -9,7 +9,7 @@ import { LANGS, normLang } from './langs.js';
 import { pickupText, themeChoice } from './choices.js';
 import { freeHoursOf, hasFreeTier, parseTiers, policyFor, refundPercentAt, singleTier, splitAmounts } from './policy.js';
 import { isPreOpening } from './opening.js';
-import { maxActiveOptions, optionWindow, reminderAt } from './optionPolicy.js';
+import { firmTiers, maxActiveOptions, optionWindow, reminderAt } from './optionPolicy.js';
 
 export { priceFor, unitPriceFor };
 
@@ -96,8 +96,10 @@ export function createBooking(app, input, nowMs = Date.now()) {
 
   const wantsOption = !!input.option;
   if (wantsOption && channel !== 'b2b') throw new BookingError('option', 'only agencies can option a date');
-  const tiers = policyFor(cfg, tour, channel, account); // dei partner o dei privati; se ne conserva una copia nella prenotazione
   const startInstant = localToInstant(input.date, input.time);
+  const baseTiers = policyFor(cfg, tour, channel, account); // dei partner o dei privati; se ne conserva una copia nella prenotazione
+  // agenzia che prenota (senza opzione) una data lontana: la cancellazione gratuita dura poco, così conviene opzionare
+  const tiers = channel === 'b2b' && !wantsOption && !input.manual ? firmTiers({ options: cfg.options, tiers: baseTiers, startMs: startInstant, nowMs }).tiers : baseTiers;
 
   return tx(db, () => {
     const ctx = loadAvailabilityContext(db, cfg, input.date, input.date, nowMs);
@@ -428,6 +430,10 @@ export function confirmOption(app, bookingId, { method = null } = {}, nowMs = Da
     const allowed = paymentOptions(app, content.tour(b.tour_slug), 'b2b', account, nowMs);
     const chosen = allowed.includes(method) ? method : allowed[0];
     if (!chosen) return { outcome: 'payment', booking: b };
+    // confermare l'opzione è un impegno: per una data lontana la cancellazione gratuita riparte da adesso, ma dura poco (vedi firmTiers)
+    const startMs = localToInstant(b.date, b.start_time);
+    const firm = firmTiers({ options: cfg.options, tiers: parseTiers(b.cancel_policy_json) ?? policyFor(cfg, content.tour(b.tour_slug), 'b2b', account), startMs, nowMs });
+    if (firm.applied) db.prepare(`UPDATE bookings SET cancel_policy_json = ?, free_cancel_until = ? WHERE id = ?`).run(JSON.stringify(firm.tiers), new Date(startMs - freeHoursOf(firm.tiers) * HOUR).toISOString(), b.id);
     if (chosen === 'invoice') {
       db.prepare(`UPDATE bookings SET status = 'confirmed', payment_method = 'invoice', confirmed_at = ?, hold_expires_at = NULL WHERE id = ?`).run(iso(nowMs), b.id);
       return { outcome: 'confirmed', booking: getBooking(db, b.id) };

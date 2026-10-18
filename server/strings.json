@@ -5530,5 +5530,35 @@
   "Download the voucher in:",
   "Descargar el voucher en:",
   "バウチャーの言語："
+ ],
+ "firm.title": [
+  "Data lontana.",
+  "Date far ahead.",
+  "Fecha lejana.",
+  "日程が先です。"
+ ],
+ "firm.text": [
+  "Se prenoti direttamente, la cancellazione è gratuita solo fino a {grace}; poi si rimborsa il {percent}% fino a {normal}, e dopo non c’è più rimborso.",
+  "If you book directly, cancellation is free only until {grace}; after that {percent}% is refunded until {normal}, and then there is no refund.",
+  "Si reservas directamente, la cancelación es gratuita solo hasta el {grace}; después se reembolsa el {percent}% hasta el {normal}, y luego ya no hay reembolso.",
+  "直接予約の場合、無料キャンセルは{grace}までです。その後{normal}までは{percent}%を返金し、それ以降は返金できません。"
+ ],
+ "firm.text0": [
+  "Se prenoti direttamente, la cancellazione è gratuita solo fino a {grace}; dopo non c’è più rimborso.",
+  "If you book directly, cancellation is free only until {grace}; after that there is no refund.",
+  "Si reservas directamente, la cancelación es gratuita solo hasta el {grace}; después no hay reembolso.",
+  "直接予約の場合、無料キャンセルは{grace}までです。それ以降は返金できません。"
+ ],
+ "firm.advice": [
+  "Se il tuo cliente non ha ancora deciso, opziona la data: non paghi, non ti impegni e la tieni fino alla scadenza.",
+  "If your client has not decided yet, hold the date: you pay nothing, you are not committed, and you keep it until it expires.",
+  "Si tu cliente aún no ha decidido, opciona la fecha: no pagas, no te comprometes y la mantienes hasta que caduque.",
+  "お客様がまだ決めていない場合は、日程を仮押さえしてください。お支払いも義務もなく、期限まで確保できます。"
+ ],
+ "firm.recommended": [
+  "Consigliato per le date lontane",
+  "Recommended for far dates",
+  "Recomendado para fechas lejanas",
+  "先の日程におすすめ"
  ]
 }

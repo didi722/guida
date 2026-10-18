@@ -1000,3 +1000,5 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .invite-box .invite-item { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
 .invite-box code { font-size: 1.05em; letter-spacing: 0.04em; }
 .invite-note { margin: 0 0 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.option-box.is-recommended { border-style: solid; border-color: var(--gold); background: var(--gold-soft); margin: 0 0 14px; }
+.firm-note { margin-top: 16px; }

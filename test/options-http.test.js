@@ -234,7 +234,7 @@ test('opzioni dal pannello: elenco, prolunga, rilascio, durata per partner e tab
     assert.match(nb(await (await admin(`/admin/partners/${agency.id}`)).text()), /Opzioni/);
 
     // tabella del sito: salvataggio e validazioni
-    const ok = { 'options.enabled': '1', 'options.minReleaseHours': '36', 'options.maxActive': '4', 'options.reminderHours': '12', 'options.tiers.0.from': '7', 'options.tiers.0.days': '2', 'options.tiers.1.from': '30', 'options.tiers.1.days': '9' };
+    const ok = { 'options.firmEnabled': '1', 'options.firmFromDays': '21', 'options.firmGraceHours': '48', 'options.firmRefundPercent': '50', 'options.enabled': '1', 'options.minReleaseHours': '36', 'options.maxActive': '4', 'options.reminderHours': '12', 'options.tiers.0.from': '7', 'options.tiers.0.days': '2', 'options.tiers.1.from': '30', 'options.tiers.1.days': '9' };
     assert.equal(loc(await admin('/admin/settings/options', form(ok))), '/admin/settings?ok=saved&s=options#options');
     assert.deepEqual(s.cfg.options.tiers, [{ fromDays: 30, days: 9 }, { fromDays: 7, days: 2 }], 'ordinate dalla più lontana');
     assert.deepEqual([s.cfg.options.minReleaseHours, s.cfg.options.maxActive, s.cfg.options.reminderHours], [36, 4, 12]);
@@ -252,7 +252,7 @@ test('opzioni dal pannello: elenco, prolunga, rilascio, durata per partner e tab
     }
     assert.deepEqual(s.cfg.options.tiers, [{ fromDays: 30, days: 9 }, { fromDays: 7, days: 2 }], 'nulla è cambiato con i valori sbagliati');
     // senza righe: nessuna opzione per i servizi vicini (si prenota direttamente)
-    assert.equal(loc(await admin('/admin/settings/options', form({ 'options.enabled': '1', 'options.minReleaseHours': '48', 'options.maxActive': '5', 'options.reminderHours': '24' }))), '/admin/settings?ok=saved&s=options#options');
+    assert.equal(loc(await admin('/admin/settings/options', form({ 'options.firmEnabled': '1', 'options.firmFromDays': '21', 'options.firmGraceHours': '48', 'options.firmRefundPercent': '50', 'options.enabled': '1', 'options.minReleaseHours': '48', 'options.maxActive': '5', 'options.reminderHours': '24' }))), '/admin/settings?ok=saved&s=options#options');
     assert.deepEqual(s.cfg.options.tiers, []);
   } finally {
     s.close();

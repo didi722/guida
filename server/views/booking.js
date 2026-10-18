@@ -8,6 +8,7 @@ import { isEditable } from '../partner.js';
 import { formatMoney } from '../util.js';
 import { LANGS, LANG_META } from '../langs.js';
 import { inviteLink } from '../invites.js';
+import { firmTiers } from '../optionPolicy.js';
 import { DEFAULT_MEETING, hasThemes, meetingOf, themeText } from '../choices.js';
 import { icon, page } from './layout.js';
 import { walletOptions } from '../wallet.js';
@@ -87,8 +88,10 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
   pricing ??= { listCents: priceFor(tour, pax, channel, acct), discountCents: 0, totalCents: priceFor(tour, pax, channel, acct), giftCents: 0, dueCents: priceFor(tour, pax, channel, acct), promo: null, gifts: [], errors: {} };
   const nothingToPay = pricing.dueCents === 0;
   const options = paymentOptions(app, tour, channel, acct);
-  const tiers = policyFor(cfg, tour, channel, acct);
   const startMs = localToInstant(date, time);
+  const baseTiers = policyFor(cfg, tour, channel, acct);
+  const firm = channel === 'b2b' ? firmTiers({ options: cfg.options, tiers: baseTiers, startMs, nowMs: Date.now() }) : { applied: false, tiers: baseTiers }; // data lontana: la prenotazione diretta ha una cancellazione gratuita breve
+  const tiers = firm.tiers;
   const hours = freeHoursOf(tiers);
   const deadline = startMs - hours * 3600_000;
   const refundable = hasFreeTier(tiers) && Date.now() <= deadline;
@@ -96,6 +99,11 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
   const method = values.paymentMethod && options.includes(values.paymentMethod) ? values.paymentMethod : (options[0] ?? null);
   const isB2b = channel === 'b2b';
   const v = (k, d = '') => values[k] ?? d;
+  const optionBox = option?.ok
+    ? html`<div class="option-box ${firm.applied ? 'is-recommended' : ''}">${firm.applied ? html`<span class="chip chip-accent">${t('firm.recommended')}</span>` : ''}<h3>${t('option.title')}</h3>
+          <p>${t('option.text', { until: fmtInstant(option.expiresMs, lang), days: timeLeft(t, option.expiresMs - Date.now()) })}</p>
+          <button class="btn ${firm.applied ? 'btn-gold' : 'btn-outline'} btn-block" type="submit" name="action" value="option" id="option-submit">${t('option.btn')}</button></div>`
+    : '';
   // lingua del tour: tra quelle offerte; se la partenza condivisa ha già qualcuno, vale la lingua di chi ha prenotato per primo
   const offered = tour.languages;
   const tourLang = slot.lang && offered.includes(slot.lang) ? slot.lang : offered.includes(v('tourLang')) ? v('tourLang') : offered.includes(lang) ? lang : offered[0];
@@ -167,12 +175,12 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
 
     <label class="check consent"><input type="checkbox" name="consent" value="1" required> <span>${t('f.consent')} <a href="${u('/terms')}" target="_blank">${t('footer.terms')}</a> · <a href="${u('/privacy')}" target="_blank">${t('footer.privacy')}</a></span></label>
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    ${firm.applied
+      ? html`<div class="notice notice-info firm-note" role="note"><strong>${t('firm.title')}</strong> ${t(firm.refundPercent > 0 ? 'firm.text' : 'firm.text0', { grace: fmtInstant(firm.graceUntilMs, lang), percent: firm.refundPercent, normal: fmtInstant(firm.normalUntilMs, lang) })}${option?.ok ? html` <strong>${t('firm.advice')}</strong>` : ''}</div>`
+      : ''}
+    ${option?.ok && firm.applied ? optionBox : ''}
     <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" ${method || nothingToPay ? '' : raw('disabled')}>${nothingToPay ? t('pay.none.cta') : method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
-    ${option?.ok
-      ? html`<div class="option-box"><h3>${t('option.title')}</h3>
-          <p>${t('option.text', { until: fmtInstant(option.expiresMs, lang), days: timeLeft(t, option.expiresMs - Date.now()) })}</p>
-          <button class="btn btn-outline btn-block" type="submit" name="action" value="option" id="option-submit">${t('option.btn')}</button></div>`
-      : option ? html`<p class="small muted option-note">${t(`option.err.${option.reason}`)}</p>` : ''}
+    ${option?.ok && !firm.applied ? optionBox : option && !option.ok ? html`<p class="small muted option-note">${t(`option.err.${option.reason}`)}</p>` : ''}
   </form>
 
   <aside class="card summary-card">
