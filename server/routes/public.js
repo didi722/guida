@@ -310,7 +310,7 @@ export function publicRouter(app) {
   r.post('/booking/:ref/invite', form, async (req, res, next) => {
     const b = loadBooking(req);
     if (!b) return next();
-    const to = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}#invita`);
+    const to = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}`); // il riquadro è subito sotto l’avviso: niente salto
     if (!app.limits.codes(ip(req))) return tooMany(res);
     try {
       const email = cleanText(req.body.email, 200); // (facoltativa: il modulo di base non la chiede più)
@@ -326,7 +326,7 @@ export function publicRouter(app) {
   r.post('/booking/:ref/invite/:id/email', form, async (req, res, next) => {
     const b = loadBooking(req);
     if (!b) return next();
-    const to = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}#invita`);
+    const to = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}`); // il riquadro è subito sotto l’avviso: niente salto
     if (!app.limits.codes(ip(req))) return tooMany(res);
     const email = cleanText(req.body.email, 200).toLowerCase();
     const invite = db.prepare('SELECT * FROM invites WHERE id = ? AND booking_id = ?').get(Number(req.params.id), b.id);

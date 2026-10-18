@@ -544,7 +544,7 @@ body.admin { --header-h: 64px; }
   .hero-grid, .band-grid, .contact-grid, .checkout-grid { grid-template-columns: 1fr; gap: 32px; }
   .hero { padding-bottom: 36px; }
   .hero-art { aspect-ratio: 16 / 9; order: -1; }
-  .tour-layout { grid-template-columns: 1fr; padding-bottom: 110px; }
+  .tour-layout { grid-template-columns: minmax(0, 1fr); padding-bottom: 110px; }
   .tour-side { position: static; max-height: none; overflow: visible; padding: 0; margin: 0; }
   .summary-card { position: static; order: -1; }
   .mobile-cta { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 20px calc(10px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.12); }
@@ -849,7 +849,7 @@ body.admin { --header-h: 64px; }
 .rate-extras { margin-bottom: 14px; }
 .sup-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--line); } .sup-list li:last-child { border-bottom: 0; } .sup-list strong { white-space: nowrap; }
 .notes-list li { margin: 0 0 4px; }
-.hourly-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: start; }
+.hourly-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: start; }
 .hourly-form .field .label { display: block; margin-bottom: 6px; }
 .hourly-form input:not([type=hidden]), .hourly-form select, .hourly-form .dp-field { height: 48px; box-sizing: border-box; }
 .hourly-form .field strong { display: flex; align-items: center; min-height: 48px; }
@@ -1002,3 +1002,5 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .invite-note { margin: 0 0 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .option-box.is-recommended { border-style: solid; border-color: var(--gold); background: var(--gold-soft); margin: 0 0 14px; }
 .firm-note { margin-top: 16px; }
+.voucher-langs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; } .voucher-langs > span { flex-basis: 100%; }
+.tour-main { min-width: 0; } .tour-main .facts, .tour-main .prose { overflow-wrap: anywhere; }

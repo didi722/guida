@@ -1313,7 +1313,7 @@ test('invita un amico: dalla pagina della prenotazione, con email o con collegam
     const token = page.split('t=')[1].split('&')[0];
     const first = await f(`${base}/invite?t=${token}`, form({}));
     assert.equal(first.status, 303);
-    assert.match(loc(first), /flash=inviteMade#invita$/);
+    assert.match(loc(first), /flash=inviteMade$/);
     const afterFirst = (await (await f(loc(first))).text()).replace(/\s+/g, ' ');
     assert.match(afterFirst, /Inviti creati: 1 su 3/);
     assert.match(afterFirst, /data-copy="#invite-link-\d+"/);
@@ -1325,7 +1325,7 @@ test('invita un amico: dalla pagina della prenotazione, con email o con collegam
     assert.match(loc(await f(`${base}/invite/9999/email?t=${token}`, form({ email: 'luca@example.com' }))), /flash=invite-error/, 'un invito che non è suo');
     const sent = await f(`${base}/invite/${inviteId}/email?t=${token}`, form({ email: 'luca@example.com' }));
     assert.equal(sent.status, 303);
-    assert.match(loc(sent), /flash=inviteSent#invita$/);
+    assert.match(loc(sent), /flash=inviteSent$/);
     const mail = s.app.mail.sent.find((m) => m.to === 'luca@example.com');
     assert.match(mail.subject, /Anna invites you/, 'nella lingua del tour (inglese)');
     const code = /AMICO-[A-Z0-9]{6}/.exec(mail.text)[0];
