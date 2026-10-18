@@ -666,7 +666,7 @@ test('Guida privata B2C su misura: ore scelte dal cliente (a ore intere), festiv
     assert.match(await (await s.admin(`/admin/bookings/${b.id}`)).text().then(nb), /Scelta del cliente<\/dt><dd>Altro: Vorrei vedere i luoghi di Casanova/);
     assert.match(await (await anon(`/it/booking/${b.ref}?t=${b.token}`)).text().then(nb), /Che tipo di tour vuoi\?<\/dt><dd>Altro: Vorrei vedere/);
     // una voce della lista, in inglese: la guida la legge in italiano, il cliente nella sua lingua
-    const date2 = plainDay(22);
+    const date2 = plainDay(Math.round((Date.parse(date) - Date.parse(nowRome().date)) / 86400000) + 1); // un altro giorno feriale, dopo il primo
     const en = await anon('/en/book/checkout', post({ ...base, date: date2, name: 'Mark', email: 'mark@example.com', lang: 'en', theme: '1', pickup: 'Hotel Danieli', paymentMethod: 'onsite', consent: '1' }));
     assert.equal(en.status, 303);
     const b2 = app.db.prepare('SELECT * FROM bookings ORDER BY id DESC LIMIT 1').get();

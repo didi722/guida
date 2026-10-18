@@ -312,7 +312,7 @@ export function publicRouter(app) {
     const to = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}#invita`);
     if (!app.limits.codes(ip(req))) return tooMany(res);
     try {
-      const email = cleanText(req.body.email, 200);
+      const email = cleanText(req.body.email, 200); // (facoltativa: il modulo di base non la chiede più)
       const { invite } = createInvite(app, b, { email });
       if (invite.friend_email) await sendInviteEmail(app, b, invite, inviteLink(app, b, invite.code, normLang(b.tour_lang ?? b.lang)));
       return to(invite.friend_email ? 'inviteSent' : 'inviteMade');
@@ -320,6 +320,19 @@ export function publicRouter(app) {
       if (e.reason) return to('invite-error');
       throw e;
     }
+  });
+  // un invito già creato: lo si manda per email all'amico
+  r.post('/booking/:ref/invite/:id/email', form, async (req, res, next) => {
+    const b = loadBooking(req);
+    if (!b) return next();
+    const to = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}#invita`);
+    if (!app.limits.codes(ip(req))) return tooMany(res);
+    const email = cleanText(req.body.email, 200).toLowerCase();
+    const invite = db.prepare('SELECT * FROM invites WHERE id = ? AND booking_id = ?').get(Number(req.params.id), b.id);
+    if (!invite || !isEmail(email) || !inviteOffer(app, b).invites?.some((i) => i.id === invite.id && !i.used)) return to('invite-error');
+    db.prepare('UPDATE invites SET friend_email = ? WHERE id = ?').run(email, invite.id);
+    await sendInviteEmail(app, b, { ...invite, friend_email: email }, inviteLink(app, b, invite.code, normLang(b.tour_lang ?? b.lang)));
+    return to('inviteSent');
   });
   r.post('/booking/:ref/cancel', form, async (req, res, next) => {
     const b = loadBooking(req);

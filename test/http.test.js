@@ -1299,16 +1299,31 @@ test('invita un amico: dalla pagina della prenotazione, con email o con collegam
     const res = await f('/it/book/checkout', form({ tour: 'san-marco-rialto', date, time: '09:30', pax: '2', name: 'Anna', email: 'anna@example.com', lang: 'it', tourLang: 'en', paymentMethod: 'onsite', consent: '1' }));
     const page = loc(res);
     const html = (await (await f(page)).text()).replace(/\s+/g, ' ');
-    assert.match(html, /Invita un amico/);
-    assert.match(html, /ha il 10% di sconto|hanno il 10%|ha il 10%|10% di sconto/);
+    assert.match(html, /Porta un amico: −10%/);
+    assert.match(html, /Puoi invitare fino a 3 amici/);
+    assert.match(html, /Crea il link per un amico/);
+    assert.match(html, /Inviti creati: 0 su 3/);
     assert.match(html, /action="\/it\/booking\/VE-[A-Z0-9]+\/invite\?t=/);
+    assert.ok(html.indexOf('id="invita"') < html.indexOf('ref-line'), 'il riquadro sta in alto, prima del riepilogo');
     // senza token, niente
     assert.equal((await f(page.replace(/\?t=.*/, '/invite?t=sbagliato'), form({ email: '' }))).status, 404);
 
-    // con l'email: la manda il sito
+    // un solo clic: il link è subito lì, da copiare o da mandare su WhatsApp
     const base = page.split('?')[0];
     const token = page.split('t=')[1].split('&')[0];
-    const sent = await f(`${base}/invite?t=${token}`, form({ email: 'luca@example.com' }));
+    const first = await f(`${base}/invite?t=${token}`, form({}));
+    assert.equal(first.status, 303);
+    assert.match(loc(first), /flash=inviteMade#invita$/);
+    const afterFirst = (await (await f(loc(first))).text()).replace(/\s+/g, ' ');
+    assert.match(afterFirst, /Inviti creati: 1 su 3/);
+    assert.match(afterFirst, /data-copy="#invite-link-\d+"/);
+    assert.match(afterFirst, /https:\/\/wa\.me\/\?text=/);
+    const inviteId = /\/invite\/(\d+)\/email\?t=/.exec(afterFirst)[1];
+    // oppure lo si manda per email all'amico: la manda il sito
+    assert.equal((await f(`${base}/invite/${inviteId}/email?t=sbagliato`, form({ email: 'luca@example.com' }))).status, 404);
+    assert.match(loc(await f(`${base}/invite/${inviteId}/email?t=${token}`, form({ email: 'boh' }))), /flash=invite-error/);
+    assert.match(loc(await f(`${base}/invite/9999/email?t=${token}`, form({ email: 'luca@example.com' }))), /flash=invite-error/, 'un invito che non è suo');
+    const sent = await f(`${base}/invite/${inviteId}/email?t=${token}`, form({ email: 'luca@example.com' }));
     assert.equal(sent.status, 303);
     assert.match(loc(sent), /flash=inviteSent#invita$/);
     const mail = s.app.mail.sent.find((m) => m.to === 'luca@example.com');
@@ -1324,23 +1339,20 @@ test('invita un amico: dalla pagina della prenotazione, con email o con collegam
     assert.match(co, /Sconto|Discount|−/);
     assert.match(co, /<input type="hidden" name="tourLang" value="en">/);
 
-    // senza email: collegamento da copiare + WhatsApp; il secondo codice è diverso
-    const made = await f(`${base}/invite?t=${token}`, form({ email: '' }));
+    // un secondo invito: il codice è diverso
+    const made = await f(`${base}/invite?t=${token}`, form({}));
     assert.match(loc(made), /flash=inviteMade/);
     const after = (await (await f(loc(made))).text()).replace(/\s+/g, ' ');
     assert.equal((after.match(/AMICO-[A-Z0-9]{6}/g) ?? []).filter((c, i, a) => a.indexOf(c) === i).length, 2, 'due inviti');
-    assert.match(after, /https:\/\/wa\.me\/\?text=/);
     assert.match(after, /non ancora usato/);
     // l'amico prenota con il codice: il suo invito risulta usato
     const booked = await friend('/it/book/checkout', form({ tour: 'san-marco-rialto', date, time: '09:30', pax: '1', name: 'Luca', email: 'luca@example.com', lang: 'it', tourLang: 'en', paymentMethod: 'onsite', promo: code, consent: '1' }));
     assert.equal(booked.status, 303);
     assert.equal(s.app.db.prepare("SELECT promo_code FROM bookings WHERE email = 'luca@example.com'").get().promo_code, code);
     assert.match((await (await f(loc(made))).text()), /usato/);
-    // email sbagliata
-    assert.match(loc(await f(`${base}/invite?t=${token}`, form({ email: 'boh' }))), /flash=invite-error/);
     // le prenotazioni di un tour privato non hanno invito
     const priv = await f('/it/book/checkout', form({ tour: 'passeggiata-privata-2h', date: day(27), time: '10:00', pax: '2', name: 'Marta', email: 'marta@example.com', lang: 'it', paymentMethod: 'onsite', consent: '1' }));
-    assert.ok(!(await (await f(loc(priv))).text()).includes('Invita un amico'));
+    assert.ok(!(await (await f(loc(priv))).text()).includes('Porta un amico'));
   } finally {
     s.close();
   }

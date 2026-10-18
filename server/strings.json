@@ -5160,16 +5160,16 @@
   "{lang}で"
  ],
  "invite.title": [
-  "Invita un amico",
-  "Invite a friend",
-  "Invita a un amigo",
-  "友だちを招待"
+  "Porta un amico: −{percent}%",
+  "Bring a friend: −{percent}%",
+  "Trae a un amigo: −{percent}%",
+  "ご友人と一緒に：−{percent}%"
  ],
  "invite.lead": [
-  "In questa partenza c’è ancora posto. Manda a un amico il suo codice sconto personale: ha il {percent}% di sconto, una volta sola e solo per questa partenza, e si unisce al tuo gruppo.",
-  "There is still room on this departure. Send a friend their own personal code: they get {percent}% off, once only and for this departure only, and join your group.",
-  "Aún hay plazas en esta salida. Envía a un amigo su código personal: tiene un {percent}% de descuento, una sola vez y solo para esta salida, y se une a tu grupo.",
-  "この出発にはまだ空きがあります。友だちに専用の割引コードを送りましょう。この出発のみ、1回限り{percent}%割引で、あなたのグループに参加できます。"
+  "Puoi invitare fino a {max} amici. Premi «Crea il link per un amico»: ottieni un link personale che dà all’amico il {percent}% di sconto su questa stessa partenza (un link, un amico, una volta sola). Poi lo copi o lo mandi su WhatsApp.",
+  "You can invite up to {max} friends. Press “Create a link for a friend”: you get a personal link that gives your friend {percent}% off this same departure (one link, one friend, one time only). Then copy it or send it on WhatsApp.",
+  "Puedes invitar hasta {max} amigos. Pulsa «Crear el enlace para un amigo»: obtienes un enlace personal que da a tu amigo un {percent}% de descuento en esta misma salida (un enlace, un amigo, una sola vez). Luego lo copias o lo envías por WhatsApp.",
+  "最大{max}名のご友人をご招待できます。「ご友人用のリンクを作る」を押すと、同じ出発日でご友人が{percent}%割引になる専用リンクが作成されます（1リンク・1名・1回のみ）。リンクはコピーするか、WhatsAppで送れます。"
  ],
  "invite.email": [
   "Email dell’amico (facoltativa)",
@@ -5184,10 +5184,10 @@
   "入力するとこちらから招待を送ります。入力しない場合は、リンクをコピーして送ってください。"
  ],
  "invite.btn": [
-  "Crea l’invito",
-  "Create the invitation",
-  "Crear la invitación",
-  "招待を作成"
+  "Crea il link per un amico",
+  "Create a link for a friend",
+  "Crear el enlace para un amigo",
+  "ご友人用のリンクを作る"
  ],
  "invite.code": [
   "Codice",
@@ -5244,10 +5244,10 @@
   "この予約で送れる招待はすべて送信済みです。"
  ],
  "booking.flash.inviteMade": [
-  "Invito creato: copia il collegamento o mandalo su WhatsApp.",
-  "Invitation created: copy the link or send it on WhatsApp.",
-  "Invitación creada: copia el enlace o envíalo por WhatsApp.",
-  "招待を作成しました。リンクをコピーするか、WhatsAppで送ってください。"
+  "Link creato: copialo o mandalo su WhatsApp, qui sotto.",
+  "Link created: copy it or send it on WhatsApp, below.",
+  "Enlace creado: cópialo o envíalo por WhatsApp, más abajo.",
+  "リンクを作成しました。下でコピーするか、WhatsAppで送れます。"
  ],
  "booking.flash.inviteSent": [
   "Invito mandato all’amico, con il suo codice sconto.",
@@ -5476,5 +5476,41 @@
   "This link is no longer valid (it has expired or has already been used). Ask for a new one.",
   "Este enlace ya no es válido (ha caducado o ya se ha usado). Pide uno nuevo.",
   "このリンクは無効です（期限切れ、または使用済み）。新しいリンクをご請求ください。"
+ ],
+ "invite.count": [
+  "Inviti creati: {made} su {max}",
+  "Invitations created: {made} of {max}",
+  "Invitaciones creadas: {made} de {max}",
+  "作成済み：{made}／{max}"
+ ],
+ "invite.copy": [
+  "Copia il link",
+  "Copy link",
+  "Copiar enlace",
+  "リンクをコピー"
+ ],
+ "invite.copied": [
+  "Copiato!",
+  "Copied!",
+  "¡Copiado!",
+  "コピーしました"
+ ],
+ "invite.mailTo": [
+  "Oppure invialo per email all’amico",
+  "Or send it to your friend by email",
+  "O envíalo por correo a tu amigo",
+  "またはご友人にメールで送る"
+ ],
+ "invite.emailPh": [
+  "email dell’amico",
+  "friend’s email",
+  "correo del amigo",
+  "ご友人のメール"
+ ],
+ "invite.mailBtn": [
+  "Invia",
+  "Send",
+  "Enviar",
+  "送信"
  ]
 }

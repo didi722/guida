@@ -87,5 +87,16 @@
   document.querySelectorAll('form[data-confirm]').forEach(function (f) {
     f.addEventListener('submit', function (e) { if (!window.confirm(f.getAttribute('data-confirm'))) e.preventDefault(); });
   });
+  // «Copia il link»: copia il testo del campo indicato e lo conferma sul pulsante
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var field = document.querySelector(btn.getAttribute('data-copy'));
+      if (!field) return;
+      var done = function () { var old = btn.textContent; btn.textContent = btn.getAttribute('data-copied') || '✓'; setTimeout(function () { btn.textContent = old; }, 1800); };
+      field.select();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(field.value).then(done, function () { document.execCommand('copy'); done(); });
+      else { document.execCommand('copy'); done(); }
+    });
+  });
   document.querySelectorAll('[data-select-all]').forEach(function (el) { el.addEventListener('focus', function () { el.select(); }); });
 })();

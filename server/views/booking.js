@@ -281,6 +281,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   <div class="status status-${tone}"><span class="status-dot" aria-hidden="true"></span><div><h1>${title}</h1><p class="lead">${text}</p></div></div>
 </div></section>
 <section class="section tight"><div class="wrap narrow">
+  ${inviteBox(ctx, b, invite)}
   <div class="card pad">
     <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${b.ref}</strong></p>
     <dl class="summary-list">
@@ -332,7 +333,6 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       : invoiceBtn ? html`<p class="btn-row">${invoiceBtn}</p>` : ''}
     ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && !invoice ? html`<p class="small muted">${t('partner.docs.invoiceLater')}</p>` : ''}
   </div>
-  ${inviteBox(ctx, b, invite)}
   ${owner && isEditable(b)
     ? html`<form class="card pad form edit-card" method="post" action="${u(`/b2b/bookings/${b.ref}/edit`)}" id="edit">
     <h2>${t('partner.edit.title')}</h2><p class="small muted">${t('partner.edit.hint')}</p>
@@ -349,26 +349,32 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   return page(ctx, { title: `${t('s.ref')} ${b.ref}`, path: `/${lang}/booking/${b.ref}`, body, noindex: true, ...(owner ? { area: 'partner', activeNav: 'b2b-account' } : {}) });
 }
 
-/** «Invita un amico»: i codici già mandati e, se c'è ancora posto, il modulo per un nuovo invito. */
+/** «Porta un amico»: si crea il link con un solo clic; ogni link si copia o si manda su WhatsApp (o per email) lì accanto. */
 function inviteBox(ctx, b, offer) {
   const { t, lang, app } = ctx;
   if (!offer || (!offer.ok && !offer.invites?.length)) return '';
   const ti = app.content.tour(b.tour_slug).i18n[lang];
   const percent = offer.ok ? offer.percent : (offer.invites[0]?.percent ?? app.cfg.invite.percent);
+  const max = app.cfg.invite.maxPerBooking;
+  const made = (offer.invites ?? []).length;
   const share = (code, link) => `https://wa.me/?text=${encodeURIComponent(`${t('invite.share', { tour: ti.title, date: fmtDate(b.date, lang, 'short'), time: b.start_time, percent, code })} ${link}`)}`;
+  const q = `?t=${b.token}`;
   return html`<div class="card pad invite-box" id="invita">
-    <h2>${t('invite.title')}</h2>
-    ${offer.ok ? html`<p>${t('invite.lead', { percent })}</p>` : ''}
-    ${(offer.invites ?? []).map((i) => {
-      const link = inviteLink(app, b, i.code, lang);
-      return html`<div class="invite-item"><p class="small"><strong>${t('invite.code')}</strong> <code>${i.code}</code> · <span class="chip ${i.used ? 'chip-ok' : ''}">${i.used ? t('invite.used') : t('invite.unused')}</span>${i.friend_email ? html` · <span class="muted">${t('invite.sentTo', { email: i.friend_email })}</span>` : ''}</p>
-        ${i.used ? '' : html`<label class="field"><span class="label">${t('invite.link')}</span><input class="copy-field" readonly value="${link}" data-select-all></label>
-        <p><a class="btn btn-outline btn-sm" href="${share(i.code, link)}" target="_blank" rel="noopener">${t('invite.whatsapp')}</a></p>`}</div>`;
-    })}
+    <h2>${t('invite.title', { percent })}</h2>
+    <p>${t('invite.lead', { percent, max })}</p>
     ${offer.ok
-      ? html`<form method="post" action="/${lang}/booking/${b.ref}/invite?t=${b.token}" class="form"><label class="field"><span class="label">${t('invite.email')}</span><input type="email" name="email" maxlength="200" autocomplete="off"><small class="muted">${t('invite.emailHint')}</small></label>
-        <button class="btn btn-gold" type="submit">${t('invite.btn')}</button></form>`
+      ? html`<form method="post" action="/${lang}/booking/${b.ref}/invite${q}"><p class="btn-row"><button class="btn btn-gold" type="submit">${t('invite.btn')}</button> <span class="small muted">${t('invite.count', { made, max })}</span></p></form>`
       : html`<p class="small muted">${t(`invite.none.${offer.reason === 'max' ? 'max' : 'full'}`)}</p>`}
+    ${[...(offer.invites ?? [])].reverse().map((i, n) => {
+      const link = inviteLink(app, b, i.code, lang);
+      const id = `invite-link-${i.id}`;
+      return html`<div class="invite-item ${i.used ? 'is-used' : ''}">
+        <p class="small"><span class="chip ${i.used ? 'chip-ok' : ''}">${i.used ? t('invite.used') : t('invite.unused')}</span> <code>${i.code}</code>${i.friend_email ? html` · <span class="muted">${t('invite.sentTo', { email: i.friend_email })}</span>` : ''}</p>
+        ${i.used ? '' : html`<div class="invite-link"><input class="copy-field" id="${id}" readonly value="${link}" data-select-all aria-label="${t('invite.link')}"><button type="button" class="btn btn-outline btn-sm" data-copy="#${id}" data-copied="${t('invite.copied')}">${t('invite.copy')}</button></div>
+        <p class="btn-row"><a class="btn btn-outline btn-sm" href="${share(i.code, link)}" target="_blank" rel="noopener">${t('invite.whatsapp')}</a></p>
+        <form method="post" action="/${lang}/booking/${b.ref}/invite/${i.id}/email${q}" class="invite-mail"><label class="field"><span class="label">${t('invite.mailTo')}</span><span class="invite-mail-row"><input type="email" name="email" required maxlength="200" autocomplete="off" placeholder="${t('invite.emailPh')}" value="${i.friend_email ?? ''}"><button class="btn btn-outline btn-sm" type="submit">${t('invite.mailBtn')}</button></span></label></form>`}
+      </div>`;
+    })}
   </div>`;
 }
 
