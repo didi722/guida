@@ -253,7 +253,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null) {
       ${b.cancel_percent != null ? html`<div><dt>Esito dell'annullo</dt><dd>rimborso ${b.cancel_percent}%${b.refund_cents ? ` · rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)}` : ''}${b.retained_cents ? html` · <strong>penale ${formatMoney(b.retained_cents, 'it', b.currency)}</strong> ${b.payment_status === 'unpaid' ? 'da fatturare' : 'trattenuta'}` : ''}</dd></div>` : ''}` : ''}
       ${b.status === 'confirmed' || invoice ? invoiceRow(invoice, { warn: true }) : ''}
     </dl>
-    ${b.status === 'confirmed' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/voucher.pdf" target="_blank" rel="noopener">Voucher PDF</a></p>` : ''}
+    ${b.status === 'confirmed' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/voucher.pdf" target="_blank" rel="noopener">Voucher PDF</a> ${['it', 'en', 'es', 'ja'].map((l) => html`<a class="chip chip-link" href="/admin/bookings/${b.id}/voucher.pdf?vl=${l}" target="_blank" rel="noopener">${l.toUpperCase()}</a>`)}</p>` : ''}
   </div>
   <div class="card pad">
     <h2>Cliente</h2>

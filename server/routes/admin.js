@@ -31,6 +31,7 @@ import { feedbackStats, setFeatured } from '../reviews.js';
 import { maskUrl } from '../calendars.js';
 import { feedbackAdminPage } from '../views/admin-feedback.js';
 import { invoiceForSource } from '../invoices.js';
+import { LANGS } from '../langs.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage } from '../views/admin.js';
 
 const ERR = {
@@ -260,7 +261,8 @@ export function adminRouter(app) {
   r.get('/bookings/:id/voucher.pdf', async (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));
     if (!b) return next();
-    sendPdf(res, await renderVoucherPdf(app, b, { lang: b.lang }), `voucher-${b.ref}.pdf`);
+    const vl = LANGS.includes(String(req.query.vl)) ? String(req.query.vl) : b.lang;
+    sendPdf(res, await renderVoucherPdf(app, b, { lang: vl }), `voucher-${b.ref}${req.query.vl ? `-${vl}` : ''}.pdf`);
   });
   r.post('/bookings/:id/notes', form, (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));

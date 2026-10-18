@@ -10,6 +10,7 @@ import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBooking
 import { renderInvoicePdf } from '../pdf-invoice.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { cleanText } from '../util.js';
+import { LANGS } from '../langs.js';
 import { accountPage, bookingStatusText, bookingsPage, invoicesPage, ratesPage } from '../views/b2b.js';
 import { bookingPage } from '../views/booking.js';
 
@@ -83,7 +84,8 @@ export function partnerRouter(app) {
   r.get('/b2b/bookings/:ref/voucher.pdf', needPartner, async (req, res, next) => {
     const b = own(req);
     if (!b || b.status !== 'confirmed') return next();
-    sendPdf(res, await renderVoucherPdf(app, b, { lang: req.lang }), `voucher-${b.ref}.pdf`);
+    const vl = LANGS.includes(String(req.query.vl)) ? String(req.query.vl) : req.lang;
+    sendPdf(res, await renderVoucherPdf(app, b, { lang: vl }), `voucher-${b.ref}${req.query.vl ? `-${vl}` : ''}.pdf`);
   });
   r.post('/b2b/bookings/:ref/edit', needPartner, form, async (req, res, next) => {
     const b = own(req);

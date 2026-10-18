@@ -5524,5 +5524,11 @@
   "Optional: below, or later from the booking",
   "Opcional: abajo, o más tarde desde la reserva",
   "任意：下に入力、または後から予約で入力"
+ ],
+ "booking.voucherIn": [
+  "Scarica il voucher in:",
+  "Download the voucher in:",
+  "Descargar el voucher en:",
+  "バウチャーの言語："
  ]
 }

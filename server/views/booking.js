@@ -6,7 +6,7 @@ import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { isPreOpening, paymentsFrom } from '../opening.js';
 import { isEditable } from '../partner.js';
 import { formatMoney } from '../util.js';
-import { LANG_META } from '../langs.js';
+import { LANGS, LANG_META } from '../langs.js';
 import { inviteLink } from '../invites.js';
 import { DEFAULT_MEETING, hasThemes, meetingOf, themeText } from '../choices.js';
 import { icon, page } from './layout.js';
@@ -321,6 +321,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
         <a class="btn btn-outline" href="${base}/voucher.pdf${q}" target="_blank" rel="noopener">${t('booking.voucher')}</a>
         ${invoiceBtn}
       </p>
+      <p class="voucher-langs small"><span class="muted">${t('booking.voucherIn')}</span> ${LANGS.map((l) => html`<a class="chip chip-link" href="${base}/voucher.pdf${q}&amp;vl=${l}" target="_blank" rel="noopener" hreflang="${l}">${LANG_META[l].name}</a>`)}</p>
       ${wallet.google || wallet.apple
         ? html`<div class="wallet-box"><p class="small muted">${t('wallet.hint')}</p><p class="btn-row">
           ${wallet.apple ? html`<a class="btn btn-dark" href="${base}/wallet/apple.pkpass${q}">${icon('wallet')} ${t('wallet.apple')}</a>` : ''}

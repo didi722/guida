@@ -19,13 +19,14 @@ import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/book
 import { hourlyPage } from '../views/hourly.js';
 import { extraHourOptions, hourOptions, minHours, openTo } from '../rates.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
-import { LANG_META, normLang, pick } from '../langs.js';
+import { LANGS, LANG_META, normLang, pick } from '../langs.js';
 import { featuredQuotes, feedbackStats } from '../reviews.js';
 
 const clampInt = (v, min, max, d) => {
   const n = Number.parseInt(v, 10);
   return Number.isInteger(n) ? Math.min(max, Math.max(min, n)) : d;
 };
+const voucherLang = (req) => (LANGS.includes(String(req.query.vl)) ? String(req.query.vl) : req.lang); // il voucher si scarica nella lingua scelta (?vl=), non solo in quella del sito
 const channelOf = (acct) => (acct?.status === 'approved' ? 'b2b' : 'b2c');
 const safeNext = (n) => (typeof n === 'string' && /^\/[a-z]{2}\/[^/]/.test(n) && !n.startsWith('//') ? n : '');
 
@@ -291,7 +292,7 @@ export function publicRouter(app) {
   r.get('/booking/:ref/voucher.pdf', async (req, res, next) => {
     const b = loadBooking(req);
     if (!b || b.status !== 'confirmed') return next();
-    sendPdf(res, await renderVoucherPdf(app, b, { lang: req.lang }), `voucher-${b.ref}.pdf`);
+    sendPdf(res, await renderVoucherPdf(app, b, { lang: voucherLang(req) }), `voucher-${b.ref}${req.query.vl ? `-${voucherLang(req)}` : ''}.pdf`);
   });
   // «Aggiungi al wallet» (solo clienti privati con prenotazione confermata): il link di Google Wallet e il file .pkpass di Apple
   r.get('/booking/:ref/wallet/google', (req, res, next) => {

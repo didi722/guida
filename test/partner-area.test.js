@@ -547,3 +547,28 @@ test('password dimenticata: collegamento per email (un’ora, una volta sola), r
     s.close();
   }
 });
+
+test('voucher: si scarica nella lingua scelta (anche diversa da quella del sito), dalla pagina della pratica e dall’area agenzie', async () => {
+  const s = await start();
+  try {
+    const f = await s.login('giulia@lagoon.example');
+    const row = book(s.app, s.lagoon, { ref: 'Gruppo Rossi', name: 'Mario Rossi', date: day(10) });
+    assert.equal(row.status, 'confirmed');
+    const page = nb(await (await f(`/it/b2b/bookings/${row.ref}`)).text());
+    assert.match(page, /Scarica il voucher in:/);
+    for (const l of ['it', 'en', 'es', 'ja']) assert.match(page, new RegExp(`voucher\\.pdf\\?t=[^&"]+&amp;vl=${l}`));
+    const seen = new Set();
+    for (const l of ['it', 'en', 'ja']) {
+      const res = await f(`/it/b2b/bookings/${row.ref}/voucher.pdf?vl=${l}`);
+      assert.equal(res.status, 200);
+      assert.match(res.headers.get('content-disposition') ?? '', new RegExp(`voucher-${row.ref}-${l}\\.pdf`));
+      const buf = Buffer.from(await res.arrayBuffer());
+      assert.equal(buf.subarray(0, 4).toString(), '%PDF');
+      seen.add(buf.length);
+    }
+    assert.ok(seen.size > 1, 'i PDF nelle lingue sono diversi');
+    assert.equal((await f(`/it/b2b/bookings/${row.ref}/voucher.pdf?vl=xx`)).status, 200, 'lingua sconosciuta: quella del sito');
+  } finally {
+    s.close();
+  }
+});
