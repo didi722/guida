@@ -31,6 +31,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - **Promemoria alle agenzie**: la sera prima del tour, **24 ore prima che finisca la cancellazione gratuita** (una sola volta) e, per le opzioni, prima della scadenza.
 - **Date lontane**: se l'agenzia prenota direttamente un servizio fra più di 21 giorni, la cancellazione gratuita dura solo 48 ore (poi rimborso ridotto fino al termine normale): così conviene **opzionare**, che non impegna. Tutto regolabile in Impostazioni › Opzioni per le agenzie.
 - **Pacchetti**: un'agenzia prenota **più servizi insieme** (guida, meet & greet, tour leader…) con **una sola opzione, una sola scadenza, un solo pagamento** (anche con carta, in una sessione Stripe sola) **e una sola fattura**. Tutti i servizi o nessuno; un'unica email con un voucher per servizio e un solo calendario; ogni servizio resta una prenotazione normale.
+- **Modifiche e proroghe**: l'agenzia **cambia da sola persone, data od ore** (prezzo ricalcolato; opzione libera, prenotazione a fattura libera nel periodo gratuito e solo in aumento dopo; spostare la data non allunga i termini di annullo) e **chiede una proroga** dell'opzione, che la guida approva (con i giorni che vuole) o rifiuta dal pannello.
 - **Opzioni**: l'agenzia può **tenere una data senza pagare** mentre il suo cliente decide; la durata dipende da quanto manca al tour (tabella e limiti modificabili, anche per singolo partner), arriva un promemoria e, se non conferma, la data **si libera da sola**. Nessun addebito automatico: se paga a fattura il servizio si fattura dopo.
 
 **Per te (pannello `/admin`, ottimizzato per telefono)** — quasi tutto si cambia da qui, senza toccare il codice ([guida](docs/GUIDA.md))
@@ -204,6 +205,8 @@ server/
   restore.js        ripristino da una copia (controllo, anteprima, sostituzione dei dati in una transazione, copie di sicurezza)
   zipread.js        lettura sicura di uno zip caricato
   optionPolicy.js   opzioni delle agenzie: durata, limiti, promemoria (puro, testato)
+  changes.js        modifiche dell'agenzia (persone, data, ore) e richieste di proroga: regole e database (testato)
+  changeServices.js modifiche e proroghe: email e avvisi alla guida
   packages.js       pacchetti di più servizi: carrello, prenotazione «tutti o nessuno», opzione unica, conferma e rilascio (solo database, testato)
   packageServices.js pacchetti: pagamento con carta (un solo `PT-…`), email e avvisi alla guida
   opening.js        pre-apertura: «Incassi dal» (puro)

@@ -1,17 +1,19 @@
 // Pacchetti delle agenzie: il carrello (servizi aggiunti e non ancora prenotati) e la pagina del pacchetto prenotato.
 import { html, raw } from '../html.js';
 import { cancellationState, paymentOptions } from '../bookings.js';
+import { pendingExtension } from '../changes.js';
 import { cancellable, packageStatus, packageTotal } from '../packages.js';
 import { fmtDate, fmtInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
 import { bookingStatusText } from './b2b.js';
+import { extensionBox } from './changes.js';
 import { breadcrumbs, fmtDuration, homeCrumb, hoursLabel, langOptions, timeLeft } from './components.js';
 
 const checkoutScript = (ctx) => raw(`<script src="/js/checkout.js?v=${ctx.app.assetVersion}" defer></script>`);
 
 /** Messaggi che le azioni sul pacchetto possono lasciare al ritorno sulla sua pagina. */
-const FLASH = ['confirmed', 'released', 'expired', 'error', 'cancelled', 'cancelPartial', 'cancel-error', 'new'];
+const FLASH = ['confirmed', 'released', 'expired', 'error', 'cancelled', 'cancelPartial', 'cancel-error', 'new', 'extension-sent', 'extension-error'];
 
 // ───────────────────────── Il pacchetto in preparazione ─────────────────────────
 /**
@@ -156,6 +158,7 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
           <button class="btn btn-gold" type="submit" ${methods.length ? '' : raw('disabled')}>${t('pkg.confirm')}</button>
         </form>
         <form method="post" action="${base}/release" class="option-release" data-confirm="${t('pkg.releaseAsk')}">${hidden}<button class="btn btn-outline" type="submit">${t('pkg.release')}</button></form>
+        ${extensionBox(ctx, { action: `${base}/extend-request`, hidden, pending: pendingExtension(app.db, optionLines[0]), untilMs })}
       </div>`
       : ''}
     ${payLeft.length ? html`<p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${group.ref}${q}&lang=${lang}">${t('booking.payNow')}</a></p>` : ''}

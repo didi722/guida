@@ -192,6 +192,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
       service_json: pricing.quote ? JSON.stringify(serviceRecord(pricing.quote)) : null,
       created_at: now,
       confirmed_at: status === 'confirmed' ? now : null,
+      custom_price: manual && Number.isInteger(manual.totalCents) ? 1 : 0, // prezzo concordato a mano: l'agenzia non può cambiare persone o ore da sola
     };
     const cols = Object.keys(row);
     const info = db.prepare(`INSERT INTO bookings(${cols.join(',')}) VALUES(${cols.map(() => '?').join(',')})`).run(...Object.values(row));

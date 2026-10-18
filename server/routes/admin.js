@@ -32,6 +32,7 @@ import { maskUrl } from '../calendars.js';
 import { feedbackAdminPage } from '../views/admin-feedback.js';
 import { invoiceForSource } from '../invoices.js';
 import { getPackage, packageBookings } from '../packages.js';
+import { pendingExtension, pendingExtensions } from '../changes.js';
 import { LANGS } from '../langs.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage } from '../views/admin.js';
 
@@ -48,6 +49,8 @@ const FLASH = {
   featured: 'Fatto: la modifica è già visibile sul sito.',
   reminder: 'Promemoria aggiornato.',
   extended: 'Opzione prorogata: l’agenzia è stata avvisata.',
+  'extension-denied': 'Proroga non concessa: l’agenzia è stata avvisata.',
+  'extension-failed': 'Non è stato possibile prolungare: l’opzione è già chiusa o scaduta.',
   released: 'Data rilasciata: l’agenzia è stata avvisata.',
   calendar: 'Calendario collegato e sincronizzato.',
   calsynced: 'Calendario sincronizzato.',
@@ -203,7 +206,7 @@ export function adminRouter(app) {
     const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(nowIso).n;
     const options = db.prepare(`SELECT COUNT(DISTINCT COALESCE('g' || group_id, 'b' || id)) n, MIN(option_expires_at) next FROM bookings WHERE status = 'option' AND option_expires_at > ?`).get(nowIso); // un pacchetto è una sola opzione
     const invoicesDue = app.invoices.queue().filter((i) => i.overdue).length;
-    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, today, view, days, calendar, pendingPartners, held, options, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
+    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, today, view, days, calendar, pendingPartners, held, options: { ...options, requests: pendingExtensions(db).length }, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
   });
 
   // ───── impegni privati in agenda: un tour preso fuori dal sito (email, di persona…) toglie quelle ore dalle disponibilità ─────
@@ -260,7 +263,7 @@ export function adminRouter(app) {
     if (!b) return next();
     const account = b.account_id ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
     const group = b.group_id ? getPackage(db, b.group_id) : null;
-    send(res, bookingDetailPage(ctxOf(req), b, account, flash(req), invoiceForSource(db, 'booking', b.id), group ? { group, bookings: packageBookings(db, group.id) } : null));
+    send(res, bookingDetailPage(ctxOf(req), b, account, flash(req), invoiceForSource(db, 'booking', b.id), group ? { group, bookings: packageBookings(db, group.id) } : null, b.status === 'option' ? pendingExtension(db, b) : null));
   });
   r.get('/bookings/:id/voucher.pdf', async (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));
@@ -295,6 +298,25 @@ export function adminRouter(app) {
     if (req.body.all && b.group_id) db.prepare(`UPDATE bookings SET payment_status = 'paid' WHERE group_id = ? AND status = 'confirmed' AND payment_status = 'unpaid'`).run(b.group_id);
     else db.prepare(`UPDATE bookings SET payment_status = 'paid' WHERE id = ? AND status = 'confirmed' AND payment_status = 'unpaid'`).run(b.id);
     res.redirect(303, `/admin/bookings/${b.id}?ok=paid`);
+  });
+  // richiesta di proroga dell'agenzia: la guida concede (i giorni li sceglie lei) o rifiuta
+  r.post('/bookings/:id/extension/:rid/approve', form, async (req, res, next) => {
+    const b = getBooking(db, Number(req.params.id));
+    if (!b) return next();
+    const days = Number.parseInt(req.body.days, 10);
+    let done = false;
+    try {
+      done = await app.changes.approveExtension(Number(req.params.rid), Number.isInteger(days) && days > 0 ? days : undefined);
+    } catch (e) {
+      if (!(e instanceof BookingError)) throw e; // giorni non validi: nulla cambia
+    }
+    res.redirect(303, `/admin/bookings/${b.id}?ok=${done ? 'extended' : 'extension-failed'}`);
+  });
+  r.post('/bookings/:id/extension/:rid/deny', form, async (req, res, next) => {
+    const b = getBooking(db, Number(req.params.id));
+    if (!b) return next();
+    const done = await app.changes.denyExtension(Number(req.params.rid));
+    res.redirect(303, `/admin/bookings/${b.id}?ok=${done ? 'extension-denied' : 'extension-failed'}`);
   });
   r.post('/bookings/:id/cancel', form, async (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));

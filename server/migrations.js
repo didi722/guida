@@ -450,6 +450,37 @@ CREATE TABLE cart_items (
 CREATE INDEX cart_items_account ON cart_items(account_id);
 `;
 
+const V20_CHANGES = `
+-- Modifiche fatte dall'agenzia da sola (persone, data, ore) e richieste di proroga di un'opzione.
+ALTER TABLE bookings ADD COLUMN custom_price INTEGER NOT NULL DEFAULT 0;   -- prezzo concordato a mano (registrato dall'agenda): non si ricalcola
+ALTER TABLE bookings ADD COLUMN modified_at TEXT;                          -- ultima modifica fatta dall'agenzia
+ALTER TABLE bookings ADD COLUMN policy_base_json TEXT;                     -- scadenze di annullo di partenza (data e scaglioni): spostare la data non le allunga mai
+
+CREATE TABLE booking_changes (
+  id          INTEGER PRIMARY KEY,
+  booking_id  INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  by          TEXT NOT NULL,                                                -- customer | admin
+  before_json TEXT NOT NULL,
+  after_json  TEXT NOT NULL,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX booking_changes_booking ON booking_changes(booking_id);
+
+CREATE TABLE extension_requests (
+  id           INTEGER PRIMARY KEY,
+  booking_id   INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  group_id     INTEGER REFERENCES booking_groups(id),                       -- se l'opzione fa parte di un pacchetto: vale per tutto il pacchetto
+  days         INTEGER NOT NULL,
+  note         TEXT,
+  status       TEXT NOT NULL DEFAULT 'pending',                             -- pending | approved | denied
+  granted_days INTEGER,
+  created_at   TEXT NOT NULL,
+  decided_at   TEXT
+);
+CREATE INDEX extension_requests_status ON extension_requests(status);
+CREATE INDEX extension_requests_booking ON extension_requests(booking_id);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -489,6 +520,7 @@ export const MIGRATIONS = [
   V18_PENALTY_REMINDER,
   // v19 — pacchetti di più servizi
   V19_PACKAGES,
+  V20_CHANGES,
 ];
 
 export function migrate(db) {

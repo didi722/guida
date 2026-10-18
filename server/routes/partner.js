@@ -12,6 +12,7 @@ import { renderInvoicePdf } from '../pdf-invoice.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { cleanText } from '../util.js';
 import { LANGS } from '../langs.js';
+import { needPartner, toLogin } from './guards.js';
 import { accountPage, bookingStatusText, bookingsPage, invoicesPage, ratesPage } from '../views/b2b.js';
 import { bookingPage } from '../views/booking.js';
 
@@ -26,13 +27,6 @@ export function partnerRouter(app) {
     next();
   });
 
-  const toLogin = (req, res) => res.redirect(`/${req.lang}/b2b/login?next=${encodeURIComponent(req.originalUrl)}`);
-  /** Serve un account approvato: chi non ha fatto il login va al modulo (e poi torna qui), chi è ancora in attesa alla pagina di stato. */
-  const needPartner = (req, res, next) => {
-    if (!req.acct) return toLogin(req, res);
-    if (req.acct.status !== 'approved') return res.redirect(303, `/${req.lang}/b2b/account`);
-    next();
-  };
   /** La prenotazione indicata nell'URL, solo se è di questa agenzia. */
   const own = (req) => {
     const b = getBookingByRef(db, req.params.ref);

@@ -14,6 +14,8 @@ import { icon, page } from './layout.js';
 import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
 import { quoteLines } from './hourly.js';
+import { changeBox, extensionBox } from './changes.js';
+import { pendingExtension } from '../changes.js';
 import { extraHourOptions, parseServiceRecord } from '../rates.js';
 
 const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
@@ -255,6 +257,7 @@ export function optionActions(ctx, b, { st, nextUrl = '', group = null }) {
       <input type="hidden" name="t" value="${b.token}">${nextUrl ? html`<input type="hidden" name="next" value="${nextUrl}">` : ''}
       <button class="btn btn-outline" type="submit">${t('booking.optionRelease')}</button>
     </form>
+    ${extensionBox(ctx, { action: `${base}/option/extend-request`, hidden: html`<input type="hidden" name="t" value="${b.token}">${nextUrl ? html`<input type="hidden" name="next" value="${nextUrl}">` : ''}`, pending: pendingExtension(app.db, b), untilMs: Date.parse(b.option_expires_at) })}
   </div>`;
 }
 
@@ -358,6 +361,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       : invoiceBtn ? html`<p class="btn-row">${invoiceBtn}</p>` : ''}
     ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && !invoice ? html`<p class="small muted">${t('partner.docs.invoiceLater')}</p>` : ''}
   </div>
+  ${owner ? changeBox(ctx, b) : ''}
   ${owner && isEditable(b)
     ? html`<form class="card pad form edit-card" method="post" action="${u(`/b2b/bookings/${b.ref}/edit`)}" id="edit">
     <h2>${t('partner.edit.title')}</h2><p class="small muted">${t('partner.edit.hint')}</p>

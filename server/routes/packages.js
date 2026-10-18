@@ -8,8 +8,7 @@ import { LANGS, normLang } from '../langs.js';
 import { PackageError, cartAdd, cartClear, cartRemove, cartSummary, getPackageByRef, packageBookings, MAX_PACKAGE_LINES } from '../packages.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
 import { packageCartPage, packagePage } from '../views/packages.js';
-
-const safeNext = (n) => (typeof n === 'string' && /^\/[a-z]{2}\/[^/]/.test(n) && !n.startsWith('//') ? n : '');
+import { needPartner, safeNext } from './guards.js';
 
 export function packagesRouter(app) {
   const r = express.Router();
@@ -22,14 +21,6 @@ export function packagesRouter(app) {
     res.set('Cache-Control', 'no-store');
     next();
   });
-
-  const toLogin = (req, res) => res.redirect(`/${req.lang}/b2b/login?next=${encodeURIComponent(req.originalUrl)}`);
-  /** Serve un account approvato (come per il resto dell'area agenzie). */
-  const needPartner = (req, res, next) => {
-    if (!req.acct) return toLogin(req, res);
-    if (req.acct.status !== 'approved') return res.redirect(303, `/${req.lang}/b2b/account`);
-    next();
-  };
 
   const errorText = (t, e) => {
     if (e.code === 'full') return t('pkg.err.full', { n: MAX_PACKAGE_LINES });

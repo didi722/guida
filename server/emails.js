@@ -1225,6 +1225,103 @@ export async function sendInvoiceCopy(app, inv, to, { includeXml = false } = {})
   });
 }
 
+// ───────────── Modifiche dell'agenzia e richieste di proroga ─────────────
+const changeLine = (app, b, lang) => `${b.participants} ${T[lang].people.toLowerCase()} · ${fmtDate(b.date, lang, 'short')} · ${timeRange(b, lang)} · ${formatMoney(bookingDue(b), lang, b.currency)}`;
+
+/** All'agenzia: la prenotazione (o l'opzione) è stata modificata. Per una prenotazione confermata ci sono il nuovo voucher e il calendario aggiornato. */
+export async function sendBookingChanged(app, before, after, nowMs = Date.now()) {
+  const lang = normLang(after.lang);
+  const t = makeT(lang);
+  const tr = T[lang];
+  const isOption = after.status === 'option';
+  const title = tourText(app, after.tour_slug, lang).title;
+  const until = isOption && after.option_expires_at ? fmtInstant(Date.parse(after.option_expires_at), lang) : '';
+  const subject = t(isOption ? 'chg.mail.optionSubject' : 'chg.mail.subject', { ref: after.ref, title, date: fmtDate(after.date, lang, 'short') });
+  const intro = isOption ? t('chg.mail.optionIntro', { until }) : t('chg.mail.intro');
+  const was = t('chg.mail.was', { what: changeLine(app, before, lang) });
+  const now = t('chg.mail.now', { what: changeLine(app, after, lang) });
+  const link = bookingUrl(app, after, lang);
+  const rows = summaryRows(app, after, lang, { option: isOption });
+  const attachments =
+    after.status === 'confirmed'
+      ? [{ filename: `${after.ref}.ics`, content: icsFor(app, after, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }, ...(await pdfAttachment(`voucher-${after.ref}.pdf`, (pdf) => pdf.renderVoucherPdf(app, after, { lang, nowMs }), 'voucher'))]
+      : [];
+  await app.mail.send({
+    to: after.email,
+    subject,
+    text: [tr.hello(after.name), '', intro, '', was, now, '', ...rows.map(([k, v]) => `${k}: ${v}`), '', `${tr.manage}: ${link}`, '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${tr.hello(after.name)}</p><p>${intro}</p>
+        <p style="font-size:14px;color:#666">${was}<br><strong style="color:#1c1c1c">${now}</strong></p>
+        <table style="border-collapse:collapse;width:100%;font-size:15px">${rows.map(([k, v]) => html`<tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top">${k}</td><td style="padding:6px 0"><strong>${v}</strong></td></tr>`)}</table>
+        <p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${tr.manage}</a></p>
+        <p style="color:#666;font-size:13px">${tr.contactLine}<br>${tr.bye} ${app.cfg.site.name}</p>`,
+      ),
+    ),
+    attachments,
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/** Avviso alla guida (in italiano): l'agenzia ha cambiato persone, data od ore di una prenotazione o di un'opzione. */
+export async function notifyGuideBookingChanged(app, before, after) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const tour = app.content.tour(after.tour_slug);
+  const account = after.account_id ? app.db.prepare('SELECT company FROM accounts WHERE id = ?').get(after.account_id) : null;
+  const money = (c) => formatMoney(c, 'it', after.currency);
+  const lines = [
+    `${after.status === 'option' ? 'Opzione modificata' : 'Prenotazione modificata'} dall’agenzia ${after.ref}${account ? ` — ${account.company}` : ''}`,
+    tour?.i18n.it.title ?? after.tour_slug,
+    `Prima: ${before.participants} pers. · ${fmtDate(before.date, 'it')} ${before.start_time}–${before.end_time} · ${money(bookingDue(before))}`,
+    `Ora:   ${after.participants} pers. · ${fmtDate(after.date, 'it')} ${after.start_time}–${after.end_time} · ${money(bookingDue(after))}`,
+    after.client_ref ? `Rif. pratica: ${after.client_ref}` : null,
+    after.status === 'option' ? `Trattenuta fino al ${fmtInstant(Date.parse(after.option_expires_at), 'it')}.` : null,
+    '',
+    `${app.cfg.baseUrl}/admin/bookings/${after.id}`,
+  ].filter((x) => x !== null);
+  await app.mail.send({ to, subject: `${after.status === 'option' ? 'Opzione modificata' : 'Prenotazione modificata'}: ${tour?.i18n.it.title ?? after.tour_slug} — ${after.date} ${after.start_time}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
+}
+
+/** Avviso alla guida (in italiano): l'agenzia chiede più tempo per un'opzione. */
+export async function notifyGuideExtensionRequest(app, b, request) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const tour = app.content.tour(b.tour_slug);
+  const account = b.account_id ? app.db.prepare('SELECT company FROM accounts WHERE id = ?').get(b.account_id) : null;
+  const lines = [
+    `Richiesta di proroga${request.group_id ? ' (pacchetto)' : ''} ${b.ref}${account ? ` — ${account.company}` : ''}`,
+    `${tour?.i18n.it.title ?? b.tour_slug} · ${fmtDate(b.date, 'it')} ${b.start_time}`,
+    `Chiede ${request.days} ${request.days === 1 ? 'giorno' : 'giorni'} in più; l’opzione scade il ${fmtInstant(Date.parse(b.option_expires_at), 'it')}.`,
+    request.note ? `Motivo: ${request.note}` : null,
+    b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
+    '',
+    `Approva o rifiuta dalla scheda: ${app.cfg.baseUrl}/admin/bookings/${b.id}`,
+  ].filter((x) => x !== null);
+  await app.mail.send({ to, subject: `Richiesta di proroga: ${tour?.i18n.it.title ?? b.tour_slug} — ${b.date} ${b.start_time}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
+}
+
+/** All'agenzia: la proroga dell'opzione non è stata concessa (quella concessa è l'email «Opzione prorogata»). */
+export async function sendExtensionDenied(app, b) {
+  const lang = normLang(b.lang);
+  const t = makeT(lang);
+  const tr = T[lang];
+  const until = fmtInstant(Date.parse(b.option_expires_at), lang);
+  const intro = t('chg.mail.deniedIntro', { until });
+  const link = b.group_id ? packageUrl(app, app.db.prepare('SELECT * FROM booking_groups WHERE id = ?').get(b.group_id), lang) : bookingUrl(app, b, lang);
+  const cta = t('chg.mail.deniedCta');
+  await app.mail.send({
+    to: b.email,
+    subject: t('chg.mail.deniedSubject', { ref: b.group_id ? app.db.prepare('SELECT ref FROM booking_groups WHERE id = ?').get(b.group_id).ref : b.ref }),
+    text: [tr.hello(b.name), '', intro, '', `${cta}: ${link}`, '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
+    html: String(layout(app, lang, html`<p>${tr.hello(b.name)}</p><p>${intro}</p><p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${cta}</a></p><p style="color:#666;font-size:13px">${tr.contactLine}<br>${tr.bye} ${app.cfg.site.name}</p>`)),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
 // ───────────── Pacchetti (più servizi prenotati insieme da un'agenzia) ─────────────
 export const packageUrl = (app, group, lang = normLang(group.lang)) => `${app.cfg.baseUrl}/${lang}/packages/${group.ref}?t=${group.token}`;
 

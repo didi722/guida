@@ -144,11 +144,12 @@ function agendaCalendar(ctx, cal, today) {
   ${selectedItems.length ? html`<div class="card">${selectedItems.map((b) => agendaRow(ctx, b))}</div>` : html`<p class="muted">Nessun servizio in questo giorno.</p>`}</section>`;
 }
 
-export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null }, programs, invoicesDue = 0, feedUrl, flash, problems, preOpening = null }) {
+export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, feedUrl, flash, problems, preOpening = null }) {
   const selectedDay = calendar?.selected ?? today;
   const body = html`
 ${calendarWarning(problems)}
 ${preOpening ? html`<div class="notice notice-info" role="note"><strong>Pre-apertura:</strong> fino al ${fmtDate(preOpening, 'it', 'date')} il sito accetta prenotazioni (solo per date da quel giorno in poi) senza incassare online: i privati pagano il giorno del servizio, le agenzie a fattura. <a href="/admin/settings?s=rules#rules">Cambia la data</a></div>` : ''}
+${options.requests ? html`<div class="notice notice-info" role="note"><strong>${options.requests} ${options.requests === 1 ? 'richiesta di proroga' : 'richieste di proroga'} da decidere.</strong> <a href="/admin/bookings?f=options">Apri le opzioni</a></div>` : ''}
 ${invoicesDue ? html`<div class="notice notice-err" role="alert"><strong>${invoicesDue} ${invoicesDue === 1 ? 'voce' : 'voci'} da fatturare oltre i 12 giorni.</strong> <a href="/admin/invoices">Apri le fatture</a></div>` : ''}
 <div class="grid grid-4 kpis">
   <div class="card pad kpi"><span class="muted">Oggi</span><strong>${(view === 'list' ? days.find((d) => d.date === today)?.items.length : calendar?.todayCount) ?? 0}</strong><small>servizi</small></div>
@@ -214,7 +215,7 @@ function cancelPreview(b, st) {
   return `Secondo la politica: oggi ${st.percent}% → ${retainedCents ? `penale ${formatMoney(retainedCents, 'it', b.currency)} da fatturare` : 'nessuna penale'}`;
 }
 
-export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, pkg = null) {
+export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, pkg = null, extension = null) {
   const tour = ctx.app.content.tour(b.tour_slug);
   const st = cancellationState(b);
   const live = b.status === 'confirmed' || b.status === 'held' || b.status === 'option';
@@ -283,6 +284,10 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, p
   ${b.status === 'option'
     ? html`<div class="card pad">
     <h2>Opzione</h2>
+    ${extension ? html`<div class="notice notice-info ext-request" role="note"><p><strong>Richiesta di proroga:</strong> l’agenzia chiede <strong>${extension.days} ${extension.days === 1 ? 'giorno' : 'giorni'}</strong> in più${extension.note ? html` — «${extension.note}»` : ''}. <small class="muted">(chiesta il ${untilIt(extension.created_at)})</small></p>
+      <form class="form inline-form" method="post" action="/admin/bookings/${b.id}/extension/${extension.id}/approve"><label class="field"><span class="label">Concedi</span><select name="days">${[1, 2, 3, 5, 7, 10, 14].map((d) => html`<option value="${d}" ${d === extension.days ? raw('selected') : ''}>${d} ${d === 1 ? 'giorno' : 'giorni'}</option>`)}</select></label>
+        <button class="btn btn-gold" type="submit">Approva e avvisa l’agenzia</button></form>
+      <form class="inline-form" method="post" action="/admin/bookings/${b.id}/extension/${extension.id}/deny" data-confirm="Non concedere la proroga? L’agenzia riceve un’email."><button class="btn btn-outline" type="submit">Non concedere</button></form></div>` : ''}
     <form class="form inline-form" method="post" action="/admin/bookings/${b.id}/option/extend"><h3>Prolunga la scadenza</h3>
       <label class="field"><span class="label">Di quanti giorni</span><select name="days">${[1, 2, 3, 5, 7, 10, 14].map((d) => html`<option value="${d}">${d} ${d === 1 ? 'giorno' : 'giorni'}</option>`)}</select></label>
       ${pkg ? html`<p class="small muted">Fa parte del pacchetto ${pkg.group.ref}: la proroga vale per tutti i suoi servizi in opzione.</p>` : ''}

@@ -83,6 +83,15 @@
     items.forEach(function (el) { el.classList.add('visible'); });
   }
 
+  // Campi che ricaricano la pagina quando cambiano (per esempio persone, data e ore nella modifica di una prenotazione)
+  document.querySelectorAll('[data-autosubmit]').forEach(function (el) {
+    el.addEventListener('change', function () {
+      var f = el.form;
+      if (!f) return;
+      if (f.requestSubmit) f.requestSubmit(); else f.submit();
+    });
+  });
+
   // Conferme (es. annulla prenotazione)
   document.querySelectorAll('form[data-confirm]').forEach(function (f) {
     f.addEventListener('submit', function (e) {

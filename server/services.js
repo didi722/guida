@@ -1,6 +1,7 @@
 // Orchestrazione: collega DB, pagamenti ed email.
 import { BookingError, bookingDue, cancelBooking, confirmOption, confirmPaid, createBooking, expireBooking, expireHolds, expireOptions, extendOption, getBooking, getBookingByRef, markRefund, optionsDueForReminder, releaseOption } from './bookings.js';
 import { notifyGuideOption, sendBookingCancelled, sendBookingConfirmed, sendOptionCreated, sendOptionExpired, sendOptionExtended, sendOptionReleased, sendOptionReminder, sendSlotLostRefund } from './emails.js';
+import { resolveExtensions } from './changes.js';
 import { onlinePaymentsOpen } from './opening.js';
 import { fmtDate, localToInstant } from './time.js';
 
@@ -154,10 +155,14 @@ export function createServices(app) {
       if (current?.group_id) {
         // le date di un pacchetto hanno una scadenza sola: si prolungano tutte insieme, con un solo avviso
         const done = await app.packages.extend(current.group_id, days, nowMs);
+        if (done) resolveExtensions(db, current, Math.round(Number(days)), nowMs); // la richiesta di proroga dell'agenzia, se c'era, è esaudita
         return done ? getBooking(db, bookingId) : null;
       }
       const b = extendOption(app, bookingId, days, nowMs);
-      if (b) await sendOptionExtended(app, b);
+      if (b) {
+        resolveExtensions(db, b, Math.round(Number(days)), nowMs);
+        await sendOptionExtended(app, b);
+      }
       return b;
     },
 

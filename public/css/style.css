@@ -1020,3 +1020,9 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
   .table tfoot th:empty { display: none; }
   .header-cart { display: none; } .hamburger .menu-badge { display: grid; }
 }
+
+/* Modifica di una prenotazione e richiesta di proroga */
+.ext-box { margin-top: 14px; } .ext-box > summary { cursor: pointer; font-weight: 700; font-size: 0.92rem; color: var(--accent-text); } .ext-box form { margin-top: 10px; }
+.ext-pending { margin: 14px 0 0; }
+.ext-request form { margin: 8px 0 0; }
+.change-card .btn-row { margin-bottom: 0; }

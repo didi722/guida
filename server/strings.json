@@ -6088,5 +6088,317 @@
   "Confirm or release the package",
   "Confirmar o liberar el paquete",
   "パッケージを確定または解除する"
+ ],
+ "chg.title": [
+  "Cambia persone, data o ore",
+  "Change guests, date or hours",
+  "Cambia personas, fecha u horas",
+  "人数・日付・時間の変更"
+ ],
+ "chg.now": [
+  "Com’è adesso",
+  "As it is now",
+  "Cómo está ahora",
+  "現在の内容"
+ ],
+ "chg.what": [
+  "Cosa vuoi cambiare",
+  "What do you want to change",
+  "Qué quieres cambiar",
+  "変更する内容"
+ ],
+ "chg.show": [
+  "Mostra orari e prezzo",
+  "Show times and price",
+  "Mostrar horarios y precio",
+  "時間と料金を表示"
+ ],
+ "chg.pickTime": [
+  "Scegli l’orario",
+  "Choose the time",
+  "Elige el horario",
+  "時間を選ぶ"
+ ],
+ "chg.current": [
+  "attuale",
+  "current",
+  "actual",
+  "現在"
+ ],
+ "chg.noSlots": [
+  "Per questa data e queste persone non ci sono orari liberi: prova un altro giorno o un numero di persone diverso.",
+  "There are no free times for this date and number of guests: try another day or a different number of guests.",
+  "No hay horarios libres para esta fecha y estas personas: prueba otro día o un número de personas distinto.",
+  "この日付・人数では空いている時間がありません。別の日、または人数を変えてお試しください。"
+ ],
+ "chg.confirm": [
+  "Conferma la modifica",
+  "Confirm the change",
+  "Confirmar el cambio",
+  "変更を確定する"
+ ],
+ "chg.confirmAsk": [
+  "Confermare la modifica? Il prezzo e il riepilogo si aggiornano e ti mandiamo l’email con il nuovo voucher.",
+  "Confirm the change? The price and summary are updated and we will email you the new voucher.",
+  "¿Confirmar el cambio? El precio y el resumen se actualizan y te enviamos un email con el nuevo voucher.",
+  "変更を確定しますか？ 料金と内容が更新され、新しいバウチャーをメールでお送りします。"
+ ],
+ "chg.btn": [
+  "Cambia persone, data o ore",
+  "Change guests, date or hours",
+  "Cambiar personas, fecha u horas",
+  "人数・日付・時間を変更"
+ ],
+ "chg.boxTitle": [
+  "Persone, data od ore",
+  "Guests, date or hours",
+  "Personas, fecha u horas",
+  "人数・日付・時間"
+ ],
+ "chg.boxFree": [
+  "Puoi cambiare il numero di persone, la data e (per i servizi a ore) la durata: il prezzo si ricalcola da solo.",
+  "You can change the number of guests, the date and (for hourly services) the duration: the price is recalculated automatically.",
+  "Puedes cambiar el número de personas, la fecha y (en los servicios por horas) la duración: el precio se recalcula solo.",
+  "人数・日付・（時間制サービスは）所要時間を変更できます。料金は自動で再計算されます。"
+ ],
+ "chg.boxIncrease": [
+  "Il periodo di cancellazione gratuita è finito: puoi ancora aumentare le persone o le ore, sullo stesso orario.",
+  "The free cancellation period is over: you can still increase the guests or the hours, at the same time.",
+  "El periodo de cancelación gratuita ha terminado: aún puedes aumentar las personas o las horas, en el mismo horario.",
+  "無料キャンセル期間は終了しました。同じ時間のまま、人数または時間を増やすことはできます。"
+ ],
+ "chg.rule.option": [
+  "Finché è un’opzione puoi cambiare liberamente persone, data e ore: il prezzo si ricalcola da solo, ma la scadenza dell’opzione non si allunga.",
+  "While it is an option you can freely change guests, date and hours: the price is recalculated automatically, but the option expiry does not get longer.",
+  "Mientras sea una opción puedes cambiar libremente personas, fecha y horas: el precio se recalcula solo, pero el vencimiento de la opción no se alarga.",
+  "仮押さえの間は、人数・日付・時間を自由に変更できます。料金は自動で再計算されますが、仮押さえの期限は延びません。"
+ ],
+ "chg.rule.free": [
+  "Fino a {until} puoi cambiare liberamente persone, data e ore, senza penali: il prezzo si ricalcola da solo. Spostare la data non allunga i termini di annullo.",
+  "Until {until} you can freely change guests, date and hours, with no fees: the price is recalculated automatically. Moving the date does not extend the cancellation deadlines.",
+  "Hasta el {until} puedes cambiar libremente personas, fecha y horas, sin penalizaciones: el precio se recalcula solo. Mover la fecha no alarga los plazos de cancelación.",
+  "{until}までは、キャンセル料なしで人数・日付・時間を自由に変更できます。料金は自動で再計算されます。日付を変えてもキャンセル期限は延びません。"
+ ],
+ "chg.rule.increase": [
+  "Il periodo gratuito è finito: puoi solo aumentare le persone o le ore, sullo stesso orario. Per altre modifiche scrivimi.",
+  "The free period is over: you can only increase guests or hours, at the same time. For any other change, write to me.",
+  "El periodo gratuito ha terminado: solo puedes aumentar las personas o las horas, en el mismo horario. Para otros cambios, escríbeme.",
+  "無料期間は終了しました。同じ時間のまま、人数または時間を増やすことのみ可能です。その他の変更はご連絡ください。"
+ ],
+ "chg.locked.status": [
+  "Questa prenotazione non si può più cambiare.",
+  "This booking can no longer be changed.",
+  "Esta reserva ya no se puede cambiar.",
+  "この予約はこれ以上変更できません。"
+ ],
+ "chg.locked.held": [
+  "Completa prima il pagamento: poi potrai cambiarla.",
+  "Complete the payment first: then you will be able to change it.",
+  "Completa primero el pago: después podrás cambiarla.",
+  "先にお支払いを完了してください。その後で変更できます。"
+ ],
+ "chg.locked.started": [
+  "Il servizio è già iniziato: non si può più cambiare.",
+  "The service has already started: it can no longer be changed.",
+  "El servicio ya ha empezado: ya no se puede cambiar.",
+  "サービスはすでに開始されているため、変更できません。"
+ ],
+ "chg.locked.custom": [
+  "Per questa prenotazione abbiamo concordato un prezzo: per cambiare persone, data o ore scrivimi.",
+  "We agreed a price for this booking: to change guests, date or hours, write to me.",
+  "Para esta reserva acordamos un precio: para cambiar personas, fecha u horas, escríbeme.",
+  "この予約は料金を個別に取り決めています。人数・日付・時間の変更はご連絡ください。"
+ ],
+ "chg.locked.card": [
+  "Hai già pagato online: per cambiare persone, data o ore scrivimi e sistemiamo anche il pagamento.",
+  "You have already paid online: to change guests, date or hours, write to me and we will sort out the payment too.",
+  "Ya has pagado online: para cambiar personas, fecha u horas, escríbeme y arreglamos también el pago.",
+  "すでにオンラインでお支払い済みです。人数・日付・時間の変更は、お支払いの調整も含めてご連絡ください。"
+ ],
+ "chg.locked.paid": [
+  "Questa prenotazione risulta già pagata: per cambiarla scrivimi.",
+  "This booking is already paid: to change it, write to me.",
+  "Esta reserva ya figura como pagada: para cambiarla, escríbeme.",
+  "この予約はお支払い済みです。変更はご連絡ください。"
+ ],
+ "chg.locked.invoiced": [
+  "Per questa prenotazione la fattura è già stata preparata: per cambiarla scrivimi.",
+  "The invoice for this booking has already been prepared: to change it, write to me.",
+  "La factura de esta reserva ya está preparada: para cambiarla, escríbeme.",
+  "この予約の請求書はすでに準備されています。変更はご連絡ください。"
+ ],
+ "chg.err.locked": [
+  "Questa prenotazione non si può cambiare da sola: scrivimi.",
+  "This booking cannot be changed online: write to me.",
+  "Esta reserva no se puede cambiar online: escríbeme.",
+  "この予約はオンラインでは変更できません。ご連絡ください。"
+ ],
+ "chg.err.invalid": [
+  "I dati della modifica non sono validi: controlla persone, data e ore.",
+  "The change is not valid: check guests, date and hours.",
+  "Los datos del cambio no son válidos: revisa personas, fecha y horas.",
+  "変更内容が正しくありません。人数・日付・時間をご確認ください。"
+ ],
+ "chg.err.nochange": [
+  "Non hai cambiato nulla.",
+  "You have not changed anything.",
+  "No has cambiado nada.",
+  "変更されていません。"
+ ],
+ "chg.err.unavailable": [
+  "Quell’orario non è più libero per queste persone: scegline un altro.",
+  "That time is no longer free for these guests: choose another one.",
+  "Ese horario ya no está libre para estas personas: elige otro.",
+  "その時間はもう空いていません。別の時間をお選びください。"
+ ],
+ "chg.err.moveLocked": [
+  "Dopo il periodo gratuito non si può spostare la data o l’orario: scrivimi.",
+  "After the free period the date or time cannot be moved: write to me.",
+  "Pasado el periodo gratuito no se puede mover la fecha ni el horario: escríbeme.",
+  "無料期間を過ぎると、日付や時間は変更できません。ご連絡ください。"
+ ],
+ "chg.err.reduceLocked": [
+  "Dopo il periodo gratuito non si possono ridurre persone od ore: scrivimi.",
+  "After the free period guests or hours cannot be reduced: write to me.",
+  "Pasado el periodo gratuito no se pueden reducir personas ni horas: escríbeme.",
+  "無料期間を過ぎると、人数や時間は減らせません。ご連絡ください。"
+ ],
+ "chg.err.option": [
+  "Per la nuova data non si può mantenere l’opzione (troppo vicina): scegli un’altra data o prenota direttamente.",
+  "The option cannot be kept for the new date (too close): choose another date or book directly.",
+  "Para la nueva fecha no se puede mantener la opción (demasiado cercana): elige otra fecha o reserva directamente.",
+  "新しい日付では仮押さえを維持できません（直前すぎます）。別の日付を選ぶか、直接ご予約ください。"
+ ],
+ "booking.flash.changed": [
+  "Modifica fatta: ti abbiamo mandato il riepilogo aggiornato.",
+  "Change made: we have sent you the updated summary.",
+  "Cambio hecho: te hemos enviado el resumen actualizado.",
+  "変更しました。更新後の内容をメールでお送りしました。"
+ ],
+ "booking.flash.extension-sent": [
+  "Richiesta inviata: ti rispondo appena posso.",
+  "Request sent: I will reply as soon as I can.",
+  "Solicitud enviada: te respondo en cuanto pueda.",
+  "リクエストを送信しました。できるだけ早くお返事します。"
+ ],
+ "booking.flash.extension-error": [
+  "Non è stato possibile inviare la richiesta (ce n’è già una aperta, o l’opzione è scaduta).",
+  "The request could not be sent (there is already one open, or the option has expired).",
+  "No se ha podido enviar la solicitud (ya hay una abierta, o la opción ha caducado).",
+  "リクエストを送信できませんでした（すでに受付中のリクエストがあるか、仮押さえの期限が切れています）。"
+ ],
+ "pkg.flash.extension-sent": [
+  "Richiesta inviata: ti rispondo appena posso.",
+  "Request sent: I will reply as soon as I can.",
+  "Solicitud enviada: te respondo en cuanto pueda.",
+  "リクエストを送信しました。できるだけ早くお返事します。"
+ ],
+ "pkg.flash.extension-error": [
+  "Non è stato possibile inviare la richiesta (ce n’è già una aperta, o l’opzione è scaduta).",
+  "The request could not be sent (there is already one open, or the option has expired).",
+  "No se ha podido enviar la solicitud (ya hay una abierta, o la opción ha caducado).",
+  "リクエストを送信できませんでした（すでに受付中のリクエストがあるか、仮押さえの期限が切れています）。"
+ ],
+ "ext.title": [
+  "Ti serve più tempo?",
+  "Need more time?",
+  "¿Necesitas más tiempo?",
+  "期限を延ばしたいですか？"
+ ],
+ "ext.text": [
+  "Chiedimi di prolungare l’opzione: ti rispondo appena posso. Intanto la data resta trattenuta fino alla scadenza attuale.",
+  "Ask me to extend the option: I will reply as soon as I can. Meanwhile the date stays held until the current expiry.",
+  "Pídeme que prorrogue la opción: te respondo en cuanto pueda. Mientras tanto, la fecha sigue retenida hasta el vencimiento actual.",
+  "仮押さえの延長をご依頼ください。できるだけ早くお返事します。それまでは、現在の期限まで日程を確保しています。"
+ ],
+ "ext.days": [
+  "Quanti giorni in più",
+  "How many more days",
+  "Cuántos días más",
+  "延長する日数"
+ ],
+ "ext.note": [
+  "Perché (facoltativo)",
+  "Why (optional)",
+  "Por qué (opcional)",
+  "理由（任意）"
+ ],
+ "ext.btn": [
+  "Chiedi la proroga",
+  "Request an extension",
+  "Pedir la prórroga",
+  "延長を依頼する"
+ ],
+ "ext.pendingChip": [
+  "Proroga richiesta",
+  "Extension requested",
+  "Prórroga solicitada",
+  "延長を依頼済み"
+ ],
+ "ext.pending": [
+  "Hai chiesto {days} giorni in più: ti rispondo appena posso. Intanto l’opzione scade il {until}.",
+  "You asked for {days} more days: I will reply as soon as I can. Meanwhile the option expires on {until}.",
+  "Has pedido {days} días más: te respondo en cuanto pueda. Mientras tanto, la opción caduca el {until}.",
+  "{days}日の延長を依頼済みです。できるだけ早くお返事します。それまでの仮押さえの期限は{until}です。"
+ ],
+ "chg.mail.subject": [
+  "Prenotazione modificata {ref} — {title}, {date}",
+  "Booking changed {ref} — {title}, {date}",
+  "Reserva modificada {ref} — {title}, {date}",
+  "予約を変更しました {ref} — {title}（{date}）"
+ ],
+ "chg.mail.optionSubject": [
+  "Opzione modificata {ref} — {title}, {date}",
+  "Option changed {ref} — {title}, {date}",
+  "Opción modificada {ref} — {title}, {date}",
+  "仮押さえを変更しました {ref} — {title}（{date}）"
+ ],
+ "chg.mail.intro": [
+  "la prenotazione è stata modificata. Qui sotto trovi i dati aggiornati; in allegato il nuovo voucher e il file del calendario.",
+  "the booking has been changed. Below you will find the updated details; attached are the new voucher and the calendar file.",
+  "la reserva se ha modificado. Abajo tienes los datos actualizados; adjuntos, el nuevo voucher y el archivo del calendario.",
+  "予約を変更しました。更新後の内容は以下のとおりです。新しいバウチャーとカレンダー用ファイルを添付しています。"
+ ],
+ "chg.mail.optionIntro": [
+  "l’opzione è stata modificata: la data resta trattenuta fino a {until}. Qui sotto trovi i dati aggiornati.",
+  "the option has been changed: the date stays held until {until}. Below you will find the updated details.",
+  "la opción se ha modificado: la fecha sigue retenida hasta el {until}. Abajo tienes los datos actualizados.",
+  "仮押さえを変更しました。日程は{until}まで確保されています。更新後の内容は以下のとおりです。"
+ ],
+ "chg.mail.was": [
+  "Prima: {what}",
+  "Before: {what}",
+  "Antes: {what}",
+  "変更前：{what}"
+ ],
+ "chg.mail.now": [
+  "Ora: {what}",
+  "Now: {what}",
+  "Ahora: {what}",
+  "変更後：{what}"
+ ],
+ "chg.mail.deniedSubject": [
+  "Proroga non concessa {ref}",
+  "Extension not granted {ref}",
+  "Prórroga no concedida {ref}",
+  "延長はできませんでした {ref}"
+ ],
+ "chg.mail.deniedIntro": [
+  "non posso prolungare l’opzione: la data resta trattenuta fino a {until}, poi si libera da sola. Se il tuo cliente ha deciso, conferma entro quella data; altrimenti rilasciala.",
+  "I cannot extend the option: the date stays held until {until} and is then released automatically. If your client has decided, confirm before then; otherwise release it.",
+  "no puedo prorrogar la opción: la fecha sigue retenida hasta el {until} y después se libera sola. Si tu cliente ha decidido, confirma antes de esa fecha; si no, libérala.",
+  "仮押さえを延長できませんでした。日程は{until}まで確保され、その後は自動的に解放されます。お客様が決まっている場合は期限までに確定し、そうでない場合は解除してください。"
+ ],
+ "chg.mail.deniedCta": [
+  "Conferma o rilascia",
+  "Confirm or release",
+  "Confirmar o liberar",
+  "確定または解除する"
+ ],
+ "chg.notFree": [
+  "annullo: rimborso {percent}%",
+  "cancellation: {percent}% refund",
+  "cancelación: reembolso {percent}%",
+  "キャンセル：返金{percent}%"
  ]
 }

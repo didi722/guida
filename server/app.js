@@ -10,6 +10,7 @@ import { LANGS } from './i18n.js';
 import { openTo } from './rates.js';
 import { langMiddleware, makeCtx, preferredLang, sameOrigin, securityHeaders, send, sessionMiddleware } from './http.js';
 import { brandIcon } from './png.js';
+import { changesRouter } from './routes/changes.js';
 import { packagesRouter } from './routes/packages.js';
 import { partnerRouter } from './routes/partner.js';
 import { publicRouter } from './routes/public.js';
@@ -83,8 +84,9 @@ export function createApp(overrides = {}) {
   const pub = publicRouter(app);
   const partner = partnerRouter(app);
   const packages = packagesRouter(app);
+  const changes = changesRouter(app);
   const features = featuresRouter(app);
-  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, features);
+  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, changes, features);
 
   // 404 (nella lingua dell'URL se possibile)
   server.use((req, res) => {
