@@ -230,12 +230,7 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   </div>
   ${channel !== 'b2b' && invitePercentFor(ctx.app, tour) ? html`<p class="invite-note"><span class="chip chip-accent">${t('tour.inviteTag', { percent: invitePercentFor(ctx.app, tour) })}</span> <small class="muted">${t('tour.inviteNote')}</small></p>` : ''}
   <h2 class="sr-only">${t('w.title')}</h2>
-  <div class="field stepper-field">
-    <span class="label" id="lbl-pax">${t('w.persons')}</span>
-    <div class="stepper" role="group" aria-labelledby="lbl-pax">
-      <button type="button" data-pax-minus aria-label="−">−</button><output data-pax aria-live="polite">2</output><button type="button" data-pax-plus aria-label="+">+</button>
-    </div>
-  </div>
+  <label class="field"><span class="label">${t('w.persons')}</span><select data-pax>${Array.from({ length: tour.maxParticipants }, (_, n) => n + 1).map((n) => html`<option value="${n}" ${n === Math.min(2, tour.maxParticipants) ? raw('selected') : ''}>${n}</option>`)}</select></label>
   ${hoursDefault != null ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select data-hours>${hourOptions(tour.service).map((h) => html`<option value="${h}" ${h === hoursDefault ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>${tour.roundHours ? html`<small class="muted">${t('hourly.note.round')}</small>` : ''}</label>` : ''}
   ${tour.languages.length > 1 ? html`<label class="field"><span class="label">${t('w.tourLang')}</span><select data-tour-lang>${tour.languages.map((l) => html`<option value="${l}" ${l === (tour.languages.includes(lang) ? lang : tour.languages[0]) ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}</select></label>` : ''}
   <div class="cal" data-cal><p class="muted small">${t('w.loading')}</p></div>
@@ -243,7 +238,7 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   <div class="book-summary" data-summary hidden></div>
   <a class="btn btn-gold btn-block" data-continue href="${u('/book')}?tour=${tour.slug}" aria-disabled="true">${t('w.continue')}</a>
   <p class="small muted policy-note">${cancellationLine(ctx, tour, channel)}${options.includes('onsite') ? html` · ${t('w.payOnSite')}` : ''}</p>
-  <noscript><form method="get" action="${u('/book')}" class="noscript-form"><input type="hidden" name="tour" value="${tour.slug}"><label>${t('quick.date')} <input type="date" name="date" min="${minDate}" required></label> <label>${t('quick.guests')} <input type="number" name="pax" min="1" max="${tour.maxParticipants}" value="2"></label> <button class="btn btn-gold" type="submit">${t('quick.go')}</button></form></noscript>
+  <noscript><form method="get" action="${u('/book')}" class="noscript-form"><input type="hidden" name="tour" value="${tour.slug}"><label>${t('quick.date')} <input type="date" name="date" min="${minDate}" required></label> <label>${t('quick.guests')} <select name="pax">${Array.from({ length: tour.maxParticipants }, (_, n) => n + 1).map((n) => html`<option value="${n}" ${n === 2 ? raw('selected') : ''}>${n}</option>`)}</select></label> <button class="btn btn-gold" type="submit">${t('quick.go')}</button></form></noscript>
 </aside>`;
 
   const body = html`

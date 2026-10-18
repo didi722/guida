@@ -37,7 +37,7 @@ export function agencyBookingPage(ctx, { agencies, tours, values: v = {}, error 
   <div class="form-grid">
     <label class="field"><span class="label">Data</span><input type="date" name="date" required value="${v.date ?? ''}"></label>
     <label class="field"><span class="label">Ora di inizio</span><input type="time" name="time" required value="${v.time ?? '09:00'}"></label>
-    <label class="field"><span class="label">Persone</span><input type="number" name="pax" min="1" required value="${v.pax ?? '2'}"></label>
+    <label class="field"><span class="label">Persone</span><select name="pax" required>${Array.from({ length: 25 }, (_, n) => n + 1).map((n) => html`<option value="${n}" ${String(n) === String(v.pax ?? '2') ? raw('selected') : ''}>${n}</option>`)}</select></label>
     <label class="field"><span class="label">Ore <em>(solo servizi a ore a scelta)</em></span><input name="hours" inputmode="decimal" placeholder="es. 4 o 5,5" value="${v.hours ?? ''}"></label>
   </div>
   <div class="form-grid">

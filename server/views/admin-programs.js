@@ -52,7 +52,7 @@ ${items.length
       <label class="field"><span class="label">Azienda <em>(se agenzia/DMC)</em></span><input name="company" maxlength="160" value="${values.company ?? ''}"></label>
       <label class="field"><span class="label">Dal</span><input type="date" name="dateFrom" value="${values.dateFrom ?? ''}"></label>
       <label class="field"><span class="label">Al</span><input type="date" name="dateTo" value="${values.dateTo ?? ''}"></label>
-      <label class="field"><span class="label">Persone</span><input type="number" name="participants" min="1" max="80" required value="${values.participants ?? '2'}"></label>
+      <label class="field"><span class="label">Persone</span><select name="participants" required>${Array.from({ length: 80 }, (_, n) => n + 1).map((n) => html`<option value="${n}" ${String(n) === String(values.participants ?? '2') ? raw('selected') : ''}>${n}</option>`)}</select></label>
       <label class="field"><span class="label">Canale</span><select name="channel"><option value="b2c">Privato</option><option value="b2b" ${values.channel === 'b2b' ? raw('selected') : ''}>Agenzia / B2B</option></select></label>
       <label class="field"><span class="label">Lingua del cliente</span><select name="lang">${langOptions(values.lang)}</select></label>
     </div>

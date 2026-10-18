@@ -16,7 +16,7 @@
   var slotsEl = root.querySelector('[data-slots]');
   var summary = root.querySelector('[data-summary]');
   var cont = root.querySelector('[data-continue]');
-  var paxOut = root.querySelector('[data-pax]');
+  var paxSel = root.querySelector('[data-pax]'); // numero di persone (menu a tendina)
 
   var langSel = root.querySelector('[data-tour-lang]');
   var hoursSel = root.querySelector('[data-hours]'); // servizio a ore: quante ore, scelte dal cliente
@@ -140,7 +140,7 @@
   }
 
   function update() {
-    paxOut.textContent = String(state.pax);
+    paxSel.value = String(state.pax);
     if (state.date && state.time) {
       summary.hidden = false;
       var dateStr = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(state.date + 'T12:00:00Z'));
@@ -162,8 +162,7 @@
     update(); loadMonth();
     if (state.date) loadSlots();
   }
-  root.querySelector('[data-pax-minus]').addEventListener('click', function () { setPax(state.pax - 1); });
-  root.querySelector('[data-pax-plus]').addEventListener('click', function () { setPax(state.pax + 1); });
+  paxSel.addEventListener('change', function () { setPax(Number(paxSel.value)); });
 
   if (hoursSel) hoursSel.addEventListener('change', function () { state.time = null; update(); loadMonth(); if (state.date) loadSlots(); });
   if (langSel) langSel.addEventListener('change', function () { state.tl = langSel.value; state.time = null; update(); loadMonth(); if (state.date) loadSlots(); });

@@ -39,7 +39,7 @@ export function programsPage(ctx, { values = {}, error = '' } = {}) {
     </div>
     <label class="check"><input type="checkbox" name="flexibleDates" value="1" ${values.flexibleDates ? raw('checked') : ''}> ${t('pg.f.flexible')}</label>
     <div class="form-grid">
-      <label class="field"><span class="label">${t('pg.f.participants')}</span><input type="number" name="participants" min="1" max="80" required value="${v('participants', '2')}" inputmode="numeric"></label>
+      <label class="field"><span class="label">${t('pg.f.participants')}</span><select name="participants" required>${Array.from({ length: 80 }, (_, n) => n + 1).map((n) => html`<option value="${n}" ${String(n) === String(v('participants', '2')) ? raw('selected') : ''}>${n}</option>`)}</select></label>
       <label class="field"><span class="label">${t('pg.f.group')}</span><select name="groupType"><option value="">—</option>${GROUP_TYPES.map((g) => html`<option value="${g}" ${(values.groupType ?? (isB2b ? 'agency' : '')) === g ? raw('selected') : ''}>${t(`pg.group.${g}`)}</option>`)}</select></label>
     </div>
     <fieldset class="check-grid"><legend class="label">${t('pg.f.interests')}</legend>
