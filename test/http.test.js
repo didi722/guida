@@ -380,10 +380,10 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     const date = day(30);
 
     assert.equal((await partner('/it/b2b/account')).status, 302, 'serve il login');
-    const reg = await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT123', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
+    const reg = await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
     assert.equal(reg.status, 200);
     assert.equal((await partner('/it/b2b/register', form({ company: 'X', vat: '1', country: 'IT', contact_name: 'G', phone: '1', email: 'dmc@example.com', password: 'corta', consent: '1' }))).status, 400);
-    assert.equal((await partner('/it/b2b/register', form({ company: 'X', vat: '1', country: 'IT', contact_name: 'G', phone: '1', email: 'nuovo@example.com', password: 'password-lunga-1', consent: '1' }))).status, 400, 'IT senza SDI/PEC');
+    assert.equal((await partner('/it/b2b/register', form({ company: 'X', vat: 'IT12345678903', country: 'IT', contact_name: 'G', phone: '1', email: 'nuovo@example.com', password: 'password-lunga-1', consent: '1' }))).status, 400, 'IT senza SDI/PEC');
     assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /partner/i.test(m.subject)));
 
     // finché è "pending" paga la tariffa pubblica e non può usare la fattura
@@ -939,7 +939,7 @@ test('programmi: il partner B2B ha il modulo precompilato e il programma resta c
     const partner = s.jar();
     const admin = s.jar();
     await admin('/admin/login', form({ password: 'segreto-admin' }));
-    await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT123', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
+    await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
     const id = s.app.db.prepare('SELECT id FROM accounts').get().id;
     await admin(`/admin/partners/${id}`, form({ status: 'approved', discount_percent: '0', allow_invoice: '1' }));
     await partner('/it/b2b/login', form({ email: 'dmc@example.com', password: 'password-lunga-1' }));

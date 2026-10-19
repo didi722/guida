@@ -99,6 +99,8 @@ Il pannello contiene i dati dei clienti e le fatture: oltre alla password puoi c
 | Cambiare **ore di cancellazione, preavviso**, pausa fra i servizi | **Sito › Impostazioni › Regole di prenotazione** |
 | Inserire i **dati per fatturare** | **Sito › Impostazioni › Fatturazione elettronica** |
 | **Approvare** un'agenzia, dare **sconti, prezzi e cancellazione** dedicati | **Clienti › Partner** › tocca l'agenzia |
+| **Invitare un'agenzia** che conosci con un collegamento personale (account già approvato) | **Clienti › Partner › Inviti** ([come funziona](#invitare-unagenzia)) |
+| Sapere se la **Partita IVA** di un'agenzia è valida | **Clienti › Partner** › tocca l'agenzia › **Verifica P.IVA** ([come funziona](#controllo-della-partita-iva-vies)) |
 | **Riordinare** i tour nell'elenco del sito (o dell'area agenzie) | **Sito › Tour B2C** (o **Tour B2B**): trascina le righe dalla maniglia ⠿ |
 | In **alta stagione** (Carnevale, Natale, estate…) rendere le opzioni **più brevi o toglierle**, o chiedere **più preavviso** | **Sito › Periodi** ([come funziona](#periodi-con-regole-particolari-alta-stagione)) |
 | Decidere **quanto dura un'opzione** per le agenzie (e quante ne possono tenere) | **Sito › Impostazioni › Opzioni per le agenzie**; per una sola agenzia **Clienti › Partner › Opzioni** |
@@ -436,12 +438,40 @@ Il sito non spunta mai da solo un caso dubbio, e una stessa fattura non si incas
 
 ## 14. Partner (agenzie, DMC, tour operator)
 
-**Clienti › Partner** elenca le aziende registrate (*Tutti* · *Da approvare* · *Approvati*). Le agenzie si registrano da `…/b2b` → *Richiedi accesso partner*.
+**Clienti › Partner** elenca le aziende registrate (*Tutti* · *Da approvare* · *Approvati*); la scheda *Inviti* è per le agenzie che inviti tu. Le agenzie si registrano da `…/b2b` → *Richiedi accesso partner*, oppure da un [tuo invito](#invitare-unagenzia).
 
 ### Approvare un partner
-1. Apri la richiesta: vedi dati aziendali (Partita IVA, SDI/PEC), referente e messaggio.
+1. Apri la richiesta: vedi dati aziendali (Partita IVA, SDI/PEC), referente e messaggio, e sotto la Partita IVA l'**esito del controllo** ([sotto](#controllo-della-partita-iva-vies)).
 2. In **Stato e pagamento** scegli **Stato**: *Approvato*, *Rifiutato* o *Sospeso*; imposta lo **Sconto su tutto il listino (%)** (vale per i tour senza prezzo dedicato) e se **può pagare a fattura / bonifico**; aggiungi **Note interne**. **Salva**.
 3. Il partner riceve un'email e può entrare nella sua area (vedi sotto). Se scegli **Sconto %**, lo sconto si toglie dalle **tariffe agenzie** (tour B2B e tariffe a ore) e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (mai oltre la tariffa).
+
+### Controllo della Partita IVA (VIES)
+Quando un'agenzia si registra, il sito controlla la sua Partita IVA e ti scrive l'esito nell'email *Nuova richiesta partner* (riga **P.IVA**):
+
+- **Subito, nel modulo.** Il numero si può scrivere come capita (`IT 012.345.678-97`, con o senza il prefisso del paese) e il sito lo salva in forma ordinata (`IT01234567897`; nelle fatture elettroniche il prefisso viene tolto dal numero, perché nel file sta in un campo a parte). Una Partita IVA **italiana** con la **cifra di controllo sbagliata** (o fatta di soli zeri) **non passa**: l'agenzia vede un messaggio e corregge, perché la fattura elettronica non la accetterebbe. Per gli **altri paesi** il formato non blocca nessuno (le regole cambiano da paese a paese e non vuoi perdere un'agenzia vera per un trattino): lo vedi tu, nell'email e nella scheda.
+- **Entro un minuto, su VIES.** Il sito interroga **VIES**, il servizio gratuito della Commissione europea che dice se il numero è **attivo** e, per molti paesi (l'Italia sì), anche **a quale società e indirizzo** appartiene. L'esito sta nella scheda del partner, alla riga **Verifica P.IVA**:
+  - *Valida su VIES*, con il nome che c'è nel registro e un avviso se **sembra diverso** da quello che l'agenzia ha scritto (oppure *corrisponde*);
+  - *Non risulta valida su VIES*;
+  - *Formato non valido* (il numero non ha la forma di una Partita IVA del suo paese);
+  - *Fuori dall'UE*: VIES non copre quei paesi (Svizzera, Regno Unito, Stati Uniti…), serve un controllo a mano;
+  - *Non verificata*: il servizio, o quello del paese dell'agenzia, non ha risposto (capita, soprattutto la sera). Il sito **riprova da solo dopo un'ora**; se non vuoi aspettare tocca **Verifica ora**.
+- **Dove lo vedi.** Nell'elenco, accanto al nome, una piccola etichetta (*P.IVA ✓*, *P.IVA non valida*, *P.IVA: formato*); in **Agenda › Da fare**, la riga dei partner da approvare dice quanti hanno una Partita IVA da controllare.
+- **È un aiuto, non un blocco.** L'esito non approva né rifiuta nessuno. Una Partita IVA «non valida» può essere un errore di battitura o un'azienda aperta da pochi giorni (VIES si aggiorna con un po' di ritardo): scrivi all'agenzia prima di decidere.
+
+> Il collegamento con VIES segue la documentazione pubblica del servizio ed è stato provato con risposte simulate, **non con il servizio vero**: fai la prova indicata nella [lista di controllo](#20-da-fare-prima-del-lancio-e-a-gennaio) con una Partita IVA reale.
+
+### Invitare un'agenzia
+Per portare in squadra un'agenzia che conosci (un contatto di una fiera, un'agenzia con cui lavori già): **Clienti › Partner › Inviti**.
+
+1. Scrivi l'**email** dell'agenzia e scegli la **lingua** dell'invito (italiano, inglese, spagnolo o giapponese). Facoltativi: il **nome dell'agenzia** e del **referente** (compaiono già scritti nel modulo e nel saluto dell'email) e un **messaggio** per lei. Tocca **Invia l'invito**.
+2. L'agenzia riceve un'email con un **collegamento personale**. Aprendolo trova il modulo di registrazione con l'indirizzo già fissato; appena lo compila **l'account è già approvato** e lei entra subito nella sua area, senza aspettare te. Di base ha la tariffa standard e può pagare a fattura: per sconto, prezzi o annullo dedicati apri la sua scheda, come per ogni partner. A te arriva un'email con i suoi dati e l'esito del controllo della Partita IVA.
+3. Il collegamento vale **14 giorni** e **una volta sola**. L'elenco sotto il modulo dice per ogni invito se è **In attesa**, **Registrata** (con il collegamento alla scheda), **Scaduto** o **Annullato**.
+
+Quando serve:
+- **Rinvia**: l'email non è arrivata o l'invito è scaduto. Si crea un collegamento **nuovo** e il vecchio smette di valere. Il collegamento lo vedi **solo nel momento in cui lo crei** (e quando rinvii): se l'email non è partita il sito te lo scrive, e puoi copiarlo e mandarlo tu, per esempio su WhatsApp.
+- **Annulla**: hai sbagliato indirizzo o hai cambiato idea; il collegamento non funziona più. L'indirizzo di un invito non si cambia: annulla e invita quello giusto.
+- Invitare di nuovo **lo stesso indirizzo** mentre l'invito è ancora aperto lo rinnova (non ne nasce un secondo). Se l'agenzia ha **già un account**, il sito te lo dice: non serve invitarla.
+- Se l'agenzia si registra **da sola** prima di usare l'invito, entra come ogni altra richiesta (da approvare) e l'invito non crea un secondo account.
 
 ### L'area riservata dell'agenzia
 L'agenzia entra da **Login agenzie** (il pulsante in alto, accanto a *Prenota*; sul telefono è l'icona della persona): da lì può anche **chiedere la registrazione**. Una volta dentro trova un'area **pulita**, pensata per lavorare in fretta: niente blog, *Chi sono*, tour o prezzi al pubblico.
@@ -701,6 +731,8 @@ Qualche accortezza:
 
 Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, regole, fatturazione…) restano valide come **valori predefiniti**: se un campo è stato cambiato dal pannello, vince il pannello. La sezione **Impostazioni** è l'unico posto da cui cambiarli.
 
+**Controllo delle Partite IVA (VIES).** Il sito interroga il servizio gratuito **VIES** della Commissione europea (`ec.europa.eu`): **non serve nessuna chiave**, basta che il server possa fare richieste HTTPS verso l'esterno (se il tuo hosting limita le connessioni in uscita, `ec.europa.eu` va permesso). Se il servizio non risponde nessuno resta bloccato: la scheda dell'agenzia dice *Non verificata* e il sito riprova da solo dopo un'ora ([come si legge l'esito](#controllo-della-partita-iva-vies)).
+
 **Pagamenti con carta, Apple Pay, Google Pay, PayPal.** Il pulsante dice *Paga ora online* perché il cliente paga su una pagina ospitata da **Stripe** e non solo con la carta: i metodi che attivi nella **dashboard di Stripe** (*Impostazioni → Metodi di pagamento*: carte, Apple Pay, Google Pay, PayPal, Klarna, bonifici online…) compaiono da soli, secondo il Paese e il dispositivo del cliente, senza toccare il sito. Scegli metodi **a conferma immediata**: quelli che confermano in giorni (addebito SEPA, bonifici) lasciano lo slot occupato in attesa. Il webhook di Stripe (`https://tuodominio.it/api/stripe/webhook`) va configurato una volta.
 
 **Email sul tuo dominio (per esempio `tours@davidetomio.it`).** Un account **Posteo non permette di usare un dominio proprio**: gli indirizzi sono solo quelli di Posteo (`@posteo.net`, `.de`, `.eu`…; controlla sul loro sito se è cambiato). Non serve però cambiare provider per avere le notifiche (nuova prenotazione, richiesta di registrazione di un'agenzia, opzioni…): vanno **a qualsiasi indirizzo**, anche il tuo Posteo, impostato in **Sito › Impostazioni › Attività e contatti › Email che riceve le notifiche**. Per avere un indirizzo del tuo dominio:
@@ -739,6 +771,10 @@ Con Posteo come mittente (`MAIL_FROM` con un indirizzo `@posteo.net`) il sito fu
 - Hai modificato i file della cartella `content/` del codice? Dopo il primo avvio non vengono più letti: usa il pannello.
 
 **Da computer non vedo il menu laterale (☰)**: è normale. Su uno schermo largo le voci stanno nella barra in alto; il menu laterale compare solo su schermi stretti (telefono, tablet o finestra ristretta) e contiene le stesse voci. Quando un'agenzia è dentro, la barra in alto mostra solo le sue voci di lavoro.
+
+**La Partita IVA di un'agenzia risulta «Non verificata» o «Non valida»**: *Non verificata* vuol dire che VIES (o il servizio del paese dell'agenzia) non ha risposto: il sito riprova da solo dopo un'ora, oppure tocca **Verifica ora** nella scheda; se succede sempre, controlla che il server possa raggiungere `ec.europa.eu` ([sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)). *Non valida* può essere un errore di battitura o un'azienda aperta da poco: scrivi all'agenzia ([come si legge l'esito](#controllo-della-partita-iva-vies)). Per i paesi fuori dall'UE non c'è controllo automatico.
+
+**Un'agenzia dice che il collegamento dell'invito non funziona**: guarda **Clienti › Partner › Inviti**. *Scaduto* (14 giorni) o l'email non è mai arrivata: tocca **Rinvia** e manda il nuovo collegamento. *Annullato*: invitala di nuovo. *Registrata*: ha già creato l'account con quel collegamento (che vale una volta sola) e deve **accedere** da *Login agenzie* con la sua email e la sua password (c'è *Password dimenticata*). Se l'agenzia aveva già un account, il sito non permette l'invito.
 
 **Un'agenzia non riesce a cambiare persone, data o ore da sola**: la prenotazione è **pagata con carta**, **già incassata**, ha una **fattura già preparata**, ha un **prezzo concordato** da te, il servizio è **già iniziato**, oppure il **periodo di annullo gratuito è finito** (allora può solo aumentare persone od ore, sullo stesso orario). Nella scheda vede il motivo e può scriverti; se vuoi accontentarla tu, annulla la prenotazione scegliendo **senza penale** (*Rimborsa tutto*) e registrala di nuovo dall'agenda con le nuove persone o la nuova data.
 
@@ -797,6 +833,7 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 - [ ] **Accesso a due passaggi** (Aiuto › Sicurezza): attivalo, **stampa i codici di emergenza** e conservali; scegli una password del pannello lunga e unica.
 - [ ] Se parti **prima della Partita IVA**: scrivi la data in **Incassi dal** e fai una prenotazione di prova da privato (deve proporre solo il pagamento di persona) e da agenzia (fattura o opzione).
 - [ ] Opzioni per le agenzie: guarda la tabella in **Impostazioni › Opzioni per le agenzie** e decidi se ti vanno bene i giorni e il limite.
+- [ ] **Inviti e Partita IVA** (Clienti › Partner): fai una prova con un tuo secondo indirizzo email. In **Inviti** invita quell'indirizzo, apri il collegamento da una finestra privata, registrati e controlla che l'account nasca **approvato** e che ti arrivi l'email con la riga **P.IVA**. Poi apri la scheda di un'agenzia con una Partita IVA **vera** e tocca **Verifica ora**: deve dire *Valida su VIES* (se dice sempre *Non verificata*, il server non raggiunge `ec.europa.eu`: [sezione 19](#19-quando-qualcosa-non-va)). Il collegamento con VIES è stato provato solo con risposte simulate: questa è la prova vera.
 - [ ] **Periodi** (Sito › Periodi): se hai un'alta stagione o degli eventi in cui non vuoi opzioni lunghe (o vuoi più preavviso), scrivili ora, con le date, prima che le agenzie comincino a opzionare.
 
 **Quando apri la Partita IVA (gennaio)**

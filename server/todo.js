@@ -32,7 +32,8 @@ export function todoList(app, nowMs = Date.now()) {
     decide.push({ tone: 'warn', text: `Proroga richiesta${r.group_id ? ' (pacchetto)' : ''}: ${b.company ?? b.name} · ${title(b.tour_slug)}, ${fmtDate(b.date, 'it', 'short')}`, meta: `chiede ${plural(r.days, 'giorno', 'giorni')}${b.option_expires_at ? `; l’opzione scade il ${fmtInstant(Date.parse(b.option_expires_at), 'it')}` : ''}`, href: `/admin/bookings/${b.id}` });
   }
   const partners = db.prepare(`SELECT COUNT(*) AS n FROM accounts WHERE status = 'pending'`).get().n;
-  if (partners) decide.push({ tone: 'warn', text: `${plural(partners, 'partner da approvare', 'partner da approvare')}`, meta: 'si sono registrati e aspettano il via libera', href: '/admin/partners' });
+  const badVat = db.prepare(`SELECT COUNT(*) AS n FROM accounts WHERE status = 'pending' AND vat_status IN ('invalid', 'format')`).get().n;
+  if (partners) decide.push({ tone: 'warn', text: `${plural(partners, 'partner da approvare', 'partner da approvare')}`, meta: badVat ? `${badVat} con la partita IVA da controllare` : 'si sono registrati e aspettano il via libera', href: '/admin/partners?f=pending' });
   const programs = db.prepare(`SELECT COUNT(*) AS n FROM programs WHERE status = 'new'`).get().n;
   if (programs) decide.push({ tone: 'warn', text: `${plural(programs, 'richiesta di programma da preparare', 'richieste di programma da preparare')}`, href: '/admin/programs' });
   section('decide', 'Da decidere', decide);

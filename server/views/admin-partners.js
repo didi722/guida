@@ -5,6 +5,7 @@ import { tierSentences } from '../policyText.js';
 import { accountPrices, unitPriceFor } from '../pricing.js';
 import { addDays, fmtDate, localToInstant, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
+import { vatLabel } from '../vat.js';
 import { adminLayout, statusLabel } from './admin.js';
 
 const ST = { pending: 'Da approvare', approved: 'Approvato', rejected: 'Rifiutato', suspended: 'Sospeso' };
@@ -21,14 +22,43 @@ const PRESETS = [
   ['Rigida (14 giorni 100% · 7 giorni 50%)', [[14, 'd', 100], [7, 'd', 50]]],
 ];
 
+/** Un'etichetta piccola sull'esito della verifica della partita IVA (niente se non c'è nulla da dire). */
+const vatBadge = (vat) => ({ valid: html`<span class="chip chip-ok" title="Valida su VIES${vat.name ? `: ${vat.name}` : ''}">P.IVA ✓</span>`, invalid: html`<span class="chip chip-err" title="Non risulta valida su VIES">P.IVA non valida</span>`, format: html`<span class="chip chip-err" title="Il formato non è quello del paese">P.IVA: formato</span>` }[vat.status] ?? '');
+
+/** L'esito della verifica a parole, per la scheda di un'agenzia. */
+function vatResult(vat, company) {
+  const day = vat.checkedAt ? new Date(vat.checkedAt).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  switch (vat.status) {
+    case 'valid':
+      return html`<span class="chip chip-ok">Valida su VIES</span> <small class="muted">controllata il ${day}</small>${vat.name ? html`<br>Nel registro: <strong>${vat.name}</strong>${vat.address ? html`, ${vat.address}` : ''}` : html`<br><small class="muted">Il registro di questo paese non dice a chi appartiene.</small>`}${vat.sameName === false ? html`<br><span class="field-error">Il nome nel registro sembra diverso da «${company}»: controlla con l’agenzia.</span>` : vat.sameName ? html` <small class="muted">(corrisponde)</small>` : ''}`;
+    case 'invalid':
+      return html`<span class="chip chip-err">Non risulta valida su VIES</span> <small class="muted">controllata il ${day}</small><br><small class="muted">Il numero non è attivo (o è sbagliato): chiedi conferma all’agenzia prima di approvare.</small>`;
+    case 'format':
+      return html`<span class="chip chip-err">Formato non valido</span><br><small class="muted">Il numero non ha la forma di una partita IVA del suo paese (o l’italiana ha la cifra di controllo sbagliata).</small>`;
+    case 'unavailable':
+      return html`<span class="chip chip-warn">Non verificata</span> <small class="muted">VIES non ha risposto${day ? ` (${day})` : ''}: riprova tra poco.</small>`;
+    case 'unsupported':
+      return html`<span class="chip">Fuori dall’UE</span> <small class="muted">VIES non copre questo paese: serve un controllo a mano.</small>`;
+    default:
+      return html`<span class="chip">Non ancora verificata</span> <small class="muted">il controllo parte da solo entro un minuto.</small>`;
+  }
+}
+
+/** Le schede dell'elenco dei partner (e degli inviti). */
+export function partnerTabs(active) {
+  const tabs = [['all', 'Tutti', '/admin/partners?f=all'], ['pending', 'Da approvare', '/admin/partners?f=pending'], ['approved', 'Approvati', '/admin/partners?f=approved'], ['invites', 'Inviti', '/admin/partners/invites']];
+  return html`<div class="tabs">${tabs.map(([k, l, href]) => html`<a href="${href}" ${active === k ? raw('aria-current="page"') : ''}>${l}</a>`)}</div>`;
+}
+
 export function partnersPage(ctx, { items, filter }) {
-  const tabs = [['all', 'Tutti'], ['pending', 'Da approvare'], ['approved', 'Approvati']];
-  const body = html`<div class="tabs">${tabs.map(([k, l]) => html`<a href="/admin/partners?f=${k}" ${filter === k ? raw('aria-current="page"') : ''}>${l}</a>`)}</div>
+  const { app } = ctx;
+  const body = html`${partnerTabs(filter)}
 ${items.length
   ? html`<div class="card table-wrap"><table class="table"><thead><tr><th>Azienda</th><th>Referente</th><th>Stato</th><th>Condizioni</th><th class="num">Prenotazioni</th></tr></thead><tbody>
     ${items.map((a) => {
       const prices = Object.keys(accountPrices(a)).length;
-      return html`<tr><td><a href="/admin/partners/${a.id}"><strong>${a.company}</strong></a><br><small class="muted">${a.country ?? ''} ${a.vat ?? ''}</small></td><td>${a.contact_name}<br><small class="muted">${a.email}</small></td>
+      const vat = app.vat.summary(a);
+      return html`<tr><td><a href="/admin/partners/${a.id}"><strong>${a.company}</strong></a><br><small class="muted">${vatLabel(a)}</small> ${vatBadge(vat)}</td><td>${a.contact_name}<br><small class="muted">${a.email}</small></td>
       <td><span class="chip ${a.status === 'approved' ? 'chip-ok' : a.status === 'pending' ? 'chip-warn' : 'chip-err'}">${ST[a.status]}</span></td>
       <td><small>${a.discount_percent ? `sconto ${a.discount_percent}%` : 'tariffa B2B'}${prices ? ` · ${prices} prezz${prices === 1 ? 'o dedicato' : 'i dedicati'}` : ''}${a.cancel_policy_json || a.cancel_hours != null ? ' · annullo dedicato' : ''}</small></td><td class="num">${a.bookings}</td></tr>`;
     })}
@@ -56,6 +86,7 @@ export function partnerDetailPage(ctx, a, { bookings, others, openOptions = 0, f
   <div class="card pad"><h2>${a.company} <span class="chip ${a.status === 'approved' ? 'chip-ok' : a.status === 'pending' ? 'chip-warn' : 'chip-err'}">${ST[a.status]}</span></h2>
     <dl class="summary-list">
       <div><dt>P.IVA / VAT</dt><dd>${a.vat ?? ''} ${a.country ? '(' + a.country + ')' : ''}</dd></div>
+      <div><dt>Verifica P.IVA</dt><dd>${vatResult(app.vat.summary(a), a.company)}${a.vat ? html` <form method="post" action="/admin/partners/${a.id}/vat" class="inline-form"><button class="btn btn-sm btn-outline" type="submit">Verifica ora</button></form>` : ''}</dd></div>
       <div><dt>SDI / PEC</dt><dd>${a.sdi_code ?? '—'} / ${a.pec ?? '—'}</dd></div>
       ${a.address ? html`<div><dt>Indirizzo</dt><dd>${a.address}</dd></div>` : ''}
       <div><dt>Referente</dt><dd>${a.contact_name} · <a href="mailto:${a.email}">${a.email}</a>${a.phone ? html` · <a href="tel:${a.phone}">${a.phone}</a>` : ''}</dd></div>

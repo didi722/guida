@@ -580,6 +580,32 @@ CREATE TABLE periods (
 CREATE INDEX idx_periods_from ON periods(date_from);
 `;
 
+const V29_PARTNER_ONBOARDING = `
+-- Verifica della partita IVA delle agenzie (controllo formale e VIES): esito, quando e cosa dice il registro
+ALTER TABLE accounts ADD COLUMN vat_status TEXT;
+ALTER TABLE accounts ADD COLUMN vat_checked_at TEXT;
+ALTER TABLE accounts ADD COLUMN vat_name TEXT;
+ALTER TABLE accounts ADD COLUMN vat_address TEXT;
+
+-- Inviti alle agenzie: un collegamento personale (se ne conserva solo l'impronta) che apre la registrazione con l'account già approvato
+CREATE TABLE partner_invites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL COLLATE NOCASE,
+  company TEXT,
+  contact_name TEXT,
+  lang TEXT NOT NULL DEFAULT 'it',
+  note TEXT,
+  token_hash TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL,
+  sent_at TEXT,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
+  cancelled_at TEXT
+);
+CREATE INDEX idx_partner_invites_email ON partner_invites(email);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -635,6 +661,8 @@ export const MIGRATIONS = [
   V27_ADMIN_CHANGES,
   // v28 — periodi con regole particolari
   V28_PERIODS,
+  // v29 — verifica della partita IVA e inviti alle agenzie
+  V29_PARTNER_ONBOARDING,
 ];
 
 export function migrate(db) {

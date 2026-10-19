@@ -188,6 +188,24 @@ test('partner B2B: più prenotazioni nella stessa fattura, bonifico a 30 giorni,
   assert.deepEqual(invoiceDetail(app, next.id).problems, [], 'la seconda fattura nasce già completa');
 });
 
+test('partner B2B: la partita IVA salvata con il prefisso del paese (come la scrive la registrazione) va in fattura senza prefisso', () => {
+  const app = appFor();
+  const cases = [
+    ['it@example.com', 'IT', 'IT12345678903', '12345678903'],
+    ['de@example.com', 'DE', 'DE123456789', '123456789'],
+    ['gr@example.com', 'GR', 'EL123456789', '123456789'],
+    ['es@example.com', 'ES', 'ESB12345678', 'B12345678'],
+    ['ch@example.com', 'CH', 'CHE-123.456.789 MWST', 'CHE-123.456.789MWST'],
+  ];
+  cases.forEach(([email, country, vat], i) => {
+    const acct = addAccount(app.db, { email, company: `Agenzia ${country}`, vat, country });
+    const b = createBooking(app, base({ channel: 'b2b', account: acct, paymentMethod: 'invoice', tourSlug: 'private', date: `2027-01-${12 + i}`, time: '16:00', pax: 5 }), NOW);
+    const [draft] = createDrafts(app, [`booking:${b.id}`], LATER);
+    const buyer = invoiceDetail(app, draft.id).buyer;
+    assert.deepEqual([buyer.country, buyer.vat], [country, cases[i][3]], vat);
+  });
+});
+
 test('rimuovere una riga da una bozza libera la voce; eliminare la bozza libera tutto', () => {
   const app = appFor();
   const a = paidCard(app, { date: '2027-01-12', time: '09:30' });

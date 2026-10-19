@@ -8,6 +8,7 @@ import { addDays, fmtDate, isDate, nowRome } from './time.js';
 import { cleanText } from './util.js';
 import { normLang } from './langs.js';
 import { parseServiceRecord, serviceNote } from './rates.js';
+import { vatWithoutPrefix } from './vat.js';
 
 export class InvoiceError extends Error {
   constructor(code, message, problems = []) {
@@ -66,7 +67,7 @@ function buyerFromAccount(a) {
     kind: 'company',
     name: a.company,
     country: countryOf(saved.country ?? a.country),
-    vat: String(saved.vat ?? a.vat ?? '').replace(/\s+/g, '').toUpperCase().replace(/^IT(?=\d{11}$)/, ''),
+    vat: vatWithoutPrefix(saved.vat ?? a.vat, countryOf(saved.country ?? a.country)),
     taxCode: saved.taxCode ?? '',
     address: saved.address ?? a.address ?? '',
     zip: saved.zip ?? '',

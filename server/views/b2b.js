@@ -69,16 +69,17 @@ export function resetPage(ctx, { token = '', invalid = false, error = '' } = {})
   return page(ctx, { title: t('b2b.reset.title'), path: `/${lang}/b2b/reset`, body, noindex: true, activeNav: 'b2b' });
 }
 
-export function registerPage(ctx, { error = '', values = {}, done = false } = {}) {
-  const { t, lang, u } = ctx;
+export function registerPage(ctx, { error = '', values = {}, done = false, invite = null } = {}) {
+  const { t, lang, u, app } = ctx;
   const v = (k, d = '') => values[k] ?? d;
+  const title = invite ? t('pinv.title') : t('b2b.reg.title');
   const body = done
     ? html`<section class="page-head"><div class="wrap narrow center"><div class="status status-ok"><span class="status-dot"></span><div><h1>${t('b2b.reg.doneTitle')}</h1><p class="lead">${t('b2b.reg.doneText')}</p></div></div>
         <p class="btn-row center"><a class="btn btn-outline" href="${u('/')}">${t('nav.home')}</a></p></div></section>`
     : html`
-<section class="page-head"><div class="wrap narrow">${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.b2b'), u('/b2b')], [t('b2b.requestAccess')]])}<h1>${t('b2b.reg.title')}</h1><p class="lead">${t('b2b.reg.lead')}</p></div></section>
+<section class="page-head"><div class="wrap narrow">${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.b2b'), u('/b2b')], [invite ? t('pinv.title') : t('b2b.requestAccess')]])}<h1>${title}</h1><p class="lead">${invite ? t('pinv.lead', { site: app.cfg.site.name }) : t('b2b.reg.lead')}</p></div></section>
 <section class="section tight"><div class="wrap narrow">
-  <form method="post" action="${u('/b2b/register')}" class="card pad form">
+  <form method="post" action="${invite ? u(`/b2b/invite/${invite.token}`) : u('/b2b/register')}" class="card pad form">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
     <h2>${t('b2b.reg.company')}</h2>
     <div class="form-grid">
@@ -94,16 +95,27 @@ export function registerPage(ctx, { error = '', values = {}, done = false } = {}
     <div class="form-grid">
       <label class="field"><span class="label">${t('f.name')}</span><input name="contact_name" required maxlength="120" autocomplete="name" value="${v('contact_name')}"></label>
       <label class="field"><span class="label">${t('f.phone')}</span><input type="tel" name="phone" required maxlength="40" autocomplete="tel" value="${v('phone')}"></label>
-      <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="username" value="${v('email')}"></label>
+      ${invite
+        ? html`<label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" readonly maxlength="200" autocomplete="username" value="${invite.email}"><small class="muted">${t('pinv.emailNote')}</small></label>`
+        : html`<label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="username" value="${v('email')}"></label>`}
       <label class="field"><span class="label">${t('f.password')} <em>${t('b2b.reg.pwHint')}</em></span><input type="password" name="password" required minlength="10" autocomplete="new-password"></label>
     </div>
     <label class="field"><span class="label">${t('b2b.reg.message')} <em>${t('f.optional')}</em></span><textarea name="message" rows="3" maxlength="1000" placeholder="${t('b2b.reg.messageHint')}">${v('message')}</textarea></label>
     <label class="check consent"><input type="checkbox" name="consent" value="1" required> <span>${t('f.consent')} <a href="${u('/terms')}" target="_blank">${t('footer.terms')}</a> · <a href="${u('/privacy')}" target="_blank">${t('footer.privacy')}</a></span></label>
     <input class="hp" type="text" name="website2" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <button class="btn btn-gold btn-block btn-lg" type="submit">${t('b2b.reg.submit')}</button>
+    <button class="btn btn-gold btn-block btn-lg" type="submit">${invite ? t('pinv.submit') : t('b2b.reg.submit')}</button>
   </form>
 </div></section>`;
-  return page(ctx, { title: t('b2b.requestAccess'), path: `/${lang}/b2b/register`, body, noindex: true, activeNav: 'b2b' });
+  return page(ctx, { title: invite ? t('pinv.title') : t('b2b.requestAccess'), path: invite ? `/${lang}/b2b/invite/${invite.token}` : `/${lang}/b2b/register`, body, noindex: true, activeNav: 'b2b' });
+}
+
+/** Il collegamento di un invito che non si può usare: non c'è (o è annullato), è scaduto oppure ha già creato un account. */
+export function inviteStatePage(ctx, { state }) {
+  const { t, lang, u } = ctx;
+  const key = state === 'used' ? 'used' : state === 'expired' ? 'expired' : 'invalid';
+  const body = html`<section class="page-head"><div class="wrap narrow center"><div class="status ${key === 'used' ? 'status-ok' : 'status-warn'}"><span class="status-dot"></span><div><h1>${t(`pinv.${key}.title`)}</h1><p class="lead">${t(`pinv.${key}.text`)}</p></div></div>
+    <p class="btn-row center">${key === 'used' ? html`<a class="btn btn-gold" href="${u('/b2b/login')}">${t('b2b.login')}</a>` : html`<a class="btn btn-gold" href="${u('/contact')}">${t('nav.contact')}</a>`}<a class="btn btn-outline" href="${u('/')}">${t('nav.home')}</a></p></div></section>`;
+  return page(ctx, { title: t(`pinv.${key}.title`), path: `/${lang}/b2b/register`, body, noindex: true, activeNav: 'b2b' });
 }
 
 // ───────────────────────── Area riservata dell'agenzia ─────────────────────────

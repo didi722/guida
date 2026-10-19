@@ -8,15 +8,18 @@ import { hourlyQuote, previewPricing } from '../pricing.js';
 import { getPackage } from '../packages.js';
 import { readSlot } from '../slotParams.js';
 import { hashPassword, signToken, verifyPassword, verifyToken } from '../auth.js';
-import { sendContactMessage, sendInviteEmail, sendPartnerPasswordReset, sendPartnerRegistered, icsFor } from '../emails.js';
+import { sendContactMessage, sendInviteEmail, sendPartnerApproved, sendPartnerPasswordReset, sendPartnerRegistered, icsFor } from '../emails.js';
 import { createInvite, inviteLink, inviteOffer } from '../invites.js';
 import { isDate, isTime, localToInstant, nowRome } from '../time.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
 import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js';
 import { invoiceOfBooking } from '../partner.js';
+import { inviteByToken, markUsed } from '../partnerInvites.js';
+import { formalSummary } from '../vat.js';
+import { tx } from '../db.js';
 import { applePass, googleSaveUrl, walletOptions } from '../wallet.js';
 import { renderVoucherPdf } from '../pdf.js';
-import { forgotPage, loginPage, registerPage, resetPage } from '../views/b2b.js';
+import { forgotPage, inviteStatePage, loginPage, registerPage, resetPage } from '../views/b2b.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { hourlyPage } from '../views/hourly.js';
 import { extraHourOptions, hourOptions, minHours, openTo } from '../rates.js';
@@ -421,6 +424,9 @@ export function publicRouter(app) {
     if (!v.company || !v.vat || !v.contact_name || !v.phone) return fail(t('err.fields'));
     if (!isEmail(v.email)) return fail(t('err.email'));
     if (String(b.password ?? '').length < 10) return fail(t('err.password'));
+    const vat = app.vat.parse(v.vat, v.country);
+    if (vat.country === 'IT' && app.vat.checkFormat(vat).ok === false) return fail(t('err.vat')); // una partita IVA italiana con la cifra di controllo sbagliata non passa dalla fattura elettronica
+    if (vat.eu && vat.id) v.vat = vat.id; // dentro l'UE si conserva la forma normale (IT01234567897); fuori, come l'ha scritta l'agenzia
     if (v.country === 'IT' && !/^[A-Z0-9]{7}$/.test(v.sdi_code) && !isEmail(v.pec)) return fail(t('err.sdi'));
     if (v.website && !/^https?:\/\/\S+$/i.test(v.website)) return fail(t('err.fields'));
     if (!b.consent) return fail(t('err.consent'));
@@ -429,9 +435,62 @@ export function publicRouter(app) {
       .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, contact_name, phone, website, message, lang, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(v.email, await hashPassword(String(b.password)), v.company, v.vat, v.sdi_code || null, v.pec || null, v.country, v.address || null, v.contact_name, v.phone, v.website || null, v.message || null, req.lang, new Date().toISOString());
     const acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(info.lastInsertRowid));
-    await sendPartnerRegistered(app, acct);
+    await sendPartnerRegistered(app, acct, { vat: formalSummary(vat) });
     loginPartner(res, cfg, acct.id);
     send(res, registerPage(ctx, { done: true }));
+  });
+
+  // ───── invito di un'agenzia: il collegamento personale apre la registrazione con l'account già approvato ─────
+  const inviteGone = (res, ctx, state) => send(res, inviteStatePage(ctx, { state }), state === 'used' || state === 'expired' ? 410 : 404);
+  r.get('/b2b/invite/:token', (req, res) => {
+    const ctx = res.locals.ctx;
+    const { state, invite } = inviteByToken(db, req.params.token);
+    if (state !== 'open') return inviteGone(res, ctx, state);
+    send(res, registerPage(ctx, { invite: { token: req.params.token, email: invite.email }, values: { company: invite.company ?? '', contact_name: invite.contact_name ?? '', email: invite.email } }));
+  });
+  r.post('/b2b/invite/:token', form, async (req, res) => {
+    const ctx = res.locals.ctx;
+    const { t } = ctx;
+    const b = req.body;
+    if (b.website2) return res.status(400).end();
+    if (!app.limits.register(ip(req))) return tooMany(res);
+    const { state, invite } = inviteByToken(db, req.params.token);
+    if (state !== 'open') return inviteGone(res, ctx, state);
+    const v = {
+      company: cleanText(b.company, 160), vat: cleanText(b.vat, 40), country: cleanText(b.country, 8) || 'IT', website: cleanText(b.website, 200), sdi_code: cleanText(b.sdi_code, 10).toUpperCase(), pec: cleanText(b.pec, 200),
+      address: cleanText(b.address, 250), contact_name: cleanText(b.contact_name, 120), phone: cleanText(b.phone, 40), email: invite.email, message: cleanText(b.message, 1000),
+    };
+    const fail = (error) => send(res, registerPage(ctx, { error, values: v, invite: { token: req.params.token, email: invite.email } }), 400);
+    if (!v.company || !v.vat || !v.contact_name || !v.phone) return fail(t('err.fields'));
+    if (String(b.password ?? '').length < 10) return fail(t('err.password'));
+    const vat = app.vat.parse(v.vat, v.country);
+    if (vat.country === 'IT' && app.vat.checkFormat(vat).ok === false) return fail(t('err.vat'));
+    if (vat.eu && vat.id) v.vat = vat.id; // dentro l'UE si conserva la forma normale (IT01234567897); fuori, come l'ha scritta l'agenzia
+    if (v.country === 'IT' && !/^[A-Z0-9]{7}$/.test(v.sdi_code) && !isEmail(v.pec)) return fail(t('err.sdi'));
+    if (v.website && !/^https?:\/\/\S+$/i.test(v.website)) return fail(t('err.fields'));
+    if (!b.consent) return fail(t('err.consent'));
+    if (db.prepare('SELECT 1 FROM accounts WHERE email = ?').get(v.email)) return fail(t('err.exists'));
+    const hash = await hashPassword(String(b.password));
+    const now = new Date().toISOString();
+    let acct;
+    try {
+      acct = tx(db, () => {
+        const info = db
+          .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, contact_name, phone, website, message, lang, status, created_at, approved_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,'approved',?,?)`)
+          .run(v.email, hash, v.company, v.vat, v.sdi_code || null, v.pec || null, v.country, v.address || null, v.contact_name, v.phone, v.website || null, v.message || null, normLang(invite.lang), now, now);
+        const id = Number(info.lastInsertRowid);
+        if (!markUsed(db, invite.id, id)) throw new Error('invite-used'); // due richieste insieme: vince la prima, l'altra annulla anche l'account
+        return db.prepare('SELECT * FROM accounts WHERE id = ?').get(id);
+      });
+    } catch (err) {
+      if (err.message === 'invite-used') return inviteGone(res, ctx, 'used');
+      if (/UNIQUE/i.test(err.message)) return inviteByToken(db, req.params.token).state === 'used' ? inviteGone(res, ctx, 'used') : fail(t('err.exists')); // l'altra richiesta ha vinto, oppure la stessa email si è registrata da sola nel frattempo
+      throw err;
+    }
+    await sendPartnerApproved(app, acct);
+    await sendPartnerRegistered(app, acct, { vat: formalSummary(vat), invited: true });
+    loginPartner(res, cfg, acct.id);
+    res.redirect(303, `/${normLang(acct.lang)}/b2b/account`);
   });
   return r;
 }

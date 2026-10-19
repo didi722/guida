@@ -62,7 +62,7 @@ test('da fare: solo per la guida, voci che compaiono e spariscono, numero nel me
     assert.match(page, /<h1>Da fare<\/h1>/);
     assert.match(page, /1 cosa da fare\./);
     assert.match(page, /<h2 class="h-sub spaced">Da decidere<\/h2>/);
-    assert.match(page, /<a class="todo-item" href="\/admin\/partners"><span class="chip chip-warn">Da fare<\/span><span class="todo-main"><strong>1 partner da approvare<\/strong>/);
+    assert.match(page, /<a class="todo-item" href="\/admin\/partners\?f=pending"><span class="chip chip-warn">Da fare<\/span><span class="todo-main"><strong>1 partner da approvare<\/strong>/);
     assert.match(await text(await admin('/admin')), /Da fare <span class="tab-n">1<\/span>/, 'il numero nel menu');
     assert.match(await text(await admin('/admin/bookings')), /Da fare <span class="tab-n">1<\/span>/, 'in tutte le pagine dell’Agenda');
 

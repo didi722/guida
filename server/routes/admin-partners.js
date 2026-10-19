@@ -15,6 +15,7 @@ const FLASH = {
   policy: 'Politica di annullo aggiornata.',
   copied: 'Copiato.',
   options: 'Opzioni aggiornate.',
+  vat: 'Partita IVA controllata: l’esito è qui sotto.',
 };
 const ERR = {
   price: 'Un prezzo non è valido: scrivi un importo in euro, per esempio 24,50 (lascia vuoto per usare la tariffa standard).',
@@ -62,6 +63,14 @@ export function adminPartnersRouter(app) {
     );
     if (justApproved) await sendPartnerApproved(app, get(a.id));
     res.redirect(303, here(a.id, 'ok', justApproved ? 'approved' : 'partner'));
+  });
+
+  // controlla la partita IVA adesso (formato e VIES)
+  r.post('/partners/:id/vat', form, async (req, res, next) => {
+    const a = get(req.params.id);
+    if (!a) return next();
+    await app.vat.verify(a.id);
+    res.redirect(303, here(a.id, 'ok', 'vat'));
   });
 
   // listino dedicato

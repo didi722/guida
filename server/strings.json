@@ -1355,6 +1355,12 @@
   "Las empresas italianas necesitan el código SDI (7 caracteres) o una PEC.",
   "イタリアの法人の場合は、SDIコード（7文字）またはPEC（認証済みメールアドレス）が必要です。"
  ],
+ "err.vat": [
+  "La partita IVA non sembra corretta: controlla le cifre (per l’Italia sono 11, con cifra di controllo).",
+  "The VAT number doesn’t look right: please check the digits (Italian numbers have 11, with a check digit).",
+  "El número de IVA no parece correcto: revisa las cifras (en Italia son 11, con dígito de control).",
+  "VAT番号が正しくないようです。桁をご確認ください（イタリアは11桁で、検査数字を含みます）。"
+ ],
  "err.consent": [
   "Devi accettare le condizioni e l’informativa privacy.",
   "You must accept the terms and the privacy policy.",
@@ -2074,6 +2080,90 @@
   "Thank you! I have sent you a confirmation email. As soon as I approve your account you can book on your own, with your terms.",
   "¡Gracias! Te he enviado un correo de confirmación. En cuanto apruebe tu cuenta, podrás reservar por tu cuenta, con tus condiciones.",
   "ありがとうございます。確認メールをお送りしました。アカウントを承認次第、貴社の条件でご自身で予約できるようになります。"
+ ],
+ "pinv.title": [
+  "Registra la tua agenzia",
+  "Register your agency",
+  "Registra tu agencia",
+  "エージェンシーを登録する"
+ ],
+ "pinv.lead": [
+  "{site} ti ha invitato: compila i dati e il tuo account sarà attivo subito, senza attendere l’approvazione.",
+  "{site} has invited you: fill in your details and your account will be active right away, without waiting for approval.",
+  "{site} te ha invitado: rellena tus datos y tu cuenta estará activa de inmediato, sin esperar la aprobación.",
+  "{site}からご招待を受けています。情報をご入力いただくと、承認を待たずにすぐアカウントが有効になります。"
+ ],
+ "pinv.emailNote": [
+  "L’invito è per questo indirizzo email.",
+  "The invitation is for this email address.",
+  "La invitación es para esta dirección de correo.",
+  "この招待はこのメールアドレス宛てです。"
+ ],
+ "pinv.submit": [
+  "Crea il mio account",
+  "Create my account",
+  "Crear mi cuenta",
+  "アカウントを作成する"
+ ],
+ "pinv.invalid.title": [
+  "Invito non valido",
+  "Invalid invitation",
+  "Invitación no válida",
+  "無効な招待です"
+ ],
+ "pinv.invalid.text": [
+  "Questo collegamento non è valido oppure è stato annullato. Se pensi sia un errore, scrivici.",
+  "This link is not valid or has been cancelled. If you think this is a mistake, please write to us.",
+  "Este enlace no es válido o ha sido cancelado. Si crees que es un error, escríbenos.",
+  "このリンクは無効か、取り消されています。誤りと思われる場合はご連絡ください。"
+ ],
+ "pinv.expired.title": [
+  "Invito scaduto",
+  "Invitation expired",
+  "Invitación caducada",
+  "招待の期限が切れています"
+ ],
+ "pinv.expired.text": [
+  "Questo invito è scaduto. Scrivici e te ne mandiamo uno nuovo.",
+  "This invitation has expired. Write to us and we’ll send you a new one.",
+  "Esta invitación ha caducado. Escríbenos y te enviamos una nueva.",
+  "この招待は期限切れです。ご連絡いただければ新しい招待をお送りします。"
+ ],
+ "pinv.used.title": [
+  "Invito già usato",
+  "Invitation already used",
+  "Invitación ya utilizada",
+  "この招待は使用済みです"
+ ],
+ "pinv.used.text": [
+  "Con questo invito è già stato creato un account: accedi con la tua email e la tua password.",
+  "An account has already been created with this invitation: sign in with your email and password.",
+  "Ya se ha creado una cuenta con esta invitación: inicia sesión con tu correo y tu contraseña.",
+  "この招待ですでにアカウントが作成されています。メールアドレスとパスワードでログインしてください。"
+ ],
+ "pinv.mail.subject": [
+  "{site} · Ti invitiamo a registrare la tua agenzia",
+  "{site} · You’re invited to register your agency",
+  "{site} · Te invitamos a registrar tu agencia",
+  "{site}｜エージェンシー登録のご招待"
+ ],
+ "pinv.mail.intro": [
+  "{site} ti invita ad aprire l’area riservata per le agenzie: tariffe dedicate, prenotazione e opzione delle date in autonomia, fatture e pagamenti in un posto solo. Registrandoti da questo collegamento il tuo account è attivo subito.",
+  "{site} invites you to open the agency area: dedicated rates, booking and holding dates on your own, invoices and payments in one place. If you register from this link, your account is active right away.",
+  "{site} te invita a abrir el área reservada para agencias: tarifas dedicadas, reserva y opción de fechas por tu cuenta, facturas y pagos en un solo lugar. Si te registras desde este enlace, tu cuenta queda activa de inmediato.",
+  "{site}より、エージェンシー専用エリアのご案内です。専用料金、日程の予約・仮押さえ、請求書とお支払いをひとつの場所で行えます。このリンクから登録いただくと、アカウントはすぐに有効になります。"
+ ],
+ "pinv.mail.cta": [
+  "Registra la tua agenzia",
+  "Register your agency",
+  "Registra tu agencia",
+  "エージェンシーを登録する"
+ ],
+ "pinv.mail.valid": [
+  "Il collegamento è personale e vale {days} giorni, una volta sola.",
+  "The link is personal and valid for {days} days, once only.",
+  "El enlace es personal y vale {days} días, una sola vez.",
+  "このリンクはご本人専用で、{days}日間・1回のみ有効です。"
  ],
  "b2b.status": [
   "Stato dell’account",

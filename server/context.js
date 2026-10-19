@@ -25,6 +25,7 @@ import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
 import { createServices } from './services.js';
 import { createTranslator } from './translate.js';
+import { createVat } from './vat.js';
 import { createWaitlistServices } from './waitlistServices.js';
 
 export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl, assetVersion = '0' }) {
@@ -64,5 +65,6 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.rates = createRates(app);
   app.restore = createRestoreServices(app);
   app.autoBackup = createAutoBackup(app, { fetchImpl: fetchImpl ?? fetch }); // copia automatica fuori dal server (lavoro periodico)
+  app.vat = createVat(app, { fetchImpl: fetchImpl ?? fetch }); // verifica della partita IVA delle agenzie (VIES, lavoro periodico)
   return app;
 }

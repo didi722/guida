@@ -12,6 +12,8 @@ import { LANG_META, normLang, pick } from './langs.js';
 import { parseServiceRecord, serviceNote, timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
 import { inviteOffer } from './invites.js';
+import { INVITE_DAYS } from './partnerInvites.js';
+import { vatLabel } from './vat.js';
 import { meetingOf, themeText } from './choices.js';
 import { ensurePayRef, groupIban, invoiceDue, invoicePayUrl, isPayable, payInstructions } from './invoicePayments.js';
 
@@ -529,16 +531,52 @@ const P = {
   },
 };
 
-export async function sendPartnerRegistered(app, a) {
+/** La riga sulla partita IVA per la guida: esito della verifica, cosa dice il registro e se il nome coincide (vedi vat.js). */
+const vatLine = (v) => {
+  if (!v) return '';
+  const detail = [v.name ? `registro: ${v.name}${v.address ? `, ${v.address}` : ''}` : '', v.sameName === false ? 'il nome sembra diverso da quello scritto' : '', ['unavailable', 'format'].includes(v.status) && v.message ? v.message : ''].filter(Boolean);
+  return `P.IVA: ${v.label}${detail.length ? ` (${detail.join(' · ')})` : ''}`;
+};
+
+/**
+ * Una nuova agenzia si è registrata: conferma di ricezione all'agenzia e avviso alla guida, con l'esito della verifica della partita IVA.
+ * `invited`: arriva da un invito (l'account è già approvato): all'agenzia non si scrive «aspetta l'approvazione».
+ */
+export async function sendPartnerRegistered(app, a, { vat = null, invited = false } = {}) {
   const tr = P[normLang(a.lang)];
-  await app.mail.send({ to: a.email, subject: tr.receivedSubject, text: `${tr.receivedBody(a.contact_name)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
+  if (!invited) await app.mail.send({ to: a.email, subject: tr.receivedSubject, text: `${tr.receivedBody(a.contact_name)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
   const to = app.cfg.mail.notifyTo;
   if (to)
     await app.mail.send({
       to,
-      subject: `Nuova richiesta partner: ${a.company}`,
-      text: [`${a.company} (${a.country ?? ''} ${a.vat ?? ''})`, `${a.contact_name} <${a.email}>${a.phone ? ' · ' + a.phone : ''}`, a.website ?? '', a.message ? `Messaggio: ${a.message}` : '', '', `Approva o rifiuta: ${app.cfg.baseUrl}/admin/partners/${a.id}`].filter(Boolean).join('\n'),
+      subject: invited ? `Agenzia invitata registrata: ${a.company}` : `Nuova richiesta partner: ${a.company}`,
+      text: [`${a.company} (${vatLabel(a)})`, vatLine(vat), `${a.contact_name} <${a.email}>${a.phone ? ' · ' + a.phone : ''}`, a.website ?? '', a.message ? `Messaggio: ${a.message}` : '', '', invited ? `Si è registrata dal tuo invito: l'account è già approvato. ${app.cfg.baseUrl}/admin/partners/${a.id}` : `Approva o rifiuta: ${app.cfg.baseUrl}/admin/partners/${a.id}`].filter(Boolean).join('\n'),
     });
+}
+
+/** All'agenzia invitata: il collegamento personale per registrarsi (con l'account già approvato). @returns {Promise<boolean>} false se l'email non è partita */
+export async function sendPartnerInvite(app, invite, url) {
+  const lang = normLang(invite.lang);
+  const t = makeT(lang);
+  const tr = T[lang];
+  const site = app.cfg.site.name;
+  const hello = greet(lang, invite.contact_name);
+  const sign = `${bye(lang)} ${site}`;
+  const intro = t('pinv.mail.intro', { site });
+  const valid = t('pinv.mail.valid', { days: INVITE_DAYS });
+  return app.mail.send({
+    to: invite.email,
+    subject: t('pinv.mail.subject', { site }),
+    text: [hello, '', intro, ...(invite.note ? ['', invite.note] : []), '', `${t('pinv.mail.cta')}: ${url}`, '', valid, '', tr.contactLine, sign].join('\n'),
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${hello}</p><p>${intro}</p>${invite.note ? html`<p style="border-left:3px solid #d6bb51;padding-left:12px;white-space:pre-line">${invite.note}</p>` : ''}<p><a href="${url}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('pinv.mail.cta')}</a></p><p style="color:#666;font-size:13px">${valid}</p><p style="color:#666;font-size:13px">${tr.contactLine}<br>${sign}</p>`,
+      ),
+    ),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
 }
 
 /** Il collegamento per scegliere una nuova password (vale un'ora, una volta sola: dopo il cambio non funziona più). */
