@@ -12,6 +12,7 @@ import { langMiddleware, makeCtx, preferredLang, sameOrigin, securityHeaders, se
 import { brandIcon } from './png.js';
 import { agencyDocsRouter } from './routes/agencyDocs.js';
 import { agencyFeedRouter } from './routes/agencyFeed.js';
+import { statementRouter } from './routes/statement.js';
 import { availabilityRouter } from './routes/availability.js';
 import { changesRouter } from './routes/changes.js';
 import { invoicePayRouter } from './routes/invoicePay.js';
@@ -92,9 +93,10 @@ export function createApp(overrides = {}) {
   const availability = availabilityRouter(app);
   const agencyDocs = agencyDocsRouter(app);
   const agencyFeed = agencyFeedRouter(app);
+  const statement = statementRouter(app);
   const invoicePay = invoicePayRouter(app);
   const features = featuresRouter(app);
-  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, changes, availability, agencyDocs, agencyFeed, invoicePay, features);
+  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, changes, availability, agencyDocs, agencyFeed, statement, invoicePay, features);
 
   // 404 (nella lingua dell'URL se possibile)
   server.use((req, res) => {

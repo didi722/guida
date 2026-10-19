@@ -4,7 +4,7 @@
 import { html } from './html.js';
 import { calendar, eventLines } from './ics.js';
 import { bookingDue, cancellationState } from './bookings.js';
-import { fmtDate, fmtInstant } from './time.js';
+import { fmtDate, fmtInstant, fmtMonth } from './time.js';
 import { formatMoney } from './util.js';
 import { formatGiftCode } from './pricing.js';
 import { makeT } from './i18n.js';
@@ -1719,5 +1719,38 @@ export async function sendDayBriefing(app, sheet, { attachments = [] } = {}) {
     text: lines.join('\n'),
     html: String(html`<div style="font-family:Arial,sans-serif"><p><strong>${head}</strong></p>${blocks.map((b) => html`<p style="margin:0 0 14px">${b.map((l) => html`${l}<br>`)}</p>`)}<p><a href="${app.cfg.baseUrl}/admin/day?date=${sheet.date}">Apri la scheda completa</a></p></div>`),
     attachments,
+  });
+}
+
+/** All'agenzia: l'estratto conto del mese, con il PDF in allegato. @returns {Promise<boolean>} false se l'email non è partita */
+export async function sendStatementEmail(app, account, st, { attachments = [] } = {}) {
+  const lang = normLang(account.lang);
+  const t = makeT(lang);
+  const tr = T[lang];
+  const month = fmtMonth(st.month, lang);
+  const money = (c) => formatMoney(c, lang);
+  const link = `${app.cfg.baseUrl}/${lang}/b2b/statement?month=${st.month}`;
+  const hello = greet(lang, account.contact_name);
+  const sign = `${bye(lang)} ${app.cfg.site.name}`;
+  const intro = t('stmt.mail.intro', { month });
+  const lines = [
+    { text: t('stmt.mail.balance', { date: fmtDate(st.asOf, lang, 'short'), amount: money(st.closing) }), big: true },
+    st.overdueCents ? { text: t('stmt.mail.overdue', { amount: money(st.overdueCents) }), err: true } : null,
+    st.closing < 0 ? { text: t('stmt.mail.credit', { amount: money(-st.closing) }) } : null,
+    st.closing === 0 ? { text: t('stmt.mail.settled') } : null,
+  ].filter(Boolean);
+  return app.mail.send({
+    to: account.email,
+    subject: t('stmt.mail.subject', { month, site: app.cfg.site.name }),
+    text: [hello, '', intro, '', ...lines.map((l) => l.text), '', `${t('stmt.mail.open')}: ${link}`, '', t('stmt.mail.stop'), '', tr.contactLine, sign].join('\n'),
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${hello}</p><p>${intro}</p>${lines.map((l) => html`<p style="margin:0 0 10px;${l.big ? 'font-size:17px;' : ''}${l.err ? 'color:#b3362b;' : ''}"><strong>${l.text}</strong></p>`)}<p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('stmt.mail.open')}</a></p><p style="color:#666;font-size:13px">${t('stmt.mail.stop')}</p><p style="color:#666;font-size:13px">${tr.contactLine}<br>${sign}</p>`,
+      ),
+    ),
+    attachments,
+    replyTo: app.cfg.mail.notifyTo || undefined,
   });
 }

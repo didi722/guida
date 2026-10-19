@@ -194,6 +194,8 @@ export const SECTIONS = [
       { key: 'reminders.sendHour', type: 'int', min: 8, max: 22, unit: 'h', label: 'Ora di invio del promemoria', hint: 'ora di Venezia, la sera prima' },
       { key: 'reminders.briefing.enabled', type: 'bool', label: 'Scheda del giorno dopo, per te', hint: 'la sera ricevi un’email con i servizi di domani (orari, punto d’incontro, contatti, cosa incassare sul posto) e il PDF da stampare; solo se domani c’è almeno un servizio' },
       { key: 'reminders.briefing.hour', type: 'int', min: 12, max: 23, unit: 'h', label: 'Ora della scheda del giorno dopo', hint: 'ora di Venezia' },
+      { key: 'statements.enabled', type: 'bool', label: 'Estratto conto mensile alle agenzie', hint: 'nei primi giorni del mese ogni agenzia riceve per email il PDF del mese scorso (fatture, note di credito, incassi, saldo), solo se c’è qualcosa da dire; ogni agenzia può disattivarlo' },
+      { key: 'statements.day', type: 'int', min: 1, max: 28, unit: 'del mese', label: 'Giorno in cui parte l’estratto conto', hint: 'alle 9 di Venezia, a partire da quel giorno' },
       { key: 'policy.allowPayOnSite', type: 'bool', label: 'Consenti di pagare il giorno del servizio', hint: 'i privati prenotano senza pagare online: più comodo per loro, più rischio di assenze' },
       { key: 'policy.paymentsFrom', type: 'date', label: 'Incassi dal (pre-apertura)', hint: 'es. il giorno in cui apri la partita IVA. Prima di questa data il sito accetta prenotazioni, ma solo per date da quel giorno in poi e senza incassare online: i privati pagano il giorno del servizio, le agenzie a fattura. Vuoto = incassi sempre attivi' },
     ],

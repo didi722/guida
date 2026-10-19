@@ -62,7 +62,8 @@ export function partnerDetailPage(ctx, a, { bookings, others, openOptions = 0, f
       ${a.website ? html`<div><dt>Sito</dt><dd><a href="${a.website}" rel="noopener nofollow" target="_blank">${a.website}</a></dd></div>` : ''}
       ${a.message ? html`<div><dt>Messaggio</dt><dd>${a.message}</dd></div>` : ''}
       <div><dt>Registrato</dt><dd>${new Date(a.created_at).toLocaleDateString('it-IT')}</dd></div>
-    </dl></div>
+    </dl>
+    ${a.status === 'approved' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/partners/${a.id}/statement">Estratto conto</a></p>` : ''}</div>
   <form class="card pad form" method="post" action="/admin/partners/${a.id}">
     <h2>Stato e pagamento</h2>
     <label class="field"><span class="label">Stato</span><select name="status">${[['pending', 'Da approvare'], ['approved', 'Approvato'], ['rejected', 'Rifiutato'], ['suspended', 'Sospeso']].map(([v, l]) => html`<option value="${v}" ${a.status === v ? raw('selected') : ''}>${l}</option>`)}</select></label>

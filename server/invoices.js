@@ -498,7 +498,7 @@ function causaliFor(app, inv, s, opts) {
 
 const eur = (c) => `${(c / 100).toFixed(2).replace('.', ',')} €`;
 /** Quanto si può stornare in tutto: il totale della fattura meno il bollo addebitato (che sulla nota di credito non si riporta). */
-const creditableCents = (rel) => rel.total_cents - (rel.bollo_charged ? rel.bollo_cents : 0);
+export const creditableCents = (rel) => rel.total_cents - (rel.bollo_charged ? rel.bollo_cents : 0);
 /** Totale delle note di credito valide (emesse e non scartate) di una fattura, escluse quelle indicate. */
 const creditedCents = (db, relatedId, exceptId = 0) =>
   db.prepare(`SELECT COALESCE(SUM(total_cents), 0) AS s FROM invoices WHERE related_id = ? AND doc_type = 'TD04' AND status IN ('issued','sent','delivered','undelivered') AND id != ?`).get(relatedId, exceptId).s;

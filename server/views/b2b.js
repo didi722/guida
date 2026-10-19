@@ -394,7 +394,8 @@ export function invoicesPage(ctx, { acct, invoices, due }) {
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [homeCrumb(ctx), [t('partner.nav.invoices')]])}
-  <h1>${t('partner.inv.title')}</h1><p class="lead">${t('partner.inv.lead')}</p>
+  <div class="account-head"><div><h1>${t('partner.inv.title')}</h1><p class="lead">${t('partner.inv.lead')}</p></div>
+    <div class="btn-row"><a class="btn btn-outline" href="${u('/b2b/statement')}">${t('stmt.title')}</a></div></div>
 </div></section>
 <section class="section tight"><div class="wrap">
   ${late.length ? html`<div class="notice notice-err" role="alert">${t('partner.inv.overdue', { n: late.length, amount: formatMoney(late.reduce((a, x) => a + x.dueCents, 0), lang) })}</div>` : ''}

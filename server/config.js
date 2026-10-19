@@ -143,6 +143,9 @@ export function createConfig(overrides = {}) {
       },
     },
 
+    // estratto conto mensile alle agenzie (email con il PDF, i primi giorni del mese): disattivato finché non lo accendi dal pannello
+    statements: { enabled: bool(e.STATEMENTS_ENABLED, false), day: num(e.STATEMENTS_DAY, 3) },
+
     // «Invita un amico» (tour condivisi): ogni invito è un codice sconto univoco, valido una volta sola per quella partenza
     invite: {
       enabled: bool(e.INVITE_ENABLED, true),

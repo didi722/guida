@@ -7456,5 +7456,395 @@
   "New address created: add it to your calendar again.",
   "Dirección nueva creada: añádela de nuevo a tu calendario.",
   "新しいアドレスを作成しました。カレンダーに追加し直してください。"
+ ],
+ "stmt.title": [
+  "Estratto conto",
+  "Statement of account",
+  "Estado de cuenta",
+  "取引明細書"
+ ],
+ "stmt.lead": [
+  "Fatture, note di credito e incassi mese per mese: quanto c’è ancora da pagare e cosa è già a posto.",
+  "Invoices, credit notes and payments month by month: what is still to be paid and what is settled.",
+  "Facturas, notas de crédito y cobros mes a mes: lo que queda por pagar y lo que ya está saldado.",
+  "請求書・クレジットノート・入金を月ごとにまとめました。未払い分と精算済みの分がひと目でわかります。"
+ ],
+ "stmt.prev": [
+  "‹ Mese precedente",
+  "‹ Previous month",
+  "‹ Mes anterior",
+  "‹ 前の月"
+ ],
+ "stmt.next": [
+  "Mese successivo ›",
+  "Next month ›",
+  "Mes siguiente ›",
+  "次の月 ›"
+ ],
+ "stmt.current": [
+  "Mese in corso",
+  "Current month",
+  "Mes en curso",
+  "今月"
+ ],
+ "stmt.pdf": [
+  "Scarica il PDF",
+  "Download PDF",
+  "Descargar PDF",
+  "PDFをダウンロード"
+ ],
+ "stmt.csv": [
+  "Scarica per il foglio di calcolo (CSV)",
+  "Download for spreadsheet (CSV)",
+  "Descargar para hoja de cálculo (CSV)",
+  "表計算用にダウンロード（CSV）"
+ ],
+ "stmt.opening": [
+  "Saldo iniziale",
+  "Opening balance",
+  "Saldo inicial",
+  "期首残高"
+ ],
+ "stmt.invoiced": [
+  "Fatture emesse",
+  "Invoices issued",
+  "Facturas emitidas",
+  "発行した請求書"
+ ],
+ "stmt.credited": [
+  "Note di credito",
+  "Credit notes",
+  "Notas de crédito",
+  "クレジットノート"
+ ],
+ "stmt.paid": [
+  "Incassi",
+  "Payments received",
+  "Cobros",
+  "入金"
+ ],
+ "stmt.closing": [
+  "Saldo finale",
+  "Closing balance",
+  "Saldo final",
+  "期末残高"
+ ],
+ "stmt.balanceAt": [
+  "Saldo al {date}",
+  "Balance at {date}",
+  "Saldo al {date}",
+  "{date}時点の残高"
+ ],
+ "stmt.overdue": [
+  "di cui scaduto",
+  "of which overdue",
+  "de los cuales vencido",
+  "うち期限超過"
+ ],
+ "stmt.overdueNotice": [
+  "Fatture scadute da pagare: {n} (in tutto {amount}).",
+  "Overdue invoices: {n} (in total {amount}).",
+  "Facturas vencidas por pagar: {n} (en total {amount}).",
+  "期限を過ぎた未払いの請求書：{n}件（合計 {amount}）。"
+ ],
+ "stmt.credit": [
+  "a tuo credito",
+  "in your favour",
+  "a tu favor",
+  "お客様のクレジット"
+ ],
+ "stmt.creditLine": [
+  "Credito a tuo favore (note di credito arrivate dopo il pagamento)",
+  "Credit in your favour (credit notes issued after payment)",
+  "Crédito a tu favor (notas de crédito posteriores al pago)",
+  "お客様のクレジット（支払い後に発行されたクレジットノート）"
+ ],
+ "stmt.moves": [
+  "Movimenti del mese",
+  "Movements of the month",
+  "Movimientos del mes",
+  "当月の取引"
+ ],
+ "stmt.noMoves": [
+  "Nessun movimento in questo mese.",
+  "No movements this month.",
+  "Ningún movimiento este mes.",
+  "今月の取引はありません。"
+ ],
+ "stmt.col.doc": [
+  "Documento",
+  "Document",
+  "Documento",
+  "書類"
+ ],
+ "stmt.col.detail": [
+  "Dettaglio",
+  "Detail",
+  "Detalle",
+  "詳細"
+ ],
+ "stmt.col.amount": [
+  "Importo",
+  "Amount",
+  "Importe",
+  "金額"
+ ],
+ "stmt.col.balance": [
+  "Saldo",
+  "Balance",
+  "Saldo",
+  "残高"
+ ],
+ "stmt.col.late": [
+  "Ritardo",
+  "Delay",
+  "Retraso",
+  "遅延"
+ ],
+ "stmt.doc.invoice": [
+  "Fattura {number}",
+  "Invoice {number}",
+  "Factura {number}",
+  "請求書 {number}"
+ ],
+ "stmt.doc.credit": [
+  "Nota di credito {number}",
+  "Credit note {number}",
+  "Nota de crédito {number}",
+  "クレジットノート {number}"
+ ],
+ "stmt.doc.payment": [
+  "Incasso fattura {number}",
+  "Payment of invoice {number}",
+  "Cobro de la factura {number}",
+  "請求書 {number} の入金"
+ ],
+ "stmt.detail.credit": [
+  "storna la fattura {number}",
+  "cancels invoice {number}",
+  "anula la factura {number}",
+  "請求書 {number} を取り消し"
+ ],
+ "stmt.detail.due": [
+  "scadenza {date}",
+  "due {date}",
+  "vence el {date}",
+  "期限 {date}"
+ ],
+ "stmt.method.bank": [
+  "bonifico",
+  "bank transfer",
+  "transferencia",
+  "銀行振込"
+ ],
+ "stmt.method.card": [
+  "carta",
+  "card",
+  "tarjeta",
+  "カード"
+ ],
+ "stmt.method.other": [
+  "altro",
+  "other",
+  "otro",
+  "その他"
+ ],
+ "stmt.open": [
+  "Fatture da pagare al {date}",
+  "Invoices to pay at {date}",
+  "Facturas por pagar a {date}",
+  "{date}時点の未払い請求書"
+ ],
+ "stmt.openNone": [
+  "Nessuna fattura da pagare.",
+  "No invoices to pay.",
+  "Ninguna factura por pagar.",
+  "未払いの請求書はありません。"
+ ],
+ "stmt.late": [
+  "scaduta da {days} gg",
+  "overdue by {days} d",
+  "vencida hace {days} d",
+  "{days}日超過"
+ ],
+ "stmt.noDue": [
+  "nessuna scadenza",
+  "no due date",
+  "sin vencimiento",
+  "期限なし"
+ ],
+ "stmt.payHint": [
+  "Bonifico: nella causale scrivi il numero della fattura, per esempio «Fattura {number}». Dalla pagina di ogni fattura puoi anche pagare con la carta.",
+  "Bank transfer: write the invoice number in the reference, for example “Invoice {number}”. You can also pay by card from each invoice page.",
+  "Transferencia: escribe el número de la factura en el concepto, por ejemplo «Factura {number}». También puedes pagar con tarjeta desde la página de cada factura.",
+  "銀行振込：振込内容に請求書番号を記入してください（例：「請求書 {number}」）。各請求書のページからカードでもお支払いいただけます。"
+ ],
+ "stmt.services": [
+  "Servizi del mese",
+  "Services this month",
+  "Servicios del mes",
+  "当月のサービス"
+ ],
+ "stmt.servicesNone": [
+  "Nessun servizio in questo mese.",
+  "No services this month.",
+  "Ningún servicio este mes.",
+  "今月のサービスはありません。"
+ ],
+ "stmt.svc.invoiced": [
+  "Fattura {number}",
+  "Invoice {number}",
+  "Factura {number}",
+  "請求書 {number}"
+ ],
+ "stmt.svc.invoicedPaid": [
+  "Fattura {number}, incassata",
+  "Invoice {number}, paid",
+  "Factura {number}, cobrada",
+  "請求書 {number}（入金済み）"
+ ],
+ "stmt.svc.card": [
+  "Pagato con carta",
+  "Paid by card",
+  "Pagado con tarjeta",
+  "カード支払い済み"
+ ],
+ "stmt.svc.onsite": [
+  "Pagamento sul posto",
+  "Pay on site",
+  "Pago en el lugar",
+  "現地払い"
+ ],
+ "stmt.svc.toInvoice": [
+  "Da fatturare",
+  "To be invoiced",
+  "Pendiente de facturar",
+  "請求書未発行"
+ ],
+ "stmt.svc.upcoming": [
+  "In programma",
+  "Upcoming",
+  "Programado",
+  "予定"
+ ],
+ "stmt.svc.penalty": [
+  "Penale di annullo, da fatturare",
+  "Cancellation fee, to be invoiced",
+  "Penalización por cancelación, pendiente de facturar",
+  "キャンセル料（請求書未発行）"
+ ],
+ "stmt.unbilled": [
+  "Servizi svolti non ancora fatturati: {count} per {amount} (a {date}). Compariranno nella prossima fattura.",
+  "Services already delivered but not yet invoiced: {count} for {amount} (as of {date}). They will appear on the next invoice.",
+  "Servicios ya realizados y aún sin facturar: {count} por {amount} (a {date}). Aparecerán en la próxima factura.",
+  "実施済みで未請求のサービス：{count}件・{amount}（{date}時点）。次回の請求書に記載されます。"
+ ],
+ "stmt.empty": [
+  "Niente da segnalare in questo mese: nessun movimento e nessun servizio.",
+  "Nothing to report this month: no movements and no services.",
+  "Nada que señalar este mes: sin movimientos ni servicios.",
+  "今月は取引もサービスもありません。"
+ ],
+ "stmt.mailOn": [
+  "Ricevi l’estratto conto per email ogni mese",
+  "Receive the statement by email every month",
+  "Recibir el estado de cuenta por correo cada mes",
+  "毎月メールで取引明細書を受け取る"
+ ],
+ "stmt.mailHint": [
+  "Arriva nei primi giorni del mese, con il PDF, solo se c’è qualcosa da dire: fatture, incassi o un saldo ancora aperto.",
+  "It arrives in the first days of the month, with the PDF, only when there is something to report: invoices, payments or an open balance.",
+  "Llega los primeros días del mes, con el PDF, solo si hay algo que comunicar: facturas, cobros o un saldo abierto.",
+  "月初に、PDF付きで届きます。請求書・入金・未精算の残高がある場合のみです。"
+ ],
+ "stmt.save": [
+  "Salva la scelta",
+  "Save",
+  "Guardar",
+  "保存"
+ ],
+ "stmt.flash.saved": [
+  "Scelta salvata.",
+  "Saved.",
+  "Guardado.",
+  "保存しました。"
+ ],
+ "stmt.vat": [
+  "P.IVA",
+  "VAT no.",
+  "N.º IVA",
+  "VAT番号"
+ ],
+ "stmt.period": [
+  "Periodo",
+  "Period",
+  "Periodo",
+  "期間"
+ ],
+ "stmt.issued": [
+  "Emesso il",
+  "Issued on",
+  "Emitido el",
+  "発行日"
+ ],
+ "stmt.summary": [
+  "Riepilogo",
+  "Summary",
+  "Resumen",
+  "概要"
+ ],
+ "stmt.footnote": [
+  "Gli importi sono in euro. Il saldo è ciò che c’è ancora da pagare; un saldo negativo è a tuo credito. Per qualsiasi domanda scrivici.",
+  "Amounts are in euros. The balance is what is still to be paid; a negative balance is in your favour. Write to us with any question.",
+  "Los importes están en euros. El saldo es lo que queda por pagar; un saldo negativo está a tu favor. Escríbenos para cualquier duda.",
+  "金額はユーロ表示です。残高は未払いの金額で、マイナスの場合はお客様のクレジットです。ご不明な点はお問い合わせください。"
+ ],
+ "stmt.mail.subject": [
+  "Estratto conto {month} — {site}",
+  "Statement of account {month} — {site}",
+  "Estado de cuenta {month} — {site}",
+  "取引明細書 {month} — {site}"
+ ],
+ "stmt.mail.intro": [
+  "ecco l’estratto conto di {month}: fatture, note di credito e incassi del mese, con il saldo e ciò che resta da pagare. Il PDF è in allegato.",
+  "here is the statement of account for {month}: invoices, credit notes and payments of the month, with the balance and what is still to be paid. The PDF is attached.",
+  "te enviamos el estado de cuenta de {month}: facturas, notas de crédito y cobros del mes, con el saldo y lo que queda por pagar. El PDF va adjunto.",
+  "{month}の取引明細書をお送りします。当月の請求書・クレジットノート・入金、残高、未払い分をまとめました。PDFを添付しています。"
+ ],
+ "stmt.mail.balance": [
+  "Saldo al {date}: {amount}",
+  "Balance at {date}: {amount}",
+  "Saldo al {date}: {amount}",
+  "{date}時点の残高：{amount}"
+ ],
+ "stmt.mail.overdue": [
+  "Di cui scaduto: {amount}. Ti chiediamo di provvedere appena possibile; se hai già pagato, ignora questo messaggio e scrivici.",
+  "Of which overdue: {amount}. Please settle it as soon as possible; if you have already paid, ignore this message and let us know.",
+  "De los cuales vencido: {amount}. Te pedimos que lo regularices cuanto antes; si ya has pagado, ignora este mensaje y escríbenos.",
+  "うち期限を過ぎた金額：{amount}。お早めにお支払いをお願いいたします。すでにお支払い済みの場合は、このメールは無視して、ご連絡ください。"
+ ],
+ "stmt.mail.credit": [
+  "Risulta un credito a tuo favore di {amount}: lo compenseremo nella prossima fattura; se preferisci riceverlo, scrivici.",
+  "There is a credit of {amount} in your favour: we will offset it on the next invoice; if you would rather have it refunded, write to us.",
+  "Hay un crédito de {amount} a tu favor: lo compensaremos en la próxima factura; si prefieres recibirlo, escríbenos.",
+  "{amount}のクレジットがあります。次回の請求書で相殺します。返金をご希望の場合はご連絡ください。"
+ ],
+ "stmt.mail.settled": [
+  "Non c’è nulla da pagare: grazie!",
+  "There is nothing to pay: thank you!",
+  "No hay nada que pagar: ¡gracias!",
+  "お支払いの必要はありません。ありがとうございます。"
+ ],
+ "stmt.mail.open": [
+  "Apri l’estratto conto online",
+  "Open the statement online",
+  "Abrir el estado de cuenta en línea",
+  "オンラインで取引明細書を見る"
+ ],
+ "stmt.mail.stop": [
+  "Non vuoi più riceverlo? Puoi disattivarlo dalla pagina «Estratto conto» della tua area riservata.",
+  "Do not want it any more? You can switch it off on the “Statement of account” page of your account area.",
+  "¿No quieres seguir recibiéndolo? Puedes desactivarlo en la página «Estado de cuenta» de tu área privada.",
+  "今後不要な場合は、アカウントエリアの「取引明細書」ページで停止できます。"
  ]
 }

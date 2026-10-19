@@ -170,7 +170,7 @@ test('promemoria dal pannello: stato nella prenotazione, «Invia ora», «Non in
     await post(`/admin/bookings/${bk.id}/reminder`, { action: 'skip' });
     assert.match(await get(`/admin/bookings/${bk.id}`), /non verrà inviato/);
     // impostazioni: si spegne e si cambia l'ora
-    const rules = { 'policy.b2cFreeCancelHours': '48', 'policy.b2bFreeCancelHours': '72', 'policy.b2cMinNoticeHours': '24', 'policy.b2bMinNoticeHours': '12', 'policy.maxAdvanceDays': '365', 'policy.bufferMin': '30', 'policy.slotStepMin': '30', 'policy.holdMinutes': '35', 'reminders.sendHour': '20', 'reminders.briefing.enabled': '1', 'reminders.briefing.hour': '18', 'policy.allowPayOnSite': '1' };
+    const rules = { 'policy.b2cFreeCancelHours': '48', 'policy.b2bFreeCancelHours': '72', 'policy.b2cMinNoticeHours': '24', 'policy.b2bMinNoticeHours': '12', 'policy.maxAdvanceDays': '365', 'policy.bufferMin': '30', 'policy.slotStepMin': '30', 'policy.holdMinutes': '35', 'reminders.sendHour': '20', 'reminders.briefing.enabled': '1', 'reminders.briefing.hour': '18', 'statements.day': '3', 'policy.allowPayOnSite': '1' };
     assert.equal((await post('/admin/settings/rules', rules)).headers.get('location'), '/admin/settings?ok=saved&s=rules#rules');
     assert.deepEqual([cfg.reminders.enabled, cfg.reminders.sendHour], [false, 20], 'casella non spuntata = spento');
     const c = mk({ email: 'c@example.com', time: tour.flexible ? '14:00' : tour.times[0], pax: 1 });

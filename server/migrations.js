@@ -539,6 +539,18 @@ ALTER TABLE accounts ADD COLUMN ics_key TEXT;
 CREATE UNIQUE INDEX accounts_ics_key ON accounts(ics_key) WHERE ics_key IS NOT NULL;
 `;
 
+const V25_STATEMENTS = `
+-- Estratto conto mensile: chi lo vuole ricevere per email, e a chi è già stato mandato (o saltato perché non c'era nulla da dire)
+ALTER TABLE accounts ADD COLUMN statement_email INTEGER NOT NULL DEFAULT 1;
+CREATE TABLE statement_sends (
+  account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  month      TEXT NOT NULL,                -- AAAA-MM
+  status     TEXT NOT NULL,                -- sent | skipped
+  sent_at    TEXT NOT NULL,
+  PRIMARY KEY (account_id, month)
+);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -586,6 +598,8 @@ export const MIGRATIONS = [
   V23_AGENCY_DOCS,
   // v24 — calendario in abbonamento delle agenzie
   V24_AGENCY_FEED,
+  // v25 — estratto conto mensile alle agenzie
+  V25_STATEMENTS,
 ];
 
 export function migrate(db) {

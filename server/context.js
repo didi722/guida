@@ -12,6 +12,7 @@ import { createPackageServices } from './packageServices.js';
 import { createPecMailer } from './pec.js';
 import { createSettings } from './settings.js';
 import { createSiteImages } from './siteImages.js';
+import { createStatementServices } from './statementServices.js';
 import { createProgramServices } from './programs.js';
 import { createReminderServices } from './reminders.js';
 import { createRestoreServices } from './restore.js';
@@ -45,6 +46,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.packages = createPackageServices(app);
   app.changes = createChangeServices(app);
   app.briefing = createBriefingServices(app);
+  app.statements = createStatementServices(app);
   app.waitlist = createWaitlistServices(app);
   app.gifts = createGiftServices(app);
   app.reviews = createReviewServices(app);

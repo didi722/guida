@@ -22,7 +22,7 @@ const form = (obj) => ({ method: 'POST', headers: { 'content-type': 'application
 const loc = (res) => res.headers.get('location');
 const day = (n) => addDays(nowRome().date, n);
 const PW = 'prova-prova-1';
-const text = async (res) => (await res.text()).replace(/ /g, ' ');
+const text = async (res) => (await res.text()).replace(/\u00a0/g, ' ');
 const SHARED = 'cannaregio-ghetto-agenzie'; // 10:00 e 15:00, 28 € a persona per le agenzie
 const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 

@@ -369,7 +369,7 @@ test('«Incassi dal» nelle impostazioni: si salva una data vera, si toglie lasc
   const s = await start();
   try {
     const { admin } = s;
-    const rules = { 'policy.b2cFreeCancelHours': '24', 'policy.b2bFreeCancelHours': '72', 'policy.b2cMinNoticeHours': '12', 'policy.b2bMinNoticeHours': '6', 'policy.maxAdvanceDays': '200', 'policy.bufferMin': '45', 'policy.slotStepMin': '30', 'policy.holdMinutes': '35', 'reminders.enabled': '1', 'reminders.sendHour': '18', 'reminders.briefing.enabled': '1', 'reminders.briefing.hour': '18', 'policy.allowPayOnSite': '1' };
+    const rules = { 'policy.b2cFreeCancelHours': '24', 'policy.b2bFreeCancelHours': '72', 'policy.b2cMinNoticeHours': '12', 'policy.b2bMinNoticeHours': '6', 'policy.maxAdvanceDays': '200', 'policy.bufferMin': '45', 'policy.slotStepMin': '30', 'policy.holdMinutes': '35', 'reminders.enabled': '1', 'reminders.sendHour': '18', 'reminders.briefing.enabled': '1', 'reminders.briefing.hour': '18', 'statements.day': '3', 'policy.allowPayOnSite': '1' };
     assert.equal(loc(await admin('/admin/settings/rules', form({ ...rules, 'policy.paymentsFrom': '2027-01-04' }))), '/admin/settings?ok=saved&s=rules#rules');
     assert.equal(s.cfg.policy.paymentsFrom, '2027-01-04');
     assert.match(nb(await (await admin('/admin')).text()), /pre-apertura|Incassi dal|incassi/i, 'l’agenda ricorda che gli incassi non sono ancora attivi');
