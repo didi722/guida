@@ -57,7 +57,7 @@ Per annullare **come lo vede il cliente**: nella scheda della prenotazione, riga
 
 ## 4. Provare le opzioni e l'area dell'agenzia
 
-La prova ha già due agenzie (`giulia@lagoon-dmc.example` con fattura e sconto del 15%, `luca@bluesail.example` solo carta; password `prova-prova-1`) con prenotazioni e **due opzioni aperte**.
+La prova ha già tre agenzie (`giulia@lagoon-dmc.example` con fattura e sconto del 15%, `luca@bluesail.example` solo carta, e `elena@serenissima-travel.example`, appena iscritta e **al suo primo accesso**; password di tutte `prova-prova-1`); le prime due hanno prenotazioni e **due opzioni aperte**.
 
 1. **L'area pulita.** Entra con **Login agenzie** (in alto, accanto a *Prenota*): vedi riepilogo, schede, ricerca e filtri per data, e solo le voci di lavoro nella barra. **Esci** riporta alla home del sito. Prova la ricerca per un nome di pratica (*Gruppo Rossi*) o per codice, le schede *Opzioni* e *Passate*, **Scarica l'elenco (CSV)**, **Tariffe e condizioni** e **Fatture** (le fatture compaiono dopo che le emetti da **Admin → Fatture**).
 2. **Cambiare il nominativo.** Apri una pratica → **Nominativo e note** → cambia il nome e **Salva**: in **Admin → Email** vedi l'avviso alla guida («Prenotazione modificata»).
@@ -68,6 +68,12 @@ La prova ha già due agenzie (`giulia@lagoon-dmc.example` con fattura e sconto d
 7. **Prima della Partita IVA.** **Sito › Impostazioni › Regole di prenotazione › Incassi dal** → una data futura (per esempio fra 30 giorni): il sito diventa «pre-apertura». Da privato: si prenotano solo date da quel giorno, il pagamento è *di persona*; da agenzia: *fattura* o opzione; l'Agenda mostra l'avviso azzurro. Svuota il campo per tornare come prima.
 
 ## 5. Altre simulazioni utili
+
+- **Il primo accesso di un'agenzia (tutorial e FAQ)**: entra come `elena@serenissima-travel.example` (*Serenissima Travel*): è approvata e **non ha ancora visto il giro**, quindi sulla prima pagina si apre da sola la finestra con i cinque passi. Prova *Avanti*, *Indietro* (o le frecce), *Salta* (o Esc), poi ricarica: non torna. Rivedilo da **Guida e FAQ** (pulsante nella *Panoramica*, voce nel piè di pagina) e leggi le domande frequenti; cambia lingua dal menu per vederle in inglese, spagnolo e giapponese. Con Lagoon DMC o Blue Sail Tours la finestra non compare (l'hanno già visto). Per ricominciare: `npm run sandbox -- --reset`.
+- **Bambini e infanti**: la prova ha già due famiglie (*Marco Esposito*, privato, e *Famiglia Conti* di Lagoon DMC): in **Admin → Prenotazioni** guarda «5 persone (2 adulti, 2 bambini, 1 infante)» e il conto (bambini a metà prezzo, infante gratis). Dal sito, su un tour condiviso, scegli 2 adulti, 1 bambino e 1 infante: nel pagamento il conto si divide per età e la conferma lo scrive. In **Agenda › Scheda del giorno** compare la composizione.
+- **Riordinare la lista d'attesa**: accedi come Blue Sail Tours e come Serenissima Travel (due finestre private), apri **Date libere**, scegli Cannaregio fra 40 giorni (tenuta in opzione da Lagoon DMC) e premi **Avvisami se si libera** con tutte e due; in **Admin → Agenda › Lista d'attesa** trascina la seconda sopra la prima (o usa le frecce ▲ ▼); poi in **Prenotazioni › Opzioni** rilascia l'opzione di Lagoon: l'email *Si è liberata* (in **Admin → Email**) arriva per prima a quella che hai fatto avanzare.
+- **Condizioni di annullo di un periodo**: in **Sito › Periodi** scrivi un periodo (per esempio le prossime due settimane) con una riga di annullo per i privati e una per le agenzie; apri il pagamento di un tour di quelle date e guarda le righe e la nota.
+- **Telefono e paese**: nel modulo di registrazione del partner prova a cercare *Giappone* o *Germania* nell'elenco dei paesi e nel prefisso del telefono, e a incollare un numero con `+81…` o `0039…`: sceglie da solo il prefisso.
 
 - **Cliente privato in spagnolo/inglese**: cambia lingua dal menu in alto e prenota; email e voucher PDF escono nella lingua scelta.
 - **Codice sconto e buono regalo**: nel checkout inserisci `PROVA10` e il codice del buono (stampato all'avvio di `npm run sandbox`); in **Admin → Sconti** li crei e li gestisci.

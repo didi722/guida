@@ -10,6 +10,7 @@
     var inputs = {};
     [].slice.call(root.querySelectorAll('input[type="number"]')).forEach(function (i) { inputs[i.name] = i; });
     var totalEl = root.querySelector('[data-party-total]');
+    var maxEl = root.querySelector('[data-party-max]'); // «Massimo N persone»: compare quando non si può aggiungere nessuno
     var buttons = [].slice.call(root.querySelectorAll('[data-step]'));
     var one = root.getAttribute('data-total-one') || '1';
     var many = root.getAttribute('data-total-many') || '{n}';
@@ -29,6 +30,7 @@
     function refresh() {
       var t = total();
       if (totalEl) totalEl.textContent = label.replace('{text}', t === 1 ? one : many.replace('{n}', String(t)));
+      if (maxEl) maxEl.hidden = t < max;
       buttons.forEach(function (b) {
         var i = inputs[b.getAttribute('data-for')];
         var step = parseInt(b.getAttribute('data-step'), 10);

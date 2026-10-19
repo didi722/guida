@@ -361,7 +361,7 @@ textarea { resize: vertical; min-height: 90px; }
 .party.is-ready .party-stepper input { -moz-appearance: textfield; appearance: textfield; }
 .party.is-ready .party-stepper input::-webkit-outer-spin-button, .party.is-ready .party-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .party-total { margin: 8px 2px 0; font-size: 0.9rem; font-weight: 700; color: var(--ink); }
-.party-note { margin: 4px 2px 0; }
+.party-note, .party-max { margin: 4px 2px 0; } .party-max[hidden] { display: none; }
 .party-compact .party-row { padding: 6px 6px 6px 12px; }
 .party-compact .party-stepper button, .party-compact .party-stepper input { height: 34px; }
 .party-compact .party-stepper button { width: 34px; }

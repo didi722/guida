@@ -83,7 +83,7 @@ export function partyField(ctx, { party = adultsOnly(2), max = MAX_PARTY, priced
   ];
   const total = partyTotal(party);
   const formAttr = form ? raw(`form="${form}"`) : '';
-  return html`<fieldset class="${compact ? 'party party-compact' : 'party'}" id="${id}" data-party${autosubmit ? raw(' data-autosubmit') : ''} data-max="${max}" data-total-one="${t('w.person1')}" data-total-many="${t('w.personN')}" data-total-label="${t('party.total', { text: '{text}' })}" data-need-adult="${t('party.needAdult')}" data-max-hit="${t('party.maxHit', { n: max })}">
+  return html`<fieldset class="${compact ? 'party party-compact' : 'party'}" id="${id}" data-party${autosubmit ? raw(' data-autosubmit') : ''} data-max="${max}" data-total-one="${t('w.person1')}" data-total-many="${t('w.personN')}" data-total-label="${t('party.total', { text: '{text}' })}">
     <legend class="label">${label ?? t('w.persons')}</legend>
     <div class="party-rows">${rows.map(([key, name, hint, min]) => html`<div class="party-row">
       <label class="party-name" for="${id}-${key}">${name}<small>${hint}</small></label>
@@ -94,6 +94,7 @@ export function partyField(ctx, { party = adultsOnly(2), max = MAX_PARTY, priced
       </div>
     </div>`)}</div>
     <p class="party-total" data-party-total aria-live="polite">${t('party.total', { text: peopleOnly(total, t) })}</p>
+    <p class="party-max small muted" data-party-max ${total >= max ? '' : raw('hidden')}>${t('party.maxHit', { n: max })}</p>
     ${priced ? '' : html`<p class="small muted party-note">${t('party.groupNote')}</p>`}
   </fieldset>`;
 }
