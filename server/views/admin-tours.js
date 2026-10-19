@@ -96,7 +96,7 @@ ${tours.length
         <form method="post" action="/admin/tours/${t.slug}/toggle" class="inline-form"><button class="btn btn-outline btn-sm" type="submit">${t.active ? 'Nascondi' : 'Mostra'}</button></form></td></tr>`)}
   </tbody></table></div>`
   : html`<p class="muted">Nessun ${sec.noun}: creane uno.</p>`}`;
-  return adminLayout(ctx, { title: sec.label, active: sec.path, body, flash, error, scripts: `<script src="/js/admin-tours-order.js?v=${ctx.app.assetVersion}" defer></script>` });
+  return adminLayout(ctx, { title: sec.label, active: sec.path, body, flash, error, scripts: `<script src="/js/admin-sortable.js?v=${ctx.app.assetVersion}" defer></script>` });
 }
 
 const field = (label, name, value, { type = 'text', hint = '', rows = 0, attrs = '', placeholder = '' } = {}) => html`<label class="field"><span class="label">${label}${hint ? html` <em>${hint}</em>` : ''}</span>${rows

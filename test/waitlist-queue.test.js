@@ -10,7 +10,7 @@ import { cancelBooking, createBooking } from '../server/bookings.js';
 import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { addDays, fmtInstant, nowRome } from '../server/time.js';
-import { exclusiveNow, getEntry, joinWaitlist, queueInfo, queuedBefore, rivalsOf } from '../server/waitlist.js';
+import { exclusiveNow, getEntry, joinWaitlist, queueInfo, queuedBefore, reorderQueue, resetQueue, rivalsOf } from '../server/waitlist.js';
 import { addAccount, base, makeApp, NOW } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
@@ -305,4 +305,80 @@ test('pagine: l’agenzia vede il suo posto in coda e il suo vantaggio; il panne
     http.close();
     fs.rmSync(cfg.dataDir, { recursive: true, force: true });
   }
+});
+
+// ───────────── l'ordine deciso dalla guida ─────────────
+const wid = (app, e) => getEntry(app.db, e.id);
+
+test('la guida porta avanti un’agenzia: avvisata per prima anche se è arrivata dopo; chi arriva dopo la sistemazione va in fondo; si torna all’ordine di arrivo', async (t) => {
+  const { app, x, a, b, c } = setup();
+  t.after(app.cleanup);
+  const held = holdDay(app, x, FAR);
+  const ea = join(app, a, FAR, { pax: 8 }, NOW + MIN);
+  const eb = join(app, b, FAR, { pax: 8 }, NOW + 2 * MIN);
+  const ec = join(app, c, FAR, { pax: 8 }, NOW + 3 * MIN);
+  assert.equal(queuedBefore(wid(app, ea), wid(app, eb)), true, 'di partenza conta l’arrivo');
+  // la guida porta B davanti a tutte: B, A, C
+  assert.equal(reorderQueue(app.db, SHARED, FAR, [eb.id, ea.id, ec.id]), true);
+  assert.deepEqual([ea, eb, ec].map((e) => wid(app, e).position), [2, 1, 3]);
+  assert.equal(queuedBefore(wid(app, eb), wid(app, ea)), true);
+  assert.equal(queuedBefore(wid(app, ea), wid(app, eb)), false);
+  assert.equal(queuedBefore(wid(app, ea), wid(app, ec)), true);
+  const info = (e, ms = NOW + 4 * MIN) => queueInfo(app.db, app.cfg, wid(app, e), ms);
+  assert.deepEqual([info(eb).ahead, info(eb).behind], [0, 2], 'B ora è la prima');
+  assert.deepEqual([info(ea).ahead, info(ea).behind], [1, 1]);
+  assert.deepEqual([info(ec).ahead, info(ec).behind], [2, 0]);
+  assert.deepEqual(rivalsOf(app.db, wid(app, ec)).map((r) => r.acct_company), ['Agenzia B', 'Agenzia A'], 'anche l’elenco delle rivali segue l’ordine');
+
+  // la data si libera: l'avviso va a B, non ad A (che è arrivata prima)
+  free(app, held, NOW + 10 * MIN);
+  const t0 = NOW + 11 * MIN;
+  assert.equal(await app.waitlist.sweep(t0), 1);
+  assert.deepEqual(who(app), ['b']);
+  assert.deepEqual([wid(app, ea).status, wid(app, eb).status, wid(app, ec).status], ['waiting', 'notified', 'waiting']);
+  // finito il vantaggio di B tocca ad A (non a C), poi C
+  assert.equal(await app.waitlist.sweep(t0 + 24 * HOUR + MIN), 1);
+  assert.deepEqual(who(app), ['b', 'a']);
+  assert.equal(await app.waitlist.sweep(t0 + 48 * HOUR + 2 * MIN), 1);
+  assert.deepEqual(who(app), ['b', 'a', 'c']);
+});
+
+test('ordine deciso dalla guida: i nuovi arrivi vanno in fondo; chi si rimette in lista perde il posto; chi è già stato avvisato resta davanti; si ripristina l’arrivo', async (t) => {
+  const { app, x, a, b, c } = setup();
+  t.after(app.cleanup);
+  const held = holdDay(app, x, FAR);
+  const ea = join(app, a, FAR, { pax: 8 }, NOW + MIN);
+  const eb = join(app, b, FAR, { pax: 8 }, NOW + 2 * MIN);
+  assert.equal(reorderQueue(app.db, SHARED, FAR, [eb.id, ea.id]), true);
+  // arriva C dopo la sistemazione: va in fondo, anche se il suo istante sarebbe stato prima di quello di qualcuno
+  const ec = join(app, c, FAR, { pax: 8 }, NOW + 3 * MIN);
+  assert.equal(wid(app, ec).position, null);
+  assert.equal(queuedBefore(wid(app, ea), wid(app, ec)), true);
+  assert.equal(queuedBefore(wid(app, ec), wid(app, eb)), false);
+  assert.deepEqual(rivalsOf(app.db, wid(app, ea)).map((r) => r.acct_company), ['Agenzia B', 'Agenzia C']);
+  // un elenco che non è quello vero non si accetta: manca C, o c'è un estraneo, o un doppione
+  assert.equal(reorderQueue(app.db, SHARED, FAR, [ea.id, eb.id]), false, 'manca C (è entrata mentre la pagina era aperta)');
+  assert.equal(reorderQueue(app.db, SHARED, FAR, [ea.id, eb.id, ec.id, 9999]), false);
+  assert.equal(reorderQueue(app.db, SHARED, FAR, [ea.id, ea.id, ec.id]), false);
+  assert.equal(reorderQueue(app.db, SHARED, '2027-02-21', [ea.id, eb.id, ec.id]), false, 'un altro giorno');
+  assert.equal(reorderQueue(app.db, 'private-agenzie', FAR, [ea.id, eb.id, ec.id]), false, 'un altro servizio');
+  assert.deepEqual([ea, eb, ec].map((e) => wid(app, e).position), [2, 1, null], 'i rifiuti non cambiano nulla');
+
+  // B (davanti) è avvisata; poi la guida porta C davanti ad A: B resta davanti a tutti (già avvisata), C passa A
+  free(app, held, NOW + 10 * MIN);
+  const t0 = NOW + 11 * MIN;
+  assert.equal(await app.waitlist.sweep(t0), 1);
+  assert.deepEqual(who(app), ['b']);
+  assert.equal(reorderQueue(app.db, SHARED, FAR, [ec.id, ea.id]), true, 'solo chi aspetta ancora; B è già stata avvisata e resta davanti');
+  assert.deepEqual([eb, ec, ea].map((e) => wid(app, e).position), [1, 2, 3]);
+  assert.equal(queueInfo(app.db, app.cfg, wid(app, ec), t0 + MIN).ahead, 1, 'davanti a C c’è B, con il suo vantaggio');
+  // B si rimette in lista dopo l'avviso: torna in fondo, senza numero
+  assert.equal(app.waitlist.rearm(b, eb.id, t0 + 2 * MIN), true);
+  assert.equal(wid(app, eb).position, null);
+  assert.equal(queuedBefore(wid(app, ea), wid(app, eb)), true);
+  // la guida riporta il gruppo all'ordine di arrivo
+  assert.equal(resetQueue(app.db, SHARED, FAR), 2);
+  assert.deepEqual([ea, eb, ec].map((e) => wid(app, e).position), [null, null, null]);
+  assert.equal(queuedBefore(wid(app, ea), wid(app, ec)), true, 'A era arrivata prima di C');
+  assert.equal(resetQueue(app.db, SHARED, FAR), 0);
 });

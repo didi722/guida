@@ -116,8 +116,10 @@ export function createApp(overrides = {}) {
 
   // eslint-disable-next-line no-unused-vars
   server.use((err, req, res, next) => {
-    console.error('[errore]', err);
+    const client = err.expose && err.status >= 400 && err.status < 500; // una richiesta illeggibile (JSON rotto, corpo troppo grande) è colpa di chi la manda, non nostra
+    if (!client) console.error('[errore]', err);
     if (res.headersSent) return;
+    if (client) return res.status(err.status).type('text/plain').send('Richiesta non valida / Invalid request');
     res.status(500).type('text/plain').send('Errore interno / Internal error');
   });
 

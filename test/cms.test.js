@@ -185,7 +185,7 @@ test('ordine dei tour: si trascina nell’elenco e si salva; un tour nuovo va in
     const before = s.app.content.allTours.map((t) => t.slug);
     const list = await (await admin('/admin/tours')).text();
     assert.match(list, /data-sortable/);
-    assert.match(list, /admin-tours-order\.js/);
+    assert.match(list, /admin-sortable\.js/);
     const b2cCount = s.app.content.allTours.filter((t) => t.audience === 'b2c').length;
     assert.equal((list.match(/class="drag-handle"/g) ?? []).length, b2cCount, 'una maniglia per ogni tour B2C (i B2B sono nell’altra sezione)');
     assert.equal((list.match(/data-move="-1"/g) ?? []).length, b2cCount, 'e le frecce');

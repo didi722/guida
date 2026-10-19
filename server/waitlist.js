@@ -78,7 +78,7 @@ export const removeEntry = (db, accountId, id) => db.prepare(`UPDATE waitlist SE
 
 /** Dopo un avviso già scattato l'agenzia può rimettersi in lista (qualcun altro è stato più veloce, o ha cambiato idea): va in fondo alla coda. */
 export const rearmEntry = (db, accountId, id, today, nowMs = Date.now()) =>
-  db.prepare(`UPDATE waitlist SET status = 'waiting', notified_at = NULL, notified_time = NULL, queued_at = ? WHERE id = ? AND account_id = ? AND status = 'notified' AND date >= ?`).run(iso(nowMs), id, accountId, today).changes === 1;
+  db.prepare(`UPDATE waitlist SET status = 'waiting', notified_at = NULL, notified_time = NULL, queued_at = ?, position = NULL WHERE id = ? AND account_id = ? AND status = 'notified' AND date >= ?`).run(iso(nowMs), id, accountId, today).changes === 1;
 
 /** Gli avvisi con la data passata non servono più. */
 export const expireEntries = (db, today) => db.prepare(`UPDATE waitlist SET status = 'expired' WHERE status IN ${ACTIVE} AND date < ?`).run(today).changes;
@@ -102,14 +102,14 @@ export const waitingEntries = (db, today) =>
     .prepare(
       `SELECT w.*, COALESCE(u.email, a.email) AS acct_email, COALESCE(u.name, a.contact_name) AS acct_name, a.company AS acct_company, COALESCE(u.lang, a.lang) AS acct_lang
        FROM waitlist w JOIN accounts a ON a.id = w.account_id LEFT JOIN account_users u ON u.id = w.user_id AND u.password_hash IS NOT NULL
-       WHERE w.status = 'waiting' AND w.date >= ? AND a.status = 'approved' ORDER BY w.date, COALESCE(w.queued_at, w.created_at), w.id`,
+       WHERE w.status = 'waiting' AND w.date >= ? AND a.status = 'approved' ORDER BY w.date, w.tour_slug, w.position IS NULL, w.position, COALESCE(w.queued_at, w.created_at), w.id`,
     )
     .all(today);
 
-/** Per il pannello: tutti gli avvisi attivi, con l'agenzia. */
+/** Per il pannello: tutti gli avvisi attivi, con l'agenzia, per data e servizio e in ordine di coda dentro ciascuno. */
 export const allActive = (db, today) =>
   db
-    .prepare(`SELECT w.*, a.company AS acct_company, a.email AS acct_email FROM waitlist w JOIN accounts a ON a.id = w.account_id WHERE w.status IN ${ACTIVE} AND w.date >= ? ORDER BY w.date, COALESCE(w.time, ''), w.id`)
+    .prepare(`SELECT w.*, a.company AS acct_company, a.email AS acct_email FROM waitlist w JOIN accounts a ON a.id = w.account_id WHERE w.status IN ${ACTIVE} AND w.date >= ? ORDER BY w.date, w.tour_slug, w.position IS NULL, w.position, COALESCE(w.queued_at, w.created_at), w.id`)
     .all(today);
 
 /** Quanti avvisi sono ancora in attesa (per il riepilogo del pannello). */
@@ -153,16 +153,46 @@ export const rivalsOf = (db, entry) =>
   db
     .prepare(
       `SELECT w.*, a.company AS acct_company FROM waitlist w JOIN accounts a ON a.id = w.account_id
-       WHERE w.tour_slug = ? AND w.date = ? AND w.account_id != ? AND w.status IN ${ACTIVE} AND a.status = 'approved' AND (? IS NULL OR w.time IS NULL OR w.time = ?) ORDER BY COALESCE(w.queued_at, w.created_at), w.id`,
+       WHERE w.tour_slug = ? AND w.date = ? AND w.account_id != ? AND w.status IN ${ACTIVE} AND a.status = 'approved' AND (? IS NULL OR w.time IS NULL OR w.time = ?) ORDER BY w.position IS NULL, w.position, COALESCE(w.queued_at, w.created_at), w.id`,
     )
     .all(entry.tour_slug, entry.date, entry.account_id, entry.time, entry.time);
 
-/** `a` è entrata in lista prima di `b`? (A parità di istante conta il numero.) */
+/**
+ * `a` viene prima di `b` in coda? Conta l'ordine deciso dalla guida (chi ha un numero passa prima, e fra due numeri il più basso);
+ * altrimenti l'ordine di iscrizione (a parità di istante conta il numero).
+ */
 export const queuedBefore = (a, b) => {
+  const pa = a.position ?? null;
+  const pb = b.position ?? null;
+  if (pa !== null || pb !== null) {
+    if (pa === null) return false;
+    if (pb === null) return true;
+    if (pa !== pb) return pa < pb;
+    return a.id < b.id;
+  }
   const ka = a.queued_at ?? a.created_at;
   const kb = b.queued_at ?? b.created_at;
   return ka < kb || (ka === kb && a.id < b.id);
 };
+
+/**
+ * La guida decide l'ordine di chi aspetta lo stesso servizio nello stesso giorno: `ids` sono gli avvisi ancora «in attesa» di quel gruppo, nell'ordine voluto.
+ * Quelli già avvisati restano davanti (hanno il loro vantaggio). Se la lista è cambiata nel frattempo (qualcuno è entrato, uscito o è stato avvisato) non si cambia nulla.
+ * @returns {boolean} false se `ids` non sono esattamente gli avvisi in attesa del gruppo
+ */
+export function reorderQueue(db, tourSlug, date, ids) {
+  const rows = db.prepare(`SELECT * FROM waitlist WHERE tour_slug = ? AND date = ? AND status IN ${ACTIVE}`).all(tourSlug, date);
+  const wanted = [...ids].map(Number);
+  const waiting = rows.filter((r) => r.status === 'waiting');
+  if (new Set(wanted).size !== wanted.length || wanted.length !== waiting.length || !wanted.every((id) => waiting.some((r) => r.id === id))) return false;
+  const front = rows.filter((r) => r.status === 'notified').sort((a, b) => (queuedBefore(a, b) ? -1 : 1)).map((r) => r.id);
+  const set = db.prepare('UPDATE waitlist SET position = ? WHERE id = ?');
+  [...front, ...wanted].forEach((id, i) => set.run(i + 1, id));
+  return true;
+}
+
+/** Riporta il gruppo all'ordine di arrivo (toglie i numeri decisi dalla guida). @returns {number} quanti avvisi erano ordinati a mano */
+export const resetQueue = (db, tourSlug, date) => db.prepare(`UPDATE waitlist SET position = NULL WHERE tour_slug = ? AND date = ? AND status IN ${ACTIVE} AND position IS NOT NULL`).run(tourSlug, date).changes;
 
 /**
  * Il posto in coda di un avviso: `ahead` le agenzie arrivate prima che sono ancora da avvisare o hanno il vantaggio in corso,

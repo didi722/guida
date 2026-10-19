@@ -251,3 +251,71 @@ test('pannello: scheda «Lista d’attesa» con chi aspetta e chi tiene la data;
     s.close();
   }
 });
+
+test('pannello: la guida riordina la lista d’attesa di una data (trascinando); l’ordine si legge nella pagina, si salva, si ripristina', async () => {
+  const s = await start();
+  try {
+    const { app, a, b, admin, pa, pb } = s;
+    const json = (obj) => ({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(obj) });
+    const c = addAccount(app.db, { email: 'carla@c.example', password_hash: await hashPassword(PW), company: 'Carla Tours', contact_name: 'Carla Verdi', lang: 'it' });
+    app.db.prepare('UPDATE accounts SET option_max = 0 WHERE id = ?').run(c.id);
+    const D = day(40);
+    const x = addAccount(app.db, { email: 'xavier@x.example', password_hash: await hashPassword(PW), company: 'Agenzia X', contact_name: 'Xavier', lang: 'it' });
+    app.db.prepare('UPDATE accounts SET option_max = 0 WHERE id = ?').run(x.id);
+    holdDay(app, x, D);
+    // A e B si mettono in lista dalle loro pagine; C la aggiungiamo a mano (stesso servizio e giorno)
+    await pa('/it/b2b/waitlist', form({ tour: SHARED, date: D, pax: '4', time: '', next: view(D) }));
+    await pb('/it/b2b/waitlist', form({ tour: SHARED, date: D, pax: '3', time: '', next: view(D) }));
+    app.db.prepare(`INSERT INTO waitlist (account_id, tour_slug, date, time, pax, hours, tour_lang, status, created_at, queued_at) VALUES (?, ?, ?, NULL, 2, NULL, NULL, 'waiting', ?, ?)`).run(c.id, SHARED, D, new Date(Date.now() + 1000).toISOString(), new Date(Date.now() + 1000).toISOString());
+    const ids = app.db.prepare('SELECT id, account_id FROM waitlist ORDER BY id').all().map((r) => ({ ...r }));
+    const idOf = (acct) => ids.find((r) => r.account_id === acct.id).id;
+    const group = `${SHARED}|${D}`;
+
+    // la pagina: un gruppo ordinabile con le tre agenzie, numerate nell'ordine di arrivo
+    const page = await text(await admin('/admin/waitlist'));
+    assert.match(page, /<tbody data-sortable data-order-url="\/admin\/waitlist\/order" data-key-attr="data-id" data-field="ids"/);
+    assert.match(page, /admin-sortable\.js/);
+    assert.ok(page.includes(`data-payload="{&quot;group&quot;:&quot;${group}&quot;}"`), 'il gruppo viaggia con la richiesta');
+    const order = (html) => [...html.matchAll(/<tr data-id="(\d+)">/g)].map((m) => Number(m[1]));
+    assert.deepEqual(order(page), [idOf(a), idOf(b), idOf(c)]);
+    assert.match(page, /Trascina un’agenzia sopra un’altra/);
+    assert.doesNotMatch(page, /ordine deciso da te/);
+    assert.doesNotMatch(page, /Riporta all’ordine di arrivo/);
+
+    // richieste sbagliate
+    const post = (body) => admin('/admin/waitlist/order', json(body));
+    assert.equal((await post({ group: 'non-esiste|' + D, ids: [1] })).status, 400, 'servizio inesistente');
+    assert.equal((await post({ group: `${SHARED}|domani`, ids: [1] })).status, 400, 'data non valida');
+    assert.equal((await post({ group, ids: 'a,b' })).status, 400, 'non è un elenco');
+    assert.equal((await post({ group, ids: ['x'] })).status, 400, 'identificativi non numerici');
+    assert.equal((await post({ group, ids: [idOf(a), idOf(b)] })).status, 409, 'manca C: la pagina era vecchia');
+    assert.equal((await admin('/admin/waitlist/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{' })).status, 400, 'JSON rotto');
+    assert.equal((await s.anon('/admin/waitlist/order', json({ group, ids: [idOf(a), idOf(b), idOf(c)] }))).status, 302, 'senza accesso si va al login');
+    assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM waitlist WHERE position IS NOT NULL').get().n, 0, 'i rifiuti non cambiano nulla');
+
+    // la sequenza giusta: C davanti a tutte
+    const ok = await post({ group, ids: [idOf(c), idOf(a), idOf(b)] });
+    assert.equal(ok.status, 200);
+    assert.deepEqual(await ok.json(), { ok: true });
+    const moved = await text(await admin('/admin/waitlist'));
+    assert.deepEqual(order(moved), [idOf(c), idOf(a), idOf(b)]);
+    assert.match(moved, /ordine deciso da te/);
+    assert.match(moved, /Riporta all’ordine di arrivo/);
+    assert.match(moved, /dopo Carla Tours/, 'A sta dopo C');
+    // …e l'agenzia lo vede dalla sua pagina: ora ha C davanti
+    assert.match(await text(await pa(view(D))), /Davanti a te in lista: 1\./);
+    assert.match(await text(await pb(view(D))), /Davanti a te in lista: 2\./);
+
+    // ripristino
+    assert.equal((await admin('/admin/waitlist/reset', form({ group: 'x|y' }))).status, 404, 'gruppo che non esiste');
+    const back = await admin('/admin/waitlist/reset', form({ group }));
+    assert.equal(back.status, 303);
+    assert.equal(loc(back), '/admin/waitlist?ok=reset');
+    const reset = await text(await admin('/admin/waitlist?ok=reset'));
+    assert.deepEqual(order(reset), [idOf(a), idOf(b), idOf(c)]);
+    assert.match(reset, /Ordine di arrivo ripristinato\./);
+    assert.doesNotMatch(reset, /ordine deciso da te/);
+  } finally {
+    s.close();
+  }
+});

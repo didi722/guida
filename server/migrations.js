@@ -692,6 +692,12 @@ ALTER TABLE periods ADD COLUMN cancel_b2b_json TEXT;
 ALTER TABLE periods ADD COLUMN cancel_partners INTEGER NOT NULL DEFAULT 0;
 `;
 
+const V34_WAITLIST_ORDER = `
+-- Ordine della lista d'attesa deciso dalla guida: dentro lo stesso servizio e giorno chi ha un numero passa prima (1, 2, 3…); chi non ce l'ha segue,
+-- nell'ordine di iscrizione. Si azzera quando l'agenzia si rimette in lista (torna in fondo) o quando la guida riporta tutto all'ordine di arrivo.
+ALTER TABLE waitlist ADD COLUMN position INTEGER;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -755,6 +761,8 @@ export const MIGRATIONS = [
   V32_BILLING,
   // v33 — condizioni di annullo nei periodi
   V33_PERIOD_CANCEL,
+  // v34 — ordine della lista d'attesa deciso dalla guida
+  V34_WAITLIST_ORDER,
 ];
 
 export function migrate(db) {
