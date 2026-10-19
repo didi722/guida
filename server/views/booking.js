@@ -109,6 +109,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
   const optionBox = option?.ok
     ? html`<div class="option-box ${firm.applied ? 'is-recommended' : ''}">${firm.applied ? html`<span class="chip chip-accent">${t('firm.recommended')}</span>` : ''}<h3>${t('option.title')}</h3>
           <p>${t('option.text', { until: fmtInstant(option.expiresMs, lang), days: timeLeft(t, option.expiresMs - Date.now()) })}</p>
+          ${option.period ? html`<p class="small muted option-note">${t('option.period.short')}</p>` : ''}
           <button class="btn ${firm.applied ? 'btn-gold' : 'btn-outline'} btn-block" type="submit" name="action" value="option" id="option-submit">${t('option.btn')}</button></div>`
     : '';
   // lingua del tour: tra quelle offerte; se la partenza condivisa ha già qualcuno, vale la lingua di chi ha prenotato per primo

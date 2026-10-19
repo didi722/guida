@@ -38,7 +38,7 @@ export function changePage(ctx, b, { rules, form, slots, error = '', errorReason
   <h1>${t('chg.title')}</h1><p class="lead">${ti.title} · ${b.ref}</p>
 </div></section>
 <section class="section tight"><div class="wrap narrow">
-  ${error ? html`<div class="notice notice-err" role="alert">${t(`chg.err.${error}`, { reason: errorReason })}</div>` : ''}
+  ${error ? html`<div class="notice notice-err" role="alert">${t(`chg.err.${error === 'option' && errorReason === 'period' ? 'optionPeriod' : error}`, { reason: errorReason })}</div>` : ''}
   <div class="card pad">
     <h2>${t('chg.now')}</h2>
     <dl class="summary-list">

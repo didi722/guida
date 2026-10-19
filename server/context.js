@@ -11,6 +11,7 @@ import path from 'node:path';
 import { createMailer } from './mail.js';
 import { createMedia } from './media.js';
 import { createPackageServices } from './packageServices.js';
+import { createPeriods } from './periods.js';
 import { createPecMailer } from './pec.js';
 import { createSettings } from './settings.js';
 import { createSiteImages } from './siteImages.js';
@@ -30,6 +31,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   const app = { cfg, db, content, assetVersion, jobs: [], limits: createLimits() };
   app.settings = createSettings({ cfg, db }); // prima di ogni altro modulo: applica alla configurazione i valori scelti dal pannello
   app.adminSecurity = createAdminSecurity(app); // accesso a due passaggi e sessioni del pannello (serve già al primo accesso)
+  app.periods = createPeriods(app); // periodi con regole particolari: le opzioni e il preavviso li leggono da cfg.options.periods
   /** Lavori periodici (ogni minuto): ogni modulo aggiunge i suoi a `app.jobs`. */
   app.runJobs = async (nowMs = Date.now()) => {
     for (const job of app.jobs) {

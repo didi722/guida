@@ -44,13 +44,13 @@ test('guida: i nomi di pulsanti e schede citati nella guida esistono nel pannell
     'Listino dedicato', 'Politica di annullo', 'Stato e pagamento', 'Salva il listino', 'Salva la politica', 'Nuovo codice sconto', 'Nuovo buono regalo', 'Rettifica il saldo', 'Reinvia all’acquirente', 'Annulla buono',
     'Esporta CSV', 'Come sono calcolati i numeri', 'Salva i testi di questa pagina', 'Carica nuove foto', 'Salva la pagina', 'Prenotazioni aperte fino a', 'Prima data fatturabile', 'Calendario sul telefono', 'Pagamenti in corso',
     'Programmi da preparare', 'Partner da approvare', 'Promemoria al cliente', 'Domande frequenti', 'Mostra sul sito', 'Pagina con tutte le recensioni', 'Cosa dicono i clienti', 'Ripristina da una copia', 'Carica e controlla', 'Solo i contenuti', 'Torna a questa versione', 'Copie salvate prima di un ripristino', 'Annulla, non cambiare niente', 'Elenco, 14 giorni', 'Calendario', 'Elimina la bozza', 'Apri come la vede il cliente', 'PDF della proposta', 'Nascondi', 'Foto', 'Grassetto', 'Anteprima',
-    'Copia giornaliera fuori dal server', 'Prova la connessione', 'Esegui una copia adesso', 'Copie presenti', 'Attiva i due passaggi', 'Conferma e attiva', 'Esci da tutti gli altri dispositivi', 'Genera nuovi codici', 'Incassi dalla banca', 'Controlla i bonifici', 'Segna come incassate le fatture selezionate',
+    'Aggiungi il periodo', 'Copia giornaliera fuori dal server', 'Prova la connessione', 'Esegui una copia adesso', 'Copie presenti', 'Attiva i due passaggi', 'Conferma e attiva', 'Esci da tutti gli altri dispositivi', 'Genera nuovi codici', 'Incassi dalla banca', 'Controlla i bonifici', 'Segna come incassate le fatture selezionate',
     'Salva le tariffe', 'Prova il calcolatore', 'Ripristina le tariffe iniziali', 'Quali giorni sono festivi', 'Chi vede le tariffe', 'Ogni ora in più', 'Il cliente sceglie quante ore', 'A chi è rivolto', 'Prezzo fisso',
   ];
   const missing = LABELS.filter((l) => !sources.includes(l) && !sources.replace(/ /g, ' ').includes(l));
   assert.deepEqual(missing, [], 'etichette non trovate nel codice: la guida o il pannello sono cambiati');
   // le voci del menu citate nella guida sono quelle del pannello
-  for (const [group, tabs] of [['Agenda', ['Agenda', 'Prenotazioni', 'Programmi', 'Disponibilità']], ['Clienti', ['Partner', 'Sconti', 'Feedback']], ['Conti', ['Fatture', 'Statistiche']], ['Sito', ['Tour B2C', 'Tour B2B', 'Listino', 'Tariffe a ore', 'Blog', 'Pagine', 'Testi', 'Immagini', 'Impostazioni']], ['Aiuto', ['Guida', 'Backup', 'Sicurezza', 'Email']]]) {
+  for (const [group, tabs] of [['Agenda', ['Agenda', 'Prenotazioni', 'Programmi', 'Disponibilità']], ['Clienti', ['Partner', 'Sconti', 'Feedback']], ['Conti', ['Fatture', 'Statistiche']], ['Sito', ['Tour B2C', 'Tour B2B', 'Listino', 'Tariffe a ore', 'Blog', 'Pagine', 'Testi', 'Immagini', 'Periodi', 'Impostazioni']], ['Aiuto', ['Guida', 'Backup', 'Sicurezza', 'Email']]]) {
     assert.match(guide, new RegExp(`\\*\\*${group}\\*\\*`), group);
     for (const t of tabs) assert.ok(guide.includes(t), `${group} › ${t}`);
     assert.ok(sources.includes(`'${group}'`), `gruppo «${group}» nel menu`);

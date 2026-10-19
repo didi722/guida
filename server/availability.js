@@ -9,10 +9,11 @@
 //  - Un tour "a gruppo" (model: group, privato) blocca la fascia per chiunque altro.
 //  - Una prenotazione, anche di una sola persona, occupa la sua fascia (più la pausa): gli orari degli altri tour che si sovrapporrebbero spariscono.
 //  - Si può prenotare solo dentro gli orari di lavoro (modello settimanale + giorni speciali),
-//    fuori dalle fasce bloccate e con il preavviso minimo.
+//    fuori dalle fasce bloccate e con il preavviso minimo (che in certi periodi, vedi periods.js, può essere diverso).
 
 import { getSetting } from './db.js';
 import { paymentsFrom } from './opening.js';
+import { periodOn } from './periods.js';
 import { addDays, dayOfWeek, fromMin, localToInstant, monthDates, nowRome, toMin } from './time.js';
 
 /** Prenotazioni che occupano il calendario adesso: confermate, in attesa di pagamento (slot trattenuto) e opzioni non scadute. Servono due `now` (ISO). */
@@ -75,7 +76,11 @@ export function dayWindow(ctx, date) {
   return w?.open ? { from: w.from, to: w.to } : null;
 }
 
-export function minNoticeHours(cfg, channel) {
+/** Preavviso minimo in ore. Con `date` (il giorno del servizio) vale quello del periodo in cui cade, se ne ha uno suo (vedi periods.js). */
+export function minNoticeHours(cfg, channel, date = null) {
+  const own = date ? periodOn(cfg.options?.periods, date) : null;
+  const special = channel === 'b2b' ? own?.noticeB2bHours : own?.noticeB2cHours;
+  if (special !== null && special !== undefined) return special;
   return channel === 'b2b' ? cfg.policy.b2bMinNoticeHours : cfg.policy.b2cMinNoticeHours;
 }
 
@@ -106,7 +111,7 @@ export function slotsForDay(ctx, cfg, tour, date, { pax = 1, channel = 'b2c', no
     starts = tour.times.filter((t) => toMin(t) >= from && toMin(t) + dur <= to);
   }
 
-  const notice = minNoticeHours(cfg, channel) * 3600_000;
+  const notice = minNoticeHours(cfg, channel, date) * 3600_000;
   const dayBookings = ctx.bookings.get(date) ?? [];
   const dayBlocks = ctx.blocks.get(date) ?? [];
   const out = [];

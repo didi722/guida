@@ -563,6 +563,23 @@ ALTER TABLE booking_changes ADD COLUMN note TEXT;
 ALTER TABLE bookings ADD COLUMN refund_pending_cents INTEGER NOT NULL DEFAULT 0;
 `;
 
+const V28_PERIODS = `
+-- Periodi con regole particolari (alta stagione, Carnevale…): intervalli di date del SERVIZIO in cui le opzioni delle agenzie e il preavviso minimo cambiano
+CREATE TABLE periods (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  date_from TEXT NOT NULL,
+  date_to TEXT NOT NULL,
+  options_mode TEXT NOT NULL DEFAULT 'normal' CHECK (options_mode IN ('normal', 'short', 'off')),
+  option_max_days INTEGER,
+  option_release_hours INTEGER,
+  notice_b2c_hours INTEGER,
+  notice_b2b_hours INTEGER,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX idx_periods_from ON periods(date_from);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -616,6 +633,8 @@ export const MIGRATIONS = [
   V26_WAITLIST_QUEUE,
   // v27 — modifiche delle prenotazioni dal pannello
   V27_ADMIN_CHANGES,
+  // v28 — periodi con regole particolari
+  V28_PERIODS,
 ];
 
 export function migrate(db) {

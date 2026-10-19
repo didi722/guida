@@ -53,7 +53,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour B2C** vuol dire «t
 | **Agenda** | Agenda · Prenotazioni · Programmi · Disponibilità |
 | **Clienti** | Partner · Sconti · Feedback |
 | **Conti** | Fatture · Statistiche |
-| **Sito** | Tour B2C · Tour B2B · Listino · Tariffe a ore · Blog · Pagine · Testi · Immagini · Impostazioni |
+| **Sito** | Tour B2C · Tour B2B · Listino · Tariffe a ore · Blog · Pagine · Testi · Immagini · Periodi · Impostazioni |
 | **Aiuto** | Guida · Backup · Sicurezza · Email |
 
 **Cambiare la password del pannello.** La password non si cambia dal pannello (per sicurezza): sta nella configurazione del server, nella variabile `ADMIN_PASSWORD`. Cambiala nel pannello del tuo hosting (sezione *Environment* / *Variables*), scrivila **senza virgolette** e riavvia il servizio. Usa una password lunga e unica.
@@ -100,6 +100,7 @@ Il pannello contiene i dati dei clienti e le fatture: oltre alla password puoi c
 | Inserire i **dati per fatturare** | **Sito › Impostazioni › Fatturazione elettronica** |
 | **Approvare** un'agenzia, dare **sconti, prezzi e cancellazione** dedicati | **Clienti › Partner** › tocca l'agenzia |
 | **Riordinare** i tour nell'elenco del sito (o dell'area agenzie) | **Sito › Tour B2C** (o **Tour B2B**): trascina le righe dalla maniglia ⠿ |
+| In **alta stagione** (Carnevale, Natale, estate…) rendere le opzioni **più brevi o toglierle**, o chiedere **più preavviso** | **Sito › Periodi** ([come funziona](#periodi-con-regole-particolari-alta-stagione)) |
 | Decidere **quanto dura un'opzione** per le agenzie (e quante ne possono tenere) | **Sito › Impostazioni › Opzioni per le agenzie**; per una sola agenzia **Clienti › Partner › Opzioni** |
 | **Prolungare o rilasciare** l'opzione di un'agenzia | **Agenda › Prenotazioni › Opzioni** › tocca l'opzione |
 | Rispondere a una **richiesta di proroga** di un'opzione | **Agenda** (avviso in alto) › **Prenotazioni › Opzioni** › tocca l'opzione: **Approva** o **Non concedere**; vedi [Cambiare persone, data o ore](#cambiare-persone-data-o-ore-da-soli-e-chiedere-una-proroga) |
@@ -469,6 +470,22 @@ Un tour operator prima **quota il pacchetto al suo cliente finale**, che lo appr
 
 > **Perché l'opzione e non «si paga quando non è più rimborsabile»?** Far pagare l'agenzia solo quando il tour diventa non rimborsabile significherebbe **addebitare la sua carta giorni dopo**, quando non c'è e non può rimediare: se la carta è scaduta o senza fondi ti ritroveresti con una data venduta e non pagata. L'opzione invece **non muove denaro** (niente rimborsi né storni) e non può fallire. Per chi paga a fattura non c'è nessun addebito automatico: la fattura parte dopo il servizio.
 
+### Periodi con regole particolari (alta stagione)
+In certi periodi — il Carnevale, Natale, l'estate, una grande mostra — non vuoi che un'agenzia tenga una data per dieci giorni: la rivenderesti volentieri. In **Sito › Periodi** scrivi un **periodo** (un nome e due date) e dici cosa cambia **per i servizi di quelle date**:
+
+- **Opzioni**: *Come sempre* (valgono le regole del sito), *Più brevi* oppure *Niente opzioni*.
+  - **Più brevi**: indichi la **durata massima** (per esempio 3 giorni) e/o la **scadenza prima del servizio** (per esempio 96 ore invece delle 48 del sito: vale il maggiore dei due). Una opzione che di solito durerebbe 10 giorni dura 3; una che dura già meno non si allunga.
+  - **Niente opzioni**: per quelle date le agenzie **prenotano direttamente**.
+- **Preavviso minimo** per prenotare, **per i privati e per le agenzie** (lasciato vuoto vale quello del sito; **0** vuol dire nessun preavviso). Per esempio 72 ore a Carnevale, o prenotazioni last minute libere in un periodo tranquillo.
+
+Come si leggono le regole:
+- Vale la **data del servizio**, non quella in cui si prenota: se il tour è dentro il periodo valgono le regole del periodo, anche se si prenota mesi prima. Il primo e l'ultimo giorno sono compresi, e si conta l'ora di Venezia.
+- **Un giorno sta in un solo periodo**: se provi a sovrapporne due il sito te lo dice e ti indica con quale. Due periodi che si toccano (uno finisce il 16, l'altro comincia il 17) vanno bene.
+- Vale per tutte le **opzioni nuove**, per i **pacchetti** (una sola scadenza: la più corta) e quando un'agenzia **sposta la data** di un'opzione dentro il periodo (se non c'è più l'opzione, il sito glielo dice e le propone di scegliere un'altra data o prenotare). Anche quando **sposti tu** la data dal pannello. La **durata fissa** concordata con un singolo partner vale fuori dai periodi; **dentro, il limite del periodo vale per tutti**.
+- Le opzioni e le prenotazioni **già fatte non cambiano**. **Prolungare** un'opzione dalla scheda resta una tua scelta e non è limitato dal periodo.
+- Le agenzie **lo vedono**: nelle loro condizioni (*Tariffe e condizioni*) compare l'elenco dei periodi in arrivo con le date e le regole, e nel pagamento una riga spiega perché l'opzione è più breve o non c'è. Un periodo che cambia solo il preavviso dei privati non compare tra quelli delle agenzie.
+- Un periodo **non cambia i prezzi**: per le variazioni di prezzo di una giornata ci sono i supplementi e i giorni festivi delle tariffe a ore ([sezione 6](#6-prezzi-tariffe-a-ore-sconti-e-buoni-regalo)). Non cambia nemmeno la politica di annullo.
+
 ### Pacchetti: più servizi nella stessa pratica
 Un tour operator di rado compra un servizio solo: per un gruppo servono, per esempio, una **guida** al mattino, un **meet & greet** all'arrivo e un **tour leader** per il resto. Con il **pacchetto** li prenota **insieme**, con **una sola opzione, una sola scadenza, un solo pagamento e una sola fattura**.
 - **Come si fa (l'agenzia)**: nel riepilogo prima di prenotare, accanto a *Conferma prenotazione*, c'è **Aggiungi al pacchetto**. Il servizio entra nel pacchetto (**non blocca ancora nulla**) e l'agenzia torna alla pagina **Pacchetto** (in alto, accanto a *Nuova prenotazione*, compare un tasto con il numero dei servizi). Da lì aggiunge altri servizi (**Aggiungi un altro servizio**), toglie quelli che non servono e, quando è pronta, scrive i dati della pratica (referente, riferimento pratica, note, lingua) e sceglie: **Opziona il pacchetto senza pagare**, oppure **prenota** (a fattura o con carta). Un pacchetto può avere fino a **12 servizi**.
@@ -592,7 +609,7 @@ In fondo alla pagina, **Come sono calcolati i numeri** spiega ogni definizione.
 **Sito › Impostazioni** ha cinque sezioni, ciascuna con il suo pulsante **Salva questa sezione** (le modifiche valgono subito). Se un campo non è valido, nulla viene salvato e vedi quale correggere.
 
 - **Attività e contatti**: nome del sito, nome per i documenti, email di contatto, **email che riceve le notifiche**, telefono, **WhatsApp** (solo cifre con prefisso, es. `393331234567`; vuoto = nascosto), Instagram, **Partita IVA**, abilitazione di guida turistica, indirizzo. Compaiono nel piè di pagina, nelle email, nei voucher e nei PDF.
-- **Regole di prenotazione**: cancellazione gratuita per privati e partner (ore), preavviso minimo, anticipo massimo (giorni), pausa tra due servizi, passo degli orari liberi, blocco dell'orario durante il pagamento, **promemoria al cliente la sera prima** (sì/no e a che ora), **pagamento il giorno del servizio** (sì/no) e **Incassi dal** (la data di partenza degli incassi online: vedi [sezione 20](#20-da-fare-prima-del-lancio-e-a-gennaio)).
+- **Regole di prenotazione**: cancellazione gratuita per privati e partner (ore), preavviso minimo (in certi periodi può essere diverso: [Periodi](#periodi-con-regole-particolari-alta-stagione)), anticipo massimo (giorni), pausa tra due servizi, passo degli orari liberi, blocco dell'orario durante il pagamento, **promemoria al cliente la sera prima** (sì/no e a che ora), **pagamento il giorno del servizio** (sì/no) e **Incassi dal** (la data di partenza degli incassi online: vedi [sezione 20](#20-da-fare-prima-del-lancio-e-a-gennaio)).
 - **Opzioni per le agenzie**: se le agenzie possono opzionare, la **tabella** «tour fra almeno N giorni → opzione di D giorni» (fino a 5 righe), la scadenza al più tardi (ore prima del servizio), il numero massimo di opzioni aperte per agenzia e quanto prima della scadenza parte il promemoria. Vedi [Opzioni](#opzioni-tenere-una-data-senza-pagare).
 - **Prenotazione ferma per le date lontane** (stessa sezione, *Opzioni per le agenzie*): per spingere le agenzie a **opzionare** invece di prenotare e poi dimenticarsi di annullare (liberandoti la data all'ultimo), se il servizio è fra più di **21 giorni** la prenotazione diretta è cancellabile gratis solo per **48 ore** dalla prenotazione; poi si rimborsa il **50%** fino al normale termine gratuito (per esempio 3 giorni prima), e dopo valgono gli scaglioni di sempre. Vale anche quando l'agenzia **conferma un'opzione** (le 48 ore ripartono da quel momento). Nel pagamento l'agenzia vede un avviso con le date e l'**opzione in evidenza** («Consigliato per le date lontane»). Giorni, ore e percentuale si cambiano lì; con l'interruttore spento torna il normale termine di cancellazione gratuita. Non vale per le prenotazioni che registri tu dall'agenda.
 - **Buoni regalo, programmi e recensioni**: validità e importi dei buoni, acconto e validità dei preventivi dei programmi, richiesta di recensione dopo il tour (sì/no, link per recensire su Google e Tripadvisor, ora d'invio) e **Pagina con tutte le recensioni** (il link che compare accanto ai commenti sul sito).
@@ -780,6 +797,7 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 - [ ] **Accesso a due passaggi** (Aiuto › Sicurezza): attivalo, **stampa i codici di emergenza** e conservali; scegli una password del pannello lunga e unica.
 - [ ] Se parti **prima della Partita IVA**: scrivi la data in **Incassi dal** e fai una prenotazione di prova da privato (deve proporre solo il pagamento di persona) e da agenzia (fattura o opzione).
 - [ ] Opzioni per le agenzie: guarda la tabella in **Impostazioni › Opzioni per le agenzie** e decidi se ti vanno bene i giorni e il limite.
+- [ ] **Periodi** (Sito › Periodi): se hai un'alta stagione o degli eventi in cui non vuoi opzioni lunghe (o vuoi più preavviso), scrivili ora, con le date, prima che le agenzie comincino a opzionare.
 
 **Quando apri la Partita IVA (gennaio)**
 - [ ] In **Impostazioni › Attività e contatti**: **Partita IVA**, **abilitazione**, **indirizzo**, nome per i documenti.

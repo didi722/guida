@@ -51,7 +51,7 @@ export function adminBookingEditRouter(app) {
     } catch (e) {
       if (!(e instanceof AdminChangeError)) throw e;
       const values = { ...valuesOf(b, req.body), notify: one(req.body.notify) === '1' ? '1' : '' };
-      send(res, bookingEditPage(ctxOf(req), b, { values, error: `${EDIT_ERRORS[e.code] ?? 'Modifica non riuscita.'}${e.reason ? ` (${e.reason})` : ''}` }), 400);
+      send(res, bookingEditPage(ctxOf(req), b, { values, error: `${EDIT_ERRORS[e.code === 'option' && e.reason === 'period' ? 'optionPeriod' : e.code] ?? 'Modifica non riuscita.'}${e.reason && e.reason !== 'period' ? ` (${e.reason})` : ''}` }), 400);
     }
   });
 

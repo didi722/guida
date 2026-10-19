@@ -1,7 +1,9 @@
 // Opzioni delle agenzie: la data resta trattenuta (senza pagare) fino a una scadenza, poi si libera da sola.
 // Qui solo le regole, senza database né rete: quanto dura un'opzione in base a quanto manca al servizio (tabella modificabile dal
 // pannello, Sito › Impostazioni › Opzioni per le agenzie) e alle condizioni dedicate a ogni partner.
+import { periodOn } from './periods.js';
 import { freeHoursOf } from './policy.js';
+import { nowRome } from './time.js';
 
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
@@ -25,25 +27,35 @@ export function normalizeOptionTiers(rows) {
   return out.slice(0, MAX_OPTION_TIERS);
 }
 
+/** Del periodo si porta dietro solo ciò che serve a spiegarlo (nome e regola), per le pagine e i messaggi. */
+const brief = (p) => (p ? { id: p.id, name: p.name, mode: p.optionsMode } : null);
+
 /**
  * Può questo partner opzionare un servizio che inizia a `startMs`, e fino a quando?
  * - la durata viene dalla tabella (secondo quanto manca al servizio), oppure è quella fissa scelta per il partner (`option_days`);
  * - non supera mai il momento che lascia `minReleaseHours` ore prima del servizio: la data deve potersi rivendere;
- * - se la tabella non ha una riga per un servizio così vicino, non si può opzionare (si prenota direttamente), salvo durata fissa del partner.
- * @param {{enabled: boolean, tiers: Array, minReleaseHours: number}} options configurazione del sito
- * @returns {{ok: true, expiresMs: number, days: number, capped: boolean} | {ok: false, reason: 'disabled'|'tooClose'}}
+ * - se la tabella non ha una riga per un servizio così vicino, non si può opzionare (si prenota direttamente), salvo durata fissa del partner;
+ * - se la data del servizio cade in un periodo con regole particolari (`options.periods`): niente opzioni, oppure opzioni più brevi
+ *   (durata massima e/o scadenza più lontana dal servizio). Vale anche per le durate fisse dei partner.
+ * @param {{enabled: boolean, tiers: Array, minReleaseHours: number, periods?: Array}} options configurazione del sito
+ * @returns {{ok: true, expiresMs: number, days: number, capped: boolean (più breve del solito), period: object|null} | {ok: false, reason: 'disabled'|'tooClose'|'period', period?: object}}
  */
 export function optionWindow({ options, account = null, startMs, nowMs }) {
   if (!options?.enabled || account?.options_enabled === 0) return { ok: false, reason: 'disabled' };
+  const period = periodOn(options.periods, nowRome(startMs).date);
+  if (period?.optionsMode === 'off') return { ok: false, reason: 'period', period: brief(period) };
+  const short = period?.optionsMode === 'short' ? period : null;
   const fixed = Number(account?.option_days) > 0 ? Number(account.option_days) : null;
   const leadDays = (startMs - nowMs) / DAY;
   const tier = normalizeOptionTiers(options.tiers).find((t) => leadDays >= t.fromDays);
   if (!tier && !fixed) return { ok: false, reason: 'tooClose' };
-  const wanted = nowMs + (fixed ?? tier.days) * DAY;
-  const latest = startMs - Math.max(0, Number(options.minReleaseHours) || 0) * HOUR;
+  const usual = nowMs + (fixed ?? tier.days) * DAY; // quanto durerebbe fuori da ogni periodo
+  const wanted = short?.optionMaxDays != null ? Math.min(usual, nowMs + short.optionMaxDays * DAY) : usual;
+  const releaseHours = Math.max(0, Number(options.minReleaseHours) || 0, short?.optionReleaseHours ?? 0);
+  const latest = startMs - releaseHours * HOUR;
   const expiresMs = Math.min(wanted, latest);
   if (expiresMs - nowMs < HOUR) return { ok: false, reason: 'tooClose' };
-  return { ok: true, expiresMs, days: Math.round(((expiresMs - nowMs) / DAY) * 10) / 10, capped: expiresMs < wanted };
+  return { ok: true, expiresMs, days: Math.round(((expiresMs - nowMs) / DAY) * 10) / 10, capped: expiresMs < usual, period: brief(short) };
 }
 
 /** Quante opzioni può tenere aperte insieme un partner (0 = nessun limite). */

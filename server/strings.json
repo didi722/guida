@@ -4361,6 +4361,18 @@
   "Las opciones no están disponibles para tu cuenta.",
   "このアカウントでは、仮押さえをご利用いただけません。"
  ],
+ "option.err.period": [
+  "In questo periodo le date non si possono opzionare: prenota direttamente.",
+  "Dates in this period can’t be held on option: please book directly.",
+  "Las fechas de este periodo no se pueden opcionar: reserva directamente.",
+  "この期間の日程は仮押さえできません。直接ご予約ください。"
+ ],
+ "option.period.short": [
+  "In questo periodo le opzioni sono più brevi del solito.",
+  "In this period, options are shorter than usual.",
+  "En este periodo las opciones son más cortas de lo habitual.",
+  "この期間は、仮押さえの期間が通常より短くなります。"
+ ],
  "booking.optionTitle": [
   "Data trattenuta (opzione)",
   "Date held (option)",
@@ -4630,6 +4642,48 @@
   "Up to {n} options open at the same time",
   "Como máximo {n} opciones abiertas a la vez",
   "同時に保持できるオプションは最大{n}件です"
+ ],
+ "partner.terms.optPeriods": [
+  "Periodi con regole particolari",
+  "Periods with special rules",
+  "Periodos con reglas especiales",
+  "特別ルールの期間"
+ ],
+ "partner.terms.period": [
+  "«{name}», {dates}: {rules}",
+  "“{name}”, {dates}: {rules}",
+  "«{name}», {dates}: {rules}",
+  "「{name}」{dates}：{rules}"
+ ],
+ "partner.terms.periodOff": [
+  "niente opzioni, si prenota direttamente",
+  "no options, you book directly",
+  "sin opciones, se reserva directamente",
+  "オプション不可（直接のご予約のみ）"
+ ],
+ "partner.terms.periodShort": [
+  "opzioni più brevi: {detail}",
+  "shorter options: {detail}",
+  "opciones más cortas: {detail}",
+  "オプションは短縮：{detail}"
+ ],
+ "partner.terms.periodMax": [
+  "al massimo {days}",
+  "{days} at most",
+  "como máximo {days}",
+  "最長{days}"
+ ],
+ "partner.terms.periodRelease": [
+  "scadenza almeno {hours} prima del servizio",
+  "expires at least {hours} before the service",
+  "caduca al menos {hours} antes del servicio",
+  "サービスの{hours}前までに期限切れ"
+ ],
+ "partner.terms.periodNotice": [
+  "preavviso minimo {hours}",
+  "minimum notice {hours}",
+  "preaviso mínimo {hours}",
+  "最低{hours}前までのご予約"
  ],
  "partner.tab.upcoming": [
   "In arrivo",
@@ -6268,6 +6322,12 @@
   "The option cannot be kept for the new date (too close): choose another date or book directly.",
   "Para la nueva fecha no se puede mantener la opción (demasiado cercana): elige otra fecha o reserva directamente.",
   "新しい日付では仮押さえを維持できません（直前すぎます）。別の日付を選ぶか、直接ご予約ください。"
+ ],
+ "chg.err.optionPeriod": [
+  "Nel periodo della nuova data non si può mantenere l’opzione: scegli un’altra data o prenota direttamente.",
+  "The option can’t be kept in the period of the new date: choose another date or book directly.",
+  "En el periodo de la nueva fecha no se puede mantener la opción: elige otra fecha o reserva directamente.",
+  "新しい日付の期間では仮押さえを維持できません。別の日付を選ぶか、直接ご予約ください。"
  ],
  "booking.flash.changed": [
   "Modifica fatta: ti abbiamo mandato il riepilogo aggiornato.",

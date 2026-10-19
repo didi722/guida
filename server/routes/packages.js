@@ -24,7 +24,7 @@ export function packagesRouter(app) {
 
   const errorText = (t, e) => {
     if (e.code === 'full') return t('pkg.err.full', { n: MAX_PACKAGE_LINES });
-    if (e.code === 'option') return t(`option.err.${['tooClose', 'limit'].includes(e.message) ? e.message : 'disabled'}`);
+    if (e.code === 'option') return t(`option.err.${['tooClose', 'limit', 'period'].includes(e.message) ? e.message : 'disabled'}`);
     if (e.code === 'language') return t('pkg.err.language');
     if (e.code === 'payment') return t('err.payment');
     return t(['unavailable', 'theme', 'overlap', 'duplicate', 'invalid'].includes(e.code) ? `pkg.err.${e.code}` : 'err.fields');

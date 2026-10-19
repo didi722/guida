@@ -213,7 +213,7 @@ export function publicRouter(app) {
     if (!w.ok) return w.reason === 'disabled' ? null : { ok: false, reason: w.reason };
     const limit = maxActiveOptions(cfg.options, req.acct);
     if (limit > 0 && activeOptionCount(db, req.acct.id) >= limit) return { ok: false, reason: 'limit', limit };
-    return { ok: true, expiresMs: w.expiresMs, days: w.days };
+    return { ok: true, expiresMs: w.expiresMs, days: w.days, period: w.period };
   };
 
   const pricingFor = (req, p, values, channel) =>
@@ -247,7 +247,7 @@ export function publicRouter(app) {
       if (e.code === 'unavailable') return send(res, slotGonePage(ctx, p), 409);
       if (e.code === 'promo' || e.code === 'gift') return rerender('');
       if (e.code === 'language') return rerender(t('err.tourLang', { lang: LANG_META[e.message]?.name ?? e.message }), 409);
-      if (e.code === 'option') return rerender(t(`option.err.${['tooClose', 'limit'].includes(e.message) ? e.message : 'disabled'}`));
+      if (e.code === 'option') return rerender(t(`option.err.${['tooClose', 'limit', 'period'].includes(e.message) ? e.message : 'disabled'}`));
       return rerender(e.code === 'payment' ? t('err.payment') : e.message === 'theme' ? t('err.theme') : t('err.fields'));
     }
   });

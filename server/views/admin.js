@@ -16,7 +16,7 @@ export const ADMIN_GROUPS = [
   { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/todo', 'Da fare'], ['/admin/day', 'Scheda del giorno'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità'], ['/admin/waitlist', 'Lista d’attesa']] },
   { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
   { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
-  { label: 'Sito', items: [['/admin/tours', 'Tour B2C'], ['/admin/tours-b2b', 'Tour B2B'], ['/admin/prices', 'Listino'], ['/admin/rates', 'Tariffe a ore'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/settings', 'Impostazioni']] },
+  { label: 'Sito', items: [['/admin/tours', 'Tour B2C'], ['/admin/tours-b2b', 'Tour B2B'], ['/admin/prices', 'Listino'], ['/admin/rates', 'Tariffe a ore'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/periods', 'Periodi'], ['/admin/settings', 'Impostazioni']] },
   { label: 'Aiuto', items: [['/admin/guide', 'Guida'], ['/admin/backup', 'Backup'], ['/admin/security', 'Sicurezza'], ['/admin/mail', 'Email']] },
 ];
 

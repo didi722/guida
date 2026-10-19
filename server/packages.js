@@ -148,7 +148,7 @@ export function cartSummary(app, account, nowMs = Date.now()) {
       if (limit > 0 && activeOptionCount(db, account.id, nowMs) >= limit) option = { ok: false, reason: 'limit', limit };
       else {
         const expiresMs = Math.min(...valid.map((l) => l.option.expiresMs));
-        option = { ok: true, expiresMs, days: Math.round(((expiresMs - nowMs) / 86_400_000) * 10) / 10 };
+        option = { ok: true, expiresMs, days: Math.round(((expiresMs - nowMs) / 86_400_000) * 10) / 10, period: valid.map((l) => l.option.period).find(Boolean) ?? null };
       }
     }
   }

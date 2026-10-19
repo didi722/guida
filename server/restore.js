@@ -424,6 +424,7 @@ export function createRestoreServices(app) {
         // 4. il sito rilegge i dati
         setSetting(db, 'last_restore', { at: new Date(nowMs).toISOString(), mode, backupAt: meta.backupAt, source: meta.source, snapshot: id });
         app.settings.reload();
+        app.periods.reload();
         splitLegacyAudiences(db); // un backup di prima della divisione B2C/B2B ha tour con due tariffe
         app.content.reload?.();
         pruneSnapshots();

@@ -130,7 +130,28 @@ function termsFacts(ctx, acct) {
     <li><span class="muted">${t('b2b.discount')}</span> <strong>${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')}</strong></li>
     <li><span class="muted">${t('b2b.payments')}</span> <strong>${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</strong></li>
     <li><span class="muted">${t('partner.terms.options')}</span> ${optionTerms(ctx, acct)}</li>
+    ${periodTerms(ctx)}
   </ul>`;
+}
+
+/** I periodi (alta stagione, Carnevale…) in cui le opzioni o il preavviso delle agenzie sono diversi dal solito: da oggi in poi, con le date. */
+function periodTerms(ctx) {
+  const { t, lang, app } = ctx;
+  const today = nowRome().date;
+  const list = app.cfg.options.periods.filter((p) => p.to >= today && (p.optionsMode !== 'normal' || p.noticeB2bHours != null));
+  if (!list.length) return '';
+  const day = 86_400_000;
+  const rules = (p) =>
+    [
+      p.optionsMode === 'off' ? t('partner.terms.periodOff') : '',
+      p.optionsMode === 'short'
+        ? t('partner.terms.periodShort', { detail: [p.optionMaxDays != null ? t('partner.terms.periodMax', { days: timeLeft(t, p.optionMaxDays * day) }) : '', p.optionReleaseHours != null ? t('partner.terms.periodRelease', { hours: fmtHours(t, p.optionReleaseHours) }) : ''].filter(Boolean).join(', ') })
+        : '',
+      p.noticeB2bHours != null ? t('partner.terms.periodNotice', { hours: fmtHours(t, p.noticeB2bHours) }) : '',
+    ]
+      .filter(Boolean)
+      .join('; ');
+  return html`<li><span class="muted">${t('partner.terms.optPeriods')}</span><ul class="plain tier-list">${list.map((p) => html`<li>${t('partner.terms.period', { name: p.name, dates: `${fmtDate(p.from, lang, 'short')} – ${fmtDate(p.to, lang, 'short')}`, rules: rules(p) })}</li>`)}</ul></li>`;
 }
 
 /** Quanto dura un'opzione per questo account: durata fissa o tabella del sito (la stessa che si modifica dal pannello). */

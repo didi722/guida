@@ -17,6 +17,7 @@ export const EDIT_ERRORS = {
   started: 'Il servizio è già iniziato: puoi correggere persone, ore e prezzo, ma non spostarlo.',
   unavailable: 'Non c’è posto per questo gruppo in quella data e a quell’ora. Se sai già che va bene, spunta «Non controllare la disponibilità».',
   option: 'L’opzione non può stare su quella data (è troppo vicina per le regole delle opzioni): confermala prima, oppure scegli un’altra data.',
+  optionPeriod: 'In quel periodo non ci sono opzioni (Sito › Periodi): confermala prima, oppure scegli un’altra data.',
   price: 'Il prezzo non è valido: scrivi un importo in euro, per esempio 350 o 350,50.',
   promo: 'Ha un codice sconto, che non si ricalcola da solo: scegli «Prezzo concordato» e scrivi tu il nuovo importo.',
   gift: 'Una parte è stata pagata con un buono regalo: il prezzo non si può cambiare (puoi spostare data e orario).',
@@ -52,7 +53,7 @@ export function editValues(app, b, cur, over = {}) {
 /** Cosa succederebbe applicando la modifica: prima e dopo, differenza e conseguenze. */
 function previewBox(b, p) {
   if (!p) return '';
-  if (!p.ok) return html`<div class="notice notice-err" role="alert">${EDIT_ERRORS[p.error] ?? 'La modifica non è possibile.'}${p.reason ? html` <small>(${p.reason})</small>` : ''}</div>`;
+  if (!p.ok) return html`<div class="notice notice-err" role="alert">${EDIT_ERRORS[p.error === 'option' && p.reason === 'period' ? 'optionPeriod' : p.error] ?? 'La modifica non è possibile.'}${p.reason && p.reason !== 'period' ? html` <small>(${p.reason})</small>` : ''}</div>`;
   const cur = b.currency;
   const rows = [
     ['Persone', `${p.from.pax} → ${p.to.pax}`, p.from.pax !== p.to.pax],

@@ -27,6 +27,7 @@ import { adminBlogRouter } from './admin-blog.js';
 import { adminTextsRouter } from './admin-texts.js';
 import { adminSettingsRouter } from './admin-settings.js';
 import { adminBackupRouter } from './admin-backup.js';
+import { adminPeriodsRouter } from './admin-periods.js';
 import { adminSecondStepRouter, adminSecurityRouter } from './admin-security.js';
 import { adminGuideRouter } from './admin-guide.js';
 import { adminInvoicesRouter } from './admin-invoices.js';
@@ -165,6 +166,7 @@ export function adminRouter(app) {
   r.use(adminSettingsRouter(app));
   r.use(adminBackupRouter(app));
   r.use(adminSecurityRouter(app));
+  r.use(adminPeriodsRouter(app));
   r.use(adminGuideRouter(app));
 
   r.get('/feedback', (req, res) => {
