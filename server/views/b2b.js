@@ -264,7 +264,7 @@ export function accountPage(ctx, { acct, flash = '' }) {
 <section class="page-head partner-head"><div class="wrap">
   <div class="account-head">
     <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${whoOf(ctx).name} · ${whoOf(ctx).email}</p></div>
-    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a>${whoOf(ctx).owner ? html`<a class="btn btn-outline" href="${u('/b2b/team')}">${t('team.nav')}</a>` : ''}</div>
+    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a><a class="btn btn-outline" href="${u('/b2b/quotes')}">${t('quotes.nav')}</a>${whoOf(ctx).owner ? html`<a class="btn btn-outline" href="${u('/b2b/team')}">${t('team.nav')}</a>` : ''}</div>
   </div>
 </div></section>
 <section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">

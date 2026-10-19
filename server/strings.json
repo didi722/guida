@@ -2405,6 +2405,546 @@
   "Elige tu contraseña",
   "パスワードを設定する"
  ],
+ "quotes.nav": [
+  "Preventivi",
+  "Quotes",
+  "Presupuestos",
+  "見積書"
+ ],
+ "quotes.title": [
+  "Preventivi per i tuoi clienti",
+  "Quotes for your clients",
+  "Presupuestos para tus clientes",
+  "お客様向けの見積書"
+ ],
+ "quotes.lead": [
+  "Prepara un preventivo dai servizi del tuo pacchetto, mandalo al cliente per email e lascia che lo accetti online. Nessuna data viene trattenuta finché non prenoti o non opzioni.",
+  "Prepare a quote from the services in your package, email it to your client and let them accept it online. No date is held until you book or option it.",
+  "Prepara un presupuesto con los servicios de tu paquete, envíalo al cliente por correo y deja que lo acepte en línea. No se retiene ninguna fecha hasta que reserves u optes.",
+  "パッケージのサービスから見積書を作成し、お客様にメールで送って、オンラインで承認してもらえます。予約または仮押さえをするまで、日程は確保されません。"
+ ],
+ "quotes.empty": [
+  "Nessun preventivo ancora: aggiungi dei servizi al pacchetto e tocca «Prepara un preventivo».",
+  "No quotes yet: add services to your package and tap “Prepare a quote”.",
+  "Aún no hay presupuestos: añade servicios al paquete y toca «Preparar un presupuesto».",
+  "見積書はまだありません。パッケージにサービスを追加して「見積書を作成」をタップしてください。"
+ ],
+ "quotes.fromCart": [
+  "Prepara un preventivo",
+  "Prepare a quote",
+  "Preparar un presupuesto",
+  "見積書を作成"
+ ],
+ "quotes.col.client": [
+  "Cliente",
+  "Client",
+  "Cliente",
+  "お客様"
+ ],
+ "quotes.col.total": [
+  "Totale al cliente",
+  "Total for the client",
+  "Total para el cliente",
+  "お客様への合計"
+ ],
+ "quotes.col.valid": [
+  "Valido fino al",
+  "Valid until",
+  "Válido hasta el",
+  "有効期限"
+ ],
+ "quotes.st.draft": [
+  "Da inviare",
+  "Not sent",
+  "Sin enviar",
+  "未送信"
+ ],
+ "quotes.st.sent": [
+  "Inviato",
+  "Sent",
+  "Enviado",
+  "送信済み"
+ ],
+ "quotes.st.approved": [
+  "Accettato",
+  "Accepted",
+  "Aceptado",
+  "承認済み"
+ ],
+ "quotes.st.declined": [
+  "Rifiutato",
+  "Declined",
+  "Rechazado",
+  "辞退"
+ ],
+ "quotes.st.expired": [
+  "Scaduto",
+  "Expired",
+  "Caducado",
+  "期限切れ"
+ ],
+ "quotes.new.title": [
+  "Nuovo preventivo",
+  "New quote",
+  "Nuevo presupuesto",
+  "新しい見積書"
+ ],
+ "quotes.new.lead": [
+  "Il prezzo per il cliente è la tua tariffa più il ricarico, arrotondato servizio per servizio. Il cliente non vede mai la tua tariffa.",
+  "The client’s price is your rate plus your markup, rounded service by service. Your rate is never shown to the client.",
+  "El precio para el cliente es tu tarifa más tu recargo, redondeado servicio por servicio. El cliente nunca ve tu tarifa.",
+  "お客様への価格は、貴社の料金に上乗せ率を加え、サービスごとに切り上げたものです。貴社の料金はお客様には表示されません。"
+ ],
+ "quotes.new.empty": [
+  "Il pacchetto è vuoto: aggiungi dei servizi prima di preparare un preventivo.",
+  "Your package is empty: add services before preparing a quote.",
+  "El paquete está vacío: añade servicios antes de preparar un presupuesto.",
+  "パッケージが空です。見積書を作成する前にサービスを追加してください。"
+ ],
+ "quotes.new.services": [
+  "I servizi del preventivo",
+  "Services in the quote",
+  "Servicios del presupuesto",
+  "見積書のサービス"
+ ],
+ "quotes.new.yourRate": [
+  "La tua tariffa: {amount}",
+  "Your rate: {amount}",
+  "Tu tarifa: {amount}",
+  "貴社料金：{amount}"
+ ],
+ "quotes.detail.yourRate": [
+  "La tua tariffa",
+  "Your rate",
+  "Tu tarifa",
+  "貴社料金"
+ ],
+ "quotes.new.submit": [
+  "Crea il preventivo",
+  "Create the quote",
+  "Crear el presupuesto",
+  "見積書を作成する"
+ ],
+ "quotes.f.client": [
+  "Nome del cliente",
+  "Client’s name",
+  "Nombre del cliente",
+  "お客様のお名前"
+ ],
+ "quotes.f.email": [
+  "Email del cliente",
+  "Client’s email",
+  "Correo del cliente",
+  "お客様のメールアドレス"
+ ],
+ "quotes.f.emailHint": [
+  "Serve per mandargli il preventivo; puoi scriverla anche dopo.",
+  "Needed to send them the quote; you can add it later.",
+  "Sirve para enviarle el presupuesto; puedes añadirlo después.",
+  "見積書の送付に使用します。後から入力もできます。"
+ ],
+ "quotes.err.client": [
+  "Scrivi il nome del cliente.",
+  "Please enter the client’s name.",
+  "Escribe el nombre del cliente.",
+  "お客様のお名前を入力してください。"
+ ],
+ "quotes.err.until": [
+  "La validità va da oggi al giorno del primo servizio ({date}).",
+  "The validity runs from today to the day of the first service ({date}).",
+  "La validez va de hoy al día del primer servicio ({date}).",
+  "有効期限は本日から最初のサービス日（{date}）までです。"
+ ],
+ "quotes.detail.client": [
+  "Per {name}",
+  "For {name}",
+  "Para {name}",
+  "{name}様宛"
+ ],
+ "quotes.detail.created": [
+  "Preparato il {date} da {name}",
+  "Prepared on {date} by {name}",
+  "Preparado el {date} por {name}",
+  "{date}に{name}が作成"
+ ],
+ "quotes.detail.clientPrice": [
+  "Prezzo al cliente: {amount} (ricarico {markup}%)",
+  "Client price: {amount} ({markup}% markup)",
+  "Precio para el cliente: {amount} (recargo del {markup}%)",
+  "お客様価格：{amount}（上乗せ率{markup}%）"
+ ],
+ "quotes.live.ok": [
+  "Ancora prenotabile",
+  "Still bookable",
+  "Aún reservable",
+  "予約可能"
+ ],
+ "quotes.live.gone": [
+  "Non più prenotabile",
+  "No longer bookable",
+  "Ya no reservable",
+  "予約不可"
+ ],
+ "quotes.live.changed": [
+  "La tua tariffa è cambiata: ora {now}, nel preventivo {was}",
+  "Your rate has changed: now {now}, in the quote {was}",
+  "Tu tarifa ha cambiado: ahora {now}, en el presupuesto {was}",
+  "料金が変更されました。現在{now}、見積書では{was}"
+ ],
+ "quotes.detail.share": [
+  "Il collegamento del cliente",
+  "The client’s link",
+  "El enlace del cliente",
+  "お客様用リンク"
+ ],
+ "quotes.detail.shareHint": [
+  "Chi lo ha può vedere il preventivo e accettarlo: mandalo solo al tuo cliente.",
+  "Anyone with it can see the quote and accept it: send it only to your client.",
+  "Quien lo tenga puede ver el presupuesto y aceptarlo: envíalo solo a tu cliente.",
+  "このリンクを知っている人は見積書を見て承認できます。お客様にのみお送りください。"
+ ],
+ "quotes.detail.sent": [
+  "Mandato a {email}; ultimo invio il {date}",
+  "Sent to {email}; last sent on {date}",
+  "Enviado a {email}; último envío el {date}",
+  "{email}に送信済み。最終送信：{date}"
+ ],
+ "quotes.detail.sends": [
+  "Invii: {n} su {max}",
+  "Emails sent: {n} of {max}",
+  "Envíos: {n} de {max}",
+  "送信回数：{n}／{max}"
+ ],
+ "quotes.detail.viewed": [
+  "Aperto dal cliente il {date}",
+  "Opened by the client on {date}",
+  "Abierto por el cliente el {date}",
+  "{date}にお客様が開封"
+ ],
+ "quotes.detail.notViewed": [
+  "Il cliente non l’ha ancora aperto",
+  "The client hasn’t opened it yet",
+  "El cliente aún no lo ha abierto",
+  "お客様はまだ開いていません"
+ ],
+ "quotes.decided.approved": [
+  "Accettato dal cliente il {date}",
+  "Accepted by the client on {date}",
+  "Aceptado por el cliente el {date}",
+  "{date}にお客様が承認"
+ ],
+ "quotes.decided.declined": [
+  "Rifiutato dal cliente il {date}",
+  "Declined by the client on {date}",
+  "Rechazado por el cliente el {date}",
+  "{date}にお客様が辞退"
+ ],
+ "quotes.decided.note": [
+  "Il messaggio del cliente: «{note}»",
+  "The client’s message: “{note}”",
+  "El mensaje del cliente: «{note}»",
+  "お客様からのメッセージ：「{note}」"
+ ],
+ "quotes.decided.next": [
+  "Se vuoi procedere, rimetti i servizi nel pacchetto e prenota (o opziona): nessuna data è trattenuta.",
+  "To go ahead, put the services back in your package and book (or option) them: no date is held.",
+  "Para continuar, vuelve a poner los servicios en el paquete y reserva (u opta): no hay ninguna fecha retenida.",
+  "進める場合は、サービスをパッケージに戻して予約（または仮押さえ）してください。日程はまだ確保されていません。"
+ ],
+ "quotes.loaded": [
+  "Servizi messi nel pacchetto il {date}",
+  "Services put in the package on {date}",
+  "Servicios puestos en el paquete el {date}",
+  "{date}にサービスをパッケージへ追加"
+ ],
+ "quotes.act.send": [
+  "Manda al cliente per email",
+  "Email it to the client",
+  "Enviar al cliente por correo",
+  "お客様にメールで送る"
+ ],
+ "quotes.act.resend": [
+  "Manda di nuovo",
+  "Send again",
+  "Enviar de nuevo",
+  "再送する"
+ ],
+ "quotes.act.pdf": [
+  "Scarica il PDF",
+  "Download the PDF",
+  "Descargar el PDF",
+  "PDFをダウンロード"
+ ],
+ "quotes.act.open": [
+  "Apri la pagina del cliente",
+  "Open the client’s page",
+  "Abrir la página del cliente",
+  "お客様用ページを開く"
+ ],
+ "quotes.act.cart": [
+  "Rimetti i servizi nel pacchetto",
+  "Put the services back in the package",
+  "Volver a poner los servicios en el paquete",
+  "サービスをパッケージに戻す"
+ ],
+ "quotes.act.goCart": [
+  "Vai al pacchetto",
+  "Go to the package",
+  "Ir al paquete",
+  "パッケージへ"
+ ],
+ "quotes.act.delete": [
+  "Elimina",
+  "Delete",
+  "Eliminar",
+  "削除"
+ ],
+ "quotes.act.deleteAsk": [
+  "Eliminare il preventivo {ref}? Il collegamento del cliente smette di funzionare.",
+  "Delete quote {ref}? The client’s link will stop working.",
+  "¿Eliminar el presupuesto {ref}? El enlace del cliente dejará de funcionar.",
+  "見積書{ref}を削除しますか？お客様用リンクは使えなくなります。"
+ ],
+ "quotes.send.title": [
+  "Manda il preventivo",
+  "Send the quote",
+  "Enviar el presupuesto",
+  "見積書を送る"
+ ],
+ "quotes.send.note": [
+  "Il cliente riceve un’email con il PDF e il collegamento per accettare; se risponde, la risposta arriva a te ({email}).",
+  "The client gets an email with the PDF and a link to accept; if they reply, the reply comes to you ({email}).",
+  "El cliente recibe un correo con el PDF y un enlace para aceptar; si responde, la respuesta te llega a ti ({email}).",
+  "お客様にはPDFと承認用リンクのメールが届きます。返信はあなた（{email}）に届きます。"
+ ],
+ "quotes.ok.created": [
+  "Preventivo creato: ora puoi mandarlo al cliente.",
+  "Quote created: you can now send it to your client.",
+  "Presupuesto creado: ya puedes enviarlo al cliente.",
+  "見積書を作成しました。お客様に送信できます。"
+ ],
+ "quotes.ok.sent": [
+  "Preventivo mandato a {email}.",
+  "Quote sent to {email}.",
+  "Presupuesto enviado a {email}.",
+  "{email}に見積書を送りました。"
+ ],
+ "quotes.ok.deleted": [
+  "Preventivo eliminato.",
+  "Quote deleted.",
+  "Presupuesto eliminado.",
+  "見積書を削除しました。"
+ ],
+ "quotes.ok.cart": [
+  "{n} servizi rimessi nel pacchetto.",
+  "{n} services put back in the package.",
+  "{n} servicios vueltos a poner en el paquete.",
+  "{n}件のサービスをパッケージに戻しました。"
+ ],
+ "quotes.ok.cartSome": [
+  "{n} servizi rimessi nel pacchetto; gli altri non sono più prenotabili, o ci sono già.",
+  "{n} services put back in the package; the others are no longer bookable, or are already there.",
+  "{n} servicios vueltos a poner en el paquete; los demás ya no se pueden reservar, o ya están.",
+  "{n}件のサービスをパッケージに戻しました。残りは予約できなくなったか、すでに入っています。"
+ ],
+ "quotes.err.cartNone": [
+  "Nessun servizio rimesso nel pacchetto: non sono più prenotabili, o ci sono già.",
+  "No service was put back in the package: they are no longer bookable, or are already there.",
+  "No se volvió a poner ningún servicio en el paquete: ya no se pueden reservar, o ya están.",
+  "パッケージに戻せたサービスはありません。予約できなくなったか、すでに入っています。"
+ ],
+ "quotes.err.noEmail": [
+  "Scrivi l’email del cliente per mandargli il preventivo.",
+  "Enter the client’s email to send them the quote.",
+  "Escribe el correo del cliente para enviarle el presupuesto.",
+  "見積書を送るには、お客様のメールアドレスを入力してください。"
+ ],
+ "quotes.err.mail": [
+  "L’email non è partita: riprova tra poco.",
+  "The email didn’t go out: please try again shortly.",
+  "El correo no ha salido: inténtalo de nuevo en un momento.",
+  "メールを送信できませんでした。しばらくしてからもう一度お試しください。"
+ ],
+ "quotes.err.sends": [
+  "Questo preventivo è già stato mandato {n} volte: per un nuovo invio preparane uno nuovo.",
+  "This quote has already been sent {n} times: prepare a new one to send again.",
+  "Este presupuesto ya se ha enviado {n} veces: prepara uno nuevo para volver a enviarlo.",
+  "この見積書はすでに{n}回送信されています。再送するには新しい見積書を作成してください。"
+ ],
+ "quotes.err.limit": [
+  "Hai mandato molti preventivi in poco tempo: riprova più tardi.",
+  "You’ve sent many quotes in a short time: please try again later.",
+  "Has enviado muchos presupuestos en poco tiempo: inténtalo más tarde.",
+  "短時間に多くの見積書を送信しました。しばらくしてからお試しください。"
+ ],
+ "quotes.err.expired": [
+  "Il preventivo è scaduto: preparane uno nuovo.",
+  "The quote has expired: prepare a new one.",
+  "El presupuesto ha caducado: prepara uno nuevo.",
+  "見積書は期限切れです。新しい見積書を作成してください。"
+ ],
+ "quotes.err.decided": [
+  "Il cliente ha già risposto: non si può più mandare.",
+  "The client has already replied: it can no longer be sent.",
+  "El cliente ya ha respondido: ya no se puede enviar.",
+  "お客様はすでに回答済みのため、送信できません。"
+ ],
+ "qp.title": [
+  "Preventivo {ref}",
+  "Quote {ref}",
+  "Presupuesto {ref}",
+  "見積書 {ref}"
+ ],
+ "qp.lead": [
+  "{agency} ha preparato questo preventivo per {client}.",
+  "{agency} has prepared this quote for {client}.",
+  "{agency} ha preparado este presupuesto para {client}.",
+  "{agency}が{client}様のために見積書を作成しました。"
+ ],
+ "qp.services": [
+  "I servizi",
+  "The services",
+  "Los servicios",
+  "サービス"
+ ],
+ "qp.pdf": [
+  "Scarica il PDF",
+  "Download the PDF",
+  "Descargar el PDF",
+  "PDFをダウンロード"
+ ],
+ "qp.how": [
+  "Accettando dici a {agency} che vuoi procedere: ti scriverà per confermare. Non devi pagare nulla adesso e nessuna data è trattenuta fino alla conferma.",
+  "By accepting you tell {agency} you’d like to go ahead: they will contact you to confirm. You pay nothing now and no date is held until confirmation.",
+  "Al aceptar le dices a {agency} que quieres seguir adelante: te escribirá para confirmar. No pagas nada ahora y ninguna fecha queda retenida hasta la confirmación.",
+  "承認すると、{agency}に進めたい旨が伝わり、確認のご連絡があります。現時点でのお支払いは不要で、確認まで日程は確保されません。"
+ ],
+ "qp.msg": [
+  "Un messaggio per {agency} (facoltativo)",
+  "A message for {agency} (optional)",
+  "Un mensaje para {agency} (opcional)",
+  "{agency}へのメッセージ（任意）"
+ ],
+ "qp.approve": [
+  "Accetto il preventivo",
+  "I accept the quote",
+  "Acepto el presupuesto",
+  "見積書を承認する"
+ ],
+ "qp.decline": [
+  "Non mi interessa",
+  "Not interested",
+  "No me interesa",
+  "辞退する"
+ ],
+ "qp.state.approved": [
+  "Hai accettato questo preventivo il {date}: {agency} ti scriverà per confermare.",
+  "You accepted this quote on {date}: {agency} will contact you to confirm.",
+  "Aceptaste este presupuesto el {date}: {agency} te escribirá para confirmar.",
+  "{date}にこの見積書を承認しました。{agency}から確認のご連絡があります。"
+ ],
+ "qp.state.declined": [
+  "Hai rifiutato questo preventivo il {date}.",
+  "You declined this quote on {date}.",
+  "Rechazaste este presupuesto el {date}.",
+  "{date}にこの見積書を辞退しました。"
+ ],
+ "qp.state.expired": [
+  "Questo preventivo è scaduto il {date}: chiedi un nuovo preventivo a {agency}.",
+  "This quote expired on {date}: please ask {agency} for a new one.",
+  "Este presupuesto caducó el {date}: pide uno nuevo a {agency}.",
+  "この見積書は{date}に期限切れになりました。{agency}に新しい見積書をご依頼ください。"
+ ],
+ "qp.done.approved": [
+  "Grazie! Abbiamo avvisato {agency}: ti scriverà per confermare.",
+  "Thank you! We’ve told {agency}: they will contact you to confirm.",
+  "¡Gracias! Hemos avisado a {agency}: te escribirá para confirmar.",
+  "ありがとうございます。{agency}に連絡しました。確認のご連絡をお待ちください。"
+ ],
+ "qp.done.declined": [
+  "Grazie, abbiamo avvisato {agency}.",
+  "Thank you, we’ve told {agency}.",
+  "Gracias, hemos avisado a {agency}.",
+  "ありがとうございます。{agency}にお伝えしました。"
+ ],
+ "qp.by": [
+  "Preventivo preparato da {agency} · gestito con {site}",
+  "Quote prepared by {agency} · powered by {site}",
+  "Presupuesto preparado por {agency} · gestionado con {site}",
+  "見積書作成：{agency}｜運営：{site}"
+ ],
+ "qm.subject": [
+  "{agency} · Preventivo {ref}",
+  "{agency} · Quote {ref}",
+  "{agency} · Presupuesto {ref}",
+  "{agency}｜見積書 {ref}"
+ ],
+ "qm.intro": [
+  "{agency} ti ha preparato un preventivo per Venezia con {site}. Qui sotto trovi i servizi e il prezzo; il PDF è in allegato.",
+  "{agency} has prepared a quote for Venice with {site}. You’ll find the services and the price below; the PDF is attached.",
+  "{agency} te ha preparado un presupuesto para Venecia con {site}. Abajo encontrarás los servicios y el precio; el PDF va adjunto.",
+  "{agency}が、{site}によるヴェネツィアの見積書を作成しました。サービスと料金は以下のとおりです。PDFを添付しています。"
+ ],
+ "qm.cta": [
+  "Guarda e accetta il preventivo",
+  "View and accept the quote",
+  "Ver y aceptar el presupuesto",
+  "見積書を見て承認する"
+ ],
+ "qm.valid": [
+  "Il preventivo è valido fino al {date}.",
+  "The quote is valid until {date}.",
+  "El presupuesto es válido hasta el {date}.",
+  "この見積書は{date}まで有効です。"
+ ],
+ "qm.reply": [
+  "Per qualsiasi domanda rispondi a questa email: la tua risposta arriva a {agency}.",
+  "For any question just reply to this email: your reply goes to {agency}.",
+  "Para cualquier duda responde a este correo: tu respuesta llega a {agency}.",
+  "ご質問はこのメールへの返信でどうぞ。返信は{agency}に届きます。"
+ ],
+ "qm.sentBy": [
+  "Email inviata da {site} per conto di {agency}.",
+  "Email sent by {site} on behalf of {agency}.",
+  "Correo enviado por {site} en nombre de {agency}.",
+  "このメールは{agency}に代わって{site}から送信されました。"
+ ],
+ "qa.subject.approved": [
+  "Il tuo cliente ha accettato il preventivo {ref}",
+  "Your client accepted quote {ref}",
+  "Tu cliente ha aceptado el presupuesto {ref}",
+  "お客様が見積書{ref}を承認しました"
+ ],
+ "qa.subject.declined": [
+  "Il tuo cliente ha rifiutato il preventivo {ref}",
+  "Your client declined quote {ref}",
+  "Tu cliente ha rechazado el presupuesto {ref}",
+  "お客様が見積書{ref}を辞退しました"
+ ],
+ "qa.body.approved": [
+  "{client} ha accettato il preventivo {ref} ({total}). Nessuna data è stata trattenuta: se vuoi procedere, rimetti i servizi nel pacchetto e prenota (o opziona) prima che altri prendano il posto.",
+  "{client} accepted quote {ref} ({total}). No date has been held: to go ahead, put the services back in your package and book (or option) them before someone else takes the spot.",
+  "{client} ha aceptado el presupuesto {ref} ({total}). No se ha retenido ninguna fecha: para seguir adelante, vuelve a poner los servicios en el paquete y reserva (u opta) antes de que otro ocupe el sitio.",
+  "{client}様が見積書{ref}（{total}）を承認しました。日程はまだ確保されていません。進める場合は、他の方に先を越される前に、サービスをパッケージに戻して予約（または仮押さえ）してください。"
+ ],
+ "qa.body.declined": [
+  "{client} ha rifiutato il preventivo {ref} ({total}).",
+  "{client} declined quote {ref} ({total}).",
+  "{client} ha rechazado el presupuesto {ref} ({total}).",
+  "{client}様が見積書{ref}（{total}）を辞退しました。"
+ ],
+ "qa.message": [
+  "Il suo messaggio: «{note}»",
+  "Their message: “{note}”",
+  "Su mensaje: «{note}»",
+  "メッセージ：「{note}」"
+ ],
+ "qa.cta": [
+  "Apri il preventivo",
+  "Open the quote",
+  "Abrir el presupuesto",
+  "見積書を開く"
+ ],
  "b2b.status": [
   "Stato dell’account",
   "Account status",
@@ -7546,6 +8086,12 @@
   "Valid until",
   "Válido hasta el",
   "有効期限"
+ ],
+ "quote.ref": [
+  "Preventivo n.",
+  "Quote no.",
+  "Presupuesto n.º",
+  "見積番号"
  ],
  "quote.total": [
   "Totale",

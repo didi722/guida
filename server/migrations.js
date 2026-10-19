@@ -634,6 +634,40 @@ ALTER TABLE cart_items ADD COLUMN user_id INTEGER;
 ALTER TABLE waitlist ADD COLUMN user_id INTEGER;
 `;
 
+const V31_QUOTES = `
+-- Preventivi online delle agenzie: una fotografia dei servizi (tariffa dell'agenzia e prezzo al cliente) che l'agenzia manda al suo cliente
+-- finale per email; il cliente lo apre dal collegamento e lo accetta o lo rifiuta. Non trattiene nessuna data.
+CREATE TABLE quotes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ref TEXT NOT NULL UNIQUE,                       -- QT-XXXXXX
+  token TEXT NOT NULL,                            -- il segreto del collegamento del cliente
+  account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  user_id INTEGER,                                -- chi dell'agenzia l'ha preparato (vuoto: il titolare)
+  created_by TEXT,
+  client_name TEXT NOT NULL,
+  client_email TEXT,
+  client_ref TEXT,
+  lang TEXT NOT NULL DEFAULT 'it',                -- lingua del documento e dell'email al cliente
+  markup_percent REAL NOT NULL DEFAULT 0,
+  markup_round INTEGER NOT NULL DEFAULT 5,
+  valid_until TEXT NOT NULL,                      -- AAAA-MM-GG, compreso
+  note TEXT,
+  lines_json TEXT NOT NULL,                       -- i servizi com'erano quando è stato preparato
+  net_cents INTEGER NOT NULL,                     -- quanto paga l'agenzia (la sua tariffa)
+  total_cents INTEGER NOT NULL,                   -- quanto vede il cliente (con il ricarico)
+  currency TEXT NOT NULL DEFAULT 'EUR',
+  status TEXT NOT NULL DEFAULT 'draft',           -- draft | sent | approved | declined (scaduto si ricava dalla data)
+  sent_at TEXT,
+  sent_count INTEGER NOT NULL DEFAULT 0,
+  viewed_at TEXT,
+  decided_at TEXT,
+  decided_note TEXT,
+  loaded_at TEXT,                                 -- quando l'agenzia ha rimesso i servizi nel pacchetto per prenotarli
+  created_at TEXT NOT NULL
+);
+CREATE INDEX idx_quotes_account ON quotes(account_id, id);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -692,6 +726,7 @@ export const MIGRATIONS = [
   // v29 — verifica della partita IVA e inviti alle agenzie
   V29_PARTNER_ONBOARDING,
   V30_TEAM,
+  V31_QUOTES,
 ];
 
 export function migrate(db) {

@@ -15,6 +15,8 @@ import { inviteOffer } from './invites.js';
 import { INVITE_DAYS } from './partnerInvites.js';
 import { vatLabel } from './vat.js';
 import { TEAM_INVITE_DAYS } from './team.js';
+import { brandOf } from './agencyDocs.js';
+import { clientView } from './quotes.js';
 import { meetingOf, themeText } from './choices.js';
 import { ensurePayRef, groupIban, invoiceDue, invoicePayUrl, isPayable, payInstructions } from './invoicePayments.js';
 
@@ -608,6 +610,98 @@ export async function sendTeamInvite(app, { account, inviter, user }, url) {
     ),
     replyTo: account.email,
   });
+}
+
+// ───────────── Preventivi online delle agenzie ─────────────
+/** Come `layout`, ma con il nome e i recapiti dell'agenzia in testa: è il suo preventivo, mandato per suo conto. */
+function agencyLayout(brand, inner) {
+  return html`<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1c1c1c;line-height:1.55">
+    <div style="background:#d6bb51;padding:18px 24px;border-radius:12px 12px 0 0"><strong style="font-size:20px">${brand.name}</strong>${brand.contact ? html`<br><span style="font-size:13px">${brand.contact}</span>` : ''}</div>
+    <div style="border:1px solid #eee;border-top:0;padding:24px;border-radius:0 0 12px 12px">${inner}</div>
+  </div>`;
+}
+
+/**
+ * Il preventivo al cliente finale dell'agenzia: i servizi con il prezzo per lui (mai la tariffa dell'agenzia), la validità, il collegamento per
+ * accettare e il PDF in allegato. Parte dal sito, ma le risposte arrivano all'agenzia (`replyTo`).
+ * @returns {Promise<boolean>} false se l'email non è partita
+ */
+export async function sendQuoteToClient(app, q, { to, replyTo, pdf }) {
+  const lang = normLang(q.lang);
+  const t = makeT(lang);
+  const site = app.cfg.site.name;
+  const brand = brandOf(app, q.account_id);
+  const view = clientView(app, q, lang);
+  const money = (c) => formatMoney(c, lang, q.currency);
+  const url = `${app.cfg.baseUrl}/${lang}/quotes/${q.ref}?t=${q.token}`;
+  const hello = greet(lang, q.client_name);
+  const intro = t('qm.intro', { agency: brand.name, site });
+  const valid = t('qm.valid', { date: fmtDate(q.valid_until, lang) });
+  const reply = t('qm.reply', { agency: brand.name });
+  const sentBy = t('qm.sentBy', { site, agency: brand.name });
+  const rows = view.lines.map((l) => ({ title: l.title, when: `${fmtDate(l.date, lang)} · ${l.when} · ${t('quote.pax', { n: l.pax })}`, price: money(l.cents) }));
+  return app.mail.send({
+    to,
+    subject: t('qm.subject', { agency: brand.name, ref: q.ref }),
+    text: [hello, '', intro, '', ...rows.flatMap((r) => [`• ${r.title} — ${r.price}`, `  ${r.when}`]), `${t('quote.total')}: ${money(view.totalCents)}`, ...(q.note ? ['', q.note] : []), '', valid, '', `${t('qm.cta')}: ${url}`, '', reply, sentBy].join('\n'),
+    html: String(
+      agencyLayout(
+        brand,
+        html`<p>${hello}</p><p>${intro}</p>
+      <table style="border-collapse:collapse;width:100%;font-size:15px">${rows.map((r) => html`<tr><td style="padding:8px 12px 8px 0;border-bottom:1px solid #eee"><strong>${r.title}</strong><br><span style="color:#666;font-size:13px">${r.when}</span></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap"><strong>${r.price}</strong></td></tr>`)}
+        <tr><td style="padding:10px 12px 10px 0">${t('quote.total')}</td><td style="padding:10px 0;text-align:right;font-size:18px"><strong>${money(view.totalCents)}</strong></td></tr></table>
+      ${q.note ? html`<p style="border-left:3px solid #d6bb51;padding-left:12px;white-space:pre-line">${q.note}</p>` : ''}
+      <p style="color:#666;font-size:13px">${valid}</p>
+      <p><a href="${url}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('qm.cta')}</a></p>
+      <p style="color:#666;font-size:13px">${reply}<br>${sentBy}</p>`,
+      ),
+    ),
+    replyTo,
+    attachments: [{ filename: `preventivo-${q.ref}.pdf`, content: pdf, contentType: 'application/pdf' }],
+  });
+}
+
+/** All'agenzia (a chi ha preparato il preventivo e al titolare): il cliente ha accettato o rifiutato. Nella lingua di ciascuno. */
+export async function notifyAgencyQuote(app, q, decision) {
+  const { db } = app;
+  const account = db.prepare('SELECT * FROM accounts WHERE id = ?').get(q.account_id);
+  if (!account) return;
+  const creator = q.user_id ? db.prepare('SELECT * FROM account_users WHERE id = ? AND account_id = ?').get(q.user_id, account.id) : null;
+  const people = [creator ? { email: creator.email, name: creator.name, lang: creator.lang } : null, { email: account.email, name: account.contact_name, lang: account.lang }].filter(Boolean);
+  for (const person of people) {
+    const lang = normLang(person.lang);
+    const t = makeT(lang);
+    const body = t(`qa.body.${decision}`, { client: q.client_name, ref: q.ref, total: formatMoney(q.total_cents, lang, q.currency) });
+    const note = q.decided_note ? t('qa.message', { note: q.decided_note }) : '';
+    const url = `${app.cfg.baseUrl}/${lang}/b2b/quotes/${q.ref}`;
+    const hello = greet(lang, person.name);
+    const sign = `${bye(lang)} ${app.cfg.site.name}`;
+    await app.mail.send({
+      to: person.email,
+      subject: t(`qa.subject.${decision}`, { ref: q.ref }),
+      text: [hello, '', body, ...(note ? ['', note] : []), '', `${t('qa.cta')}: ${url}`, '', sign].join('\n'),
+      html: String(layout(app, lang, html`<p>${hello}</p><p>${body}</p>${note ? html`<p style="border-left:3px solid #d6bb51;padding-left:12px;white-space:pre-line">${note}</p>` : ''}<p><a href="${url}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('qa.cta')}</a></p><p style="color:#666;font-size:13px">${sign}</p>`)),
+      replyTo: app.cfg.mail.notifyTo || undefined,
+    });
+  }
+}
+
+/** Alla guida (in italiano): il cliente di un'agenzia ha accettato un preventivo. Nessuna data è trattenuta; non si vede il ricarico dell'agenzia. */
+export async function notifyGuideQuote(app, q) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const account = app.db.prepare('SELECT company FROM accounts WHERE id = ?').get(q.account_id);
+  const view = clientView(app, q, 'it');
+  const lines = [
+    `Preventivo accettato ${q.ref} — ${account?.company ?? ''}`,
+    `Il cliente (${q.client_name}) ha accettato il preventivo dell'agenzia. Nessuna data è trattenuta: se l'agenzia prenota, lo vedrai qui.`,
+    '',
+    ...view.lines.map((l) => `${fmtDate(l.date, 'it', 'short')} · ${l.when} · ${l.title} · ${l.pax} pers.`),
+    `Tariffa dell'agenzia: ${formatMoney(q.net_cents, 'it', q.currency)}`,
+    '',
+    `${app.cfg.baseUrl}/admin/partners/${q.account_id}`,
+  ];
+  await app.mail.send({ to, subject: `Preventivo accettato: ${account?.company ?? ''} — ${q.ref}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
 }
 
 /** Il collegamento per scegliere una nuova password (vale un'ora, una volta sola: dopo il cambio non funziona più). */

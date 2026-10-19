@@ -20,6 +20,10 @@ export function createLimits() {
     register: rateLimiter({ windowMs: 60 * 60_000, max: 6 }),
     forgot: rateLimiter({ windowMs: 60 * 60_000, max: 5 }), // richieste di nuova password
     team: rateLimiter({ windowMs: 60 * 60_000, max: 20 }), // inviti ai collaboratori (per agenzia)
+    quote: rateLimiter({ windowMs: 60 * 60_000, max: 30 }), // preventivi preparati (per agenzia)
+    quoteMail: rateLimiter({ windowMs: 60 * 60_000, max: 20 }), // preventivi mandati per email (per agenzia)
+    quoteTo: rateLimiter({ windowMs: 24 * 60 * 60_000, max: 3 }), // e a uno stesso indirizzo, da chiunque, in un giorno
+    quotePublic: rateLimiter({ windowMs: 10 * 60_000, max: 60 }), // la pagina del cliente, il suo PDF e la sua risposta (per indirizzo IP)
     api: rateLimiter({ windowMs: 60_000, max: 150 }),
     codes: rateLimiter({ windowMs: 10 * 60_000, max: 30 }), // tentativi con codici sconto / buoni regalo
     docs: rateLimiter({ windowMs: 10 * 60_000, max: 40 }), // preventivi PDF e caricamento del logo delle agenzie

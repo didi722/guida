@@ -53,7 +53,7 @@ export function packageCartPage(ctx, { acct, summary, values = {}, error = '', f
 <section class="page-head partner-head"><div class="wrap">
   ${breadcrumbs(ctx, [homeCrumb(ctx), [t('pkg.title')]])}
   <div class="account-head"><div><p class="eyebrow">${acct.company}</p><h1>${t('pkg.title')}</h1><p class="lead">${t('pkg.lead')}</p></div>
-    <div class="btn-row"><a class="btn btn-outline btn-lg" href="${u('/book')}">${t('pkg.addAnother')}</a></div></div>
+    <div class="btn-row"><a class="btn btn-outline btn-lg" href="${u('/book')}">${t('pkg.addAnother')}</a>${lines.length ? html`<a class="btn btn-outline btn-lg" href="${u('/b2b/quotes/new')}">${t('quotes.fromCart')}</a>` : ''}</div></div>
 </div></section>
 <section class="section tight"><div class="wrap">
   ${flash === 'added' || flash === 'removed' ? html`<div class="notice notice-ok" role="status">${t(`pkg.flash.${flash}`)}</div>` : ''}

@@ -5,6 +5,7 @@ import { meetingOf } from './choices.js';
 import { makeT } from './i18n.js';
 import { normLang, pick } from './langs.js';
 import { COLORS as C, CW, PAGE, box, createDoc, ensure, finishDoc, fold, keyValueRows, title as titleBlock } from './pdf.js';
+import { quoteBookings } from './quotes.js';
 import { timeRange } from './rates.js';
 import { fmtDate, nowRome } from './time.js';
 import { formatMoney } from './util.js';
@@ -50,9 +51,9 @@ function serviceBlock(doc, { name, price, details, meeting, included }) {
  * @param {object[]} o.bookings le prenotazioni da includere (solo opzioni e confermate)
  * @param {number} o.markup ricarico % · @param {number} o.round arrotondamento (euro)
  * @param {string} [o.client] a chi è intestato · @param {string} [o.until] AAAA-MM-GG di validità · @param {string} [o.note] note per il cliente
- * @param {string} [o.lang] lingua del documento
+ * @param {string} [o.lang] lingua del documento · @param {string} [o.ref] numero del preventivo salvato (QT-…)
  */
-export async function renderQuotePdf(app, { account, bookings, markup = 0, round = 5, client = '', until = '', note = '', lang: wanted, nowDate = nowRome().date }) {
+export async function renderQuotePdf(app, { account, bookings, markup = 0, round = 5, client = '', until = '', note = '', lang: wanted, ref = '', nowDate = nowRome().date }) {
   const lang = normLang(wanted ?? account.lang);
   const t = makeT(lang);
   const { cfg } = app;
@@ -65,6 +66,7 @@ export async function renderQuotePdf(app, { account, bookings, markup = 0, round
   titleBlock(doc, t('quote.title'), client ? t('quote.forClient', { name: client }) : t('quote.heading'));
   const refs = [...new Set(quote.lines.map((l) => l.booking.client_ref).filter(Boolean))].join(', ');
   keyValueRows(doc, [
+    [t('quote.ref'), ref],
     [t('quote.issued'), nowDate ? fmtDate(nowDate, lang) : ''],
     [t('quote.valid'), until ? fmtDate(until, lang) : '', { bold: true }],
     [t('f.clientRef'), refs],
@@ -100,4 +102,10 @@ export async function renderQuotePdf(app, { account, bookings, markup = 0, round
     doc.font('R').fontSize(9).fillColor(C.muted).text(fold(brand.footer), PAGE.m, doc.y, { width: CW });
   }
   return finishDoc(doc, app, lang, { lines: [[brand.name, brand.contact].filter(Boolean).join('  ·  '), t('quote.operator', { name: cfg.site.name })] });
+}
+
+/** Il PDF di un preventivo salvato (con i servizi e i prezzi com'erano quando è stato preparato). */
+export async function renderSavedQuotePdf(app, q, { lang } = {}) {
+  const account = app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(q.account_id);
+  return renderQuotePdf(app, { account, bookings: quoteBookings(q), markup: q.markup_percent, round: q.markup_round, client: q.client_name, until: q.valid_until, note: q.note ?? '', lang: lang ?? q.lang, ref: q.ref, nowDate: nowRome(Date.parse(q.created_at)).date });
 }
