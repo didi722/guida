@@ -13,13 +13,18 @@
     if (window.createImageBitmap) return createImageBitmap(file).catch(function () { return viaImage(file); });
     return viaImage(file);
   }
+  // senza createImageBitmap (o con un file che non sa leggere) si passa da un indirizzo «data:», l'unico tipo che la politica di sicurezza del sito ammette per le immagini
   function viaImage(file) {
     return new Promise(function (resolve, reject) {
-      var url = URL.createObjectURL(file);
-      var img = new Image();
-      img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error(box.getAttribute('data-error'))); };
-      img.src = url;
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error(box.getAttribute('data-error'))); };
+      reader.onload = function () {
+        var img = new Image();
+        img.onload = function () { resolve(img); };
+        img.onerror = function () { reject(new Error(box.getAttribute('data-error'))); };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
     });
   }
   function render(src, side, jpeg) {
