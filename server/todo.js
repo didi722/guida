@@ -63,6 +63,8 @@ export function todoList(app, nowMs = Date.now()) {
   // ── da controllare ──
   const check = [];
   for (const s of app.calendars.problems(nowMs)) check.push({ tone: 'warn', text: `Il calendario «${s.name}» non si aggiorna`, meta: 'finché non torna a funzionare le sue ore non bloccano il sito', href: '/admin/availability' });
+  const backup = app.autoBackup.problem(nowMs);
+  if (backup) check.push({ ...backup, href: '/admin/backup' });
   section('check', 'Da controllare', check);
 
   // ── in arrivo ──

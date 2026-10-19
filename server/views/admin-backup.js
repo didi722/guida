@@ -1,4 +1,4 @@
-import { html } from '../html.js';
+import { html, raw } from '../html.js';
 import { KEEP_SNAPSHOTS, MODES, RESTORE_WORD } from '../restore.js';
 import { adminLayout } from './admin.js';
 
@@ -7,11 +7,70 @@ const when = (iso) => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/
 const day = (iso) => new Date(iso).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', year: '2-digit' });
 const daysAgo = (iso) => Math.floor((Date.now() - Date.parse(iso)) / 86400000);
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const NAME_DATE = /^guida-backup-(\d{4}-\d{2}-\d{2})\.zip$/;
 const script = (ctx) => `<script src="/js/admin-restore.js?v=${ctx.app.assetVersion}" defer></script>`;
 
-export function backupPage(ctx, { last, media, dbBytes, snapshots = [], lastRestore = null, flash = '', error = '' }) {
+const hourText = (h) => `${String(h).padStart(2, '0')}:00`;
+const dayText = (date) => new Date(`${date}T12:00:00Z`).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', weekday: 'long', day: 'numeric', month: 'long' });
+const STATE_CHIP = { running: ['chip-warn', 'In corso'], error: ['chip-err', 'Non riuscita'], ok: ['chip-ok', 'Attiva'], off: ['', 'Spenta'], none: ['chip-warn', 'Da configurare'] };
+
+/** La copia giornaliera fuori dal server: stato, prove e copie presenti. */
+function autoCard(auto) {
+  const state = !auto.configured ? 'none' : !auto.enabled ? 'off' : auto.running ? 'running' : auto.lastError ? 'error' : 'ok';
+  const [chip, label] = STATE_CHIP[state];
+  const copies = auto.destinations.flatMap((d) => (auto.copies[d.id]?.list ?? []).map((c) => ({ ...c, dest: d })).sort((a, b) => b.name.localeCompare(a.name)));
+  const setup = html`<details class="auto-how"${auto.configured ? '' : ' open'}>
+    <summary>Come si imposta</summary>
+    <p class="muted small">La destinazione e le chiavi si scrivono sul server, nelle variabili d’ambiente (come le chiavi di Stripe), e poi si riavvia il servizio. Puoi usarne una o tutte e due.</p>
+    <div class="table-wrap"><table class="table"><thead><tr><th>Variabile</th><th>Cosa scrivere</th></tr></thead><tbody>
+      <tr><td><code>BACKUP_DIR</code></td><td>una cartella fuori dal sito: un disco o un NAS montato, per esempio <code>/backups</code> (con Docker, un volume diverso da quello dei dati)</td></tr>
+      <tr><td><code>BACKUP_S3_ENDPOINT</code></td><td>l’indirizzo del servizio di archiviazione online, per esempio <code>https://s3.eu-central-003.backblazeb2.com</code> (Backblaze B2, Cloudflare R2, Wasabi, Scaleway, AWS S3…)</td></tr>
+      <tr><td><code>BACKUP_S3_BUCKET</code></td><td>il nome del bucket (<strong>privato</strong>)</td></tr>
+      <tr><td><code>BACKUP_S3_REGION</code></td><td>la regione del bucket, per esempio <code>eu-central-003</code> (per Cloudflare R2: <code>auto</code>)</td></tr>
+      <tr><td><code>BACKUP_S3_ACCESS_KEY</code> · <code>BACKUP_S3_SECRET_KEY</code></td><td>la chiave di accesso e il suo segreto, creati solo per questo bucket (lettura, scrittura, elenco)</td></tr>
+      <tr><td><code>BACKUP_S3_PREFIX</code></td><td>facoltativa: la «cartella» nel bucket (di base <code>guida/</code>)</td></tr>
+      <tr><td><code>BACKUP_S3_PATH_STYLE</code></td><td>facoltativa: <code>true</code> di base; <code>false</code> se il servizio vuole l’indirizzo <code>bucket.servizio</code></td></tr>
+    </tbody></table></div>
+    <p class="muted small">La copia contiene i dati personali dei clienti: usa un bucket <strong>non pubblico</strong>, con una chiave limitata a quel bucket, in un’area europea e con la cifratura a riposo del servizio attiva. Dopo aver impostato le variabili, torna qui e tocca <strong>Prova la connessione</strong>.</p>
+  </details>`;
+  if (!auto.configured) {
+    return html`<div class="card pad" id="copia-automatica" data-auto>
+  <h2>Copia giornaliera fuori dal server <span class="chip ${chip}">${label}</span></h2>
+  <p>Ogni notte il sito può fare da solo una copia completa e metterla <strong>fuori dal server</strong>: se il server si rompe, o l’hosting chiude l’account, i dati sono salvi altrove. Oggi non c’è nessuna destinazione indicata sul server: finché non la imposti, resta la copia che scarichi a mano qui sotto.</p>
+  ${setup}
+</div>`;
+  }
+  return html`<div class="card pad" id="copia-automatica" data-auto ${auto.running ? raw('data-auto-running') : ''}>
+  <h2>Copia giornaliera fuori dal server <span class="chip ${chip}">${label}</span></h2>
+  <ul class="plain info-list">
+    <li><strong>Dove</strong>: ${auto.destinations.map((d, i) => html`${i ? ' · ' : ''}${d.label} <code>${d.where}</code>`)}</li>
+    <li><strong>Quando</strong>: ${auto.enabled ? html`ogni giorno alle <strong>${hourText(auto.hour)}</strong> (ora di Venezia)${auto.next ? html` · prossima ${auto.next.soon ? html`<strong>a momenti</strong>` : html`<strong>${dayText(auto.next.date)}</strong> alle ${hourText(auto.next.hour)}`}` : ''}` : html`<strong>spenta</strong>`} · <a href="/admin/settings?s=backup#backup">Cambia orario e quante copie tenere</a></li>
+    <li><strong>Quante ne tengo</strong>: le ultime ${auto.keepDays}${auto.keepMonths ? html` e la più vecchia di ognuno degli ultimi ${auto.keepMonths} mesi` : ''}; le altre si cancellano da sole.</li>
+    <li><strong>Ultima copia riuscita</strong>: ${auto.lastOk ? html`${when(auto.lastOk.at)} · ${kb(auto.lastOk.bytes)} · ${Math.max(1, Math.round(auto.lastOk.ms / 1000))} s` : html`<span class="muted">ancora nessuna</span>`}</li>
+  </ul>
+  ${auto.running ? html`<div class="notice notice-info" role="status">Copia in corso: può durare qualche minuto. Questa pagina si aggiorna da sola.</div>` : ''}
+  ${auto.lastError && !auto.running ? html`<div class="notice notice-err" role="alert"><strong>L’ultima copia non è riuscita</strong> (${when(auto.lastError.at)}): ${auto.lastError.message} <br>Il sito riprova da solo; intanto scarica una copia a mano qui sotto.</div>` : ''}
+  ${auto.lastOk?.warnings?.length ? html`<div class="notice notice-info">${auto.lastOk.warnings.join(' ')}</div>` : ''}
+  <div class="btn-row">
+    <form method="post" action="/admin/backup/auto/run"><button class="btn btn-gold" type="submit" ${auto.running ? raw('disabled') : ''}>Esegui una copia adesso</button></form>
+    <form method="post" action="/admin/backup/auto/test"><button class="btn btn-outline" type="submit" ${auto.running ? raw('disabled') : ''}>Prova la connessione</button></form>
+  </div>
+  ${auto.lastTest ? html`<ul class="plain info-list auto-test"><li class="muted small">Prova del ${when(auto.lastTest.at)}:</li>${auto.lastTest.results.map((r) => html`<li>${r.ok ? html`<span class="chip chip-ok">Funziona</span>` : html`<span class="chip chip-err">Non funziona</span>`} ${r.label} <code>${r.where}</code>${r.ok ? '' : html`<br><span class="field-error">${r.error}</span>`}</li>`)}</ul>` : ''}
+  <h3>Copie presenti</h3>
+  ${copies.length
+    ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Copia del</th><th>Dove</th><th class="num">Dimensione</th><th></th></tr></thead><tbody>
+      ${copies.map((c) => html`<tr><td>${day(`${NAME_DATE.exec(c.name)[1]}T12:00:00Z`)}</td><td>${c.dest.label}</td><td class="num">${kb(c.bytes)}</td><td class="actions"><a class="btn btn-sm btn-outline" href="/admin/backup/auto/download?dest=${c.dest.id}&amp;name=${c.name}">Scarica</a></td></tr>`)}
+    </tbody></table></div>`
+    : html`<p class="muted">Nessuna copia nell’elenco: compare dopo la prima copia, oppure con <em>Aggiorna l’elenco</em>.</p>`}
+  <form method="post" action="/admin/backup/auto/refresh" class="inline-form"><button class="btn btn-sm btn-outline" type="submit">Aggiorna l’elenco</button> ${auto.destinations.map((d) => (auto.copies[d.id]?.at ? html`<span class="muted small">${d.label}: elenco del ${when(auto.copies[d.id].at)}</span> ` : ''))}${auto.destinations.map((d) => (auto.copiesError?.[d.id] ? html`<span class="field-error">${d.label}: ${auto.copiesError[d.id]}</span> ` : ''))}</form>
+  <p class="muted small">Per ripristinare una di queste copie: <strong>Scarica</strong>, poi qui sotto <em>Ripristina da una copia</em>. ${setup}</p>
+</div>`;
+}
+
+export function backupPage(ctx, { last, media, dbBytes, snapshots = [], lastRestore = null, auto = null, flash = '', error = '' }) {
   const old = last ? daysAgo(last) : null;
   const body = html`
+${auto ? autoCard(auto) : ''}
 <div class="card pad">
   <h2>Copia di sicurezza</h2>
   <p class="muted">Tutto ciò che hai nel sito — prenotazioni, clienti, partner, fatture, tour, articoli, pagine, testi, impostazioni e le foto caricate — sta nel server. Una copia scaricata sul tuo computer ti protegge se il server si rompe o se cancelli qualcosa per errore.</p>
@@ -35,7 +94,7 @@ export function backupPage(ctx, { last, media, dbBytes, snapshots = [], lastRest
 </div>
 ${snapshots.length
   ? html`<div class="card pad">
-  <h2>Copie di sicurezza automatiche</h2>
+  <h2>Copie salvate prima di un ripristino</h2>
   <p class="muted">Prima di ogni ripristino il sito salva da solo com’era (tengo le ultime ${KEEP_SNAPSHOTS}). Se hai ripristinato la copia sbagliata, da qui puoi tornare indietro: <strong>Torna a questa versione</strong> ti mostra prima cosa cambierebbe, come per ogni ripristino.</p>
   <div class="table-wrap"><table class="table"><thead><tr><th>Salvata il</th><th>Prima di</th><th></th></tr></thead><tbody>
   ${snapshots.map((s) => html`<tr><td>${when(s.at)}</td><td>${MODES[s.mode]?.label ?? s.mode}</td>
@@ -54,7 +113,7 @@ ${snapshots.length
     <li>Per ripristinarla usa «Ripristina da una copia» qui sopra. Le istruzioni per farlo a mano sul server sono nel file <code>LEGGIMI.txt</code> dentro lo zip e nella guida.</li>
   </ul>
 </div>`;
-  return adminLayout(ctx, { title: 'Backup', active: '/admin/backup', body, flash, error, scripts: script(ctx) });
+  return adminLayout(ctx, { title: 'Backup', active: '/admin/backup', body, flash, error, scripts: script(ctx) + (auto?.running ? `<script src="/js/admin-backup-auto.js?v=${ctx.app.assetVersion}" defer></script>` : '') });
 }
 
 // ───────────── controllo prima di ripristinare ─────────────

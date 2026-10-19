@@ -152,6 +152,27 @@ export function createConfig(overrides = {}) {
       openBelowHours: num(e.WAITLIST_OPEN_BELOW_HOURS, 72), // con il servizio più vicino di così non si aspetta il proprio turno: l'avviso parte a tutte
     },
 
+    // copia automatica di sicurezza fuori dal server: orario e rotazione si cambiano dal pannello (Impostazioni › Copia automatica);
+    // la destinazione (una cartella e/o un servizio compatibile S3) e le chiavi restano qui, nell'ambiente del server
+    backup: {
+      auto: {
+        enabled: bool(e.BACKUP_AUTO, true), // parte da sola appena c'è una destinazione
+        hour: num(e.BACKUP_HOUR, 3), // ora di Venezia
+        keepDays: num(e.BACKUP_KEEP_DAYS, 14), // le ultime copie giornaliere
+        keepMonths: num(e.BACKUP_KEEP_MONTHS, 6), // e la più vecchia di ognuno degli ultimi mesi
+      },
+      dir: String(e.BACKUP_DIR ?? '').trim(),
+      s3: {
+        endpoint: secret(e.BACKUP_S3_ENDPOINT), // es. https://s3.eu-central-003.backblazeb2.com
+        bucket: secret(e.BACKUP_S3_BUCKET),
+        region: secret(e.BACKUP_S3_REGION) || 'us-east-1',
+        accessKey: secret(e.BACKUP_S3_ACCESS_KEY),
+        secretKey: secret(e.BACKUP_S3_SECRET_KEY),
+        prefix: secret(e.BACKUP_S3_PREFIX) || 'guida/',
+        pathStyle: bool(e.BACKUP_S3_PATH_STYLE, true),
+      },
+    },
+
     // «Invita un amico» (tour condivisi): ogni invito è un codice sconto univoco, valido una volta sola per quella partenza
     invite: {
       enabled: bool(e.INVITE_ENABLED, true),

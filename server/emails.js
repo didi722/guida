@@ -1765,3 +1765,11 @@ export async function notifySecurity(app, { subject, lines, ip = '' }) {
   const body = [...lines, '', ip ? `Da: ${ip}` : null, `Quando: ${fmtInstant(Date.now(), 'it')}`, '', 'Se non sei stato tu, cambia subito la password del pannello (ADMIN_PASSWORD sul server): così tutti i dispositivi vengono scollegati.'].filter((l) => l !== null);
   return app.mail.send({ to, subject: `${app.cfg.site.name} · ${subject}`, text: body.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${body.map((l) => html`${l}<br>`)}</div>`) });
 }
+
+/** Alla guida (in italiano): la copia automatica di sicurezza non è riuscita. */
+export async function notifyBackupFailed(app, { message }) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return false;
+  const lines = ['La copia automatica di sicurezza non è riuscita.', '', message, '', 'Il sito riprova da solo. Intanto puoi scaricare una copia a mano da Aiuto › Backup, e da lì controllare la destinazione («Prova la connessione»).', `${app.cfg.baseUrl}/admin/backup`];
+  return app.mail.send({ to, subject: `${app.cfg.site.name} · Copia automatica non riuscita`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
+}

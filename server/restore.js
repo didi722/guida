@@ -47,7 +47,7 @@ const CONTENT_PLAN = [
   { table: 'media', merge: true }, // la libreria delle immagini si unisce: non si perde nessuna foto
 ];
 const CONTENT_SETTINGS = ['site_images', 'rate_card']; // le foto del sito e le tariffe a ore tornano con i contenuti
-const KEEP_SETTINGS = ['last_backup_at', 'last_restore', ...PRIVATE_SETTINGS]; // restano quelli di adesso anche se si ripristina tutto (compresa la sicurezza del pannello)
+const KEEP_SETTINGS = ['last_backup_at', 'last_restore', 'auto_backup', ...PRIVATE_SETTINGS]; // restano quelli di adesso anche se si ripristina tutto (compresa la sicurezza del pannello)
 
 const COUNTS = [
   ['tours', 'SELECT COUNT(*) AS n FROM content_tours'],

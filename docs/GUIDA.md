@@ -596,6 +596,7 @@ In fondo alla pagina, **Come sono calcolati i numeri** spiega ogni definizione.
 - **Opzioni per le agenzie**: se le agenzie possono opzionare, la **tabella** «tour fra almeno N giorni → opzione di D giorni» (fino a 5 righe), la scadenza al più tardi (ore prima del servizio), il numero massimo di opzioni aperte per agenzia e quanto prima della scadenza parte il promemoria. Vedi [Opzioni](#opzioni-tenere-una-data-senza-pagare).
 - **Prenotazione ferma per le date lontane** (stessa sezione, *Opzioni per le agenzie*): per spingere le agenzie a **opzionare** invece di prenotare e poi dimenticarsi di annullare (liberandoti la data all'ultimo), se il servizio è fra più di **21 giorni** la prenotazione diretta è cancellabile gratis solo per **48 ore** dalla prenotazione; poi si rimborsa il **50%** fino al normale termine gratuito (per esempio 3 giorni prima), e dopo valgono gli scaglioni di sempre. Vale anche quando l'agenzia **conferma un'opzione** (le 48 ore ripartono da quel momento). Nel pagamento l'agenzia vede un avviso con le date e l'**opzione in evidenza** («Consigliato per le date lontane»). Giorni, ore e percentuale si cambiano lì; con l'interruttore spento torna il normale termine di cancellazione gratuita. Non vale per le prenotazioni che registri tu dall'agenda.
 - **Buoni regalo, programmi e recensioni**: validità e importi dei buoni, acconto e validità dei preventivi dei programmi, richiesta di recensione dopo il tour (sì/no, link per recensire su Google e Tripadvisor, ora d'invio) e **Pagina con tutte le recensioni** (il link che compare accanto ai commenti sul sito).
+- **Copia automatica**: se la copia di sicurezza giornaliera fuori dal server è accesa, a che ora parte e quante copie tenere ([sezione 17](#copia-giornaliera-fuori-dal-server)); dove metterla si imposta sul server.
 - **Fatturazione elettronica**: dati del cedente (nome o denominazione, codice fiscale, indirizzo), regime, IVA, natura, bollo, rivalsa INPS, ritenuta, diciture, IBAN, scadenze, buoni regalo, prima data fatturabile.
 
 Come funziona:
@@ -619,6 +620,28 @@ La copia **non contiene** la chiave dell'accesso a due passaggi né i codici di 
 
 **Quando.** Dopo ogni grande modifica (nuovi tour, tante foto, cambio prezzi) e **almeno una volta al mese**. La pagina ti ricorda quando hai scaricato l'ultima. Conserva il file **al sicuro**: contiene **dati personali dei clienti** (non mandarlo per email, non lasciarlo su computer condivisi). Molti hosting fanno anche copie automatiche del disco: chiedi al tuo se sono attive, ma la tua copia resta l'assicurazione in più.
 
+### Copia giornaliera fuori dal server
+La copia che scarichi a mano si dimentica; quella automatica no. Ogni notte il sito prepara da solo **lo stesso zip** di *Scarica la copia completa* e lo mette **fuori dal server**: se il server si rompe o l'hosting chiude l'account, i tuoi dati sono altrove. Si gestisce in **Aiuto › Backup › Copia giornaliera fuori dal server**.
+
+**Dove metterla.** Sul server (le variabili d'ambiente, come le chiavi di Stripe: [sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)) indichi una o due destinazioni, poi riavvii:
+- **Una cartella** (`BACKUP_DIR`): un disco o un NAS montato sul server, per esempio `/backups`. Con Docker dev'essere un volume diverso da quello dei dati, altrimenti si perde insieme a loro.
+- **Un servizio di archiviazione online compatibile S3** (`BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION`, `BACKUP_S3_ACCESS_KEY`, `BACKUP_S3_SECRET_KEY`; facoltative `BACKUP_S3_PREFIX` e `BACKUP_S3_PATH_STYLE`): Backblaze B2, Cloudflare R2, Wasabi, Scaleway, AWS S3… Crea un bucket **privato**, una chiave valida **solo per quel bucket** (lettura, scrittura, elenco) e scrivi i cinque valori. Esempi: Backblaze B2 → endpoint `https://s3.<regione>.backblazeb2.com` e regione come `eu-central-003`; Cloudflare R2 → endpoint `https://<account>.r2.cloudflarestorage.com` e regione `auto`.
+
+**Provala subito.** Torna in **Aiuto › Backup** e tocca **Prova la connessione**: scrive un file piccolo, lo ritrova e lo cancella, e per ogni destinazione dice *Funziona* oppure cosa non va (chiavi sbagliate, bucket che non c'è, regione sbagliata, permessi…). Poi **Esegui una copia adesso**: parte in secondo piano (può durare qualche minuto, la pagina si aggiorna da sola) e alla fine mostra data, dimensione e durata.
+
+**Quando e quante.** Di base ogni giorno alle **3** (ora di Venezia). In **Sito › Impostazioni › Copia automatica** scegli se è accesa, l'ora e quante copie tenere: le ultime **14** più, per ciascuno degli ultimi **6 mesi**, la più vecchia di quel mese (così puoi tornare indietro anche di mesi). Le altre si cancellano da sole, **ma solo i file con il nome delle copie automatiche** (`guida-backup-AAAA-MM-GG.zip`): nulla di ciò che metti di tuo nella stessa cartella o bucket viene toccato.
+
+**Se qualcosa non va.** Se la copia della notte non riesce il sito **riprova ogni mezz'ora** (al massimo quattro volte al giorno), mostra l'errore nella pagina, mette una voce rossa in **Agenda › Da fare** e ti scrive **un'email** (una volta, poi un promemoria ogni tre giorni se il guasto continua). Se per tre giorni non parte nessuna copia compare un avviso. Con due destinazioni, se una fallisce l'altra ha comunque la sua copia, e l'errore dice quale.
+
+**Ripristinare da una di queste copie.** Nella tabella **Copie presenti** tocca **Scarica** (per il servizio online il sito genera un indirizzo che vale cinque minuti), poi segui **Ripristina da una copia** qui sotto. **Aggiorna l'elenco** rilegge cosa c'è davvero sulla destinazione.
+
+**Da sapere**
+- La copia contiene i **dati personali dei clienti**: usa un bucket **non pubblico**, una chiave limitata a quel bucket, un'area europea e la cifratura a riposo del servizio. Il sito non cifra lo zip per conto suo.
+- Non contiene la chiave dell'accesso a due passaggi (resta sul server) né le chiavi del servizio, che stanno solo nelle variabili d'ambiente.
+- Lo zip comprende anche le **foto**: con molte foto pesa di più, e ogni notte viene caricato intero.
+- Se il server è spento all'ora scelta, la copia parte appena torna acceso (lo stesso giorno).
+- La **copia a mano** resta, e vale ancora farla dopo una grande modifica o prima di un ripristino.
+
 ### Ripristinare una copia
 
 **Aiuto › Backup › Ripristina da una copia**: scegli lo zip che avevi scaricato e premi **Carica e controlla**. Il sito controlla il file e ti mostra **cosa cambierebbe**: quanti tour, articoli, prenotazioni, fatture… ci sono adesso e quanti nella copia. **Finché non confermi, non cambia nulla.** Poi scegli che cosa ripristinare:
@@ -628,7 +651,7 @@ La copia **non contiene** la chiave dell'accesso a due passaggi né i codici di 
 
 Per confermare scrivi **RIPRISTINA** nella casella e premi **Ripristina**. Il pulsante **Annulla, non cambiare niente** butta via il file caricato.
 
-**Se hai ripristinato la copia sbagliata.** Prima di ogni ripristino il sito salva da solo com'era: le ultime tre copie compaiono in **Copie di sicurezza automatiche**. **Torna a questa versione** ti riporta com'era prima (con la stessa anteprima e la stessa conferma); **Scarica (.zip)** te la dà come file, uguale a una copia normale.
+**Se hai ripristinato la copia sbagliata.** Prima di ogni ripristino il sito salva da solo com'era: le ultime tre copie compaiono in **Copie salvate prima di un ripristino**. **Torna a questa versione** ti riporta com'era prima (con la stessa anteprima e la stessa conferma); **Scarica (.zip)** te la dà come file, uguale a una copia normale.
 
 Qualche accortezza:
 - Fallo **quando nessuno sta prenotando** (per esempio la sera): durante il ripristino, che dura pochi secondi, una prenotazione in corso potrebbe sbagliare.
@@ -653,6 +676,7 @@ Qualche accortezza:
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `MAIL_FROM` | spedizione delle email |
 | `PEC_SMTP_*`, `SDI_PEC_ADDRESS` | invio delle fatture a SdI dalla tua PEC |
 | `DATA_DIR`, `PORT`, `NODE_ENV`, `TRUST_PROXY` | dove stanno i dati e come gira il server |
+| `BACKUP_DIR`, `BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION`, `BACKUP_S3_ACCESS_KEY`, `BACKUP_S3_SECRET_KEY`, `BACKUP_S3_PREFIX`, `BACKUP_S3_PATH_STYLE` | dove mettere la copia giornaliera fuori dal server ([sezione 17](#copia-giornaliera-fuori-dal-server)); `BACKUP_AUTO`, `BACKUP_HOUR`, `BACKUP_KEEP_DAYS`, `BACKUP_KEEP_MONTHS` sono i valori di partenza di orario e rotazione (si cambiano dal pannello) |
 | `UMAMI_WEBSITE_ID`, `UMAMI_SRC` | statistiche di visita anonime (facoltative) |
 | `TRANSLATE_PROVIDER`, `TRANSLATE_API_KEY` | traduzione automatica dei commenti (`deepl` o `google`): vedi sotto |
 | `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_KEY_FILE` | «Aggiungi a Google Wallet»: vedi sotto |
@@ -723,6 +747,8 @@ Con Posteo come mittente (`MAIL_FROM` con un indirizzo `@posteo.net`) il sito fu
 
 **Ho cancellato per errore un tour, un articolo o una pagina**: non c'è un cestino. Rimedio: la **copia di sicurezza** più recente. Con **Aiuto › Backup › Ripristina da una copia › Solo i contenuti** rimetti tour, articoli, pagine, testi e foto com'erano, senza toccare le prenotazioni (vedi [sezione 17](#17-backup-e-ripristino)); `contenuti.json` dentro lo zip contiene gli stessi testi in forma leggibile, se ti serve solo ricopiare qualcosa. Per i tour con prenotazioni il sito non permette l'eliminazione: si nascondono.
 
+**La copia automatica non parte o non riesce**: apri **Aiuto › Backup** e tocca **Prova la connessione**: per ogni destinazione dice cosa non va. Cause comuni: *la chiave segreta non corrisponde* (una delle due chiavi è sbagliata o ha spazi in più), *il bucket non esiste* (nome o endpoint sbagliati), *regione sbagliata*, *accesso negato* (la chiave non ha i permessi di scrittura ed elenco su quel bucket), *cartella non scrivibile* (permessi del disco montato), *spazio esaurito*. Dopo aver corretto le variabili sul server riavvia il sito. Se non c'è nessuna destinazione la pagina te lo dice e mostra come impostarla; se è tutto a posto ma non parte, controlla che sia **accesa** in *Sito › Impostazioni › Copia automatica* e che il server sia acceso all'ora scelta.
+
 **Il sito è lento o non risponde**: è un problema del server o dell'hosting; guarda i *log* nel pannello dell'hosting e chiedi aiuto con le ultime righe di errore.
 
 ## 20. Da fare prima del lancio e a gennaio
@@ -750,6 +776,7 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 - [ ] **Stripe**: prima in modalità test (carte di prova), poi **in modalità reale** con il webhook configurato; **SMTP** funzionante. Fai una prenotazione di prova e un rimborso (in reale, con un importo piccolo).
 - [ ] **Orari di lavoro**, giorni di chiusura e **calendario personale** collegato (Agenda › Disponibilità).
 - [ ] **Dominio e HTTPS**, `BASE_URL` corretto, disco persistente, **primo backup**.
+- [ ] **Copia automatica fuori dal server** (Aiuto › Backup): indica una cartella o un bucket S3 privato, tocca **Prova la connessione** e **Esegui una copia adesso**; verifica che la copia compaia nell'elenco e che sappia scaricarla.
 - [ ] **Accesso a due passaggi** (Aiuto › Sicurezza): attivalo, **stampa i codici di emergenza** e conservali; scegli una password del pannello lunga e unica.
 - [ ] Se parti **prima della Partita IVA**: scrivi la data in **Incassi dal** e fai una prenotazione di prova da privato (deve proporre solo il pagamento di persona) e da agenzia (fattura o opzione).
 - [ ] Opzioni per le agenzie: guarda la tabella in **Impostazioni › Opzioni per le agenzie** e decidi se ti vanno bene i giorni e il limite.

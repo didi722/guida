@@ -226,6 +226,17 @@ export const SECTIONS = [
     ],
   },
   {
+    id: 'backup',
+    title: 'Copia automatica',
+    intro: 'Ogni giorno il sito fa una copia di sicurezza completa e la mette fuori dal server (una cartella o un servizio di archiviazione online): se il server si rompe, i dati sono salvi. Qui scegli quando farla e quante copie tenere; dove metterla (e le chiavi del servizio) si imposta sul server: vedi Aiuto › Backup.',
+    fields: [
+      { key: 'backup.auto.enabled', type: 'bool', label: 'Copia automatica ogni giorno', hint: 'parte da sola appena sul server è indicata una destinazione' },
+      { key: 'backup.auto.hour', type: 'int', min: 0, max: 23, unit: 'h', label: 'A che ora', hint: 'ora di Venezia: meglio di notte, quando nessuno prenota' },
+      { key: 'backup.auto.keepDays', type: 'int', min: 1, max: 365, unit: 'copie', label: 'Copie giornaliere da tenere', hint: 'le più recenti; le altre si cancellano da sole (solo i file con il nome delle copie automatiche)' },
+      { key: 'backup.auto.keepMonths', type: 'int', min: 0, max: 60, unit: 'mesi', label: 'In più, una copia per ogni mese', hint: 'la più vecchia di ognuno degli ultimi mesi, per tornare indietro di più; 0 = nessuna' },
+    ],
+  },
+  {
     id: 'invite',
     title: 'Invita un amico',
     intro: 'Chi ha prenotato un tour condiviso a posti può mandare a un amico un codice sconto tutto suo, valido una volta sola e solo per quella partenza: l’amico si unisce al gruppo e tu riempi i posti liberi.',

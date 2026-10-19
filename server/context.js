@@ -1,5 +1,6 @@
 // Assembla i moduli dell'applicazione (usato dal server e dai test, così non si disallineano).
 import { createAdminSecurity } from './adminSecurity.js';
+import { createAutoBackup } from './autoBackup.js';
 import { createBriefingServices } from './briefing.js';
 import { createCalendars } from './calendars.js';
 import { createChangeServices } from './changeServices.js';
@@ -60,5 +61,6 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.invoices = createInvoiceServices(app);
   app.rates = createRates(app);
   app.restore = createRestoreServices(app);
+  app.autoBackup = createAutoBackup(app, { fetchImpl: fetchImpl ?? fetch }); // copia automatica fuori dal server (lavoro periodico)
   return app;
 }

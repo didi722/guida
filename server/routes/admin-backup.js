@@ -6,13 +6,19 @@ import { MODES, RESTORE_WORD, RestoreError } from '../restore.js';
 import { backupPage, restorePreviewPage } from '../views/admin-backup.js';
 
 const FLASH = {
-  restored: 'Ripristino completato. Il sito è già aggiornato. Se non è come lo volevi, qui sotto trovi la copia di sicurezza automatica per tornare indietro.',
+  restored: 'Ripristino completato. Il sito è già aggiornato. Se non è come lo volevi, qui sotto trovi la copia salvata prima del ripristino per tornare indietro.',
   cancelled: 'Fatto: non ho cambiato nulla.',
+  'auto-started': 'Ho avviato la copia: può durare qualche minuto. La pagina si aggiorna da sola e mostra l’esito.',
+  'auto-tested': 'Prova terminata: l’esito è qui sotto.',
+  'auto-listed': 'Elenco delle copie aggiornato.',
 };
 const ERR = {
   expired: 'Il file caricato non c’è più (dopo un’ora si cancella): caricalo di nuovo.',
   snapshot: 'Copia di sicurezza non trovata.',
   busy: 'C’è già un’operazione in corso: riprova tra un minuto.',
+  'auto-busy': 'C’è già una copia in corso: aspetta che finisca.',
+  'auto-none': 'Sul server non è indicata nessuna destinazione per la copia automatica: vedi «Come si imposta».',
+  'auto-gone': 'Quella copia non c’è più (o la destinazione non è raggiungibile): aggiorna l’elenco.',
   failed: 'Non sono riuscito a preparare il ripristino. Non ho cambiato nulla.',
 };
 
@@ -23,7 +29,7 @@ export function adminBackupRouter(app) {
 
   const showBackup = (req, res, { flash = '', error = '', status = 200 } = {}) => {
     const dbBytes = Number(app.db.prepare('PRAGMA page_count').get().page_count) * Number(app.db.prepare('PRAGMA page_size').get().page_size);
-    send(res, backupPage(ctxOf(req), { last: lastBackup(app.db), media: mediaStats(app.cfg), dbBytes, snapshots: app.restore.snapshots(), lastRestore: app.restore.lastRestore(), flash, error }), status);
+    send(res, backupPage(ctxOf(req), { last: lastBackup(app.db), media: mediaStats(app.cfg), dbBytes, snapshots: app.restore.snapshots(), lastRestore: app.restore.lastRestore(), auto: app.autoBackup.status(), flash, error }), status);
   };
 
   r.get('/backup', (req, res) => showBackup(req, res, { flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
@@ -45,6 +51,28 @@ export function adminBackupRouter(app) {
   r.post('/backup/download', form, (req, res, next) => {
     const nowMs = Date.now();
     return sendZip(res, next, backupEntries(app, nowMs), backupFileName(nowMs), nowMs, () => markBackup(app.db, nowMs));
+  });
+
+  // ── copia giornaliera fuori dal server ──
+  r.post('/backup/auto/run', form, (req, res) => {
+    const out = app.autoBackup.start('manual');
+    res.redirect(303, `/admin/backup?${out.started ? 'ok=auto-started' : out.busy ? 'err=auto-busy' : 'err=auto-none'}#copia-automatica`);
+  });
+  r.post('/backup/auto/test', form, async (req, res) => {
+    if (!app.autoBackup.destinations().length) return res.redirect(303, '/admin/backup?err=auto-none#copia-automatica');
+    await app.autoBackup.test();
+    res.redirect(303, '/admin/backup?ok=auto-tested#copia-automatica');
+  });
+  r.post('/backup/auto/refresh', form, async (req, res) => {
+    await app.autoBackup.refreshCopies();
+    res.redirect(303, '/admin/backup?ok=auto-listed#copia-automatica');
+  });
+  r.get('/backup/auto/status', (req, res) => res.set('Cache-Control', 'no-store').json({ running: app.autoBackup.running() }));
+  r.get('/backup/auto/download', (req, res) => {
+    const link = app.autoBackup.link(String(req.query.dest ?? ''), String(req.query.name ?? ''));
+    if (link?.url) return res.redirect(303, link.url);
+    if (link?.file) return res.set('Cache-Control', 'private, no-store').download(link.file, String(req.query.name));
+    res.redirect(303, '/admin/backup?err=auto-gone');
   });
 
   // ── ripristino ──

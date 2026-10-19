@@ -407,7 +407,7 @@ test('ripristino: si tengono solo le ultime copie di sicurezza e la pagina Backu
     assert.deepEqual(snaps.map((x) => x.id), [...snaps.map((x) => x.id)].sort().reverse(), 'dalla più recente');
     assert.equal(fs.readdirSync(path.join(s.cfg.dataDir, 'restore-backups')).length, KEEP_SNAPSHOTS);
     const page = await (await admin('/admin/backup')).text();
-    assert.match(page, /Copie di sicurezza automatiche/);
+    assert.match(page, /Copie salvate prima di un ripristino/);
     assert.equal((page.match(/Torna a questa versione/g) ?? []).length, KEEP_SNAPSHOTS + 1, 'un pulsante per ogni copia (più il richiamo nel testo)');
     assert.match(page, /Carica e controlla/);
     assert.match(page, /\/js\/admin-restore\.js/);
