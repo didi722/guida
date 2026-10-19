@@ -7066,5 +7066,311 @@
   "See the times and book",
   "Ver los horarios y reservar",
   "時間を見て予約する"
+ ],
+ "quote.title": [
+  "Preventivo",
+  "Quote",
+  "Presupuesto",
+  "お見積り"
+ ],
+ "quote.heading": [
+  "Servizi a Venezia",
+  "Services in Venice",
+  "Servicios en Venecia",
+  "ヴェネツィアでのサービス"
+ ],
+ "quote.forClient": [
+  "Per {name}",
+  "For {name}",
+  "Para {name}",
+  "{name} 様"
+ ],
+ "quote.issued": [
+  "Emesso il",
+  "Issued on",
+  "Emitido el",
+  "発行日"
+ ],
+ "quote.valid": [
+  "Valido fino al",
+  "Valid until",
+  "Válido hasta el",
+  "有効期限"
+ ],
+ "quote.total": [
+  "Totale",
+  "Total",
+  "Total",
+  "合計"
+ ],
+ "quote.notes": [
+  "Note",
+  "Notes",
+  "Notas",
+  "備考"
+ ],
+ "quote.pax": [
+  "Persone: {n}",
+  "Guests: {n}",
+  "Personas: {n}",
+  "人数：{n}"
+ ],
+ "quote.operator": [
+  "Servizi svolti da {name}",
+  "Services provided by {name}",
+  "Servicios prestados por {name}",
+  "サービス提供：{name}"
+ ],
+ "docs.title": [
+  "Logo e documenti",
+  "Logo and documents",
+  "Logo y documentos",
+  "ロゴと書類"
+ ],
+ "docs.lead": [
+  "Il tuo logo e i tuoi recapiti compaiono sui voucher e sui preventivi che dai al tuo cliente finale. I prezzi del preventivo sono la tua tariffa più il tuo ricarico: la tua tariffa non compare mai.",
+  "Your logo and contact details appear on the vouchers and quotes you give to your end client. Quote prices are your rate plus your markup: your rate never appears.",
+  "Tu logo y tus datos de contacto aparecen en los vouchers y presupuestos que entregas a tu cliente final. Los precios del presupuesto son tu tarifa más tu recargo: tu tarifa nunca aparece.",
+  "ロゴと連絡先は、エンドのお客様にお渡しするバウチャーと見積書に表示されます。見積書の価格は、貴社の料金に上乗せ額を加えたものです。貴社の料金は表示されません。"
+ ],
+ "docs.name": [
+  "Nome sui documenti",
+  "Name on documents",
+  "Nombre en los documentos",
+  "書類に表示する名称"
+ ],
+ "docs.nameHint": [
+  "Se lo lasci vuoto usiamo la ragione sociale.",
+  "If you leave it empty we use the company name.",
+  "Si lo dejas vacío usamos la razón social.",
+  "空欄の場合は会社名を使用します。"
+ ],
+ "docs.contact": [
+  "Recapiti sui documenti",
+  "Contact details on documents",
+  "Datos de contacto en los documentos",
+  "書類に表示する連絡先"
+ ],
+ "docs.contactHint": [
+  "Per esempio: info@agenzia.it · +39 041 000000 · www.agenzia.it",
+  "For example: info@agency.com · +39 041 000000 · www.agency.com",
+  "Por ejemplo: info@agencia.es · +39 041 000000 · www.agencia.es",
+  "例：info@agency.jp · +39 041 000000 · www.agency.jp"
+ ],
+ "docs.footer": [
+  "Nota in fondo ai preventivi",
+  "Note at the foot of quotes",
+  "Nota al pie de los presupuestos",
+  "見積書の末尾の注記"
+ ],
+ "docs.footerHint": [
+  "Per esempio condizioni di annullo, IVA o validità. Compare in ogni preventivo.",
+  "For example cancellation terms, VAT or validity. It appears on every quote.",
+  "Por ejemplo condiciones de cancelación, IVA o validez. Aparece en todos los presupuestos.",
+  "例：キャンセル条件、VAT、有効期間など。すべての見積書に表示されます。"
+ ],
+ "docs.markup": [
+  "Ricarico predefinito sui preventivi (%)",
+  "Default markup on quotes (%)",
+  "Recargo predeterminado en los presupuestos (%)",
+  "見積書の標準上乗せ率（%）"
+ ],
+ "docs.markupHint": [
+  "Si aggiunge alla tua tariffa. Lo puoi cambiare a ogni preventivo.",
+  "It is added to your rate. You can change it on every quote.",
+  "Se suma a tu tarifa. Puedes cambiarlo en cada presupuesto.",
+  "貴社の料金に加算されます。見積書ごとに変更できます。"
+ ],
+ "docs.round": [
+  "Arrotonda i prezzi al cliente",
+  "Round client prices",
+  "Redondea los precios al cliente",
+  "お客様向け価格の丸め"
+ ],
+ "docs.round.1": [
+  "all’euro intero",
+  "up to the whole euro",
+  "al euro entero",
+  "1ユーロ単位に切り上げ"
+ ],
+ "docs.round.5": [
+  "ai 5 € successivi",
+  "up to the next 5 €",
+  "a los 5 € siguientes",
+  "5ユーロ単位に切り上げ"
+ ],
+ "docs.round.10": [
+  "ai 10 € successivi",
+  "up to the next 10 €",
+  "a los 10 € siguientes",
+  "10ユーロ単位に切り上げ"
+ ],
+ "docs.logo": [
+  "Logo",
+  "Logo",
+  "Logo",
+  "ロゴ"
+ ],
+ "docs.logoHint": [
+  "PNG o JPEG, anche con sfondo trasparente (massimo 500 KB). Lo ridimensioniamo noi.",
+  "PNG or JPEG, transparent background allowed (500 KB at most). We resize it for you.",
+  "PNG o JPEG, también con fondo transparente (500 KB como máximo). Lo redimensionamos nosotros.",
+  "PNGまたはJPEG（背景透過可、最大500 KB）。サイズは自動で調整します。"
+ ],
+ "docs.logoPick": [
+  "Carica il logo",
+  "Upload the logo",
+  "Subir el logo",
+  "ロゴをアップロード"
+ ],
+ "docs.logoChange": [
+  "Cambia logo",
+  "Change logo",
+  "Cambiar logo",
+  "ロゴを変更"
+ ],
+ "docs.logoRemove": [
+  "Togli il logo",
+  "Remove the logo",
+  "Quitar el logo",
+  "ロゴを削除"
+ ],
+ "docs.logoNone": [
+  "Nessun logo caricato: sui documenti compare solo il nome.",
+  "No logo uploaded: documents show the name only.",
+  "Ningún logo subido: los documentos muestran solo el nombre.",
+  "ロゴは未登録です。書類には名称のみが表示されます。"
+ ],
+ "docs.logoWorking": [
+  "Carico…",
+  "Uploading…",
+  "Subiendo…",
+  "アップロード中…"
+ ],
+ "docs.logoFailed": [
+  "Caricamento non riuscito: serve un PNG o un JPEG fino a 500 KB.",
+  "Upload failed: use a PNG or JPEG up to 500 KB.",
+  "No se pudo subir: usa un PNG o JPEG de hasta 500 KB.",
+  "アップロードに失敗しました。500 KBまでのPNGまたはJPEGをご利用ください。"
+ ],
+ "docs.logoOnVoucher": [
+  "Mostra il logo sui voucher",
+  "Show the logo on vouchers",
+  "Mostrar el logo en los vouchers",
+  "バウチャーにロゴを表示する"
+ ],
+ "docs.save": [
+  "Salva",
+  "Save",
+  "Guardar",
+  "保存"
+ ],
+ "docs.flash.saved": [
+  "Salvato.",
+  "Saved.",
+  "Guardado.",
+  "保存しました。"
+ ],
+ "docs.flash.logo": [
+  "Logo aggiornato.",
+  "Logo updated.",
+  "Logo actualizado.",
+  "ロゴを更新しました。"
+ ],
+ "docs.flash.logoRemoved": [
+  "Logo tolto.",
+  "Logo removed.",
+  "Logo quitado.",
+  "ロゴを削除しました。"
+ ],
+ "docs.err.markup": [
+  "Il ricarico deve essere un numero tra 0 e {max}.",
+  "The markup must be a number between 0 and {max}.",
+  "El recargo debe ser un número entre 0 y {max}.",
+  "上乗せ率は0〜{max}の数値で入力してください。"
+ ],
+ "docs.card.text": [
+  "Il tuo logo sui voucher e il preventivo per il tuo cliente, con il tuo ricarico.",
+  "Your logo on vouchers and the quote for your client, with your markup.",
+  "Tu logo en los vouchers y el presupuesto para tu cliente, con tu recargo.",
+  "バウチャーに貴社ロゴを表示し、上乗せ額を加えたお客様向けの見積書を作成できます。"
+ ],
+ "docs.box.title": [
+  "Documenti per il tuo cliente",
+  "Documents for your client",
+  "Documentos para tu cliente",
+  "お客様向け書類"
+ ],
+ "docs.box.lead": [
+  "Il voucher non ha prezzi e porta il tuo logo. Il preventivo mostra i prezzi per il tuo cliente: la tua tariffa più il ricarico (la tua tariffa non compare).",
+  "The voucher has no prices and carries your logo. The quote shows prices for your client: your rate plus your markup (your rate does not appear).",
+  "El voucher no lleva precios y muestra tu logo. El presupuesto muestra los precios para tu cliente: tu tarifa más tu recargo (tu tarifa no aparece).",
+  "バウチャーには価格がなく、貴社ロゴが入ります。見積書にはお客様向けの価格（貴社の料金＋上乗せ額）が表示され、貴社の料金は表示されません。"
+ ],
+ "docs.q.title": [
+  "Preventivo per il tuo cliente",
+  "Quote for your client",
+  "Presupuesto para tu cliente",
+  "お客様向け見積書"
+ ],
+ "docs.q.client": [
+  "Per (nome del cliente)",
+  "For (client name)",
+  "Para (nombre del cliente)",
+  "宛先（お客様名）"
+ ],
+ "docs.q.markup": [
+  "Ricarico (%)",
+  "Markup (%)",
+  "Recargo (%)",
+  "上乗せ率（%）"
+ ],
+ "docs.q.round": [
+  "Arrotonda",
+  "Round",
+  "Redondeo",
+  "丸め"
+ ],
+ "docs.q.until": [
+  "Valido fino al",
+  "Valid until",
+  "Válido hasta el",
+  "有効期限"
+ ],
+ "docs.q.lang": [
+  "Lingua del documento",
+  "Document language",
+  "Idioma del documento",
+  "書類の言語"
+ ],
+ "docs.q.note": [
+  "Note per il cliente",
+  "Notes for the client",
+  "Notas para el cliente",
+  "お客様へのメモ"
+ ],
+ "docs.q.download": [
+  "Scarica il preventivo (PDF)",
+  "Download the quote (PDF)",
+  "Descargar el presupuesto (PDF)",
+  "見積書をダウンロード（PDF）"
+ ],
+ "docs.q.yourRate": [
+  "La tua tariffa: {amount}",
+  "Your rate: {amount}",
+  "Tu tarifa: {amount}",
+  "貴社の料金：{amount}"
+ ],
+ "docs.q.settings": [
+  "Logo, recapiti e ricarico predefinito →",
+  "Logo, contact details and default markup →",
+  "Logo, datos de contacto y recargo predeterminado →",
+  "ロゴ・連絡先・標準上乗せ率 →"
+ ],
+ "docs.q.noLogo": [
+  "Non hai ancora caricato il tuo logo.",
+  "You have not uploaded your logo yet.",
+  "Aún no has subido tu logo.",
+  "ロゴはまだ登録されていません。"
  ]
 }

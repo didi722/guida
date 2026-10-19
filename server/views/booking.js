@@ -15,6 +15,7 @@ import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
 import { quoteLines } from './hourly.js';
 import { changeBox, extensionBox } from './changes.js';
+import { documentsBox } from './agencyDocs.js';
 import { bookTabs } from './availability.js';
 import { bookingPayBlock } from './invoicePay.js';
 import { pendingExtension } from '../changes.js';
@@ -367,6 +368,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
     ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && b.payment_status === 'unpaid' ? bookingPayBlock(ctx, b, invoice) : ''}
   </div>
   ${owner ? changeBox(ctx, b) : ''}
+  ${owner && b.channel === 'b2b' ? documentsBox(ctx, { ref: b.ref, bookings: [b] }) : ''}
   ${owner && isEditable(b)
     ? html`<form class="card pad form edit-card" method="post" action="${u(`/b2b/bookings/${b.ref}/edit`)}" id="edit">
     <h2>${t('partner.edit.title')}</h2><p class="small muted">${t('partner.edit.hint')}</p>

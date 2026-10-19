@@ -1062,3 +1062,8 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
   .wait-item { grid-template-columns: 54px 1fr; } .wait-item .agenda-state { grid-column: 1 / -1; align-items: flex-start; }
   .wait-actions { justify-content: flex-start; }
 }
+
+/* ───────── Logo e documenti dell'agenzia ───────── */
+.doc-logo { max-width: 220px; max-height: 90px; height: auto; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 50% / 16px 16px; }
+[data-theme='dark'] .doc-logo { background: repeating-conic-gradient(#444 0 25%, #333 0 50%) 50% / 16px 16px; }
+.docs-box { margin-top: 18px; } .docs-box h2 { font-size: 1.3rem; margin-bottom: 0.2em; } .docs-box h3 { margin: 1.2rem 0 4px; font-size: 1.15rem; } .docs-box .form-grid { margin-top: 8px; }

@@ -20,6 +20,7 @@ export function createLimits() {
     forgot: rateLimiter({ windowMs: 60 * 60_000, max: 5 }), // richieste di nuova password
     api: rateLimiter({ windowMs: 60_000, max: 150 }),
     codes: rateLimiter({ windowMs: 10 * 60_000, max: 30 }), // tentativi con codici sconto / buoni regalo
+    docs: rateLimiter({ windowMs: 10 * 60_000, max: 40 }), // preventivi PDF e caricamento del logo delle agenzie
   };
 }
 

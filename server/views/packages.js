@@ -7,6 +7,7 @@ import { onlinePaymentsOpen } from '../opening.js';
 import { cancellable, packageStatus, packageTotal, payableLines } from '../packages.js';
 import { fmtDate, fmtInstant } from '../time.js';
 import { formatMoney } from '../util.js';
+import { documentsBox } from './agencyDocs.js';
 import { page } from './layout.js';
 import { bookingStatusText } from './b2b.js';
 import { extensionBox } from './changes.js';
@@ -176,6 +177,7 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
         : ''}`
       : ''}
   </div>
+  ${owner ? documentsBox(ctx, { ref: group.ref, bookings }) : ''}
 </div></section>`;
   return page(ctx, { title: `${t('pkg.title')} ${group.ref}`, path: `/${lang}/packages/${group.ref}`, body, noindex: true, ...(owner ? { area: 'partner', activeNav: 'b2b-bookings' } : {}) });
 }

@@ -514,6 +514,25 @@ CREATE INDEX waitlist_status_date ON waitlist(status, date);
 CREATE INDEX waitlist_account ON waitlist(account_id, status);
 `;
 
+const V23_AGENCY_DOCS = `
+-- Documenti dell'agenzia per il suo cliente finale: nome, logo e recapiti sui voucher e sui preventivi, ricarico dei preventivi.
+ALTER TABLE accounts ADD COLUMN doc_name TEXT;                              -- nome sui documenti (vuoto = ragione sociale)
+ALTER TABLE accounts ADD COLUMN doc_contact TEXT;                           -- recapiti sui documenti (email, telefono, sito)
+ALTER TABLE accounts ADD COLUMN doc_footer TEXT;                            -- nota in fondo ai preventivi (condizioni, IVA…)
+ALTER TABLE accounts ADD COLUMN markup_percent REAL NOT NULL DEFAULT 0;     -- ricarico predefinito sui preventivi
+ALTER TABLE accounts ADD COLUMN markup_round INTEGER NOT NULL DEFAULT 5;    -- i prezzi al cliente si arrotondano per eccesso a N euro (1, 5 o 10)
+ALTER TABLE accounts ADD COLUMN logo_on_voucher INTEGER NOT NULL DEFAULT 1; -- mostra il logo sui voucher
+
+CREATE TABLE account_logos (
+  account_id INTEGER PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+  mime       TEXT NOT NULL,
+  data       BLOB NOT NULL,
+  width      INTEGER NOT NULL,
+  height     INTEGER NOT NULL,
+  updated_at TEXT NOT NULL
+);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -557,6 +576,8 @@ export const MIGRATIONS = [
   V21_INVOICE_PAYMENTS,
   // v22 — lista d'attesa delle agenzie
   V22_WAITLIST,
+  // v23 — logo, recapiti e ricarico dei documenti delle agenzie
+  V23_AGENCY_DOCS,
 ];
 
 export function migrate(db) {

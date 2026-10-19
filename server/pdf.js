@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import PDFDocument from 'pdfkit';
+import { brandOf } from './agencyDocs.js';
 import { bookingDue, cancellationState } from './bookings.js';
 import { ROOT } from './config.js';
 import { makeT } from './i18n.js';
@@ -97,46 +98,80 @@ function useJapaneseFont(doc) {
 }
 
 // ───────────── documento ─────────────
-export function createDoc(app, { title, subject, lang, label }) {
+/**
+ * `brand` (facoltativo) è il marchio di un'agenzia: { mode, name, contact, logo: {data, width, height} | null }.
+ *  - mode 'cobrand' (voucher): l'intestazione resta quella della guida e il logo dell'agenzia prende il posto dell'etichetta, a destra;
+ *  - mode 'agency' (preventivo): l'intestazione è dell'agenzia (logo, nome e recapiti) e a destra c'è l'etichetta del documento.
+ */
+export function createDoc(app, { title, subject, lang, label, brand = null }) {
   const { site } = app.cfg;
   const doc = new PDFDocument({
     size: 'A4',
     margins: { top: PAGE.m, bottom: 66, left: PAGE.m, right: PAGE.m },
     bufferPages: true,
     lang: localeOf(lang),
-    info: { Title: fold(title), Author: fold(site.legalName || site.name), Subject: fold(subject ?? title), Creator: fold(site.name) },
+    info: { Title: fold(title), Author: fold(brand?.mode === 'agency' ? brand.name : site.legalName || site.name), Subject: fold(subject ?? title), Creator: fold(site.name) },
   });
   for (const [name, buf] of Object.entries(loadFonts())) doc.registerFont(name, buf);
   useJapaneseFont(doc);
   doc.page.margins.top = PAGE.m;
-  drawHeader(doc, app, lang, label);
+  drawHeader(doc, app, lang, label, { brand });
   // le pagine successive hanno un'intestazione compatta
   doc.on('pageAdded', () => {
-    drawHeader(doc, app, lang, label, { compact: true });
+    drawHeader(doc, app, lang, label, { compact: true, brand });
   });
   return doc;
 }
 
-function drawHeader(doc, app, lang, label, { compact = false } = {}) {
+/** Il logo dell'agenzia in un riquadro bianco con gli angoli arrotondati; restituisce le misure del riquadro. */
+function drawLogoBox(doc, logo, x, y, { maxW, maxH, right = false }) {
+  const k = Math.min(maxW / logo.width, maxH / logo.height, 1.5);
+  const w = logo.width * k;
+  const h = logo.height * k;
+  const pad = 7;
+  const bx = right ? x - w - pad * 2 : x;
+  try {
+    doc.save();
+    doc.roundedRect(bx, y, w + pad * 2, h + pad * 2, 7).fill('#ffffff');
+    doc.image(logo.data, bx + pad, y + pad, { width: w, height: h });
+    doc.restore();
+  } catch {
+    doc.restore(); // un logo che non si legge non deve impedire di stampare il documento
+  }
+  return { w: w + pad * 2, h: h + pad * 2 };
+}
+
+function drawHeader(doc, app, lang, label, { compact = false, brand = null } = {}) {
   const { site } = app.cfg;
   const h = compact ? 52 : 86;
+  const agency = brand?.mode === 'agency';
   doc.save();
   doc.rect(0, 0, PAGE.w, h).fill(C.band);
-  doc.fillColor(C.ink).font('B').fontSize(compact ? 14 : 21).text(fold(site.name), PAGE.m, compact ? 18 : 26, { lineBreak: false });
-  if (!compact) doc.font('R').fontSize(8.5).text(fold(pick(site.tagline, lang).toUpperCase()), PAGE.m, 54, { characterSpacing: 1.2, lineBreak: false });
-  doc.font('B').fontSize(compact ? 8 : 9).text(fold(String(label).toUpperCase()), PAGE.m, compact ? 21 : 37, { width: CW, align: 'right', characterSpacing: 1.4, lineBreak: false });
+  if (agency) {
+    // intestazione dell'agenzia: logo (solo sulla prima pagina), nome e recapiti
+    let x = PAGE.m;
+    if (!compact && brand.logo) x += drawLogoBox(doc, brand.logo, PAGE.m, 14, { maxW: 150, maxH: 44 }).w + 14;
+    doc.fillColor(C.ink).font('B').fontSize(compact ? 14 : 18).text(fold(brand.name), x, compact ? 18 : 25, { width: CW - (x - PAGE.m) - 130, lineBreak: false, ellipsis: true });
+    if (!compact && brand.contact) doc.font('R').fontSize(8.5).text(fold(brand.contact), x, 52, { width: CW - (x - PAGE.m) - 130, lineBreak: false, ellipsis: true });
+    doc.fillColor(C.ink).font('B').fontSize(compact ? 8 : 9).text(fold(String(label).toUpperCase()), PAGE.m, compact ? 21 : 37, { width: CW, align: 'right', characterSpacing: 1.4, lineBreak: false });
+  } else {
+    doc.fillColor(C.ink).font('B').fontSize(compact ? 14 : 21).text(fold(site.name), PAGE.m, compact ? 18 : 26, { lineBreak: false });
+    if (!compact) doc.font('R').fontSize(8.5).text(fold(pick(site.tagline, lang).toUpperCase()), PAGE.m, 54, { characterSpacing: 1.2, lineBreak: false });
+    if (!compact && brand?.logo) drawLogoBox(doc, brand.logo, PAGE.w - PAGE.m, 14, { maxW: 150, maxH: 44, right: true });
+    else doc.font('B').fontSize(compact ? 8 : 9).text(fold(String(label).toUpperCase()), PAGE.m, compact ? 21 : 37, { width: CW, align: 'right', characterSpacing: 1.4, lineBreak: false });
+  }
   doc.restore();
   doc.x = PAGE.m;
   doc.y = h + (compact ? 24 : 30);
 }
 
-/** Aggiunge il piè di pagina (dati d'impresa, numero di pagina) a tutte le pagine e restituisce il PDF. */
-export function finishDoc(doc, app, lang) {
+/** Aggiunge il piè di pagina (dati d'impresa, numero di pagina) a tutte le pagine e restituisce il PDF. `lines`: le due righe da usare al posto dei dati della guida. */
+export function finishDoc(doc, app, lang, { lines = null } = {}) {
   const t = makeT(lang);
   const { site } = app.cfg;
   const vat = site.vatNumber ? `${pick({ it: 'P.IVA', en: 'VAT no.', es: 'N.º IVA', ja: 'VAT番号' }, lang)} ${site.vatNumber}` : '';
-  const line1 = [site.legalName || site.name, vat, site.guideLicense].filter(Boolean).join('  ·  ');
-  const line2 = [site.address, site.email, site.phone].filter(Boolean).join('  ·  ');
+  const line1 = lines ? lines[0] : [site.legalName || site.name, vat, site.guideLicense].filter(Boolean).join('  ·  ');
+  const line2 = lines ? lines[1] : [site.address, site.email, site.phone].filter(Boolean).join('  ·  ');
   const range = doc.bufferedPageRange();
   for (let i = 0; i < range.count; i++) {
     doc.switchToPage(range.start + i);
@@ -275,7 +310,8 @@ export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = 
   const meet = meetingOf(tour, b, lang);
   const b2b = b.channel === 'b2b';
   const account = b2b && b.account_id ? app.db.prepare('SELECT company FROM accounts WHERE id = ?').get(b.account_id) : null;
-  const doc = createDoc(app, { title: `${t('voucher.title')} ${b.ref}`, subject: ti.title, lang, label: t('voucher.title') });
+  const brand = account ? brandOf(app, b.account_id) : null; // nome, recapiti e logo dell'agenzia (il voucher è per il suo cliente finale)
+  const doc = createDoc(app, { title: `${t('voucher.title')} ${b.ref}`, subject: ti.title, lang, label: t('voucher.title'), brand: brand?.logo && brand.logoOnVoucher ? { mode: 'cobrand', logo: brand.logo } : null });
 
   title(doc, t('voucher.title'), ti.title, ti.subtitle);
 
@@ -298,7 +334,7 @@ export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = 
     // sul voucher B2B, che l'agenzia può girare al cliente, non compaiono i recapiti di chi ha prenotato
     [t('s.name'), b2b ? b.name : [b.name, b.email, b.phone].filter(Boolean).join('  ·  ')],
   ];
-  if (account) items.push([t('pdf.agency'), account.company]);
+  if (account) items.push([t('pdf.agency'), brand ? [brand.name, brand.contact].filter(Boolean).join('\n') : account.company]);
   if (b.client_ref) items.push([t('f.clientRef'), b.client_ref]);
   if (b.notes) items.push([t('f.notes'), b.notes]);
   keyValueRows(doc, items);

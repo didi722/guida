@@ -33,6 +33,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - **Pacchetti**: un'agenzia prenota **più servizi insieme** (guida, meet & greet, tour leader…) con **una sola opzione, una sola scadenza, un solo pagamento** (anche con carta, in una sessione Stripe sola) **e una sola fattura**. Tutti i servizi o nessuno; un'unica email con un voucher per servizio e un solo calendario; ogni servizio resta una prenotazione normale.
 - **Pagamento chiaro delle fatture**: ogni fattura ha uno stato (da pagare entro…, scaduta, pagata) e una **pagina di pagamento** con importo, scadenza, **IBAN, causale** e **«Paga ora con carta»** (link riservato anche nelle email); la guida segna i bonifici arrivati, e le fatture scadute ricevono **solleciti automatici** (1 giorno dopo la scadenza, poi ogni 7, al massimo 3, regolabili).
 - **Date libere e lista d'attesa**: per ogni servizio un **calendario del mese** con i giorni liberi (anche per numero di persone, durata e lingua), senza dover provare una data alla volta; se una data è **tenuta in opzione** da un altro operatore (o completa), l'agenzia può chiedere **«avvisami se si libera»** e riceve un'email appena torna prenotabile. La guida vede chi aspetta e chi tiene la data.
+- **Documenti per il cliente finale**: ogni agenzia carica il **logo** e i **recapiti**; il **voucher** (senza prezzi) porta il suo logo e dalla scheda di una pratica o di un pacchetto scarica un **preventivo PDF** con il **suo ricarico** (la tariffa che paga alla guida non compare mai), nella lingua che vuole, con validità e note.
 - **Modifiche e proroghe**: l'agenzia **cambia da sola persone, data od ore** (prezzo ricalcolato; opzione libera, prenotazione a fattura libera nel periodo gratuito e solo in aumento dopo; spostare la data non allunga i termini di annullo) e **chiede una proroga** dell'opzione, che la guida approva (con i giorni che vuole) o rifiuta dal pannello.
 - **Opzioni**: l'agenzia può **tenere una data senza pagare** mentre il suo cliente decide; la durata dipende da quanto manca al tour (tabella e limiti modificabili, anche per singolo partner), arriva un promemoria e, se non conferma, la data **si libera da sola**. Nessun addebito automatico: se paga a fattura il servizio si fattura dopo.
 
@@ -220,7 +221,8 @@ server/
   invoicePayments.js pagamento delle fatture: stato, scadenza, IBAN e causale, incasso, solleciti (testato)
   invoiceServices.js fatture: invio, incasso, pagamento con carta (`IN-…`) e solleciti
   fatturapa.js      importi e XML FatturaPA (puro)
-  pdf.js            voucher, buoni regalo, proposte (e pdf-invoice.js)
+  pdf.js            voucher, buoni regalo, proposte (e pdf-invoice.js, pdf-quote.js: il preventivo dell'agenzia)
+  agencyDocs.js     logo, recapiti e ricarico dei documenti delle agenzie; prezzo al cliente (testato)
   payments.js       Stripe (HTTP diretto) + demo
   routes/           pagine pubbliche, API/webhook, admin
   views/            template HTML
