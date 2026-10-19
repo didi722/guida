@@ -268,6 +268,9 @@ Passo per passo, con i percorsi del pannello, nella [guida](docs/GUIDA.md#20-da-
 - [ ] **Google Business Profile** con link di recensione (Impostazioni › Buoni regalo, programmi e recensioni); calendario personale collegato (Agenda › Disponibilità).
 - [ ] **Dominio + HTTPS**, `BASE_URL` corretto, **disco persistente** per `DATA_DIR`, primo **backup** (Aiuto › Backup).
 - [ ] Orari di lavoro e giorni di chiusura inseriti dal pannello `/admin`.
+- [ ] **Sicurezza e copie**: accesso a **due passaggi** del pannello con i codici di emergenza stampati (Aiuto › Sicurezza) e **copia giornaliera fuori dal server** con «Prova la connessione» (Aiuto › Backup).
+- [ ] **Prove con un'agenzia di prova**: invito e **verifica della Partita IVA su VIES** (provata solo con risposte simulate: la prova vera è dal server), **team** con un collaboratore, **preventivo online** mandato a un tuo indirizzo e accettato (la tariffa dell'agenzia non deve mai comparire), estratto conto e calendario sul telefono.
+- [ ] **Incassi dalla banca**: prova il CSV vero della tua banca; **scheda del giorno** per email la sera prima; **periodi** (alta stagione) scritti prima che le agenzie comincino a opzionare.
 
 ## Idee per i prossimi passi
 
@@ -275,4 +278,6 @@ Passo per passo, con i percorsi del pannello, nella [guida](docs/GUIDA.md#20-da-
 - Scrittura diretta su Google Calendar (oggi: lettura via indirizzo segreto iCal e feed .ics in abbonamento) con l'API di Google.
 - Lettura automatica delle ricevute di SdI dalla PEC e invio a un intermediario/API (Aruba, Fatture in Cloud…).
 - Verifica via email per eventuali prenotazioni «paga sul posto», contro le prenotazioni fasulle.
-- Pagamento di un acconto anche sui servizi singoli.
+- Pagamento di un acconto anche sui servizi singoli e sui gruppi grandi (scelto di non farlo per ora).
+- Maggiorazione dei **prezzi** per periodo (alta stagione): oggi i periodi cambiano solo opzioni e preavviso, non i prezzi (scelta voluta, per non avere tariffe diverse da spiegare alle agenzie).
+- Preventivo online: più versioni dello stesso preventivo, e conversione in prenotazione con un solo tocco (oggi i servizi si rimettono nel pacchetto e si prenota da lì).
