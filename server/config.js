@@ -132,6 +132,8 @@ export function createConfig(overrides = {}) {
       enabled: bool(e.REMINDERS_ENABLED, true), // la sera prima del tour (clienti privati e agenzie) e, alle agenzie, prima che finisca la cancellazione gratuita: orario, punto d'incontro, come contattarti
       sendHour: num(e.REMINDER_SEND_HOUR, 18), // ora di Venezia
       penaltyHours: num(e.PENALTY_REMINDER_HOURS, 24), // alle agenzie: così tante ore prima che la cancellazione gratuita finisca
+      // scheda del giorno dopo per la guida (email con i servizi di domani e il PDF), la sera all'ora indicata (Venezia)
+      briefing: { enabled: bool(e.BRIEFING_ENABLED, true), hour: num(e.BRIEFING_HOUR, 18) },
       // solleciti delle fatture scadute e non pagate (alle agenzie): il primo dopo qualche giorno dalla scadenza, poi a intervalli, fino a un massimo
       overdue: {
         enabled: bool(e.OVERDUE_REMINDERS_ENABLED, true),

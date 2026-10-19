@@ -34,6 +34,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - **Pagamento chiaro delle fatture**: ogni fattura ha uno stato (da pagare entro…, scaduta, pagata) e una **pagina di pagamento** con importo, scadenza, **IBAN, causale** e **«Paga ora con carta»** (link riservato anche nelle email); la guida segna i bonifici arrivati, e le fatture scadute ricevono **solleciti automatici** (1 giorno dopo la scadenza, poi ogni 7, al massimo 3, regolabili).
 - **Date libere e lista d'attesa**: per ogni servizio un **calendario del mese** con i giorni liberi (anche per numero di persone, durata e lingua), senza dover provare una data alla volta; se una data è **tenuta in opzione** da un altro operatore (o completa), l'agenzia può chiedere **«avvisami se si libera»** e riceve un'email appena torna prenotabile. La guida vede chi aspetta e chi tiene la data.
 - **Documenti per il cliente finale**: ogni agenzia carica il **logo** e i **recapiti**; il **voucher** (senza prezzi) porta il suo logo e dalla scheda di una pratica o di un pacchetto scarica un **preventivo PDF** con il **suo ricarico** (la tariffa che paga alla guida non compare mai), nella lingua che vuole, con validità e note.
+- **Da fare e scheda del giorno (pannello)**: una pagina con tutto ciò che aspetta la guida (proroghe, partner, fatture scadute o da trasmettere, rimborsi falliti, incassi sul posto, opzioni in scadenza) con il numero nel menu; la **scheda operativa del giorno** (punto d'incontro, contatti, note, cosa incassare) in pagina, in PDF e **per email la sera prima**.
 - **Modifiche e proroghe**: l'agenzia **cambia da sola persone, data od ore** (prezzo ricalcolato; opzione libera, prenotazione a fattura libera nel periodo gratuito e solo in aumento dopo; spostare la data non allunga i termini di annullo) e **chiede una proroga** dell'opzione, che la guida approva (con i giorni che vuole) o rifiuta dal pannello.
 - **Opzioni**: l'agenzia può **tenere una data senza pagare** mentre il suo cliente decide; la durata dipende da quanto manca al tour (tabella e limiti modificabili, anche per singolo partner), arriva un promemoria e, se non conferma, la data **si libera da sola**. Nessun addebito automatico: se paga a fattura il servizio si fattura dopo.
 
@@ -212,6 +213,7 @@ server/
   changeServices.js modifiche e proroghe: email e avvisi alla guida
   packages.js       pacchetti di più servizi: carrello, prenotazione «tutti o nessuno», opzione unica, conferma e rilascio (solo database, testato)
   packageServices.js pacchetti: pagamento con carta (un solo `PT-…`), email e avvisi alla guida
+  todo.js           «Da fare» del pannello (voci per sezione e conteggio); daySheet.js, pdf-day.js, briefing.js: scheda del giorno, PDF e email serale (testati)
   waitlist.js       lista d'attesa delle agenzie: regole e database (testato); waitlistServices.js: email e controllo ogni minuto
   opening.js        pre-apertura: «Incassi dal» (puro)
   partner.js        area agenzie: elenco con filtri, riepilogo, fatture dell'agenzia

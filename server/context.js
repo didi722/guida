@@ -1,4 +1,5 @@
 // Assembla i moduli dell'applicazione (usato dal server e dai test, così non si disallineano).
+import { createBriefingServices } from './briefing.js';
 import { createCalendars } from './calendars.js';
 import { createChangeServices } from './changeServices.js';
 import { createGiftServices } from './giftServices.js';
@@ -43,6 +44,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.services = createServices(app);
   app.packages = createPackageServices(app);
   app.changes = createChangeServices(app);
+  app.briefing = createBriefingServices(app);
   app.waitlist = createWaitlistServices(app);
   app.gifts = createGiftServices(app);
   app.reviews = createReviewServices(app);

@@ -7,12 +7,13 @@ import { dayOfWeek, fmtDate, fmtMonth, monthDates, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
 import { LANG_META, langName, normLang } from '../langs.js';
 import { parseServiceRecord, serviceNote } from '../rates.js';
+import { todoBadge } from '../todo.js';
 import { quoteLines } from './hourly.js';
 import { meetingOf, themeText } from '../choices.js';
 
 // Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
 export const ADMIN_GROUPS = [
-  { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità'], ['/admin/waitlist', 'Lista d’attesa']] },
+  { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/todo', 'Da fare'], ['/admin/day', 'Scheda del giorno'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità'], ['/admin/waitlist', 'Lista d’attesa']] },
   { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
   { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
   { label: 'Sito', items: [['/admin/tours', 'Tour B2C'], ['/admin/tours-b2b', 'Tour B2B'], ['/admin/prices', 'Listino'], ['/admin/rates', 'Tariffe a ore'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/settings', 'Impostazioni']] },
@@ -48,7 +49,7 @@ export function adminLayout(ctx, { title, active, body, flash = '', error = '', 
 <main class="wrap admin-main">
   ${flash ? html`<div class="notice notice-ok" role="status">${flash}</div>` : ''}
   ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
-  ${group && group.items.length > 1 ? html`<nav class="tabs admin-subnav" aria-label="${group.label}">${group.items.map(([href, label]) => html`<a href="${href}" ${active === href ? raw('aria-current="page"') : ''}>${label}</a>`)}</nav>` : ''}
+  ${group && group.items.length > 1 ? html`<nav class="tabs admin-subnav" aria-label="${group.label}">${group.items.map(([href, label]) => html`<a href="${href}" ${active === href ? raw('aria-current="page"') : ''}>${label}${href === '/admin/todo' && todoBadge(app) ? html` <span class="tab-n">${todoBadge(app)}</span>` : ''}</a>`)}</nav>` : ''}
   <h1>${title}</h1>
   ${body}
 </main>

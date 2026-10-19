@@ -1690,3 +1690,34 @@ export async function notifyGuideWaitlist(app, e, account, blockers = []) {
   ].filter((x) => x !== null);
   await app.mail.send({ to, subject: `Lista d’attesa: ${account.company} — ${title}, ${e.date}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
 }
+
+// ───────────── Scheda del giorno dopo, per la guida ─────────────
+/** Alla guida (in italiano): i servizi del giorno `sheet.date`, con il PDF della scheda in allegato. @returns {Promise<boolean>} */
+export async function sendDayBriefing(app, sheet, { attachments = [] } = {}) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return false;
+  const t = sheet.totals;
+  const eur = (c) => `${(c / 100).toLocaleString('it-IT', { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 })} €`;
+  const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+  const head = `${fmtDate(sheet.date, 'it')}: ${n(t.services, 'servizio', 'servizi')}, ${n(t.people, 'persona', 'persone')}${t.options ? `, ${n(t.options, 'opzione aperta', 'opzioni aperte')}` : ''}${t.collectCents ? ` · da incassare sul posto ${eur(t.collectCents)}` : ''}`;
+  const blocks = sheet.services.map((s) => {
+    const who = s.b2b ? [s.agency, s.clientRef, s.name, s.phone].filter(Boolean).join(' · ') : [s.name, s.phone].filter(Boolean).join(' · ');
+    return [
+      `${s.start}–${s.end}  ${s.title}${s.confirmed ? '' : ' (OPZIONE)'}`,
+      `   ${n(s.people, 'persona', 'persone')}${s.tourLang ? ` · ${s.tourLang}` : ''}${s.service ? ` · ${s.service}` : ''}`,
+      s.meeting ? `   Incontro: ${s.meeting}` : null,
+      who ? `   ${s.b2b ? 'Agenzia' : 'Cliente'}: ${who}` : null,
+      s.notes ? `   Note: ${s.notes}` : null,
+      s.adminNotes ? `   Tue note: ${s.adminNotes}` : null,
+      s.collectCents ? `   DA INCASSARE SUL POSTO: ${eur(s.collectCents)}` : null,
+    ].filter(Boolean);
+  });
+  const lines = [head, '', ...blocks.flatMap((b) => [...b, '']), `Scheda completa: ${app.cfg.baseUrl}/admin/day?date=${sheet.date}`];
+  return app.mail.send({
+    to,
+    subject: `Domani: ${n(t.services, 'servizio', 'servizi')}, ${n(t.people, 'persona', 'persone')}${t.collectCents ? ` · da incassare ${eur(t.collectCents)}` : ''} — ${fmtDate(sheet.date, 'it', 'short')}`,
+    text: lines.join('\n'),
+    html: String(html`<div style="font-family:Arial,sans-serif"><p><strong>${head}</strong></p>${blocks.map((b) => html`<p style="margin:0 0 14px">${b.map((l) => html`${l}<br>`)}</p>`)}<p><a href="${app.cfg.baseUrl}/admin/day?date=${sheet.date}">Apri la scheda completa</a></p></div>`),
+    attachments,
+  });
+}

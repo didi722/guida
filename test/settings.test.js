@@ -79,7 +79,7 @@ test('contatti e regole: si cambiano dal pannello, valgono subito, restano dopo 
     assert.match(await (await s.admin('/admin/settings?s=business')).text(), /Predefinito: vecchia@example\.com/);
 
     // regole di prenotazione
-    const rules = { 'policy.b2cFreeCancelHours': '24', 'policy.b2bFreeCancelHours': '72', 'policy.b2cMinNoticeHours': '12', 'policy.b2bMinNoticeHours': '6', 'policy.maxAdvanceDays': '200', 'policy.bufferMin': '45', 'policy.slotStepMin': '30', 'policy.holdMinutes': '35', 'reminders.enabled': '1', 'reminders.sendHour': '18', 'policy.allowPayOnSite': '1' };
+    const rules = { 'policy.b2cFreeCancelHours': '24', 'policy.b2bFreeCancelHours': '72', 'policy.b2cMinNoticeHours': '12', 'policy.b2bMinNoticeHours': '6', 'policy.maxAdvanceDays': '200', 'policy.bufferMin': '45', 'policy.slotStepMin': '30', 'policy.holdMinutes': '35', 'reminders.enabled': '1', 'reminders.sendHour': '18', 'reminders.briefing.enabled': '1', 'reminders.briefing.hour': '18', 'policy.allowPayOnSite': '1' };
     assert.equal(loc(await s.admin('/admin/settings/rules', form(rules))), '/admin/settings?ok=saved&s=rules#rules');
     assert.deepEqual([s.cfg.policy.b2cFreeCancelHours, s.cfg.policy.b2cMinNoticeHours, s.cfg.policy.maxAdvanceDays, s.cfg.policy.bufferMin, s.cfg.policy.allowPayOnSite], [24, 12, 200, 45, true]);
     // la casella non spuntata vale «no»

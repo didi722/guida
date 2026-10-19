@@ -26,6 +26,7 @@ import { adminSettingsRouter } from './admin-settings.js';
 import { adminBackupRouter } from './admin-backup.js';
 import { adminGuideRouter } from './admin-guide.js';
 import { adminInvoicesRouter } from './admin-invoices.js';
+import { adminTodayRouter } from './admin-today.js';
 import { adminWaitlistRouter } from './admin-waitlist.js';
 import { waitingCount } from '../waitlist.js';
 import { dayConflicts } from '../programs.js';
@@ -123,6 +124,7 @@ export function adminRouter(app) {
   r.use((req, res, next) => (req.isAdmin ? next() : res.redirect('/admin/login')));
   r.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
+    if (req.method !== 'GET') res.on('finish', () => { app.todoCache = null; }); // una modifica cambia ciò che c'è da fare: il numero nel menu si ricalcola
     next();
   });
 
@@ -131,6 +133,7 @@ export function adminRouter(app) {
   r.use(adminProgramsRouter(app));
   r.use(adminInvoicesRouter(app));
   r.use(adminWaitlistRouter(app));
+  r.use(adminTodayRouter(app));
   r.use(adminMailRouter(app));
   r.use(adminPartnersRouter(app));
   r.use(adminStatsRouter(app));
