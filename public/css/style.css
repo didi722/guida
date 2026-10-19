@@ -27,6 +27,7 @@
   --warn: #946200; --warn-bg: rgba(214, 150, 0, 0.16);
   --err: #b3362b; --err-bg: rgba(179, 54, 43, 0.12);
   --radius: 12px;
+  --control-h: 49.6px; /* altezza di ogni campo (casella, menù, data, prefisso) e dei pulsanti accanto: i menù a tendina da soli sarebbero più bassi */
   --header-h: 84px;
   --art-sky: #f4ecd0; --art-sun: #d6bb51; --art-ink: #6b5a3e; --art-cut: #f4ecd0; --art-water: #af9168; --art-wave: #d6bb51;
   color-scheme: light;
@@ -333,6 +334,11 @@ a.card:hover .arrow { transform: translateX(5px); }
 input, select, textarea { width: 100%; font: inherit; font-size: 1rem; color: var(--text); background: var(--field); border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 14px; transition: border-color 0.2s, box-shadow 0.2s; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(214, 187, 81, 0.3); }
 input[type='checkbox'], input[type='radio'] { width: auto; accent-color: var(--bronze); }
+/* un'unica altezza per i campi: il menù a tendina e le ore/date del browser, da soli, vengono più bassi o più alti delle caselle di testo e affiancati non si allineano */
+select:not([multiple]):not([size]), input[type='time'], input[type='date'], input[type='month'], input[type='datetime-local'], .dp-field, .combo-btn { height: var(--control-h); }
+select.pax-select, .img-slot-form select { height: auto; } /* i due menù piccoli, di proposito */
+/* pulsanti nelle righe di campi (moduli in linea, barre degli strumenti): alti come i campi accanto */
+.inline-form .btn, .copy-form .btn, .day-tools .btn, .wait-row .btn { min-height: var(--control-h); }
 textarea { resize: vertical; min-height: 90px; }
 .stepper-field { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .stepper-field .label { margin: 0; }
@@ -379,7 +385,7 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 
 /* ───────── Prenota / checkout ───────── */
 .search-card { display: grid; grid-template-columns: 1fr 0.55fr 1.2fr auto; gap: 14px; align-items: end; }
-.search-card .field { margin: 0; } .search-card .btn { height: 48px; }
+.search-card .field { margin: 0; } .search-card .btn { height: var(--control-h); }
 .search-card .kinds { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 24px; border: 0; padding: 0; margin: 0; } .search-card .kinds .check { margin: 4px 0; }
 .option-box { margin-top: 18px; padding: 16px 18px; border: 1.5px dashed var(--bronze); border-radius: 12px; background: var(--soft); } .option-box h3 { font-size: 1.05rem; margin: 0 0 6px; } .option-box p { margin: 0 0 12px; font-size: 0.95rem; color: var(--muted); }
 .option-note { margin: 12px 0 0; }
@@ -397,6 +403,14 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 .form-grid > .span-2 { grid-column: 1 / -1; }
 .form-grid.form-grid-3 { grid-template-columns: 6rem minmax(0, 1fr) 6rem; } .form-grid.form-grid-3.is-two { grid-template-columns: 6rem minmax(0, 1fr); }
 @media (max-width: 520px) { .form-grid.form-grid-3, .form-grid.form-grid-3.is-two { grid-template-columns: 6rem minmax(0, 1fr); } } /* sul telefono la provincia va sotto il CAP */
+/* Campi affiancati allineati: ogni campo occupa tre righe della griglia (etichetta, campo, nota) e le righe sono in comune con il vicino. Se un'etichetta va a capo
+   (o una ha una nota sotto e l'altra no), le caselle restano alla stessa altezza; l'etichetta più corta si appoggia al suo campo. */
+@supports (grid-template-rows: subgrid) {
+  .form-grid > * { grid-row: span 3; }
+  .form-grid > .field:not(fieldset) { display: grid; grid-template-rows: subgrid; align-content: start; }
+  .form-grid > .field:not(fieldset) > :first-child { align-self: end; }
+  .form-grid > .field:not(fieldset) > :not(:first-child) { align-self: start; }
+}
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; margin: 10px 0; cursor: pointer; } .check input { margin-top: 5px; flex: none; }
 .consent { margin: 18px 0 14px; }
 .invoice-opt { margin: 4px 0 8px; } .invoice-opt summary { cursor: pointer; color: var(--accent-text); font-weight: 700; padding: 6px 0; }
@@ -420,7 +434,7 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 .gift-code { font-size: 1.3rem; letter-spacing: 0.12em; }
 .band-soft { background: var(--soft); border-block: 1px solid var(--line); }
 .promo-box { margin: 4px 0 8px; } .promo-box summary { cursor: pointer; color: var(--accent-text); font-weight: 700; padding: 6px 0; }
-.promo-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px 14px; align-items: end; margin-top: 6px; } .promo-grid .field { margin: 0; } .promo-grid .btn { height: 46px; margin-bottom: 0; }
+.promo-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px 14px; align-items: end; margin-top: 6px; } .promo-grid .field { margin: 0; } .promo-grid .btn { height: var(--control-h); margin-bottom: 0; }
 .field-error { color: var(--err); font-weight: 700; margin: 6px 0 0; font-size: 0.93rem; } .field-ok { color: var(--ok); font-weight: 700; margin: 6px 0 0; font-size: 0.93rem; }
 .row-discount dd { color: var(--ok); }
 .pay-options { display: grid; gap: 10px; }
@@ -854,7 +868,7 @@ body.admin { --header-h: 64px; }
 .notes-list li { margin: 0 0 4px; }
 .hourly-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: start; }
 .hourly-form .field .label { display: block; margin-bottom: 6px; }
-.hourly-form input:not([type=hidden]), .hourly-form select, .hourly-form .dp-field { height: 48px; box-sizing: border-box; }
+.hourly-form input:not([type=hidden]), .hourly-form select, .hourly-form .dp-field { height: var(--control-h); box-sizing: border-box; }
 .hourly-form .field strong { display: flex; align-items: center; min-height: 48px; }
 .hourly-form .form-note { grid-column: 1 / -1; margin: -4px 0 0; }
 .hourly-form .field, .hourly-form .check { margin: 0; } .hourly-form .wide, .hourly-form .check, .hourly-form .btn, .hourly-form .notice { grid-column: 1 / -1; }
@@ -1075,7 +1089,7 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 
 /* ───────── Date libere e lista d'attesa (area agenzie) ───────── */
 .avail-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; align-items: end; margin-bottom: 18px; }
-.avail-form .field { margin: 0; } .avail-form .btn { justify-self: start; }
+.avail-form .field { margin: 0; } .avail-form .btn { justify-self: start; height: var(--control-h); }
 .btn.is-off { opacity: 0.35; pointer-events: none; }
 .avail-grid .acal-cell { min-height: 78px; }
 .acal-cell.is-none { background: var(--soft); opacity: 0.5; pointer-events: none; }
