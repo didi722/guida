@@ -187,6 +187,9 @@ export const partnerInvoice = (db, accountId, id) =>
   db.prepare(`SELECT * FROM invoices WHERE id = ? AND account_id = ? AND number IS NOT NULL AND status IN (${CREDITABLE_STATUS.map(() => '?').join(',')})`).get(id, accountId, ...CREDITABLE_STATUS) ?? null;
 
 /** Il nominativo (e il resto) si può cambiare finché la prenotazione è viva e il servizio non è iniziato. */
+/** Una prenotazione confermata il cui servizio è già finito: all'agenzia non serve sapere che è «confermata», serve sapere che è fatto. */
+export const isDone = (b, nowMs = Date.now()) => b.status === 'confirmed' && localToInstant(b.date, b.end_time) <= nowMs;
+
 export const isEditable = (b, nowMs = Date.now()) => ['confirmed', 'held', 'option'].includes(b.status) && localToInstant(b.date, b.start_time) > nowMs;
 
 /** Esportazione CSV delle righe (Excel italiano: separatore «;», UTF-8 con BOM, importi con la virgola). */

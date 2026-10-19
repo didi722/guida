@@ -2,16 +2,20 @@
 import express from 'express';
 import { send } from '../http.js';
 import { getPeriod, listPeriods } from '../periods.js';
+import { tierInput } from '../policy.js';
 import { periodEditPage, periodsPage } from '../views/admin-periods.js';
 
 const FLASH = { created: 'Periodo aggiunto: le sue regole valgono da subito per i servizi di quelle date.', saved: 'Periodo salvato.', deleted: 'Periodo eliminato: per quelle date tornano le regole del sito.' };
 
-/** Il modulo come arriva (testo). */
-const readPeriod = (b) => ({ name: b.name, from: b.from, to: b.to, mode: b.mode, maxDays: b.maxDays, releaseHours: b.releaseHours, noticeB2c: b.noticeB2c, noticeB2b: b.noticeB2b });
+/** Il modulo come arriva (testo; le righe dell'annullo come sono state scritte). */
+const readPeriod = (b) => ({
+  name: b.name, from: b.from, to: b.to, mode: b.mode, maxDays: b.maxDays, releaseHours: b.releaseHours, noticeB2c: b.noticeB2c, noticeB2b: b.noticeB2b,
+  cancelB2c: tierInput(b, 'c_'), cancelB2b: tierInput(b, 'a_'), cancelPartners: b.cancelPartners === '1',
+});
 
 export function adminPeriodsRouter(app) {
   const r = express.Router();
-  const form = express.urlencoded({ extended: false, limit: '4kb' });
+  const form = express.urlencoded({ extended: false, limit: '8kb' });
   const ctxOf = (req) => ({ app, req });
   const flashOf = (req) => FLASH[String(req.query.ok ?? '')] ?? '';
   const one = (req) => {

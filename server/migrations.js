@@ -684,6 +684,14 @@ UPDATE accounts SET
 WHERE billing_json IS NOT NULL AND json_valid(billing_json);
 `;
 
+const V33_PERIOD_CANCEL = `
+-- Condizioni di annullo particolari per i servizi di un periodo (privati e agenzie), come scaglioni [{"hours":168,"refund":100},…]; vuoto = come il sito.
+-- cancel_partners = 1: valgono anche per le agenzie che hanno una politica di annullo propria.
+ALTER TABLE periods ADD COLUMN cancel_b2c_json TEXT;
+ALTER TABLE periods ADD COLUMN cancel_b2b_json TEXT;
+ALTER TABLE periods ADD COLUMN cancel_partners INTEGER NOT NULL DEFAULT 0;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -745,6 +753,8 @@ export const MIGRATIONS = [
   V31_QUOTES,
   // v32 — dati di fatturazione completi dei partner
   V32_BILLING,
+  // v33 — condizioni di annullo nei periodi
+  V33_PERIOD_CANCEL,
 ];
 
 export function migrate(db) {

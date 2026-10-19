@@ -1,8 +1,8 @@
 import { html, raw } from '../html.js';
 import { unitPriceFor } from '../bookings.js';
 import { maxActiveOptions, normalizeOptionTiers } from '../optionPolicy.js';
-import { PARTNER_VIEWS, hasSearch } from '../partner.js';
-import { accountTiers } from '../policy.js';
+import { PARTNER_VIEWS, hasSearch, isDone } from '../partner.js';
+import { accountTiers, hasOwnPolicy } from '../policy.js';
 import { localeOf } from '../langs.js';
 import { isSimplePolicy, tierSentencesHours } from '../policyText.js';
 import { daysInMonth, fmtDate, fmtInstant, fmtMonth, nowRome } from '../time.js';
@@ -117,14 +117,18 @@ export function inviteStatePage(ctx, { state }) {
 // ───────────────────────── Area riservata dell'agenzia ─────────────────────────
 /** Messaggi che le azioni dell'elenco (rilascia, conferma) possono lasciare al ritorno sulla dashboard. */
 const FLASH = ['option-confirmed', 'option-released', 'option-expired', 'option-error', 'cancelled', 'cancel-error', 'feed'];
-/** Lo stato di una prenotazione a parole (anche per l'esportazione): un'opzione scaduta non è una prenotazione «scaduta». */
-export const bookingStatusText = (t, b) => (b.status === 'expired' && b.option_expires_at ? t('b2b.bst.optionExpired') : t(`b2b.bst.${b.status}`));
+/**
+ * Lo stato di una prenotazione a parole (anche per l'esportazione): un'opzione scaduta non è una prenotazione «scaduta»,
+ * e una confermata il cui servizio è già finito è «servizio effettuato».
+ */
+export const bookingStatusText = (t, b, nowMs = Date.now()) => (isDone(b, nowMs) ? t('b2b.bst.done') : b.status === 'expired' && b.option_expires_at ? t('b2b.bst.optionExpired') : t(`b2b.bst.${b.status}`));
+/** La classe del riquadro colorato dello stato. */
+export const bookingStatusChip = (b, nowMs = Date.now()) => (isDone(b, nowMs) ? 'chip-done' : { confirmed: 'chip-ok', held: 'chip-warn', option: 'chip-warn' }[b.status] ?? 'chip-err');
 
 function statusChip(ctx, b) {
   const { t, lang } = ctx;
   if (b.status === 'option') return html`<span class="chip chip-warn">${t('b2b.bst.option')}</span><small class="muted">${t('partner.optUntil', { when: fmtInstant(Date.parse(b.option_expires_at), lang) })}</small>`;
-  const cls = { confirmed: 'chip-ok', held: 'chip-warn' }[b.status] ?? 'chip-err';
-  return html`<span class="chip ${cls}">${bookingStatusText(t, b)}</span>`;
+  return html`<span class="chip ${bookingStatusChip(b)}">${bookingStatusText(t, b)}</span>`;
 }
 
 /** Le condizioni dell'account in poche righe (sconto, annullo, pagamento): stesse parole nella pagina dedicata e nel riquadro in alto. */
@@ -138,15 +142,16 @@ function termsFacts(ctx, acct) {
     <li><span class="muted">${t('b2b.discount')}</span> <strong>${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')}</strong></li>
     <li><span class="muted">${t('b2b.payments')}</span> <strong>${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</strong></li>
     <li><span class="muted">${t('partner.terms.options')}</span> ${optionTerms(ctx, acct)}</li>
-    ${periodTerms(ctx)}
+    ${periodTerms(ctx, acct)}
   </ul>`;
 }
 
 /** I periodi (alta stagione, Carnevale…) in cui le opzioni o il preavviso delle agenzie sono diversi dal solito: da oggi in poi, con le date. */
-function periodTerms(ctx) {
+function periodTerms(ctx, acct) {
   const { t, lang, app } = ctx;
   const today = nowRome().date;
-  const list = app.cfg.options.periods.filter((p) => p.to >= today && (p.optionsMode !== 'normal' || p.noticeB2bHours != null));
+  const cancels = (p) => !!p.cancelB2b && (!hasOwnPolicy(acct) || p.cancelPartners); // l'annullo del periodo vale per questa agenzia
+  const list = app.cfg.options.periods.filter((p) => p.to >= today && (p.optionsMode !== 'normal' || p.noticeB2bHours != null || cancels(p)));
   if (!list.length) return '';
   const day = 86_400_000;
   const rules = (p) =>
@@ -156,6 +161,7 @@ function periodTerms(ctx) {
         ? t('partner.terms.periodShort', { detail: [p.optionMaxDays != null ? t('partner.terms.periodMax', { days: timeLeft(t, p.optionMaxDays * day) }) : '', p.optionReleaseHours != null ? t('partner.terms.periodRelease', { hours: fmtHours(t, p.optionReleaseHours) }) : ''].filter(Boolean).join(', ') })
         : '',
       p.noticeB2bHours != null ? t('partner.terms.periodNotice', { hours: fmtHours(t, p.noticeB2bHours) }) : '',
+      cancels(p) ? t('partner.terms.periodCancel', { tiers: tierSentencesHours(t, p.cancelB2b, fmtHours).join(' ') }) : '',
     ]
       .filter(Boolean)
       .join('; ');

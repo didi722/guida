@@ -210,3 +210,99 @@ test('agenzie: le loro condizioni elencano i periodi con le date e le regole, ne
     s.close();
   }
 });
+
+const CANCEL = { c_h1: '7', c_u1: 'd', c_r1: '100', a_h1: '14', a_u1: 'd', a_r1: '100', a_h2: '7', a_u2: 'd', a_r2: '50' };
+
+test('pannello: condizioni di annullo del periodo (privati e agenzie), errori che non perdono ciò che si è scritto, modifica', async () => {
+  const s = await start();
+  try {
+    const { app, admin } = s;
+    const page = await text(await admin('/admin/periods'));
+    assert.match(page, /Condizioni di annullo, per i servizi di questo periodo/);
+    for (const n of ['c_h1', 'c_u1', 'c_r1', 'c_h3', 'a_h1', 'a_u2', 'a_r3', 'cancelPartners']) assert.match(page, new RegExp(`name="${n}"`), n);
+    assert.match(page, /data-preset="\[\[3,&quot;d&quot;,100\]\]" data-prefix="c_"/, 'i modelli riempiono le righe dei privati');
+    assert.match(page, /data-prefix="a_"/);
+    assert.match(page, /<strong>Annullo gratuito<\/strong>: privati fino a \d+ or[ae] prima/, 'le regole di base ricordano com’è il sito');
+
+    // un periodo che cambia solo l'annullo basta
+    const only = { name: 'Natale', from: day(60), to: day(70), mode: 'normal', maxDays: '', releaseHours: '', noticeB2c: '', noticeB2b: '', ...CANCEL };
+    const made = await admin('/admin/periods', form(only));
+    assert.equal(loc(made), '/admin/periods?ok=created');
+    const p = app.periods.list()[0];
+    assert.deepEqual(p.cancelB2c, [{ hours: 168, refund: 100 }]);
+    assert.deepEqual(p.cancelB2b, [{ hours: 336, refund: 100 }, { hours: 168, refund: 50 }]);
+    assert.equal(p.cancelPartners, false);
+    const list = await text(await admin('/admin/periods'));
+    assert.match(list, /annullo dei privati: 100% fino a 7 giorni prima, poi nulla/);
+    assert.match(list, /annullo delle agenzie: 100% fino a 14 giorni prima, 50% fino a 7 giorni prima, poi nulla/);
+
+    // la pagina di modifica rimette le righe, con giorni e ore
+    const edit = await text(await admin(`/admin/periods/${p.id}`));
+    assert.match(edit, /name="c_h1"[^>]*value="7"/);
+    assert.match(edit, /<select name="c_u1"[^>]*><option value="d" selected>giorni<\/option>/);
+    assert.match(edit, /name="a_h2"[^>]*value="7"/);
+    assert.match(edit, /name="a_r2"[^>]*value="50"/);
+
+    // errori: il messaggio sta nel punto giusto e il modulo resta com'era
+    const bad = await admin(`/admin/periods/${p.id}`, form({ ...only, a_r1: '40', a_r2: '60', cancelPartners: '1' }));
+    assert.equal(bad.status, 400);
+    const badPage = await text(bad);
+    assert.match(badPage, /Annullo delle agenzie: Il rimborso non può aumentare/);
+    assert.match(badPage, /name="a_r2"[^>]*value="60"/, 'ciò che si era scritto resta');
+    assert.match(badPage, /name="cancelPartners" value="1" checked/);
+    assert.deepEqual(app.periods.list()[0].cancelB2b.map((t) => t.refund), [100, 50], 'nulla è cambiato');
+    const empty = await admin(`/admin/periods/${p.id}`, form({ name: 'Natale', from: day(60), to: day(70), mode: 'normal' }));
+    assert.equal(empty.status, 400, 'senza nessuna regola il periodo non si salva');
+    assert.match(await text(empty), /condizioni di annullo particolari/);
+
+    // modifica: si toglie quello dei privati, si aggiunge «anche per i partner»
+    const saved = await admin(`/admin/periods/${p.id}`, form({ ...only, c_h1: '', c_r1: '', cancelPartners: '1' }));
+    assert.equal(loc(saved), `/admin/periods/${p.id}?ok=saved`);
+    const q = app.periods.list()[0];
+    assert.equal(q.cancelB2c, null);
+    assert.equal(q.cancelPartners, true);
+  } finally {
+    s.close();
+  }
+});
+
+test('annullo del periodo: il checkout lo mostra con il motivo (agenzie con il nome, privati senza), le agenzie con condizioni proprie no, e le loro condizioni lo elencano', async () => {
+  const s = await start();
+  try {
+    const { app, partner, anon } = s;
+    app.periods.save({ name: 'Natale', from: day(60), to: day(70), mode: 'normal', cancelB2c: [{ value: '10', unit: 'd', refund: '100' }, { value: '', unit: 'd', refund: '' }, { value: '', unit: 'd', refund: '' }], cancelB2b: [{ value: '14', unit: 'd', refund: '100' }, { value: '7', unit: 'd', refund: '50' }, { value: '', unit: 'd', refund: '' }] });
+    const agencyUrl = (date, lang = 'it') => `/${lang}/book/checkout?tour=cannaregio-ghetto-agenzie&date=${date}&time=10:00&pax=4`;
+    // agenzia: i due scaglioni del periodo e la nota con il nome
+    let page = await text(await partner(agencyUrl(day(65))));
+    const box = page.match(/<div class="policy-box[^"]*"><strong>[^<]*<\/strong><ul class="plain tier-list">(.*?)<\/ul>/s)[1];
+    assert.match(box, /Rimborso totale fino al /);
+    assert.match(box, /Rimborso del 50% fino al /);
+    assert.match(page, /Per le date del periodo «Natale» valgono condizioni di annullo particolari\./);
+    assert.ok((await text(await partner(agencyUrl(day(65), 'en')))).includes('Special cancellation terms apply to the dates of the period “Natale”.'));
+    // fuori dal periodo: come sempre, nessuna nota
+    page = await text(await partner(agencyUrl(day(40))));
+    assert.doesNotMatch(page, /valgono condizioni di annullo particolari/);
+    // privato: un solo termine (10 giorni) e la nota generica, senza il nome del periodo
+    const privUrl = (date) => `/it/book/checkout?tour=san-marco-rialto&date=${date}&time=09:30&pax=2`;
+    page = await text(await anon(privUrl(day(65))));
+    assert.match(page, /Per queste date valgono condizioni di annullo particolari\./);
+    assert.doesNotMatch(page, /Natale/);
+    const until = page.match(/Cancellazione gratuita fino a ([^<]+?)\s*\(10 giorni prima\)/);
+    assert.ok(until, 'gratuita fino a 10 giorni prima: ' + page.match(/policy-box[^>]*>([^<]+)</)?.[1]);
+    assert.doesNotMatch(await text(await anon(privUrl(day(40)))), /valgono condizioni di annullo particolari/);
+    // un'agenzia con condizioni proprie le tiene, finché il periodo non dice il contrario
+    app.db.prepare("UPDATE accounts SET cancel_policy_json = ? WHERE email = 'giulia@lagoon.example'").run(JSON.stringify([{ hours: 24, refund: 100 }]));
+    page = await text(await partner(agencyUrl(day(65))));
+    assert.doesNotMatch(page, /valgono condizioni di annullo particolari/);
+    // le condizioni dell'agenzia: nel suo elenco di periodi compaiono solo se valgono per lei
+    assert.doesNotMatch(await text(await partner('/it/b2b/rates')), /Periodi con regole particolari/, 'per lei il periodo non cambia nulla');
+    const p = app.periods.list()[0];
+    app.periods.save({ name: 'Natale', from: p.from, to: p.to, mode: 'normal', cancelB2b: [{ value: '14', unit: 'd', refund: '100' }, { value: '7', unit: 'd', refund: '50' }, { value: '', unit: 'd', refund: '' }], cancelPartners: true }, p.id);
+    const rates = await text(await partner('/it/b2b/rates'));
+    assert.match(rates, /«Natale», [^<]+: condizioni di annullo: Rimborso totale fino a 14 giorni prima dell’inizio\. Rimborso del 50% fino a 7 giorni prima dell’inizio\. Dopo: nessun rimborso\./);
+    assert.match(await text(await partner(agencyUrl(day(65)))), /Per le date del periodo «Natale» valgono condizioni di annullo particolari\./, 'ora vale anche per chi ha condizioni proprie');
+    assert.match(await text(await partner('/en/b2b/rates')), /cancellation terms: Full refund up to 14 days before the start\./);
+  } finally {
+    s.close();
+  }
+});

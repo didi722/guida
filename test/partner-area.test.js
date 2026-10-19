@@ -572,3 +572,51 @@ test('voucher: si scarica nella lingua scelta (anche diversa da quella del sito)
     s.close();
   }
 });
+
+test('prenotazioni passate: «Servizio effettuato» al posto di «Confermata» (elenco, calendario, pagina della pratica, esportazione); le future restano «Confermata»', async () => {
+  const s = await start();
+  try {
+    const f = await s.login('giulia@lagoon.example');
+    const past = book(s.app, s.lagoon, { date: day(10), time: '10:00', ref: 'GIA FATTO' });
+    const later = book(s.app, s.lagoon, { date: day(12), time: '10:00', ref: 'ANCORA DA FARE' });
+    const cancelled = book(s.app, s.lagoon, { date: day(14), time: '10:00', ref: 'ANNULLATA' });
+    s.app.db.prepare("UPDATE bookings SET status = 'cancelled', cancelled_at = ? WHERE id = ?").run(new Date().toISOString(), cancelled.id);
+    s.app.db.prepare('UPDATE bookings SET date = ? WHERE id = ?').run(day(-3), past.id); // il servizio si è svolto 3 giorni fa
+    const row = (html, ref) => html.match(new RegExp(`<tr[^>]*>(?:(?!</tr>)[^])*${ref}(?:(?!</tr>)[^])*</tr>`))[0];
+
+    const all = nb(await (await f('/it/b2b/bookings?view=all')).text());
+    assert.match(row(all, 'GIA FATTO'), /<span class="chip chip-done">Servizio effettuato<\/span>/);
+    assert.ok(!/Confermata/.test(row(all, 'GIA FATTO')));
+    assert.match(row(all, 'ANCORA DA FARE'), /<span class="chip chip-ok">Confermata<\/span>/, 'una futura resta confermata');
+    assert.match(row(all, 'ANNULLATA'), /chip-err">Annullata/);
+    // la scheda «Passate» elenca la prenotazione fatta, con la stessa parola
+    const pastTab = nb(await (await f('/it/b2b/bookings?view=past')).text());
+    assert.match(row(pastTab, 'GIA FATTO'), /Servizio effettuato/);
+
+    // pagina della pratica: l'intestazione dice che è fatta
+    const detail = nb(await (await f(`/it/b2b/bookings/${past.ref}`)).text());
+    assert.match(detail, /<h1>Servizio effettuato<\/h1>/);
+    assert.match(detail, /Il servizio si è svolto /);
+    const future = nb(await (await f(`/it/b2b/bookings/${later.ref}`)).text());
+    assert.match(future, /<h1>Prenotazione confermata<\/h1>/);
+    // il cliente (con il suo link) continua a vedere ciò che vedeva
+    const customer = nb(await (await s.anon(`/it/booking/${past.ref}?t=${past.token}`)).text());
+    assert.match(customer, /<h1>Prenotazione confermata<\/h1>/);
+
+    // esportazione
+    const csv = await (await f('/it/b2b/bookings.csv?view=all')).text();
+    assert.match(csv, /GIA FATTO[^\n]*Servizio effettuato/);
+    assert.match(csv, /ANCORA DA FARE[^\n]*Confermata/);
+
+    // in inglese e in spagnolo, e il servizio di oggi già finito conta come fatto (non quello che deve ancora iniziare)
+    assert.match(nb(await (await f('/en/b2b/bookings?view=all')).text()), /Service completed/);
+    assert.match(nb(await (await f('/es/b2b/bookings?view=all')).text()), /Servicio realizado/);
+    const today = book(s.app, s.lagoon, { date: day(6), time: '10:00', ref: 'OGGI MATTINA' });
+    s.app.db.prepare('UPDATE bookings SET date = ?, start_time = ?, end_time = ? WHERE id = ?').run(nowRome().date, '00:01', '00:02', today.id);
+    assert.match(row(nb(await (await f('/it/b2b/bookings?view=all')).text()), 'OGGI MATTINA'), /Servizio effettuato/);
+    s.app.db.prepare('UPDATE bookings SET start_time = ?, end_time = ? WHERE id = ?').run('23:58', '23:59', today.id);
+    assert.match(row(nb(await (await f('/it/b2b/bookings?view=all')).text()), 'OGGI MATTINA'), /Confermata/);
+  } finally {
+    s.close();
+  }
+});

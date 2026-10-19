@@ -815,6 +815,18 @@
   "Después: sin reembolso.",
   "それ以降は返金なし。"
  ],
+ "policy.periodNote": [
+  "Per le date del periodo «{name}» valgono condizioni di annullo particolari.",
+  "Special cancellation terms apply to the dates of the period “{name}”.",
+  "Para las fechas del periodo «{name}» rigen condiciones de cancelación especiales.",
+  "「{name}」の期間の日程には、特別なキャンセル条件が適用されます。"
+ ],
+ "policy.periodNoteB2c": [
+  "Per queste date valgono condizioni di annullo particolari.",
+  "Special cancellation terms apply to these dates.",
+  "Para estas fechas rigen condiciones de cancelación especiales.",
+  "これらの日程には、特別なキャンセル条件が適用されます。"
+ ],
  "policy.tierHoursFull": [
   "Rimborso totale fino a {when} prima dell’inizio.",
   "Full refund up to {when} before the start.",
@@ -1474,6 +1486,18 @@
   "We have sent the details to {email}.",
   "Hemos enviado los detalles a {email}.",
   "詳細を{email}にお送りしました。"
+ ],
+ "booking.doneTitle": [
+  "Servizio effettuato",
+  "Service completed",
+  "Servicio realizado",
+  "実施済み"
+ ],
+ "booking.doneText": [
+  "Il servizio si è svolto {date}.",
+  "The service took place on {date}.",
+  "El servicio se realizó el {date}.",
+  "サービスは{date}に実施されました。"
  ],
  "booking.heldTitle": [
   "In attesa di pagamento",
@@ -3304,6 +3328,12 @@
   "Confirmed",
   "Confirmada",
   "確定"
+ ],
+ "b2b.bst.done": [
+  "Servizio effettuato",
+  "Service completed",
+  "Servicio realizado",
+  "実施済み"
  ],
  "b2b.bst.held": [
   "In pagamento",
@@ -5776,6 +5806,12 @@
   "minimum notice {hours}",
   "preaviso mínimo {hours}",
   "最低{hours}前までのご予約"
+ ],
+ "partner.terms.periodCancel": [
+  "condizioni di annullo: {tiers}",
+  "cancellation terms: {tiers}",
+  "condiciones de cancelación: {tiers}",
+  "キャンセル条件：{tiers}"
  ],
  "partner.tab.upcoming": [
   "In arrivo",

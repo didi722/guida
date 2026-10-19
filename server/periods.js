@@ -1,6 +1,7 @@
 // Periodi con regole particolari: intervalli di date del SERVIZIO (l'alta stagione, il Carnevale, Natale…) in cui cambiano le regole
-// delle opzioni delle agenzie e il preavviso minimo. Un giorno appartiene a un solo periodo. Fuori dai periodi valgono le regole di
-// Impostazioni; dentro, quelle del periodo, qualunque sia il giorno in cui si prenota.
+// delle opzioni delle agenzie, il preavviso minimo e le condizioni di annullo. Un giorno appartiene a un solo periodo. Fuori dai periodi valgono
+// le regole di Impostazioni; dentro, quelle del periodo, qualunque sia il giorno in cui si prenota.
+import { TIER_ERRORS, parseTiers, tierRows, validateTiers } from './policy.js';
 import { isDate } from './time.js';
 
 export const MODES = ['normal', 'short', 'off'];
@@ -26,6 +27,9 @@ export const fromRow = (r) => ({
   optionReleaseHours: r.option_release_hours ?? null,
   noticeB2cHours: r.notice_b2c_hours ?? null,
   noticeB2bHours: r.notice_b2b_hours ?? null,
+  cancelB2c: parseTiers(r.cancel_b2c_json), // scaglioni di annullo dei privati e delle agenzie nel periodo (null = come il sito)
+  cancelB2b: parseTiers(r.cancel_b2b_json),
+  cancelPartners: !!r.cancel_partners, // valgono anche per le agenzie con una politica propria
 });
 
 /** Il periodo che contiene una data (AAAA-MM-GG), o null. */
@@ -76,13 +80,27 @@ export function normalizePeriod(input) {
   }
   const noticeB2c = check('noticeB2c', 'Preavviso per i privati', 720);
   const noticeB2b = check('noticeB2b', 'Preavviso per le agenzie', 720);
-  if (!Object.keys(errors).length && mode === 'normal' && noticeB2c === null && noticeB2b === null) errors.mode = 'Questo periodo non cambia nessuna regola: scegli opzioni più brevi o senza opzioni, oppure un preavviso diverso.';
+  // condizioni di annullo: righe come scritte nel modulo (preavviso, unità, rimborso); tutte vuote = come il sito
+  const cancel = (key, label) => {
+    if (!Array.isArray(input[key])) return null;
+    const { tiers, error } = validateTiers(tierRows(input[key]));
+    if (error) {
+      errors[key] = `${label}: ${TIER_ERRORS[error]}`;
+      return null;
+    }
+    return tiers;
+  };
+  const cancelB2c = cancel('cancelB2c', 'Annullo dei privati');
+  const cancelB2b = cancel('cancelB2b', 'Annullo delle agenzie');
+  const cancelPartners = !!cancelB2b && !!input.cancelPartners;
+  if (!Object.keys(errors).length && mode === 'normal' && noticeB2c === null && noticeB2b === null && !cancelB2c && !cancelB2b) errors.mode = 'Questo periodo non cambia nessuna regola: scegli opzioni più brevi o senza opzioni, un preavviso diverso o condizioni di annullo particolari.';
 
   if (Object.keys(errors).length) return { ok: false, errors };
-  return { ok: true, values: { name, from, to, mode, maxDays, releaseHours: release, noticeB2c, noticeB2b } };
+  return { ok: true, values: { name, from, to, mode, maxDays, releaseHours: release, noticeB2c, noticeB2b, cancelB2c, cancelB2b, cancelPartners } };
 }
 
 const ROW = 'SELECT * FROM periods ORDER BY date_from, id';
+const json = (tiers) => (tiers ? JSON.stringify(tiers) : null);
 
 export const listPeriods = (db) => db.prepare(ROW).all().map(fromRow);
 export const getPeriod = (db, id) => {
@@ -108,19 +126,22 @@ export function savePeriod(db, input, id = null, nowMs = Date.now()) {
   if (clash) return { ok: false, errors: { from: `Queste date si sovrappongono a «${clash.name}» (${showRange(clash)}): un giorno può stare in un solo periodo.` } };
   if (id) {
     const done = db
-      .prepare('UPDATE periods SET name = ?, date_from = ?, date_to = ?, options_mode = ?, option_max_days = ?, option_release_hours = ?, notice_b2c_hours = ?, notice_b2b_hours = ? WHERE id = ?')
-      .run(v.name, v.from, v.to, v.mode, v.maxDays, v.releaseHours, v.noticeB2c, v.noticeB2b, id);
+      .prepare('UPDATE periods SET name = ?, date_from = ?, date_to = ?, options_mode = ?, option_max_days = ?, option_release_hours = ?, notice_b2c_hours = ?, notice_b2b_hours = ?, cancel_b2c_json = ?, cancel_b2b_json = ?, cancel_partners = ? WHERE id = ?')
+      .run(v.name, v.from, v.to, v.mode, v.maxDays, v.releaseHours, v.noticeB2c, v.noticeB2b, json(v.cancelB2c), json(v.cancelB2b), v.cancelPartners ? 1 : 0, id);
     return done.changes ? { ok: true, id } : { ok: false, errors: { name: 'Questo periodo non esiste più.' } };
   }
   const row = db
-    .prepare('INSERT INTO periods(name, date_from, date_to, options_mode, option_max_days, option_release_hours, notice_b2c_hours, notice_b2b_hours, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(v.name, v.from, v.to, v.mode, v.maxDays, v.releaseHours, v.noticeB2c, v.noticeB2b, new Date(nowMs).toISOString());
+    .prepare('INSERT INTO periods(name, date_from, date_to, options_mode, option_max_days, option_release_hours, notice_b2c_hours, notice_b2b_hours, cancel_b2c_json, cancel_b2b_json, cancel_partners, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(v.name, v.from, v.to, v.mode, v.maxDays, v.releaseHours, v.noticeB2c, v.noticeB2b, json(v.cancelB2c), json(v.cancelB2b), v.cancelPartners ? 1 : 0, new Date(nowMs).toISOString());
   return { ok: true, id: Number(row.lastInsertRowid) };
 }
 
 export const deletePeriod = (db, id) => db.prepare('DELETE FROM periods WHERE id = ?').run(id).changes > 0;
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const before = (h) => (h >= 48 && h % 24 === 0 ? plural(h / 24, 'giorno', 'giorni') : plural(h, 'ora', 'ore'));
+/** Scaglioni di annullo in una riga: «100% fino a 14 giorni prima, 50% fino a 7 giorni prima, poi nulla». */
+export const tiersLine = (tiers) => `${tiers.map((t) => `${t.refund}% fino a ${before(t.hours)} prima`).join(', ')}, poi nulla`;
 /** Le regole di un periodo in una riga, per il pannello. */
 export function rulesText(p) {
   const parts = [];
@@ -135,6 +156,8 @@ export function rulesText(p) {
   if (p.noticeB2cHours != null) notice.push(`privati ${plural(p.noticeB2cHours, 'ora', 'ore')}`);
   if (p.noticeB2bHours != null) notice.push(`agenzie ${plural(p.noticeB2bHours, 'ora', 'ore')}`);
   if (notice.length) parts.push(`preavviso minimo: ${notice.join(', ')}`);
+  if (p.cancelB2c) parts.push(`annullo dei privati: ${tiersLine(p.cancelB2c)}`);
+  if (p.cancelB2b) parts.push(`annullo delle agenzie: ${tiersLine(p.cancelB2b)}${p.cancelPartners ? ' (anche per chi ha condizioni proprie)' : ''}`);
   return parts.join(' · ');
 }
 

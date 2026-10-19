@@ -1006,6 +1006,7 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .dp-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .dp-link { background: none; border: 0; font: inherit; font-size: 0.9rem; font-weight: 700; color: var(--accent-text); cursor: pointer; padding: 6px 8px; border-radius: 8px; }
 .dp-link:hover:not(:disabled) { background: var(--gold-soft); } .dp-link:disabled { opacity: 0.4; cursor: not-allowed; }
+.chip-done { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
 .dp-close { display: none; margin-left: auto; } .dp-pop.is-sheet .dp-close { display: inline-block; }
 
 /* ── paese e telefono: elenco con ricerca e bandiere (public/js/combo.js) ── */

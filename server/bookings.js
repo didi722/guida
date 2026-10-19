@@ -97,7 +97,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
   const wantsOption = !!input.option;
   if (wantsOption && channel !== 'b2b') throw new BookingError('option', 'only agencies can option a date');
   const startInstant = localToInstant(input.date, input.time);
-  const baseTiers = policyFor(cfg, tour, channel, account); // dei partner o dei privati; se ne conserva una copia nella prenotazione
+  const baseTiers = policyFor(cfg, tour, channel, account, input.date); // dei partner o dei privati (o del periodo in cui cade il servizio); se ne conserva una copia nella prenotazione
   // agenzia che prenota (senza opzione) una data lontana: la cancellazione gratuita dura poco, così conviene opzionare
   const tiers = channel === 'b2b' && !wantsOption && !input.manual ? firmTiers({ options: cfg.options, tiers: baseTiers, startMs: startInstant, nowMs }).tiers : baseTiers;
 

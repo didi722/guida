@@ -2,7 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createContext } from '../server/context.js';
-import { BookingError, createBooking, getBooking } from '../server/bookings.js';
+import { BookingError, cancellationState, createBooking, getBooking } from '../server/bookings.js';
+import { cancelPeriodFor, policyFor } from '../server/policy.js';
 import { loadAvailabilityContext, minNoticeHours, slotsForDay } from '../server/availability.js';
 import { DEFAULT_OPTION_TIERS, optionWindow } from '../server/optionPolicy.js';
 import { listPeriods, normalizePeriod, periodOn, rulesText, savePeriod, spanDays } from '../server/periods.js';
@@ -41,8 +42,8 @@ test('controllo del modulo: nome, date, tipo di opzioni, numeri, e un periodo ch
     return r.errors;
   };
   const dates = { from: '2027-02-04', to: '2027-02-16' };
-  assert.deepEqual(ok({ name: '  Carnevale   2027 ', ...dates, mode: 'short', maxDays: '3', releaseHours: '', noticeB2c: '', noticeB2b: '' }), { name: 'Carnevale 2027', ...dates, mode: 'short', maxDays: 3, releaseHours: null, noticeB2c: null, noticeB2b: null });
-  assert.deepEqual(ok({ name: 'Natale', ...dates, mode: 'off' }), { name: 'Natale', ...dates, mode: 'off', maxDays: null, releaseHours: null, noticeB2c: null, noticeB2b: null });
+  assert.deepEqual(ok({ name: '  Carnevale   2027 ', ...dates, mode: 'short', maxDays: '3', releaseHours: '', noticeB2c: '', noticeB2b: '' }), { name: 'Carnevale 2027', ...dates, mode: 'short', maxDays: 3, releaseHours: null, noticeB2c: null, noticeB2b: null, cancelB2c: null, cancelB2b: null, cancelPartners: false });
+  assert.deepEqual(ok({ name: 'Natale', ...dates, mode: 'off' }), { name: 'Natale', ...dates, mode: 'off', maxDays: null, releaseHours: null, noticeB2c: null, noticeB2b: null, cancelB2c: null, cancelB2b: null, cancelPartners: false });
   assert.deepEqual(ok({ name: 'Solo preavviso', ...dates, mode: 'normal', noticeB2c: '72', noticeB2b: '0' }).noticeB2b, 0, 'zero ore è un valore valido: nessun preavviso');
   assert.equal(ok({ name: 'x', ...dates, mode: 'off', maxDays: '5', releaseHours: '9' }).maxDays, null, 'i numeri delle opzioni brevi contano solo per «Più brevi»');
   assert.equal(ok({ name: 'x', ...dates, mode: 'strano', noticeB2b: '5' }).mode, 'normal', 'un tipo che non esiste vale «come sempre»');
@@ -253,6 +254,124 @@ test('preavviso nelle partenze prenotabili: più lungo nel periodo (la partenza 
     assert.deepEqual(slots('2027-01-05', 'b2b'), ['09:30', '14:30'], 'le agenzie hanno il loro preavviso (12 ore): invariato, e quel periodo non dice nulla per loro');
     app.periods.save({ name: 'Last minute', from: '2027-01-08', to: '2027-01-08', mode: 'normal', noticeB2c: '0', noticeB2b: '0' }, null, NOW);
     assert.deepEqual(slots('2027-01-08', 'b2c'), ['09:30', '14:30']);
+  } finally {
+    app.cleanup();
+  }
+});
+
+// ───────────── le condizioni di annullo del periodo ─────────────
+const rowsOf = (...rows) => [0, 1, 2].map((i) => ({ value: rows[i]?.[0] ?? '', unit: rows[i]?.[1] ?? 'd', refund: rows[i]?.[2] ?? '' }));
+
+test('annullo del periodo: righe come nel modulo del partner; vuote = come il sito; errori con il nome del campo; da solo basta a rendere utile il periodo', () => {
+  const dates = { name: 'Natale', from: '2027-12-20', to: '2028-01-06', mode: 'normal' };
+  const ok = (input) => {
+    const r = normalizePeriod({ ...dates, ...input });
+    assert.equal(r.ok, true, JSON.stringify(r.errors));
+    return r.values;
+  };
+  const bad = (input) => {
+    const r = normalizePeriod({ ...dates, ...input });
+    assert.equal(r.ok, false);
+    return r.errors;
+  };
+  const v = ok({ cancelB2c: rowsOf([7, 'd', 100]), cancelB2b: rowsOf([14, 'd', 100], [7, 'd', 50]), cancelPartners: true });
+  assert.deepEqual(v.cancelB2c, [{ hours: 168, refund: 100 }]);
+  assert.deepEqual(v.cancelB2b, [{ hours: 336, refund: 100 }, { hours: 168, refund: 50 }]);
+  assert.equal(v.cancelPartners, true);
+  assert.deepEqual(ok({ cancelB2c: rowsOf([36, 'h', 100]) }).cancelB2c, [{ hours: 36, refund: 100 }], 'anche in ore');
+  assert.equal(ok({ cancelB2c: rowsOf([7, 'd', 100]), cancelB2b: rowsOf() }).cancelB2b, null, 'righe vuote: come il sito');
+  assert.equal(ok({ cancelB2b: rowsOf([7, 'd', 100]), cancelPartners: false }).cancelPartners, false);
+  assert.equal(ok({ cancelB2c: rowsOf([7, 'd', 100]), cancelPartners: true }).cancelPartners, false, '«anche per i partner» ha senso solo con un annullo per le agenzie');
+  assert.deepEqual(ok({ cancelB2b: rowsOf([14, 'd', 50], [7, 'd', 50]) }).cancelB2b, [{ hours: 168, refund: 50 }], 'due 50% di fila diventano uno solo');
+  // errori
+  assert.match(bad({ cancelB2c: rowsOf([7, 'd', '']) }).cancelB2c, /Annullo dei privati: Controlla le ore/);
+  assert.match(bad({ cancelB2b: rowsOf([14, 'd', 40], [7, 'd', 60]) }).cancelB2b, /Annullo delle agenzie: Il rimborso non può aumentare/);
+  assert.match(bad({ cancelB2b: rowsOf([7, 'd', 120]) }).cancelB2b, /percentuale intera da 0 a 100/);
+  assert.match(bad({ cancelB2c: rowsOf([7, 'd', 100], [7, 'd', 50]) }).cancelB2c, /stesso preavviso/);
+  assert.match(bad({ cancelB2c: rowsOf([100, 'd', 100]) }).cancelB2c, /da 0 a 2000/, 'oltre 2000 ore non si può');
+  assert.match(bad({}).mode, /non cambia nessuna regola/, 'senza nessuna regola il periodo è inutile');
+  assert.match(bad({ cancelB2c: rowsOf() }).mode, /condizioni di annullo particolari/, 'righe vuote non sono una regola');
+});
+
+test('annullo del periodo: si salva, si rilegge, e la riga di riepilogo lo racconta (anche per chi ha condizioni proprie)', () => {
+  const app = makeApp();
+  try {
+    const saved = app.periods.save({ name: 'Natale', from: '2027-12-20', to: '2028-01-06', mode: 'off', cancelB2c: rowsOf([7, 'd', 100]), cancelB2b: rowsOf([14, 'd', 100], [7, 'd', 50]), cancelPartners: true }, null, NOW);
+    assert.equal(saved.ok, true);
+    const p = app.periods.list()[0];
+    assert.deepEqual(p.cancelB2c, [{ hours: 168, refund: 100 }]);
+    assert.deepEqual(p.cancelB2b.map((t) => t.refund), [100, 50]);
+    assert.equal(p.cancelPartners, true);
+    assert.equal(rulesText(p), 'niente opzioni (le agenzie prenotano direttamente) · annullo dei privati: 100% fino a 7 giorni prima, poi nulla · annullo delle agenzie: 100% fino a 14 giorni prima, 50% fino a 7 giorni prima, poi nulla (anche per chi ha condizioni proprie)');
+    // si cambia e si toglie
+    assert.equal(app.periods.save({ name: 'Natale', from: '2027-12-20', to: '2028-01-06', mode: 'off', cancelB2c: rowsOf(), cancelB2b: rowsOf([48, 'h', 100]) }, p.id).ok, true);
+    const q = app.periods.list()[0];
+    assert.equal(q.cancelB2c, null);
+    assert.deepEqual(q.cancelB2b, [{ hours: 48, refund: 100 }]);
+    assert.equal(q.cancelPartners, false);
+    assert.equal(rulesText(q), 'niente opzioni (le agenzie prenotano direttamente) · annullo delle agenzie: 100% fino a 2 giorni prima, poi nulla');
+  } finally {
+    app.cleanup();
+  }
+});
+
+test('politica in vigore: nel periodo valgono le condizioni del periodo; i privati scavalcano anche il termine del tour; i partner con condizioni proprie le tengono, salvo che il periodo dica di no', () => {
+  const app = makeApp();
+  try {
+    app.periods.save({ name: 'Natale', from: '2027-02-04', to: '2027-02-16', mode: 'normal', cancelB2c: rowsOf([7, 'd', 100]), cancelB2b: rowsOf([14, 'd', 100], [7, 'd', 50]) }, null, NOW);
+    const shared = app.content.tour('shared');
+    const halfDay = app.content.tour('half-day'); // termine proprio: 72 ore
+    const free = addAccount(app.db, { email: 'free@example.com' });
+    const own = addAccount(app.db, { email: 'own@example.com', cancel_policy_json: JSON.stringify([{ hours: 24, refund: 100 }]) });
+    const inside = '2027-02-10';
+    const outside = '2027-02-24';
+    const h = (tiers) => tiers.map((t) => `${t.refund}@${t.hours}`).join(' ');
+    // privati
+    assert.equal(h(policyFor(app.cfg, shared, 'b2c', null, inside)), '100@168');
+    assert.equal(h(policyFor(app.cfg, halfDay, 'b2c', null, inside)), '100@168', 'il periodo vince sul termine del tour');
+    assert.equal(h(policyFor(app.cfg, shared, 'b2c', null, outside)), `100@${app.cfg.policy.b2cFreeCancelHours}`, 'fuori dal periodo, come sempre');
+    assert.equal(h(policyFor(app.cfg, halfDay, 'b2c', null, outside)), '100@72');
+    assert.equal(h(policyFor(app.cfg, shared, 'b2c', null)), `100@${app.cfg.policy.b2cFreeCancelHours}`, 'senza data nessun periodo');
+    // agenzie
+    assert.equal(h(policyFor(app.cfg, shared, 'b2b', free, inside)), '100@336 50@168');
+    assert.equal(h(policyFor(app.cfg, shared, 'b2b', free, outside)), `100@${app.cfg.policy.b2bFreeCancelHours}`);
+    assert.equal(h(policyFor(app.cfg, shared, 'b2b', own, inside)), '100@24', 'chi ha condizioni proprie le tiene');
+    assert.equal(cancelPeriodFor(app.cfg, shared, 'b2b', own, inside), null);
+    assert.equal(cancelPeriodFor(app.cfg, shared, 'b2b', free, inside).name, 'Natale');
+    assert.equal(cancelPeriodFor(app.cfg, shared, 'b2c', null, inside).name, 'Natale');
+    assert.equal(cancelPeriodFor(app.cfg, shared, 'b2c', null, outside), null);
+    const p = app.periods.list()[0];
+    app.periods.save({ name: 'Natale', from: p.from, to: p.to, mode: 'normal', cancelB2c: rowsOf([7, 'd', 100]), cancelB2b: rowsOf([14, 'd', 100], [7, 'd', 50]), cancelPartners: true }, p.id);
+    assert.equal(h(policyFor(app.cfg, shared, 'b2b', own, inside)), '100@336 50@168', 'con «anche per chi ha condizioni proprie» valgono per tutti');
+    assert.equal(cancelPeriodFor(app.cfg, shared, 'b2b', own, inside).name, 'Natale');
+    // un periodo senza annullo non cambia nulla
+    app.periods.save({ name: 'Solo preavviso', from: '2027-03-01', to: '2027-03-10', mode: 'normal', noticeB2c: '72' });
+    assert.equal(h(policyFor(app.cfg, shared, 'b2c', null, '2027-03-05')), `100@${app.cfg.policy.b2cFreeCancelHours}`);
+  } finally {
+    app.cleanup();
+  }
+});
+
+test('prenotare in un periodo con annullo particolare: la prenotazione conserva le condizioni del periodo; spostare la data non le cambia', () => {
+  const { app, acct } = setup();
+  try {
+    app.periods.save({ name: 'Natale', from: '2027-02-04', to: '2027-02-16', mode: 'normal', cancelB2c: rowsOf([7, 'd', 100]), cancelB2b: rowsOf([14, 'd', 100], [7, 'd', 50]) }, null, NOW);
+    const priv = createBooking(app, base({ tourSlug: 'shared', date: '2027-02-10', time: '09:30', pax: 2, paymentMethod: 'card' }), NOW);
+    assert.deepEqual(JSON.parse(priv.cancel_policy_json ?? 'null') ?? [{ hours: 168, refund: 100 }], [{ hours: 168, refund: 100 }]);
+    assert.equal(Date.parse(priv.free_cancel_until), localToInstant('2027-02-10', '09:30') - 168 * HOUR, 'gratis fino a 7 giorni prima');
+    const outsidePriv = createBooking(app, base({ tourSlug: 'shared', date: '2027-02-24', time: '09:30', pax: 2, paymentMethod: 'card', email: 'altro@example.com' }), NOW);
+    assert.equal(Date.parse(outsidePriv.free_cancel_until), localToInstant('2027-02-24', '09:30') - app.cfg.policy.b2cFreeCancelHours * HOUR, 'fuori dal periodo il termine di sempre');
+    // agenzia (senza data lontana): due scaglioni
+    app.cfg.options.firmEnabled = false;
+    const ag = createBooking(app, base({ tourSlug: 'shared-agenzie', date: '2027-02-10', time: '14:30', pax: 2, channel: 'b2b', account: acct, paymentMethod: 'invoice' }), NOW);
+    assert.deepEqual(JSON.parse(ag.cancel_policy_json).map((t) => [t.hours, t.refund]), [[336, 100], [168, 50]]);
+    assert.equal(cancellationState(ag, localToInstant('2027-01-20', '14:30')).percent, 100);
+    assert.equal(cancellationState(ag, localToInstant('2027-02-01', '14:30')).percent, 50);
+    assert.equal(cancellationState(ag, localToInstant('2027-02-05', '14:30')).percent, 0);
+    // se il periodo cambia dopo, la prenotazione già fatta tiene ciò che era stato accettato
+    const pid = app.periods.list()[0].id;
+    app.periods.save({ name: 'Natale', from: '2027-02-04', to: '2027-02-16', mode: 'normal', cancelB2b: rowsOf([30, 'd', 100]) }, pid);
+    assert.deepEqual(JSON.parse(getBooking(app.db, ag.id).cancel_policy_json).map((t) => t.hours), [336, 168]);
   } finally {
     app.cleanup();
   }

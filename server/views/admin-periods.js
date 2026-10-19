@@ -2,7 +2,9 @@
 import { html, raw } from '../html.js';
 import { nowRome } from '../time.js';
 import { MODES, MODE_LABEL, rulesText, showRange, spanDays } from '../periods.js';
+import { tierInputOf } from '../policy.js';
 import { adminLayout } from './admin.js';
+import { presetButtons, tierRowsHtml } from './policyRows.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const HOURS = (n) => plural(n, 'ora', 'ore');
@@ -14,6 +16,7 @@ function siteRules(cfg) {
   return html`<ul class="plain info-list">
     <li><strong>Opzioni</strong>: ${options.enabled ? html`${tiers.length ? tiers.join(' · ') : 'nessuna riga'}; scadono sempre almeno ${HOURS(options.minReleaseHours)} prima del servizio` : 'spente per tutto il sito'}</li>
     <li><strong>Preavviso minimo</strong>: privati ${HOURS(policy.b2cMinNoticeHours)}, agenzie ${HOURS(policy.b2bMinNoticeHours)}</li>
+    <li><strong>Annullo gratuito</strong>: privati fino a ${HOURS(policy.b2cFreeCancelHours)} prima (alcuni tour hanno un termine loro), agenzie fino a ${HOURS(policy.b2bFreeCancelHours)} prima (salvo le condizioni proprie di un partner)</li>
   </ul>`;
 }
 
@@ -27,6 +30,9 @@ const valuesOf = (p) => ({
   releaseHours: p?.optionReleaseHours ?? '',
   noticeB2c: p?.noticeB2cHours ?? '',
   noticeB2b: p?.noticeB2bHours ?? '',
+  cancelB2c: tierInputOf(p?.cancelB2c),
+  cancelB2b: tierInputOf(p?.cancelB2b),
+  cancelPartners: !!p?.cancelPartners,
 });
 
 function periodForm(cfg, { action, values, errors = {}, submit, extra = '' }) {
@@ -54,6 +60,20 @@ function periodForm(cfg, { action, values, errors = {}, submit, extra = '' }) {
       <label class="field"><span class="label">Agenzie</span><span class="input-unit"><input name="noticeB2b" inputmode="numeric" value="${v.noticeB2b}" placeholder="${cfg.policy.b2bMinNoticeHours}" autocomplete="off"><span class="unit">ore</span></span>${err('noticeB2b')}</label>
     </div>
   </fieldset>
+  <fieldset class="field period-cancel">
+    <legend class="label">Condizioni di annullo, per i servizi di questo periodo <em>(righe vuote = come il solito)</em></legend>
+    <p class="small muted">Come sempre: più ci si avvicina al servizio, meno si rimborsa; dopo l’ultimo scaglione non si rimborsa nulla. Chi paga a fattura riceve una penale pari alla parte non rimborsata.</p>
+    <h3>Privati</h3>
+    ${tierRowsHtml(v.cancelB2c, 'c_')}
+    <p class="small muted">Modelli: ${presetButtons('c_', 'Svuota (come il sito)')}</p>
+    ${err('cancelB2c')}
+    <h3>Agenzie</h3>
+    ${tierRowsHtml(v.cancelB2b, 'a_')}
+    <p class="small muted">Modelli: ${presetButtons('a_', 'Svuota (come il sito)')}</p>
+    ${err('cancelB2b')}
+    <label class="check"><input type="checkbox" name="cancelPartners" value="1" ${v.cancelPartners ? raw('checked') : ''}> <span>Valgono anche per le agenzie che hanno condizioni di annullo proprie <small class="muted">(di solito le tengono, anche in questo periodo)</small></span></label>
+    <small class="muted">Le condizioni valgono per le prenotazioni <strong>nuove</strong> dei servizi di queste date: quelle già fatte e chi sposta la data mantengono le condizioni accettate.</small>
+  </fieldset>
   <div class="btn-row"><button class="btn btn-gold" type="submit">${submit}</button>${extra}</div>
 </form>`;
 }
@@ -73,7 +93,7 @@ export function periodsPage(ctx, { periods, values = null, errors = {}, flash = 
   const past = periods.filter((p) => p.to < today).reverse();
   const table = (list) => html`<div class="card table-wrap"><table class="table"><thead><tr><th>Periodo</th><th>Cosa cambia</th><th></th></tr></thead><tbody>${list.map((p) => periodRow(p, today))}</tbody></table></div>`;
   const body = html`
-<p class="muted">Un <strong>periodo</strong> è un intervallo di date del <strong>servizio</strong> (non del giorno in cui si prenota) con regole diverse dal solito: per esempio in alta stagione le opzioni delle agenzie durano meno, o non ci sono, oppure serve più preavviso. Fuori dai periodi valgono le regole di <a href="/admin/settings?s=options#options">Impostazioni</a>. Un giorno può stare in un solo periodo.</p>
+<p class="muted">Un <strong>periodo</strong> è un intervallo di date del <strong>servizio</strong> (non del giorno in cui si prenota) con regole diverse dal solito: per esempio in alta stagione le opzioni delle agenzie durano meno, o non ci sono, serve più preavviso, o l’annullo gratuito dura meno. Fuori dai periodi valgono le regole di <a href="/admin/settings?s=options#options">Impostazioni</a>. Un giorno può stare in un solo periodo.</p>
 <div class="card pad"><h2>Le regole di base del sito</h2>${siteRules(cfg)}</div>
 ${upcoming.length ? html`<h2 class="h-sub">Periodi in corso e in arrivo <span class="chip">${upcoming.length}</span></h2>${table(upcoming)}` : html`<div class="card pad muted">Nessun periodo: oggi ovunque valgono le regole del sito.</div>`}
 <div class="card pad" id="nuovo">
@@ -82,7 +102,7 @@ ${upcoming.length ? html`<h2 class="h-sub">Periodi in corso e in arrivo <span cl
 </div>
 ${past.length ? html`<details class="spaced"><summary>Periodi passati (${past.length})</summary>${table(past)}</details>` : ''}
 <p class="muted small">Le opzioni e le prenotazioni già fatte non cambiano: le regole valgono per le prenotazioni nuove e per chi sposta la data. Le <strong>durate fisse</strong> concordate con un partner valgono fuori dai periodi; dentro, il limite del periodo vale per tutti.</p>`;
-  return adminLayout(ctx, { title: 'Periodi', active: '/admin/periods', body, flash, error });
+  return adminLayout(ctx, { title: 'Periodi', active: '/admin/periods', body, flash, error, scripts: `<script src="/js/admin-partner.js?v=${ctx.app.assetVersion}" defer></script>` });
 }
 
 export function periodEditPage(ctx, { period, values = null, errors = {}, flash = '', error = '' }) {
@@ -101,5 +121,5 @@ export function periodEditPage(ctx, { period, values = null, errors = {}, flash 
   <form id="delete-period" method="post" action="/admin/periods/${period.id}/delete" data-confirm="Eliminare il periodo «${period.name}»? Per quelle date tornano le regole del sito."></form>
 </div>
 <div class="card pad"><h2>Le regole di base del sito</h2>${siteRules(cfg)}</div>`;
-  return adminLayout(ctx, { title: 'Modifica periodo', active: '/admin/periods', body, flash, error });
+  return adminLayout(ctx, { title: 'Modifica periodo', active: '/admin/periods', body, flash, error, scripts: `<script src="/js/admin-partner.js?v=${ctx.app.assetVersion}" defer></script>` });
 }

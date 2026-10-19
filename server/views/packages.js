@@ -10,7 +10,8 @@ import { formatMoney } from '../util.js';
 import { documentsBox } from './agencyDocs.js';
 import { page } from './layout.js';
 import { phoneField } from './fields.js';
-import { bookingStatusText } from './b2b.js';
+import { bookingStatusChip, bookingStatusText } from './b2b.js';
+import { isDone } from '../partner.js';
 import { extensionBox } from './changes.js';
 import { breadcrumbs, fmtDuration, homeCrumb, hoursLabel, langOptions, timeLeft, whoOf } from './components.js';
 
@@ -146,7 +147,7 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
           <td data-label="${t('s.service')}"><a class="pb-title" href="${lineUrl(b)}">${tour?.i18n[lang].title ?? b.tour_slug}</a><small class="muted">${b.ref}</small></td>
           <td data-label="${t('s.date')}"><strong>${fmtDate(b.date, lang, 'short')}</strong><small class="muted">${b.start_time}–${b.end_time}</small></td>
           <td class="num" data-label="${t('s.guests')}">${b.participants}</td>
-          <td data-label="${t('b2b.state')}"><span class="chip ${{ confirmed: 'chip-ok', held: 'chip-warn', option: 'chip-warn' }[b.status] ?? 'chip-err'}">${bookingStatusText(t, b)}</span>${b.status === 'confirmed' ? html`<small class="muted">${cancelCell(b)}</small>` : ''}</td>
+          <td data-label="${t('b2b.state')}"><span class="chip ${bookingStatusChip(b)}">${bookingStatusText(t, b)}</span>${b.status === 'confirmed' && !isDone(b) ? html`<small class="muted">${cancelCell(b)}</small>` : ''}</td>
           <td class="num" data-label="${t('s.total')}">${money(b.total_cents - (b.gift_cents ?? 0), b.currency)}</td>
         </tr>`;
       })}

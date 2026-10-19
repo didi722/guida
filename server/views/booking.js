@@ -1,10 +1,10 @@
 import { html, raw } from '../html.js';
 import { bookingDue, cancellationState, inviteDiscountOwed, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
-import { freeHoursOf, hasFreeTier, policyFor, refundPercentAt } from '../policy.js';
+import { cancelPeriodFor, freeHoursOf, hasFreeTier, policyFor, refundPercentAt } from '../policy.js';
 import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
 import { isPreOpening, paymentsFrom } from '../opening.js';
-import { isEditable } from '../partner.js';
+import { isDone, isEditable } from '../partner.js';
 import { formatMoney } from '../util.js';
 import { LANGS, LANG_META } from '../langs.js';
 import { inviteLink } from '../invites.js';
@@ -98,7 +98,8 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
   const nothingToPay = pricing.dueCents === 0;
   const options = paymentOptions(app, tour, channel, acct);
   const startMs = localToInstant(date, time);
-  const baseTiers = policyFor(cfg, tour, channel, acct);
+  const baseTiers = policyFor(cfg, tour, channel, acct, date);
+  const cancelPeriod = cancelPeriodFor(cfg, tour, channel, acct, date); // il servizio cade in un periodo con condizioni di annullo particolari
   const firm = channel === 'b2b' ? firmTiers({ options: cfg.options, tiers: baseTiers, startMs, nowMs: Date.now() }) : { applied: false, tiers: baseTiers }; // data lontana: la prenotazione diretta ha una cancellazione gratuita breve
   const tiers = firm.tiers;
   const hours = freeHoursOf(tiers);
@@ -218,6 +219,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       ${isSimplePolicy(tiers)
         ? html`<p class="policy-box ${refundable ? 'ok' : 'warn'}">${refundable ? t('checkout.refundable', { until: fmtInstant(deadline, lang), when: fmtHours(t, hours) }) : t('checkout.nonRefundable')}</p>`
         : html`<div class="policy-box ${refundNow === 100 ? 'ok' : 'warn'}"><strong>${t('policy.title')}</strong><ul class="plain tier-list">${tierSentences(t, lang, tiers, startMs).map((x) => html`<li>${x}</li>`)}</ul>${refundNow === 0 ? html`<p>${t('checkout.nonRefundable')}</p>` : ''}</div>`}
+      ${cancelPeriod ? html`<p class="small muted period-note">${isB2b ? t('policy.periodNote', { name: cancelPeriod.name }) : t('policy.periodNoteB2c')}</p>` : ''}
       ${slot.joined ? html`<p class="small muted">${t('checkout.joined')}</p>` : ''}
     </div>
   </aside>
@@ -292,7 +294,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   const wasOption = !!b.option_expires_at; // un'opzione (anche se poi scaduta o confermata)
   const optionUntil = b.option_expires_at ? fmtInstant(Date.parse(b.option_expires_at), lang) : '';
   const heads = {
-    confirmed: ['ok', t('booking.confirmedTitle'), t('booking.confirmedText', { email: b.email })],
+    confirmed: owner && isDone(b) ? ['ok', t('booking.doneTitle'), t('booking.doneText', { date: fmtDate(b.date, lang) })] : ['ok', t('booking.confirmedTitle'), t('booking.confirmedText', { email: b.email })],
     held: ['wait', t('booking.heldTitle'), t('booking.heldText', { n: holdLeft })],
     option: ['wait', t('booking.optionTitle'), t('booking.optionText', { until: optionUntil })],
     cancelled: ['err', t('booking.cancelledTitle'), t('booking.cancelledText')],

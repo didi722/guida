@@ -60,11 +60,59 @@ export function accountTiers(cfg, account) {
   return parseTiers(account?.cancel_policy_json) ?? (account?.cancel_hours != null ? singleTier(account.cancel_hours) : singleTier(cfg.policy.b2bFreeCancelHours));
 }
 
-/** Politica in vigore per un servizio: dei partner (B2B) oppure dei privati (ore del tour o predefinite). */
-export function policyFor(cfg, tour, channel, account = null) {
-  if (channel === 'b2b') return accountTiers(cfg, account);
-  return singleTier(tour?.cancelHours ?? cfg.policy.b2cFreeCancelHours);
+/** Il partner ha una politica di annullo propria (scaglioni o ore singole)? */
+export const hasOwnPolicy = (account) => !!(account?.cancel_policy_json || account?.cancel_hours != null);
+
+/** Il periodo con regole particolari che contiene una data del servizio (la lista sta in `cfg.options.periods`, vedi periods.js). */
+const periodAt = (cfg, date) => (date ? (cfg.options?.periods ?? []).find((p) => p.from <= date && date <= p.to) ?? null : null);
+
+/**
+ * Politica in vigore per un servizio: dei partner (B2B) oppure dei privati (ore del tour o predefinite).
+ * Se la data del servizio cade in un periodo con condizioni di annullo proprie, valgono quelle (per le agenzie con una politica propria solo se il
+ * periodo lo dice), qualunque sia il giorno in cui si prenota.
+ */
+export function policyFor(cfg, tour, channel, account = null, date = null) {
+  const period = periodAt(cfg, date);
+  if (channel === 'b2b') {
+    if (period?.cancelB2b && (!hasOwnPolicy(account) || period.cancelPartners)) return period.cancelB2b;
+    return accountTiers(cfg, account);
+  }
+  return period?.cancelB2c ?? singleTier(tour?.cancelHours ?? cfg.policy.b2cFreeCancelHours);
 }
+
+/** Il periodo le cui condizioni di annullo valgono per questo servizio, o null (per dirlo a chi prenota). */
+export function cancelPeriodFor(cfg, tour, channel, account, date) {
+  const period = periodAt(cfg, date);
+  if (!period) return null;
+  const special = channel === 'b2b' ? period.cancelB2b && (!hasOwnPolicy(account) || period.cancelPartners) : period.cancelB2c;
+  return special ? period : null;
+}
+
+/** Ore → numero e unità per il modulo: 72 → 3 giorni, 36 → 36 ore. */
+export const splitHours = (h) => (h >= 48 && h % 24 === 0 ? { value: h / 24, unit: 'd' } : { value: h, unit: 'h' });
+
+/**
+ * Le righe di un modulo di scaglioni, come sono state scritte: i campi si chiamano `${prefix}h1` (numero), `${prefix}u1` (d = giorni, h = ore),
+ * `${prefix}r1` (rimborso %), fino a MAX_TIERS.
+ * @returns {{ value: string, unit: 'd'|'h', refund: string }[]}
+ */
+export const tierInput = (body, prefix = '') =>
+  Array.from({ length: MAX_TIERS }, (_, i) => ({ value: String(body?.[`${prefix}h${i + 1}`] ?? '').trim(), unit: body?.[`${prefix}u${i + 1}`] === 'd' ? 'd' : 'h', refund: String(body?.[`${prefix}r${i + 1}`] ?? '').trim() }));
+
+/** Le righe scritte → quelle che vuole `validateTiers` (il preavviso in ore). */
+export const tierRows = (input) => input.map((r) => ({ hours: String(r.value ?? '').trim() === '' ? '' : Number(String(r.value).replace(',', '.')) * (r.unit === 'd' ? 24 : 1), refund: String(r.refund ?? '').trim() }));
+
+/** Scaglioni salvati → righe da mostrare nel modulo (le righe in più restano vuote). */
+export const tierInputOf = (tiers) => Array.from({ length: MAX_TIERS }, (_, i) => (tiers?.[i] ? { ...splitHours(tiers[i].hours), refund: tiers[i].refund } : { value: '', unit: 'd', refund: '' }));
+
+/** I messaggi (per il pannello) di ciò che `validateTiers` può rifiutare. */
+export const TIER_ERRORS = {
+  hours: `Controlla le ore: numeri interi da 0 a ${MAX_HOURS} (con «giorni» ×24), e il rimborso va indicato per ogni riga.`,
+  refund: 'Il rimborso è una percentuale intera da 0 a 100.',
+  duplicate: 'Due scaglioni hanno lo stesso preavviso.',
+  order: 'Il rimborso non può aumentare avvicinandosi al servizio: più si è vicini, meno si rimborsa.',
+  count: `Al massimo ${MAX_TIERS} scaglioni.`,
+};
 
 /** Ore di preavviso entro cui l'annullo è gratuito (rimborso totale); 0 se non c'è un periodo gratuito. */
 export const freeHoursOf = (tiers) => tiers.filter((t) => t.refund === 100).reduce((m, t) => Math.max(m, t.hours), 0);

@@ -132,7 +132,7 @@ export function cartSummary(app, account, nowMs = Date.now(), userId = null) {
     line.pricing = previewPricing(app, { tour: p.tour, pax: p.pax, channel: 'b2b', account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs });
     line.startMs = localToInstant(p.date, p.time);
     line.option = optionWindow({ options: cfg.options, account, startMs: line.startMs, nowMs });
-    line.firm = firmTiers({ options: cfg.options, tiers: policyFor(cfg, p.tour, 'b2b', account), startMs: line.startMs, nowMs });
+    line.firm = firmTiers({ options: cfg.options, tiers: policyFor(cfg, p.tour, 'b2b', account, p.date), startMs: line.startMs, nowMs });
     line.ok = !!line.slot;
     return line;
   });
