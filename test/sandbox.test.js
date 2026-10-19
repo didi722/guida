@@ -51,4 +51,16 @@ test('sandbox: dati d’esempio creati senza errori, sito di prova, partner con 
   assert.match(await (await fetch(`${base}/it/tours/san-marco-rialto-agenzie`, { headers: { cookie: pcookie } })).text(), /25\s*€/, '28 € − 15% = 23,80 € → 25 €');
   // e la sua politica di annullo a scaglioni è nella scheda del partner
   assert.match(await admin('/admin/partners/1'), /Rimborso del 50% fino al/);
+
+  // il giro dell'area agenzie: Lagoon DMC lo ha già visto, l'agenzia appena iscritta lo vede al primo accesso
+  assert.ok(out.includes('elena@serenissima-travel.example'), 'l’agenzia al primo accesso è nel riepilogo');
+  const lagoonHome = await (await fetch(`${base}/it/b2b/account`, { headers: { cookie: pcookie } })).text();
+  assert.doesNotMatch(lagoonHome, /<dialog class="tutorial"/);
+  const first = await fetch(`${base}/it/b2b/login`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: base }, body: new URLSearchParams({ email: 'elena@serenissima-travel.example', password: 'prova-prova-1' }).toString() });
+  assert.equal(first.status, 303);
+  const fcookie = first.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+  const firstHome = await (await fetch(`${base}/it/b2b/account`, { headers: { cookie: fcookie } })).text();
+  assert.match(firstHome, /<dialog class="tutorial" id="tutorial"[^>]* data-auto data-mark>/);
+  assert.match(firstHome, /Benvenuti, Serenissima Travel/);
+  assert.match(await (await fetch(`${base}/it/b2b/help`, { headers: { cookie: pcookie } })).text(), /Domande frequenti/, 'Guida e FAQ anche per chi l’ha già visto');
 });

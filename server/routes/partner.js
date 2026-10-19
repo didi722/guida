@@ -12,12 +12,14 @@ import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBooking
 import { renderInvoicePdf } from '../pdf-invoice.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { teamSize } from '../team.js';
+import { markTutorialDone, tutorialDue } from '../tutorial.js';
 import { cleanText } from '../util.js';
 import { optionalPhone } from '../countries.js';
 import { LANGS } from '../langs.js';
-import { needPartner, toLogin } from './guards.js';
+import { needPartner, safeNext, toLogin } from './guards.js';
 import { accountPage, bookingStatusText, bookingsPage, invoicesPage, ratesPage } from '../views/b2b.js';
 import { bookingPage } from '../views/booking.js';
+import { helpPage } from '../views/tutorial.js';
 
 export function partnerRouter(app) {
   const r = express.Router();
@@ -25,7 +27,7 @@ export function partnerRouter(app) {
   const form = express.urlencoded({ extended: false, limit: '50kb' });
 
   // dati personali e fiscali: mai in cache del browser o di proxy
-  r.use(['/b2b/account', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv'], (req, res, next) => {
+  r.use(['/b2b/account', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/help'], (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
   });
@@ -44,7 +46,17 @@ export function partnerRouter(app) {
     if (!req.acct) return toLogin(req, res);
     const ctx = res.locals.ctx;
     if (req.acct.status === 'approved' && ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page', 'v', 'm', 'd'].some((k) => req.query[k] !== undefined)) return res.redirect(302, `/${req.lang}/b2b/bookings?${new URLSearchParams(req.query)}`);
-    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? '') }));
+    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor) }));
+  });
+
+  // «Guida e FAQ»: i passi del giro scritti per intero, il pulsante per rivederlo e le domande frequenti
+  r.get('/b2b/help', needPartner, (req, res) => send(res, helpPage(res.locals.ctx, { due: tutorialDue(db, req.acct, req.actor) })));
+
+  // il giro è visto o saltato (dalla finestra, con una richiesta in background, oppure dal riquadro)
+  r.post('/b2b/tutorial/done', needPartner, form, (req, res) => {
+    markTutorialDone(db, req.acct, req.actor);
+    if (req.get('x-requested-with') === 'tutorial') return res.status(204).end();
+    res.redirect(303, safeNext(req.body?.next) || `/${req.lang}/b2b/account`);
   });
 
   r.get('/b2b/bookings', needPartner, (req, res) => {

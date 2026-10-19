@@ -15,6 +15,7 @@ import { billingFields, phoneField } from './fields.js';
 import { billingGaps } from '../billing.js';
 import { gapWords } from './billing.js';
 import { stateText } from './invoicePay.js';
+import { tutorialBanner, tutorialDialog } from './tutorial.js';
 import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, timeLeft, whoOf } from './components.js';
 import { ratesBlock, ratesNotes, rateCard, supplementsBox } from './hourly.js';
 
@@ -259,7 +260,7 @@ function tariffario(ctx, acct) {
  * La prima pagina dell'area agenzie: tariffe e condizioni dell'agenzia, con i pulsanti per prenotare e per andare alle prenotazioni.
  * Per un account non ancora approvato mostra la pagina di stato.
  */
-export function accountPage(ctx, { acct, flash = '' }) {
+export function accountPage(ctx, { acct, flash = '', tutorial = false }) {
   if (acct.status !== 'approved') return pendingPage(ctx, acct);
   const { t, u } = ctx;
   const canQuote = hasHourlyProducts(ctx, 'b2b'); // senza servizi a ore prenotabili il calcolatore non avrebbe nulla da mostrare
@@ -267,11 +268,12 @@ export function accountPage(ctx, { acct, flash = '' }) {
 <section class="page-head partner-head"><div class="wrap">
   <div class="account-head">
     <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${whoOf(ctx).name} · ${whoOf(ctx).email}</p></div>
-    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a><a class="btn btn-outline" href="${u('/b2b/quotes')}">${t('quotes.nav')}</a>${whoOf(ctx).owner ? html`<a class="btn btn-outline" href="${u('/b2b/team')}">${t('team.nav')}</a><a class="btn btn-outline" href="${u('/b2b/billing')}">${t('billing.nav')}</a>` : ''}</div>
+    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a><a class="btn btn-outline" href="${u('/b2b/quotes')}">${t('quotes.nav')}</a>${whoOf(ctx).owner ? html`<a class="btn btn-outline" href="${u('/b2b/team')}">${t('team.nav')}</a><a class="btn btn-outline" href="${u('/b2b/billing')}">${t('billing.nav')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/help')}">${t('partner.nav.help')}</a></div>
   </div>
 </div></section>
 <section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">
   ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
+  ${tutorial ? tutorialBanner(ctx) : ''}
   ${whoOf(ctx).owner && billingGaps(acct).length ? html`<div class="notice notice-info" role="note">${t('billing.missing', { list: gapWords(t, acct) })} <a href="${u('/b2b/billing')}">${t('billing.complete')} →</a></div>` : ''}
   ${tariffario(ctx, acct)}
   <details class="terms-strip card spaced"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>
@@ -279,7 +281,7 @@ export function accountPage(ctx, { acct, flash = '' }) {
     <p class="small"><a href="${u('/b2b/rates')}">${t('partner.terms.all')} →</a></p>
   </details>
 </div></section>`;
-  return page(ctx, { title: t('partner.nav.home'), path: `/${ctx.lang}/b2b/account`, body, noindex: true, activeNav: 'b2b-account', area: 'partner' });
+  return page(ctx, { title: t('partner.nav.home'), path: `/${ctx.lang}/b2b/account`, body: tutorial ? html`${body}${tutorialDialog(ctx, { auto: true, mark: true })}` : body, noindex: true, activeNav: 'b2b-account', area: 'partner', scripts: tutorial ? raw(`<script src="/js/tutorial.js?v=${ctx.app.assetVersion}" defer></script>`) : '' });
 }
 
 /**

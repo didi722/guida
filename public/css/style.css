@@ -1173,3 +1173,41 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
   body.admin { background: #fff; } .day-item { break-inside: avoid; box-shadow: none; } .kpis { display: none; }
   .recovery-codes li { background: #fff; border: 1px solid #999; }
 }
+
+/* Il giro dell'area agenzie (finestra a passi) e la pagina «Guida e FAQ» */
+dialog.tutorial { border: 0; padding: 0; margin: auto; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; border-radius: 22px; background: var(--card); color: var(--ink); box-shadow: var(--shadow-lg); }
+dialog.tutorial::backdrop { background: rgba(24, 18, 8, 0.58); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.tut-card { padding: 20px 26px 22px; display: grid; gap: 14px; }
+.tut-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tut-title { margin: 0; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.tut-skip { background: none; border: 0; padding: 6px 0; font: inherit; color: var(--muted); text-decoration: underline; cursor: pointer; }
+.tut-skip:hover { color: var(--ink); }
+.tut-icon { display: inline-grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 18px; background: var(--gold-soft); color: var(--accent-text); }
+.tut-icon svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.tut-count { margin: 12px 0 0; font-size: 0.85rem; color: var(--muted); }
+.tut-step h2 { margin: 4px 0 8px; font-size: 1.55rem; line-height: 1.2; }
+.tut-step p:last-child { margin: 0; line-height: 1.55; }
+.tut-body { min-height: 15.5rem; }
+.tut-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.tut-dots { display: flex; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.tut-dots li { width: 8px; height: 8px; border-radius: 8px; background: var(--line); transition: width 0.2s, background 0.2s; }
+.tut-dots li.is-on { width: 22px; background: var(--bronze); }
+.tut-nav { display: flex; gap: 8px; align-items: center; }
+.tut-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 18px; }
+.tut-banner[hidden] { display: none; }
+.tut-banner-actions { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tut-banner-actions form { margin: 0; }
+.help-steps { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 14px; counter-reset: step; }
+.help-steps li { display: flex; gap: 16px; align-items: flex-start; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+.help-steps h3 { margin: 2px 0 6px; font-size: 1.1rem; }
+.help-steps p { margin: 0; line-height: 1.55; }
+.faq-group { margin: 26px 0 10px; font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+details.faq { border: 1px solid var(--line); border-radius: 14px; background: var(--card); margin: 0 0 8px; }
+details.faq summary { padding: 14px 18px; font-weight: 700; cursor: pointer; list-style-position: inside; }
+details.faq[open] summary { color: var(--accent-text); }
+details.faq p { margin: 0; padding: 0 18px 16px; line-height: 1.6; }
+@media (max-width: 560px) {
+  .tut-card { padding: 16px 18px 18px; }
+  .tut-body { min-height: 19rem; }
+  .help-steps li { flex-direction: column; gap: 10px; }
+}

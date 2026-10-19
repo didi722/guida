@@ -148,7 +148,7 @@ ${partner
       ${cfg.site.whatsapp ? html`<li><a href="https://wa.me/${cfg.site.whatsapp}" rel="noopener">${icon('whatsapp')} WhatsApp</a></li>` : ''}
       ${cfg.site.phone ? html`<li><a href="tel:${cfg.site.phone.replace(/\s+/g, '')}">${icon('phone')} ${cfg.site.phone}</a></li>` : ''}
     </ul>
-    <span class="footer-links"><a href="${u('/privacy')}">${t('footer.privacy')}</a> · <a href="${u('/terms')}">${t('footer.terms')}</a></span>
+    <span class="footer-links"><a href="${u('/b2b/help')}" ${activeNav === 'b2b-help' ? raw('aria-current="page"') : ''}>${t('partner.nav.help')}</a> · <a href="${u('/privacy')}">${t('footer.privacy')}</a> · <a href="${u('/terms')}">${t('footer.terms')}</a></span>
     ${flagsCredit(t)}
   </div>
 </footer>`

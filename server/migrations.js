@@ -705,6 +705,13 @@ ALTER TABLE bookings ADD COLUMN children INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE bookings ADD COLUMN infants INTEGER NOT NULL DEFAULT 0;
 `;
 
+const V36_TUTORIAL = `
+-- Il giro dell'area agenzie al primo accesso: quando la persona l'ha visto o saltato (vuoto = lo vedrà al prossimo accesso). Il titolare sta nell'account,
+-- i collaboratori hanno il loro (ognuno ha il suo primo accesso).
+ALTER TABLE accounts ADD COLUMN tutorial_done_at TEXT;
+ALTER TABLE account_users ADD COLUMN tutorial_done_at TEXT;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -772,6 +779,8 @@ export const MIGRATIONS = [
   V34_WAITLIST_ORDER,
   // v35 — adulti, bambini e infanti
   V35_PARTY,
+  // v36 — giro dell'area agenzie al primo accesso
+  V36_TUTORIAL,
 ];
 
 export function migrate(db) {

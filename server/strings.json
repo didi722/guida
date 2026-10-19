@@ -1007,6 +1007,360 @@
   "gratis",
   "無料"
  ],
+ "partner.nav.help": [
+  "Guida e FAQ",
+  "Help & FAQ",
+  "Ayuda y FAQ",
+  "ヘルプ・FAQ"
+ ],
+ "tut.title": [
+  "Un giro veloce dell’area agenzie",
+  "A quick tour of the agency area",
+  "Un recorrido rápido por el área de agencias",
+  "代理店エリアのクイックツアー"
+ ],
+ "tut.step": [
+  "Passo {n} di {total}",
+  "Step {n} of {total}",
+  "Paso {n} de {total}",
+  "{total}ステップ中{n}"
+ ],
+ "tut.next": [
+  "Avanti",
+  "Next",
+  "Siguiente",
+  "次へ"
+ ],
+ "tut.prev": [
+  "Indietro",
+  "Back",
+  "Atrás",
+  "戻る"
+ ],
+ "tut.skip": [
+  "Salta",
+  "Skip",
+  "Omitir",
+  "スキップ"
+ ],
+ "tut.done": [
+  "Ho capito, iniziamo",
+  "Got it, let’s start",
+  "Entendido, empecemos",
+  "わかりました。始めます"
+ ],
+ "tut.dots": [
+  "Passi del giro",
+  "Tour steps",
+  "Pasos del recorrido",
+  "ツアーのステップ"
+ ],
+ "tut.banner": [
+  "Prima volta qui? Un giro di un minuto per orientarti.",
+  "First time here? A one-minute tour to find your way around.",
+  "¿Primera vez aquí? Un recorrido de un minuto para orientarte.",
+  "初めてのご利用ですか？ 1分でご案内します。"
+ ],
+ "tut.banner.start": [
+  "Fai il giro",
+  "Take the tour",
+  "Hacer el recorrido",
+  "ツアーを見る"
+ ],
+ "tut.banner.skip": [
+  "No, grazie",
+  "No, thanks",
+  "No, gracias",
+  "今はしない"
+ ],
+ "tut.replay": [
+  "Rivedi il giro dell’area",
+  "Watch the tour again",
+  "Ver el recorrido otra vez",
+  "もう一度ツアーを見る"
+ ],
+ "tut.1.title": [
+  "Benvenuti, {company}",
+  "Welcome, {company}",
+  "Bienvenidos, {company}",
+  "{company}様、ようこそ"
+ ],
+ "tut.1.text": [
+  "Questa è l’area riservata alle agenzie: qui prenoti per i tuoi clienti con la tariffa agenzia e tieni sotto controllo prenotazioni, opzioni e fatture. Un giro di un minuto per orientarti.",
+  "This is the agency area: you book for your clients at your agency rate and keep bookings, options and invoices under control. Here is a one-minute tour to get you started.",
+  "Esta es el área de agencias: reservas para tus clientes con la tarifa de agencia y controlas reservas, opciones y facturas. Un recorrido de un minuto para orientarte.",
+  "ここは旅行会社様専用のエリアです。代理店料金でお客様の予約ができ、予約・オプション・請求書をまとめて管理できます。1分でご案内します。"
+ ],
+ "tut.2.title": [
+  "Prenota in pochi passaggi",
+  "Book in a few steps",
+  "Reserva en pocos pasos",
+  "かんたんに予約"
+ ],
+ "tut.2.text": [
+  "Premi «Nuova prenotazione», scegli servizio, data e orario e indica chi viene: adulti, bambini (4–12 anni, prezzo al 50%) e infanti (0–3 anni, gratis). Il prezzo è già quello della tua tariffa. Scrivi il riferimento della pratica o del gruppo: lo ritrovi nell’elenco e sulle fatture.",
+  "Press “New booking”, pick the service, date and time, and say who is coming: adults, children (ages 4–12, 50% of the price) and infants (ages 0–3, free). The price is already your agency rate. Add your file or group reference: you will find it in your list and on invoices.",
+  "Pulsa «Nueva reserva», elige servicio, fecha y hora e indica quién viene: adultos, niños (4–12 años, 50% del precio) y bebés (0–3 años, gratis). El precio ya es el de tu tarifa. Añade la referencia del expediente o del grupo: la encontrarás en la lista y en las facturas.",
+  "「新規予約」を押し、サービス・日付・時間を選んで、ご参加の内訳（大人、子ども4〜12歳は料金50%、乳幼児0〜3歳は無料）を入力します。料金はすでにご契約の代理店料金です。案件番号やグループ名を入れておくと、一覧や請求書で探しやすくなります。"
+ ],
+ "tut.3.title": [
+  "Opziona e controlla le date libere",
+  "Hold dates and check free dates",
+  "Opciona y consulta las fechas libres",
+  "仮押さえと空き日の確認"
+ ],
+ "tut.3.text": [
+  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata: prima la confermi oppure la rilasci. In «Date libere» vedi i giorni disponibili servizio per servizio e, su una data occupata, puoi farti avvisare se si libera.",
+  "“Hold without paying” keeps the date for you until the deadline shown: before it ends you confirm or release it. In “Free dates” you see the available days service by service and, on a taken date, you can ask to be told if it frees up.",
+  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado: antes de que termine, la confirmas o la liberas. En «Fechas libres» ves los días disponibles servicio por servicio y, en una fecha ocupada, puedes pedir que te avisemos si se libera.",
+  "「支払いなしで仮押さえする」を選ぶと、表示された期限まで日程を確保できます。期限までに確定するか、解除してください。「空き日」ではサービスごとの空き状況を確認でき、埋まっている日は空いたときに通知を受け取れます。"
+ ],
+ "tut.4.title": [
+  "Pacchetti e preventivi",
+  "Packages and quotes",
+  "Paquetes y presupuestos",
+  "パッケージと見積書"
+ ],
+ "tut.4.text": [
+  "Più servizi per lo stesso cliente? Aggiungili al pacchetto: una sola opzione, un solo pagamento, una sola fattura. Dal pacchetto prepari anche un preventivo con il tuo ricarico, in PDF o con un collegamento dove il cliente lo approva online: la tariffa agenzia non compare mai.",
+  "Several services for the same client? Add them to a package: one hold, one payment, one invoice. From the package you can also prepare a quote with your markup, as a PDF or with a link where your client approves it online: your agency rate never shows.",
+  "¿Varios servicios para el mismo cliente? Añádelos al paquete: una sola opción, un solo pago, una sola factura. Desde el paquete también preparas un presupuesto con tu recargo, en PDF o con un enlace donde el cliente lo aprueba en línea: la tarifa de agencia nunca aparece.",
+  "同じお客様に複数のサービスをご案内する場合は、パッケージにまとめます。仮押さえも支払いも請求書も1回で済みます。パッケージから、上乗せ額を加えた見積書（PDF、またはお客様がオンラインで承認できるリンク）も作成できます。代理店料金は表示されません。"
+ ],
+ "tut.5.title": [
+  "Modifiche, annullo e fatture",
+  "Changes, cancellations and invoices",
+  "Cambios, cancelaciones y facturas",
+  "変更・キャンセル・請求書"
+ ],
+ "tut.5.text": [
+  "Da «Prenotazioni» cambi persone, data od ore da solo, finché la cancellazione è gratuita; le condizioni di annullo sono in «Tariffe e condizioni» e restano quelle di quando hai prenotato. In «Fatture» trovi fatture, IBAN, causale e estratto conto. Se serve, scrivi alla guida. Questo giro lo rivedi quando vuoi da «Guida e FAQ».",
+  "From “Bookings” you change guests, date or hours yourself while cancellation is still free; the cancellation terms are in “Rates & terms” and stay as they were when you booked. In “Invoices” you find invoices, IBAN, payment reference and statement. If you need anything, write to the guide. You can watch this tour again whenever you like from “Help & FAQ”.",
+  "Desde «Reservas» cambias personas, fecha u horas por tu cuenta mientras la cancelación sea gratuita; las condiciones de cancelación están en «Tarifas y condiciones» y siguen siendo las de cuando reservaste. En «Facturas» encuentras facturas, IBAN, concepto y estado de cuenta. Si necesitas algo, escribe al guía. Puedes volver a ver este recorrido cuando quieras desde «Ayuda y FAQ».",
+  "「予約一覧」では、キャンセルが無料の間は人数・日付・時間をご自身で変更できます。キャンセル条件は「料金・条件」にあり、予約時の内容が引き継がれます。「請求書」では請求書、IBAN、支払い参照番号、取引明細書をご覧いただけます。ご不明な点はガイドまでご連絡ください。このツアーは「ヘルプ・FAQ」からいつでも見直せます。"
+ ],
+ "help.title": [
+  "Guida e domande frequenti",
+  "Help and frequently asked questions",
+  "Ayuda y preguntas frecuentes",
+  "ヘルプとよくある質問"
+ ],
+ "help.lead": [
+  "Come funziona l’area agenzie e le risposte alle domande più frequenti. Non trovi quello che cerchi? Scrivi a {email}.",
+  "How the agency area works and answers to the most common questions. Can’t find what you need? Write to {email}.",
+  "Cómo funciona el área de agencias y respuestas a las preguntas más frecuentes. ¿No encuentras lo que buscas? Escribe a {email}.",
+  "代理店エリアの使い方と、よくあるご質問への回答です。見つからない場合は {email} までご連絡ください。"
+ ],
+ "help.steps": [
+  "Come funziona",
+  "How it works",
+  "Cómo funciona",
+  "使い方"
+ ],
+ "help.faq": [
+  "Domande frequenti",
+  "Frequently asked questions",
+  "Preguntas frecuentes",
+  "よくある質問"
+ ],
+ "faq.g1": [
+  "Prenotare",
+  "Booking",
+  "Reservar",
+  "予約"
+ ],
+ "faq.g2": [
+  "Opzioni, date libere e pacchetti",
+  "Holds, free dates and packages",
+  "Opciones, fechas libres y paquetes",
+  "仮押さえ・空き日・パッケージ"
+ ],
+ "faq.g3": [
+  "Modifiche e annullo",
+  "Changes and cancellations",
+  "Cambios y cancelaciones",
+  "変更とキャンセル"
+ ],
+ "faq.g4": [
+  "Pagamenti e fatture",
+  "Payments and invoices",
+  "Pagos y facturas",
+  "お支払いと請求書"
+ ],
+ "faq.g5": [
+  "Il tuo account",
+  "Your account",
+  "Tu cuenta",
+  "アカウント"
+ ],
+ "faq.1.q": [
+  "Come prenoto un servizio per un mio cliente?",
+  "How do I book a service for one of my clients?",
+  "¿Cómo reservo un servicio para un cliente mío?",
+  "お客様のためにサービスを予約するには？"
+ ],
+ "faq.1.a": [
+  "Premi «Nuova prenotazione» in alto, scegli il servizio, la data e l’orario e indica chi viene. Il prezzo che vedi è già quello della tua tariffa agenzia. Puoi scrivere il riferimento della pratica o del gruppo: lo ritrovi nell’elenco delle prenotazioni e sulle fatture.",
+  "Press “New booking” at the top, choose the service, date and time, and say who is coming. The price you see is already your agency rate. You can add a file or group reference: you will find it in your booking list and on invoices.",
+  "Pulsa «Nueva reserva» arriba, elige el servicio, la fecha y la hora e indica quién viene. El precio que ves ya es el de tu tarifa de agencia. Puedes añadir la referencia del expediente o del grupo: la encontrarás en la lista de reservas y en las facturas.",
+  "上部の「新規予約」を押し、サービス・日付・時間を選んで、ご参加者を入力します。表示される料金はすでに代理店料金です。案件番号やグループ名を入れておくと、予約一覧や請求書で確認できます。"
+ ],
+ "faq.2.q": [
+  "Come si calcolano i prezzi per bambini e infanti?",
+  "How are prices worked out for children and infants?",
+  "¿Cómo se calculan los precios para niños y bebés?",
+  "子どもと乳幼児の料金はどう計算されますか？"
+ ],
+ "faq.2.a": [
+  "Nei servizi a persona gli adulti pagano la tariffa intera, i bambini da 4 a 12 anni il 50% e gli infanti fino a 3 anni niente. Tutti occupano un posto nel gruppo. Nei servizi a gruppo o a ore il prezzo non cambia, ma sapere chi viene aiuta la guida a organizzarsi. Serve sempre almeno un adulto.",
+  "On per-person services adults pay the full rate, children aged 4 to 12 pay 50% and infants up to age 3 are free. Everyone takes a place in the group. On group or hourly services the price does not change, but knowing who is coming helps the guide to prepare. At least one adult is always needed.",
+  "En los servicios por persona los adultos pagan la tarifa completa, los niños de 4 a 12 años el 50% y los bebés hasta 3 años nada. Todos ocupan una plaza en el grupo. En los servicios por grupo o por horas el precio no cambia, pero saber quién viene ayuda al guía a organizarse. Siempre hace falta al menos un adulto.",
+  "1人あたりの料金のサービスでは、大人は全額、4〜12歳の子どもは50%、3歳までの乳幼児は無料です。全員がグループの1名分の席を使います。グループ料金や時間制のサービスでは料金は変わりませんが、内訳をお知らせいただくとガイドが準備しやすくなります。大人が少なくとも1名必要です。"
+ ],
+ "faq.3.q": [
+  "Quali servizi posso prenotare? E quelli a ore?",
+  "Which services can I book? And the hourly ones?",
+  "¿Qué servicios puedo reservar? ¿Y los de pago por horas?",
+  "どのサービスを予約できますか？ 時間制のサービスは？"
+ ],
+ "faq.3.a": [
+  "Trovi i tour di gruppo con partenze fisse (si paga a persona), le visite private (si paga a gruppo) e i servizi a ore, come guida, assistente e meet & greet: per questi scegli la durata e il prezzo viene dalle tariffe a ore, con i supplementi festivi e per gli auricolari. Tutte le cifre sono in «Tariffe e condizioni».",
+  "You will find group tours with fixed departures (priced per person), private visits (priced per group) and hourly services such as guide, assistant and meet & greet: for these you choose the duration and the price comes from the hourly rates, with holiday and headset supplements. All the figures are in “Rates & terms”.",
+  "Encontrarás tours en grupo con salidas fijas (se paga por persona), visitas privadas (se paga por grupo) y servicios por horas, como guía, asistente y meet & greet: en estos eliges la duración y el precio sale de las tarifas por horas, con los suplementos de festivos y de auriculares. Todas las cifras están en «Tarifas y condiciones».",
+  "出発日が決まっているグループツアー（1人あたり料金）、貸切の見学（グループ料金）、そしてガイド・アシスタント・ミート＆グリートなどの時間制サービスがあります。時間制は所要時間を選ぶと、時間制料金（祝日・イヤホンの追加料金を含む）で計算されます。金額はすべて「料金・条件」にあります。"
+ ],
+ "faq.4.q": [
+  "Cos’è un’opzione?",
+  "What is a hold?",
+  "¿Qué es una opción?",
+  "仮押さえとは？"
+ ],
+ "faq.4.a": [
+  "Con «Opziona senza pagare» tieni da parte la data fino alla scadenza che vedi (più la data è lontana, più dura). Prima della scadenza la confermi con fattura o carta, oppure la rilasci; se non fai nulla si libera da sola, e prima ti mandiamo un promemoria per email.",
+  "With “Hold without paying” you keep the date until the deadline you see (the further away the date, the longer the hold). Before it ends you confirm it by invoice or card, or release it; if you do nothing it frees itself, and we email you a reminder first.",
+  "Con «Opcionar sin pagar» reservas la fecha hasta el plazo que ves (cuanto más lejos la fecha, más dura). Antes de que termine la confirmas con factura o tarjeta, o la liberas; si no haces nada se libera sola, y antes te enviamos un recordatorio por correo.",
+  "「支払いなしで仮押さえする」を選ぶと、表示された期限まで日程を確保できます（日程が先なほど期限は長くなります）。期限までに請求書またはカードで確定するか、解除してください。何もしなければ自動的に解除され、その前にメールでお知らせします。"
+ ],
+ "faq.5.q": [
+  "Mi serve più tempo per un’opzione: che faccio?",
+  "I need more time on a hold: what do I do?",
+  "Necesito más tiempo para una opción: ¿qué hago?",
+  "仮押さえの期限を延ばしたいときは？"
+ ],
+ "faq.5.a": [
+  "Dalla pagina della prenotazione premi «Chiedi la proroga» e scegli quanti giorni: la guida riceve la richiesta e ti risponde. Per un pacchetto la richiesta vale per tutti i suoi servizi.",
+  "On the booking page press “Request an extension” and choose how many days: the guide receives the request and replies. For a package the request covers all its services.",
+  "En la página de la reserva pulsa «Pedir la prórroga» y elige cuántos días: el guía recibe la solicitud y te responde. En un paquete la solicitud vale para todos sus servicios.",
+  "予約のページで「延長を依頼する」を押し、日数を選びます。ガイドが依頼を確認して返信します。パッケージの場合は、含まれるすべてのサービスが対象です。"
+ ],
+ "faq.6.q": [
+  "La data che mi serve è occupata: posso essere avvisata se si libera?",
+  "The date I need is taken: can I be told if it frees up?",
+  "La fecha que necesito está ocupada: ¿me avisáis si se libera?",
+  "希望の日が埋まっています。空いたら通知してもらえますか？"
+ ],
+ "faq.6.a": [
+  "Sì. In «Date libere» scegli il servizio e il giorno: sulle date tenute da altri premi «Avvisami se si libera». Se si libera ti scriviamo subito; chi è davanti nella lista ha qualche ora di vantaggio, poi tocca alla successiva. Prenota chi arriva per primo, quindi non aspettare.",
+  "Yes. In “Free dates” choose the service and the day: on dates held by others press “Notify me if it frees up”. If it frees up we email you straight away; whoever is first in line gets a few hours’ head start, then it is the next one’s turn. First to book gets it, so don’t wait.",
+  "Sí. En «Fechas libres» elige el servicio y el día: en las fechas ocupadas por otros pulsa «Avísame si se libera». Si se libera te escribimos enseguida; quien va primero en la lista tiene unas horas de ventaja y después le toca a la siguiente. La consigue quien reserva primero, así que no esperes.",
+  "はい。「空き日」でサービスと日を選び、他社が確保している日は「空いたら通知する」を押します。空いたらすぐにメールでお知らせします。リストの先頭の会社には数時間の優先期間があり、その後は次の会社に回ります。予約は先着順ですので、お早めにどうぞ。"
+ ],
+ "faq.7.q": [
+  "Cos’è il pacchetto e come preparo un preventivo?",
+  "What is a package and how do I prepare a quote?",
+  "¿Qué es el paquete y cómo preparo un presupuesto?",
+  "パッケージとは？ 見積書はどう作りますか？"
+ ],
+ "faq.7.a": [
+  "Se vuoi più servizi per lo stesso cliente, usa «Aggiungi al pacchetto»: hai una sola opzione, un solo pagamento e una sola fattura per tutto. Dal pacchetto premi «Prepara un preventivo»: aggiungi il tuo ricarico e ottieni un PDF con il tuo logo, o un collegamento dove il cliente approva online. Il cliente non vede mai la tariffa agenzia.",
+  "If you want several services for the same client, use “Add to package”: you get one hold, one payment and one invoice for everything. From the package press “Prepare a quote”: add your markup and get a PDF with your logo, or a link where your client approves online. Your client never sees your agency rate.",
+  "Si quieres varios servicios para el mismo cliente, usa «Añadir al paquete»: tienes una sola opción, un solo pago y una sola factura para todo. Desde el paquete pulsa «Preparar un presupuesto»: añade tu recargo y obtén un PDF con tu logo, o un enlace donde el cliente aprueba en línea. El cliente nunca ve la tarifa de agencia.",
+  "同じお客様に複数のサービスをご案内する場合は「パッケージに追加」を使います。仮押さえ・お支払い・請求書がまとめて1回になります。パッケージから「見積書を作成」を押し、上乗せ額を加えると、ロゴ入りのPDF、またはお客様がオンラインで承認できるリンクが作れます。代理店料金がお客様に表示されることはありません。"
+ ],
+ "faq.8.q": [
+  "Posso cambiare persone, data od ore di una prenotazione?",
+  "Can I change the guests, date or hours of a booking?",
+  "¿Puedo cambiar las personas, la fecha o las horas de una reserva?",
+  "予約の人数・日付・時間は変更できますか？"
+ ],
+ "faq.8.a": [
+  "Sì: da «Prenotazioni» apri la pratica e scegli «Cambia persone, data o ore». Finché la cancellazione è gratuita puoi cambiare tutto e il prezzo si ricalcola da solo; dopo puoi solo aumentare (più persone o più ore) e il conto non può scendere. Se non si può, scrivi alla guida.",
+  "Yes: from “Bookings” open the file and choose “Change guests, date or hours”. While cancellation is free you can change anything and the price is recalculated automatically; after that you can only increase (more guests or more hours) and the total cannot go down. If it is not possible, write to the guide.",
+  "Sí: desde «Reservas» abre la reserva y elige «Cambia personas, fecha u horas». Mientras la cancelación sea gratuita puedes cambiar todo y el precio se recalcula solo; después solo puedes aumentar (más personas o más horas) y el total no puede bajar. Si no se puede, escribe al guía.",
+  "はい。「予約一覧」で該当の予約を開き、「人数・日付・時間の変更」を選びます。キャンセルが無料の間はすべて変更でき、料金は自動で再計算されます。それ以降は増やす変更（人数や時間を増やす）のみで、合計金額は下げられません。変更できない場合はガイドまでご連絡ください。"
+ ],
+ "faq.9.q": [
+  "Come funziona l’annullo e quanto si rimborsa?",
+  "How do cancellations work and how much is refunded?",
+  "¿Cómo funcionan las cancelaciones y cuánto se reembolsa?",
+  "キャンセルの仕組みと返金額は？"
+ ],
+ "faq.9.a": [
+  "Le condizioni sono scritte al momento della prenotazione e restano quelle: di solito rimborso totale fino a un certo preavviso, poi in parte, poi nulla. Le trovi in «Tariffe e condizioni» e nella pagina di ogni prenotazione. Spostare la data non allunga i termini.",
+  "The terms are written when you book and stay as they were: usually a full refund up to a certain notice, then partial, then none. You will find them in “Rates & terms” and on each booking page. Moving the date does not extend the deadlines.",
+  "Las condiciones se indican al reservar y se mantienen: normalmente reembolso total hasta cierto preaviso, después parcial y luego nada. Las encuentras en «Tarifas y condiciones» y en la página de cada reserva. Cambiar la fecha no alarga los plazos.",
+  "キャンセル条件は予約時に表示され、そのまま適用されます。通常は一定の期限まで全額返金、その後は一部返金、以降は返金なしです。条件は「料金・条件」と各予約のページで確認できます。日程を変更しても期限は延びません。"
+ ],
+ "faq.10.q": [
+  "Come si paga?",
+  "How do I pay?",
+  "¿Cómo se paga?",
+  "お支払い方法は？"
+ ],
+ "faq.10.a": [
+  "A fattura (con bonifico, se è attiva per la tua agenzia) oppure con carta online. Con la fattura trovi IBAN, causale e scadenza nella pagina della pratica e in «Fatture».",
+  "By invoice (bank transfer, if it is enabled for your agency) or by card online. With the invoice you find the IBAN, payment reference and due date on the booking page and in “Invoices”.",
+  "Con factura (transferencia bancaria, si está activa para tu agencia) o con tarjeta en línea. Con la factura encuentras el IBAN, el concepto y el vencimiento en la página de la reserva y en «Facturas».",
+  "請求書払い（お取引条件で有効な場合は銀行振込）またはオンラインのカード払いです。請求書払いの場合、IBAN・支払い参照番号・期限は予約のページと「請求書」に表示されます。"
+ ],
+ "faq.11.q": [
+  "Dove trovo fatture ed estratto conto?",
+  "Where do I find invoices and the statement?",
+  "¿Dónde encuentro las facturas y el estado de cuenta?",
+  "請求書や取引明細書はどこで見られますか？"
+ ],
+ "faq.11.a": [
+  "In «Fatture» ci sono le fatture emesse (PDF), quelle da pagare e l’estratto conto mensile, anche in CSV per la contabilità. L’elenco delle prenotazioni si scarica in CSV da «Prenotazioni».",
+  "In “Invoices” you find issued invoices (PDF), the ones still to pay and the monthly statement, also as CSV for your accounting. The list of bookings can be downloaded as CSV from “Bookings”.",
+  "En «Facturas» están las facturas emitidas (PDF), las pendientes de pago y el estado de cuenta mensual, también en CSV para la contabilidad. La lista de reservas se descarga en CSV desde «Reservas».",
+  "「請求書」には、発行済みの請求書（PDF）、未払いの請求書、月次の取引明細書（経理用のCSVも可）があります。予約の一覧は「予約一覧」からCSVでダウンロードできます。"
+ ],
+ "faq.12.q": [
+  "Dove correggo i dati di fatturazione?",
+  "Where do I correct my billing details?",
+  "¿Dónde corrijo los datos de facturación?",
+  "請求先情報はどこで修正できますか？"
+ ],
+ "faq.12.a": [
+  "Dall’area agenzia, nella sezione «Dati di fatturazione»: ragione sociale, partita IVA, indirizzo, codice SDI o PEC. Le fatture vengono compilate con questi dati, quindi tienili aggiornati.",
+  "From the agency area, in “Billing details”: company name, VAT number, address, SDI code or PEC. Invoices are filled in with these details, so please keep them up to date.",
+  "Desde el área de agencia, en «Datos de facturación»: razón social, NIF/IVA, dirección, código SDI o PEC. Las facturas se rellenan con estos datos, así que mantenlos al día.",
+  "代理店エリアの「請求先情報」で、会社名・VAT番号・住所・SDIコードまたはPECを修正できます。請求書はこの情報で作成されますので、常に最新の状態にしてください。"
+ ],
+ "faq.13.q": [
+  "Possono usare l’area anche i miei colleghi?",
+  "Can my colleagues use the area too?",
+  "¿Pueden usar el área también mis compañeros?",
+  "同僚も利用できますか？"
+ ],
+ "faq.13.a": [
+  "Sì: il titolare dell’account può invitare i collaboratori dalla sezione «Il tuo team». Ognuno entra con la sua email e la sua password, lavora sulle prenotazioni dell’agenzia e si vede chi ha prenotato cosa.",
+  "Yes: the account owner can invite team members from “Your team”. Everyone signs in with their own email and password, works on the agency’s bookings, and you can see who booked what.",
+  "Sí: el titular de la cuenta puede invitar a los colaboradores desde «Tu equipo». Cada uno entra con su correo y su contraseña, trabaja con las reservas de la agencia y se ve quién reservó qué.",
+  "はい。アカウントの所有者が「チーム」から同僚を招待できます。各自のメールアドレスとパスワードでログインし、会社の予約を扱えます。誰が何を予約したかも確認できます。"
+ ],
+ "faq.14.q": [
+  "Come porto le prenotazioni sul mio calendario?",
+  "How do I get my bookings into my calendar?",
+  "¿Cómo llevo las reservas a mi calendario?",
+  "予約を自分のカレンダーに入れるには？"
+ ],
+ "faq.14.a": [
+  "In «Prenotazioni» trovi «Calendario sul telefono»: copia il collegamento e aggiungilo a Google Calendar, Outlook o al calendario del telefono. Si aggiorna da solo. Il collegamento è privato: puoi cambiarlo quando vuoi.",
+  "In “Bookings” you will find “Calendar on your phone”: copy the link and add it to Google Calendar, Outlook or your phone’s calendar. It updates by itself. The link is private: you can change it whenever you like.",
+  "En «Reservas» encuentras «Calendario en el móvil»: copia el enlace y añádelo a Google Calendar, Outlook o al calendario del móvil. Se actualiza solo. El enlace es privado: puedes cambiarlo cuando quieras.",
+  "「予約一覧」にある「スマートフォンのカレンダー」のリンクをコピーし、Googleカレンダー、Outlook、スマートフォンのカレンダーに追加します。自動で更新されます。リンクは非公開で、いつでも変更できます。"
+ ],
  "w.pickDate": [
   "Scegli la data",
   "Pick a date",
