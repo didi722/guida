@@ -8,7 +8,9 @@ import { isSimplePolicy, tierSentencesHours } from '../policyText.js';
 import { daysInMonth, fmtDate, fmtInstant, fmtMonth, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
 import { SERVICES, openTo } from '../rates.js';
+import { payState } from '../invoicePayments.js';
 import { page } from './layout.js';
+import { stateText } from './invoicePay.js';
 import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, timeLeft } from './components.js';
 import { ratesBlock, ratesNotes, rateCard, supplementsBox } from './hourly.js';
 
@@ -279,7 +281,7 @@ export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mo
     ${kpi(`${base}?view=upcoming`, t('partner.kpi.upcoming'), summary.upcoming.count, t('partner.kpi.pax', { n: summary.upcoming.pax }))}
     ${kpi(`${base}?view=options`, t('partner.kpi.options'), summary.options.count, summary.options.nextMs ? t('partner.kpi.optNext', { when: fmtInstant(summary.options.nextMs, lang) }) : t('partner.kpi.optNone'), optionsSoon ? 'kpi-warn' : '')}
     ${kpi(`${base}?view=all&from=${summary.month.month}-01&to=${summary.month.month}-${String(daysInMonth(summary.month.month)).padStart(2, '0')}`, t('partner.kpi.month', { month }), summary.month.count, formatMoney(summary.month.cents, lang))}
-    ${kpi(`${u('/b2b/invoices')}`, t('partner.kpi.due'), formatMoney(summary.due.cents, lang), summary.due.cents ? t('partner.kpi.dueNote') : t('partner.kpi.dueNone'), summary.due.cents ? 'kpi-due' : '')}
+    ${kpi(`${u('/b2b/invoices')}`, t('partner.kpi.due'), formatMoney(summary.due.cents, lang), summary.due.overdueCount ? t('partner.kpi.dueOverdue', { amount: formatMoney(summary.due.overdueCents, lang) }) : summary.due.cents ? t('partner.kpi.dueNote') : t('partner.kpi.dueNone'), summary.due.overdueCount ? 'kpi-due kpi-warn' : summary.due.cents ? 'kpi-due' : '')}
   </div>
 
 
@@ -375,24 +377,33 @@ export function ratesPage(ctx, { acct }) {
   return page(ctx, { title: t('partner.nav.rates'), path: `/${lang}/b2b/rates`, body, noindex: true, activeNav: 'b2b-rates', area: 'partner' });
 }
 
-/** Fatture e note di credito emesse all'agenzia, con la copia in PDF. */
+/** Fatture e note di credito emesse all'agenzia, con la copia in PDF, lo stato del pagamento e come pagare. */
 export function invoicesPage(ctx, { acct, invoices, due }) {
-  const { t, lang, u } = ctx;
+  const { t, lang, u, app } = ctx;
+  const today = nowRome().date;
+  const states = new Map(invoices.map((i) => [i.id, payState(i, today)]));
+  const late = [...states.values()].filter((x) => x.state === 'overdue');
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [homeCrumb(ctx), [t('partner.nav.invoices')]])}
   <h1>${t('partner.inv.title')}</h1><p class="lead">${t('partner.inv.lead')}</p>
 </div></section>
 <section class="section tight"><div class="wrap">
+  ${late.length ? html`<div class="notice notice-err" role="alert">${t('partner.inv.overdue', { n: late.length, amount: formatMoney(late.reduce((a, x) => a + x.dueCents, 0), lang) })}</div>` : ''}
   ${due.cents ? html`<div class="notice notice-info" role="note">${t('partner.inv.due', { amount: formatMoney(due.cents, lang) })}</div>` : ''}
   ${invoices.length
-    ? html`<div class="table-wrap card"><table class="table table-stack"><thead><tr><th>${t('partner.inv.number')}</th><th>${t('s.date')}</th><th>${t('partner.inv.type')}</th><th class="num">${t('s.total')}</th><th><span class="sr-only">PDF</span></th></tr></thead><tbody>
-      ${invoices.map((i) => html`<tr>
+    ? html`<div class="table-wrap card"><table class="table table-stack partner-table"><thead><tr><th>${t('partner.inv.number')}</th><th>${t('s.date')}</th><th>${t('partner.inv.type')}</th><th>${t('partner.inv.payment')}</th><th class="num">${t('s.total')}</th><th><span class="sr-only">PDF</span></th></tr></thead><tbody>
+      ${invoices.map((i) => {
+        const st = states.get(i.id);
+        const pending = st.state === 'open' || st.state === 'overdue';
+        return html`<tr>
         <td data-label="${t('partner.inv.number')}"><strong>${i.number}</strong></td>
         <td data-label="${t('s.date')}">${fmtDate(i.issue_date, lang, 'short')}</td>
         <td data-label="${t('partner.inv.type')}">${i.doc_type === 'TD04' ? t('partner.inv.td04') : t('partner.inv.td01')}</td>
+        <td data-label="${t('partner.inv.payment')}">${i.doc_type === 'TD04' ? '—' : html`<span class="chip ${{ paid: 'chip-ok', settled: 'chip-ok', credited: '', open: 'chip-warn', overdue: 'chip-err' }[st.state]}">${stateText(t, lang, i, st)}</span>${pending && st.dueCents !== i.total_cents ? html`<small class="muted">${t('invpay.toPay')}: ${formatMoney(st.dueCents, lang, i.currency)}</small>` : ''}`}</td>
         <td class="num" data-label="${t('s.total')}">${formatMoney(i.total_cents, lang, i.currency)}</td>
-        <td class="pb-actions"><div class="pb-actions-in"><a class="btn btn-outline btn-sm" href="${u(`/b2b/invoices/${i.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.inv.pdf')}</a></div></td></tr>`)}
+        <td class="pb-actions"><div class="pb-actions-in">${pending && i.pay_ref ? html`<a class="btn ${st.state === 'overdue' ? 'btn-gold' : 'btn-outline'} btn-sm" href="/${lang}/invoices/${i.pay_ref}?t=${i.pay_token}">${app.invoices.canPayByCard(i) ? t('partner.inv.payNow') : t('partner.inv.howToPay')}</a>` : ''}<a class="btn btn-outline btn-sm" href="${u(`/b2b/invoices/${i.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.inv.pdf')}</a></div></td></tr>`;
+      })}
     </tbody></table></div>`
     : html`<div class="card pad center empty-state"><p>${t('partner.inv.none')}</p></div>`}
   <p class="small muted">${acct.allow_invoice ? t('partner.inv.howInvoice') : t('partner.inv.howCard')}</p>

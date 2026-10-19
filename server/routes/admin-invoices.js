@@ -1,5 +1,6 @@
 import express from 'express';
 import { InvoiceError, getInvoice, settingsOf } from '../invoices.js';
+import { ensurePayRef, invoicePayUrl, payState } from '../invoicePayments.js';
 import { nowRome } from '../time.js';
 import { cleanText, parseEuros } from '../util.js';
 import { send, sendPdf } from '../http.js';
@@ -18,6 +19,10 @@ const FLASH = {
   status: 'Esito registrato.',
   credit: 'Nota di credito in bozza: indica gli importi da stornare e poi emettila.',
   discarded: 'Fattura riportata in bozza: il numero è di nuovo disponibile.',
+  paid: 'Incasso registrato: le prenotazioni della fattura risultano pagate e l’agenzia ha ricevuto la ricevuta.',
+  unpaid: 'Incasso annullato: la fattura torna da incassare.',
+  reminded: 'Sollecito inviato all’agenzia.',
+  noreminder: 'Nessun sollecito inviato: la fattura non è da pagare o manca l’email dell’intestatario.',
 };
 
 const arr = (v) => [].concat(v ?? []).map(String);
@@ -99,6 +104,7 @@ export function adminInvoicesRouter(app) {
       canDiscard: inv.status === 'issued' && !inv.sent_at && !inv.emailed_at && inv.seq === lastSeq,
       creditNotes: db.prepare(`SELECT id, number, total_cents, status FROM invoices WHERE related_id = ? AND doc_type = 'TD04' ORDER BY id`).all(id),
       pecConfigured: app.invoices.pecConfigured, settings: settingsOf(app.cfg),
+      pay: inv.doc_type === 'TD01' && inv.number && !inv.credited ? { st: payState(inv), url: invoicePayUrl(app, ensurePayRef(db, inv), 'it') } : null, // incasso e link di pagamento
     }), status);
   }
   const load = (req) => {
@@ -192,6 +198,37 @@ export function adminInvoicesRouter(app) {
       return renderDetail(req, res, inv.id, { error: message(e), status: 400 });
     }
     go(res, inv.id, 'status');
+  });
+
+  // incasso: un bonifico arrivato (si annulla se registrato per errore) e i solleciti
+  r.post('/invoices/:id/paid', form, async (req, res, next) => {
+    const inv = load(req);
+    if (!inv) return next();
+    try {
+      await app.invoices.markPaid(inv.id, { date: String(req.body.date ?? ''), method: String(req.body.method ?? 'bank') });
+    } catch (e) {
+      if (!(e instanceof InvoiceError)) return next(e);
+      return renderDetail(req, res, inv.id, { error: message(e), status: 400 });
+    }
+    go(res, inv.id, 'paid');
+  });
+
+  r.post('/invoices/:id/unpaid', form, (req, res, next) => {
+    const inv = load(req);
+    if (!inv) return next();
+    try {
+      app.invoices.unmarkPaid(inv.id);
+    } catch (e) {
+      if (!(e instanceof InvoiceError)) return next(e);
+      return renderDetail(req, res, inv.id, { error: message(e), status: 400 });
+    }
+    go(res, inv.id, 'unpaid');
+  });
+
+  r.post('/invoices/:id/remind', form, async (req, res, next) => {
+    const inv = load(req);
+    if (!inv) return next();
+    go(res, inv.id, (await app.invoices.remind(inv.id, Date.now(), { manual: true })) ? 'reminded' : 'noreminder');
   });
 
   r.post('/invoices/:id/credit-note', form, (req, res, next) => {

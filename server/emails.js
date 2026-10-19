@@ -13,6 +13,7 @@ import { parseServiceRecord, serviceNote, timeRange } from './rates.js';
 import { isSimplePolicy, tierSentences } from './policyText.js';
 import { inviteOffer } from './invites.js';
 import { meetingOf, themeText } from './choices.js';
+import { ensurePayRef, groupIban, invoiceDue, invoicePayUrl, isPayable, payInstructions } from './invoicePayments.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
 const greet = (lang, name) => pick({ it: name ? `Ciao ${name},` : 'Ciao,', en: name ? `Hi ${name},` : 'Hi,', es: name ? `Hola ${name},` : 'Hola,', ja: name ? `${name} 様` : 'お客様' }, lang);
@@ -247,13 +248,14 @@ export async function sendBookingConfirmed(app, b, nowMs = Date.now()) {
   const tr = T[lang];
   const ti = tourText(app, b.tour_slug, lang);
   const pol = policyLine(b, lang, nowMs);
+  const payNote = invoiceNote(app, b, lang); // prenotazione a fattura: quando e come si paga
   // tour condiviso con posti liberi: un invito per un amico, dalla pagina della prenotazione
   const inviteLine = inviteOffer(app, b, nowMs).ok ? `${makeT(lang)('invite.mailHint')} ${bookingUrl(app, b, lang)}#invita` : '';
   await app.mail.send({
     to: b.email,
     subject: tr.confirmedSubject(b.ref, ti.title, fmtDate(b.date, lang, 'short')),
-    text: textBody(app, b, lang, tr.confirmedIntro, [pol, tr.addCal, ...(inviteLine ? ['', inviteLine] : []), '']),
-    html: String(bodyHtml(app, b, lang, tr.confirmedIntro, html`<p style="font-size:14px;color:#444">${pol}</p><p style="font-size:13px;color:#666">${tr.addCal}</p>${inviteLine ? html`<p style="font-size:13px;color:#666">${makeT(lang)('invite.mailHint')} <a href="${bookingUrl(app, b, lang)}#invita">${makeT(lang)('invite.title')}</a></p>` : ''}`)),
+    text: textBody(app, b, lang, tr.confirmedIntro, [pol, ...(payNote ? [payNote] : []), tr.addCal, ...(inviteLine ? ['', inviteLine] : []), '']),
+    html: String(bodyHtml(app, b, lang, tr.confirmedIntro, html`<p style="font-size:14px;color:#444">${pol}</p>${payNote ? html`<p style="font-size:14px;color:#444">${payNote}</p>` : ''}<p style="font-size:13px;color:#666">${tr.addCal}</p>${inviteLine ? html`<p style="font-size:13px;color:#666">${makeT(lang)('invite.mailHint')} <a href="${bookingUrl(app, b, lang)}#invita">${makeT(lang)('invite.title')}</a></p>` : ''}`)),
     attachments: [
       { filename: `${b.ref}.ics`, content: icsFor(app, b, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' },
       ...(await pdfAttachment(`voucher-${b.ref}.pdf`, (pdf) => pdf.renderVoucherPdf(app, b, { lang, nowMs }), 'voucher')),
@@ -1215,15 +1217,108 @@ export async function sendInvoiceCopy(app, inv, to, { includeXml = false } = {})
   if (includeXml && inv.xml) attachments.push({ filename: inv.file_name, content: inv.xml, contentType: 'application/xml' });
   const hello = greet(lang, name);
   const sign = `${bye(lang)} ${app.cfg.site.name}`;
+  // da pagare: come (IBAN, causale, scadenza) e il link alla pagina di pagamento (anche con carta)
+  const payable = inv.doc_type === 'TD01' && isPayable(inv) && invoiceDue(inv) > 0;
+  const pay = payable ? ensurePayRef(app.db, inv) : null;
+  const rows = pay ? payRows(app, pay, lang) : [];
+  const link = pay ? invoicePayUrl(app, pay, lang) : '';
   return app.mail.send({
     to,
     subject: t('inv.mail.subject', { kind: Kind, number: inv.number, name: app.cfg.site.name }),
-    text: [hello, '', intro, includeXml ? t('inv.mail.xml') : '', '', sign].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n'),
-    html: String(layout(app, lang, html`<p>${hello}</p><p>${intro}${includeXml ? html` ${t('inv.mail.xml')}` : ''}</p><p style="color:#666;font-size:13px">${sign}</p>`)),
+    text: [hello, '', intro, includeXml ? t('inv.mail.xml') : '', ...(rows.length ? ['', t('invpay.how'), ...rows.map(([k, v]) => `${k}: ${v}`), `${t('invpay.payOrCard')}: ${link}`] : []), '', sign].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n'),
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${hello}</p><p>${intro}${includeXml ? html` ${t('inv.mail.xml')}` : ''}</p>
+        ${rows.length ? html`<p><strong>${t('invpay.how')}</strong></p>${payTable(rows)}<p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('invpay.payOrCard')}</a></p>` : ''}
+        <p style="color:#666;font-size:13px">${sign}</p>`,
+      ),
+    ),
     attachments,
     replyTo: app.cfg.mail.notifyTo || undefined,
   });
 }
+
+// ───────────── Pagamento delle fatture: come pagare, solleciti, incasso ─────────────
+/** «Come pagare» in righe: importo, scadenza, intestatario, IBAN, banca e causale (solo ciò che c'è). */
+function payRows(app, inv, lang) {
+  const t = makeT(lang);
+  const p = payInstructions(app, inv);
+  return [
+    [t('invpay.amount'), formatMoney(p.amountCents, lang, inv.currency)],
+    p.dueDate ? [t('invpay.dueBy'), fmtDate(p.dueDate, lang, 'date')] : null,
+    p.iban ? [t('invpay.beneficiary'), p.beneficiary] : null,
+    p.iban ? [t('invpay.iban'), p.iban] : null,
+    p.iban && p.bank ? [t('invpay.bank'), p.bank] : null,
+    p.iban ? [t('invpay.reference'), p.reference] : null,
+  ].filter(Boolean);
+}
+const payTable = (rows) => html`<table style="border-collapse:collapse;font-size:15px">${rows.map(([k, v]) => html`<tr><td style="padding:5px 14px 5px 0;color:#666;vertical-align:top">${k}</td><td style="padding:5px 0"><strong>${v}</strong></td></tr>`)}</table>`;
+
+/** La riga sul pagamento nella conferma di una prenotazione a fattura: quando e come si paga. Vuota se non c'è nulla da dire. */
+export function invoiceNote(app, b, lang) {
+  if (b.channel !== 'b2b' || b.payment_method !== 'invoice' || b.payment_status === 'paid' || b.status !== 'confirmed') return '';
+  const t = makeT(lang);
+  const days = Number(app.cfg.invoice.b2bDueDays) || 0;
+  const iban = app.cfg.invoice.iban ? t('invpay.ibanPart', { iban: groupIban(app.cfg.invoice.iban) }) : '';
+  return t('invpay.bookingNote', { when: days > 0 ? t('invpay.within', { days }) : t('invpay.onInvoiceDate'), iban });
+}
+
+/** All'agenzia: la fattura è scaduta e non risulta incassata (il sollecito). Con la fattura in allegato, IBAN, causale e il link per pagare. */
+export async function sendInvoiceOverdue(app, inv, { to, lang: l }) {
+  const lang = normLang(l);
+  const t = makeT(lang);
+  const tr = T[lang];
+  const pay = ensurePayRef(app.db, inv);
+  const p = payInstructions(app, pay);
+  const link = invoicePayUrl(app, pay, lang);
+  const rows = payRows(app, pay, lang);
+  const intro = t('invpay.mail.overdueIntro', { number: inv.number, amount: formatMoney(p.amountCents, lang, inv.currency), date: p.dueDate ? fmtDate(p.dueDate, lang, 'date') : '' });
+  const attachments = await pdfAttachment(`fattura-${String(inv.number).replace('/', '-')}.pdf`, (pdf) => pdf.renderInvoicePdf(app, pay), 'fattura', './pdf-invoice.js');
+  const name = JSON.parse(inv.buyer_json);
+  const hello = greet(lang, name.kind === 'person' ? name.firstName : name.name);
+  const sign = `${bye(lang)} ${app.cfg.site.name}`;
+  return app.mail.send({
+    to,
+    subject: t('invpay.mail.overdueSubject', { number: inv.number, date: p.dueDate ? fmtDate(p.dueDate, lang, 'date') : '' }),
+    text: [hello, '', intro, '', ...rows.map(([k, v]) => `${k}: ${v}`), '', `${t('invpay.payOrCard')}: ${link}`, '', tr.contactLine, sign].join('\n'),
+    html: String(layout(app, lang, html`<p>${hello}</p><p>${intro}</p>${payTable(rows)}<p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('invpay.payOrCard')}</a></p><p style="color:#666;font-size:13px">${tr.contactLine}<br>${sign}</p>`)),
+    attachments,
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/** All'agenzia: pagamento ricevuto (con la carta, o segnato dalla guida quando arriva il bonifico). */
+export async function sendInvoicePaid(app, inv, { to, lang: l, amountCents }) {
+  const lang = normLang(l);
+  const t = makeT(lang);
+  const tr = T[lang];
+  const intro = t('invpay.mail.paidIntro', { number: inv.number, amount: formatMoney(amountCents, lang, inv.currency) });
+  const link = invoicePayUrl(app, ensurePayRef(app.db, inv), lang);
+  const buyer = JSON.parse(inv.buyer_json);
+  const hello = greet(lang, buyer.kind === 'person' ? buyer.firstName : buyer.name);
+  const sign = `${bye(lang)} ${app.cfg.site.name}`;
+  return app.mail.send({
+    to,
+    subject: t('invpay.mail.paidSubject', { number: inv.number }),
+    text: [hello, '', intro, '', `${t('invpay.openInvoice')}: ${link}`, '', sign].join('\n'),
+    html: String(layout(app, lang, html`<p>${hello}</p><p>${intro}</p><p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('invpay.openInvoice')}</a></p><p style="color:#666;font-size:13px">${tr.contactLine}<br>${sign}</p>`)),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/** Avviso alla guida (in italiano) sulle fatture: sollecito mandato, pagamento con carta ricevuto. */
+export async function notifyGuideInvoice(app, inv, kind, extra = '') {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const buyer = JSON.parse(inv.buyer_json);
+  const who = buyer.name || [buyer.firstName, buyer.lastName].filter(Boolean).join(' ') || 'cliente';
+  const label = { overdue: 'Fattura scaduta: sollecito inviato', paid: 'Fattura pagata con carta' }[kind];
+  const lines = [`${label} ${inv.number} — ${who}`, extra || null, '', `${app.cfg.baseUrl}/admin/invoices/${inv.id}`].filter((x) => x !== null);
+  await app.mail.send({ to, subject: `${label}: ${inv.number} — ${who}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
+}
+
 
 // ───────────── Modifiche dell'agenzia e richieste di proroga ─────────────
 const changeLine = (app, b, lang) => `${b.participants} ${T[lang].people.toLowerCase()} · ${fmtDate(b.date, lang, 'short')} · ${timeRange(b, lang)} · ${formatMoney(bookingDue(b), lang, b.currency)}`;
@@ -1348,7 +1443,7 @@ export function icsForPackage(app, group, bookings, lang = normLang(group.lang))
 }
 
 /** Il corpo comune delle email sul pacchetto: saluto, testo, elenco dei servizi (con il prezzo di ciascuno e il totale) e un pulsante. */
-async function sendPackageMail(app, group, bookings, { subject, intro, until = null, cta = 'pkg.mail.cta', policy = false, attachments = [], nowMs = Date.now() }) {
+async function sendPackageMail(app, group, bookings, { subject, intro, until = null, cta = 'pkg.mail.cta', policy = false, note = '', attachments = [], nowMs = Date.now() }) {
   const lang = normLang(group.lang);
   const t = makeT(lang);
   const shown = bookings.filter((b) => ['confirmed', 'held', 'option'].includes(b.status));
@@ -1370,6 +1465,7 @@ async function sendPackageMail(app, group, bookings, { subject, intro, until = n
     ...rows.flatMap((r) => [`${r.when} — ${r.what} — ${r.price}`, ...(r.note ? [`   ${r.note}`] : [])]),
     `${t('pkg.mail.total')}: ${total}`,
     ...(group.client_ref ? [`${T[lang].clientRef}: ${group.client_ref}`] : []),
+    ...(note ? ['', note] : []),
     '',
     `${t(cta)}: ${link}`,
     '',
@@ -1391,6 +1487,7 @@ async function sendPackageMail(app, group, bookings, { subject, intro, until = n
           <tr><td colspan="2" style="padding:8px 10px 0 0;text-align:right"><strong>${t('pkg.mail.total')}</strong></td><td style="padding:8px 0 0;text-align:right"><strong>${total}</strong></td></tr>
         </table>
         ${group.client_ref ? html`<p style="font-size:13px;color:#666">${T[lang].clientRef}: ${group.client_ref}</p>` : ''}
+        ${note ? html`<p style="font-size:14px;color:#444">${note}</p>` : ''}
         <p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t(cta)}</a></p>
         <p style="color:#666;font-size:13px">${T[lang].contactLine}<br>${bye(lang)} ${app.cfg.site.name}</p>`,
       ),
@@ -1416,6 +1513,7 @@ export async function sendPackageConfirmed(app, group, bookings, nowMs = Date.no
     subject: t('pkg.mail.confirmedSubject', { ref: group.ref, n: confirmed.length }),
     intro: t('pkg.mail.confirmedIntro'),
     policy: true,
+    note: confirmed[0] ? invoiceNote(app, confirmed[0], lang) : '',
     nowMs,
     attachments: [{ filename: `${group.ref}.ics`, content: icsForPackage(app, group, confirmed, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }, ...vouchers],
   });

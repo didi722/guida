@@ -1,6 +1,7 @@
 import { html, raw } from '../html.js';
 import { STATUS_LABEL, sdiNext } from '../invoices.js';
-import { fmtDate } from '../time.js';
+import { payState } from '../invoicePayments.js';
+import { fmtDate, nowRome } from '../time.js';
 import { adminLayout } from './admin.js';
 import { normLang } from '../langs.js';
 import { langOptions } from './components.js';
@@ -13,6 +14,45 @@ const COUNTRIES = ['IT', 'DE', 'FR', 'ES', 'GB', 'US', 'NL', 'AT', 'CH', 'BE', '
 const STATUS_CHIP = { draft: 'chip-warn', issued: 'chip-accent', sent: 'chip-accent', delivered: 'chip-ok', rejected: 'chip-err', undelivered: 'chip-warn' };
 export const invoiceChip = (inv) => html`<span class="chip ${STATUS_CHIP[inv.status] ?? ''}">${STATUS_LABEL[inv.status] ?? inv.status}</span>${inv.credited ? html` <span class="chip chip-err">Stornata</span>` : ''}`;
 const kindLabel = (inv) => (inv.doc_type === 'TD04' ? 'Nota di credito' : 'Fattura');
+const PAID_VIA = { card: 'carta', bank: 'bonifico', other: 'altro' };
+/** L'incasso di una fattura in una parola (elenco): pagata, scaduta (da quanti giorni), da pagare entro, saldata. */
+const payChip = (inv) => {
+  const st = payState(inv);
+  if (st.state === 'paid') return html`<br><span class="chip chip-ok">Incassata</span>`;
+  if (st.state === 'overdue') return html`<br><span class="chip chip-err">Scaduta da ${st.days} ${st.days === 1 ? 'giorno' : 'giorni'}</span>`;
+  if (st.state === 'open') return html`<br><span class="chip chip-warn">Da incassare${st.dueDate ? ` · entro il ${fmtDate(st.dueDate, 'it', 'short')}` : ''}</span>`;
+  return '';
+};
+/** Scheda «Incasso e solleciti» di una fattura emessa: lo stato, segnare il bonifico arrivato, il sollecito e il link di pagamento per l'agenzia. */
+const payCard = (inv, pay) => {
+  const st = pay.st;
+  const today = nowRome().date;
+  return html`<div class="card pad pay-card">
+    <h2>Incasso e solleciti</h2>
+    ${st.state === 'paid'
+      ? html`<p><span class="chip chip-ok">Incassata</span> il ${fmtDate(nowRome(Date.parse(inv.paid_at)).date, 'it', 'date')} (${PAID_VIA[inv.paid_method] ?? 'altro'}).</p>
+        ${inv.paid_method === 'card' ? html`<p class="muted small">Pagata online con carta: per restituire il denaro serve un rimborso da Stripe (e una nota di credito).</p>` : html`<form method="post" action="/admin/invoices/${inv.id}/unpaid" data-confirm="Annullare l’incasso? La fattura e le sue prenotazioni tornano da incassare."><button class="btn btn-outline btn-sm" type="submit">Annulla l’incasso registrato</button></form>`}`
+      : st.state === 'settled'
+        ? html`<p class="muted">Nulla da incassare: la fattura è già saldata (per esempio pagata online al momento della prenotazione).</p>`
+        : html`<p>${st.state === 'overdue' ? html`<span class="chip chip-err">Scaduta da ${st.days} ${st.days === 1 ? 'giorno' : 'giorni'}</span>` : html`<span class="chip chip-warn">Da incassare</span>`} ${eur(st.dueCents)}${st.dueDate ? ` · scadenza ${fmtDate(st.dueDate, 'it', 'date')}` : ''}</p>
+        <form method="post" action="/admin/invoices/${inv.id}/paid" class="form">
+          <div class="form-grid">
+            <label class="field"><span class="label">Arrivato il</span><input type="date" name="date" value="${today}" max="${today}"></label>
+            <label class="field"><span class="label">Come</span><select name="method"><option value="bank">Bonifico</option><option value="other">Altro</option></select></label>
+          </div>
+          <button class="btn btn-gold btn-sm" type="submit">Segna come incassata</button>
+          <span class="muted small">le prenotazioni della fattura risultano pagate e l’agenzia riceve la ricevuta</span>
+        </form>`}
+    ${st.state === 'open' || st.state === 'overdue'
+      ? html`<form method="post" action="/admin/invoices/${inv.id}/remind" class="form" data-confirm="Mandare ora un sollecito all’agenzia?"><h3>Sollecito</h3>
+        <p class="muted small">${inv.overdue_reminders ? `Inviati ${inv.overdue_reminders} ${inv.overdue_reminders === 1 ? 'sollecito' : 'solleciti'} (l’ultimo il ${fmtDate(nowRome(Date.parse(inv.overdue_reminded_at)).date, 'it', 'short')}).` : 'Nessun sollecito inviato.'} I solleciti partono da soli dopo la scadenza (si regolano in <a href="/admin/settings#invoice">Impostazioni › Fatturazione</a>).</p>
+        <button class="btn btn-outline btn-sm" type="submit">Invia ora un sollecito</button></form>`
+      : ''}
+    <h3>Link di pagamento per l’agenzia</h3>
+    <p class="muted small">Apre la pagina con importo, scadenza, IBAN, causale e pagamento con carta. Lo trovi già nelle email di sollecito e nella copia di cortesia.</p>
+    <p><input class="copy-field" readonly value="${pay.url}" data-select-all></p>
+  </div>`;
+};
 const buyerName = (b) => (b.kind === 'person' ? `${b.firstName ?? ''} ${b.lastName ?? ''}`.trim() : b.name) || '—';
 const SOURCE_LINK = { booking: (id) => `/admin/bookings/${id}`, gift: (id) => `/admin/discounts/gifts/${id}`, program: (id) => `/admin/programs/${id}` };
 const PAY_LABEL = { MP08: 'Carta', MP05: 'Bonifico', MP01: 'Contanti' };
@@ -71,7 +111,7 @@ ${issued.length
     <td><a href="/admin/invoices/${i.id}"><strong>${i.number}</strong></a><br><small class="muted">${kindLabel(i)} · ${fmtDate(i.issue_date, 'it', 'short')}</small></td>
     <td>${buyerName(JSON.parse(i.buyer_json))}</td>
     <td class="num">${i.doc_type === 'TD04' ? '−' : ''}${eur(i.total_cents)}</td>
-    <td>${invoiceChip(i)}</td>
+    <td>${invoiceChip(i)}${i.doc_type === 'TD01' ? payChip(i) : ''}</td>
     <td class="actions"><a class="btn btn-sm btn-outline" href="/admin/invoices/${i.id}/xml">XML</a> <a class="btn btn-sm btn-outline" href="/admin/invoices/${i.id}/pdf" target="_blank" rel="noopener">PDF</a></td>
   </tr>`)}
   </tbody></table></div>`
@@ -165,7 +205,7 @@ function lineRow(l, i) {
   </div>`;
 }
 
-export function invoiceDetailPage(ctx, d, { flash = '', error = '', problems = [], form = null, canDiscard = false, creditNotes = [], pecConfigured = false, settings }) {
+export function invoiceDetailPage(ctx, d, { flash = '', error = '', problems = [], form = null, canDiscard = false, creditNotes = [], pecConfigured = false, settings, pay = null }) {
   const { inv, lines, buyer, options, payments, related } = d;
   const editable = ['draft', 'rejected'].includes(inv.status);
   const credit = inv.doc_type === 'TD04';
@@ -243,6 +283,7 @@ ${inv.status === 'draft' ? html`<form method="post" action="/admin/invoices/${in
   </div>
 </div>
 
+${pay ? payCard(inv, pay) : ''}
 <div class="grid grid-2 admin-detail">
   <div class="card pad">
     <h2>Invio</h2>

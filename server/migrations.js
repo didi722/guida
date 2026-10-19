@@ -481,6 +481,19 @@ CREATE INDEX extension_requests_status ON extension_requests(status);
 CREATE INDEX extension_requests_booking ON extension_requests(booking_id);
 `;
 
+const V21_INVOICE_PAYMENTS = `
+-- Pagamento delle fatture: incasso, pagamento con carta (un collegamento per fattura) e solleciti delle fatture scadute.
+ALTER TABLE invoices ADD COLUMN paid_at TEXT;                       -- incassata il
+ALTER TABLE invoices ADD COLUMN paid_method TEXT;                   -- bank | card | other
+ALTER TABLE invoices ADD COLUMN pay_ref TEXT;                       -- IN-XXXXXX: serve a pagare con la carta e ad aprire la pagina di pagamento
+ALTER TABLE invoices ADD COLUMN pay_token TEXT;
+ALTER TABLE invoices ADD COLUMN stripe_session_id TEXT;
+ALTER TABLE invoices ADD COLUMN stripe_payment_intent TEXT;
+ALTER TABLE invoices ADD COLUMN overdue_reminded_at TEXT;           -- ultimo sollecito
+ALTER TABLE invoices ADD COLUMN overdue_reminders INTEGER NOT NULL DEFAULT 0;
+CREATE UNIQUE INDEX invoices_pay_ref ON invoices(pay_ref) WHERE pay_ref IS NOT NULL;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -521,6 +534,7 @@ export const MIGRATIONS = [
   // v19 — pacchetti di più servizi
   V19_PACKAGES,
   V20_CHANGES,
+  V21_INVOICE_PAYMENTS,
 ];
 
 export function migrate(db) {

@@ -6400,5 +6400,329 @@
   "cancellation: {percent}% refund",
   "cancelación: reembolso {percent}%",
   "キャンセル：返金{percent}%"
+ ],
+ "invpay.title": [
+  "Fattura {number}",
+  "Invoice {number}",
+  "Factura {number}",
+  "請求書 {number}"
+ ],
+ "invpay.state.paid": [
+  "Pagata il {date}",
+  "Paid on {date}",
+  "Pagada el {date}",
+  "{date}にお支払い済み"
+ ],
+ "invpay.state.paidCard": [
+  "Pagata il {date} con carta",
+  "Paid on {date} by card",
+  "Pagada el {date} con tarjeta",
+  "{date}にカードでお支払い済み"
+ ],
+ "invpay.state.paidBank": [
+  "Pagata il {date} con bonifico",
+  "Paid on {date} by bank transfer",
+  "Pagada el {date} por transferencia",
+  "{date}に銀行振込でお支払い済み"
+ ],
+ "invpay.state.open": [
+  "Da pagare entro il {date}",
+  "To be paid by {date}",
+  "A pagar antes del {date}",
+  "{date}までにお支払いください"
+ ],
+ "invpay.state.openNoDate": [
+  "Da pagare",
+  "To be paid",
+  "Pendiente de pago",
+  "お支払い待ち"
+ ],
+ "invpay.state.overdue": [
+  "Scaduta il {date}: non risulta ancora pagata",
+  "Overdue since {date}: not yet paid",
+  "Vencida el {date}: aún no consta como pagada",
+  "{date}が期限です。まだお支払いを確認できていません"
+ ],
+ "invpay.state.settled": [
+  "Nulla da pagare: già saldata",
+  "Nothing to pay: already settled",
+  "Nada que pagar: ya saldada",
+  "お支払いは不要です（精算済み）"
+ ],
+ "invpay.state.credited": [
+  "Stornata con una nota di credito",
+  "Cancelled by a credit note",
+  "Anulada con una nota de crédito",
+  "クレジットノートで取り消されました"
+ ],
+ "invpay.how": [
+  "Come pagare",
+  "How to pay",
+  "Cómo pagar",
+  "お支払い方法"
+ ],
+ "invpay.transfer": [
+  "Bonifico bancario",
+  "Bank transfer",
+  "Transferencia bancaria",
+  "銀行振込"
+ ],
+ "invpay.transferHint": [
+  "Scrivi la causale indicata: così riconosciamo subito il pagamento.",
+  "Please use the reference shown: this way we recognise the payment straight away.",
+  "Escribe el concepto indicado: así reconocemos el pago enseguida.",
+  "記載の振込内容（参照番号）を入力してください。入金をすぐに確認できます。"
+ ],
+ "invpay.noIban": [
+  "Per pagare con bonifico scrivimi: ti mando le coordinate. Importo: {amount}.",
+  "To pay by bank transfer, write to me and I will send you the details. Amount: {amount}.",
+  "Para pagar por transferencia, escríbeme y te envío los datos. Importe: {amount}.",
+  "銀行振込をご希望の場合はご連絡ください。口座情報をお送りします。金額：{amount}"
+ ],
+ "invpay.card": [
+  "Carta online",
+  "Card online",
+  "Tarjeta online",
+  "オンラインでカード払い"
+ ],
+ "invpay.copy": [
+  "Copia",
+  "Copy",
+  "Copiar",
+  "コピー"
+ ],
+ "invpay.copied": [
+  "Copiato!",
+  "Copied!",
+  "¡Copiado!",
+  "コピーしました"
+ ],
+ "invpay.cardHint": [
+  "Pagamento sicuro con Stripe. La fattura risulta subito pagata.",
+  "Secure payment with Stripe. The invoice is marked as paid straight away.",
+  "Pago seguro con Stripe. La factura figura como pagada al instante.",
+  "Stripeによる安全なお支払いです。請求書はすぐに支払い済みになります。"
+ ],
+ "invpay.payCard": [
+  "Paga ora con carta",
+  "Pay now by card",
+  "Pagar ahora con tarjeta",
+  "カードで今すぐ支払う"
+ ],
+ "invpay.payOrCard": [
+  "Come pagare (anche con carta)",
+  "How to pay (also by card)",
+  "Cómo pagar (también con tarjeta)",
+  "お支払い方法（カード払いも可）"
+ ],
+ "invpay.openInvoice": [
+  "Apri la fattura",
+  "Open the invoice",
+  "Abrir la factura",
+  "請求書を開く"
+ ],
+ "invpay.pdf": [
+  "Scarica la fattura (PDF)",
+  "Download the invoice (PDF)",
+  "Descargar la factura (PDF)",
+  "請求書をダウンロード（PDF）"
+ ],
+ "invpay.amount": [
+  "Importo",
+  "Amount",
+  "Importe",
+  "金額"
+ ],
+ "invpay.dueBy": [
+  "Scadenza",
+  "Due date",
+  "Vencimiento",
+  "支払期限"
+ ],
+ "invpay.beneficiary": [
+  "Intestatario del conto",
+  "Account holder",
+  "Titular de la cuenta",
+  "口座名義"
+ ],
+ "invpay.iban": [
+  "IBAN",
+  "IBAN",
+  "IBAN",
+  "IBAN"
+ ],
+ "invpay.bank": [
+  "Banca",
+  "Bank",
+  "Banco",
+  "銀行"
+ ],
+ "invpay.reference": [
+  "Causale",
+  "Payment reference",
+  "Concepto",
+  "振込内容（参照番号）"
+ ],
+ "invpay.issuedTo": [
+  "Intestata a",
+  "Issued to",
+  "Emitida a nombre de",
+  "請求先"
+ ],
+ "invpay.invoiceDate": [
+  "Data della fattura",
+  "Invoice date",
+  "Fecha de la factura",
+  "請求日"
+ ],
+ "invpay.invoiceTotal": [
+  "Totale della fattura",
+  "Invoice total",
+  "Total de la factura",
+  "請求総額"
+ ],
+ "invpay.toPay": [
+  "Da pagare",
+  "To pay",
+  "A pagar",
+  "お支払い額"
+ ],
+ "invpay.flash.paid": [
+  "Pagamento ricevuto: grazie! La fattura risulta pagata.",
+  "Payment received: thank you! The invoice is marked as paid.",
+  "Pago recibido: ¡gracias! La factura figura como pagada.",
+  "お支払いを確認しました。ありがとうございます。請求書は支払い済みになりました。"
+ ],
+ "invpay.flash.canceled": [
+  "Pagamento annullato: puoi riprovare quando vuoi.",
+  "Payment cancelled: you can try again whenever you like.",
+  "Pago cancelado: puedes volver a intentarlo cuando quieras.",
+  "お支払いはキャンセルされました。いつでもやり直せます。"
+ ],
+ "invpay.within": [
+  "entro {days} giorni dalla data della fattura",
+  "within {days} days of the invoice date",
+  "en un plazo de {days} días desde la fecha de la factura",
+  "請求日から{days}日以内に"
+ ],
+ "invpay.onInvoiceDate": [
+  "alla data della fattura",
+  "on the invoice date",
+  "en la fecha de la factura",
+  "請求日に"
+ ],
+ "invpay.ibanPart": [
+  " (IBAN {iban})",
+  " (IBAN {iban})",
+  " (IBAN {iban})",
+  "（IBAN {iban}）"
+ ],
+ "invpay.bookingNote": [
+  "Pagamento: dopo il servizio ricevi la fattura elettronica e paghi con bonifico {when}{iban}; se preferisci puoi anche pagare subito con carta dalla pagina della prenotazione.",
+  "Payment: after the service you receive the electronic invoice and pay by bank transfer {when}{iban}; if you prefer, you can also pay straight away by card from the booking page.",
+  "Pago: tras el servicio recibes la factura electrónica y pagas por transferencia {when}{iban}; si lo prefieres, también puedes pagar ya con tarjeta desde la página de la reserva.",
+  "お支払い：サービス後に電子請求書をお送りします。銀行振込で{when}お支払いください{iban}。ご希望の場合は、予約ページからカードで先にお支払いいただくこともできます。"
+ ],
+ "invpay.booking.title": [
+  "Pagamento a fattura",
+  "Payment by invoice",
+  "Pago por factura",
+  "請求書でのお支払い"
+ ],
+ "invpay.booking.before": [
+  "Dopo il servizio ricevi la fattura elettronica e paghi con bonifico {when}.",
+  "After the service you receive the electronic invoice and pay by bank transfer {when}.",
+  "Tras el servicio recibes la factura electrónica y pagas por transferencia {when}.",
+  "サービス後に電子請求書をお送りします。銀行振込で{when}お支払いください。"
+ ],
+ "invpay.booking.invoiced": [
+  "Fattura {number}: {amount}.",
+  "Invoice {number}: {amount}.",
+  "Factura {number}: {amount}.",
+  "請求書 {number}：{amount}"
+ ],
+ "invpay.booking.how": [
+  "Come pagare la fattura",
+  "How to pay the invoice",
+  "Cómo pagar la factura",
+  "請求書のお支払い方法"
+ ],
+ "invpay.booking.cardHint": [
+  "Vuoi chiudere subito il conto? Paga con carta: la fattura risulterà già pagata.",
+  "Want to settle straight away? Pay by card: the invoice will already be marked as paid.",
+  "¿Quieres saldar ya la cuenta? Paga con tarjeta: la factura figurará como pagada.",
+  "すぐに精算しますか？ カードでお支払いいただくと、請求書は支払い済みになります。"
+ ],
+ "invpay.mail.overdueSubject": [
+  "Promemoria di pagamento: fattura {number} scaduta il {date}",
+  "Payment reminder: invoice {number} was due on {date}",
+  "Recordatorio de pago: la factura {number} venció el {date}",
+  "お支払いのリマインダー：請求書 {number}（期限 {date}）"
+ ],
+ "invpay.mail.overdueIntro": [
+  "la fattura {number} di {amount} è scaduta il {date} e non ci risulta ancora pagata. Se hai già pagato, ti ringrazio e ti chiedo di ignorare questo messaggio (puoi rispondere con la data del bonifico); altrimenti trovi qui sotto come pagare.",
+  "invoice {number} for {amount} was due on {date} and we have not yet received the payment. If you have already paid, thank you, and please ignore this message (you can reply with the date of the transfer); otherwise you will find below how to pay.",
+  "la factura {number} de {amount} venció el {date} y aún no consta como pagada. Si ya has pagado, gracias, y te pido que ignores este mensaje (puedes responder con la fecha de la transferencia); si no, abajo tienes cómo pagar.",
+  "請求書 {number}（{amount}）の支払期限は{date}でしたが、まだお支払いを確認できておりません。すでにお支払い済みの場合は、ありがとうございます。本メールは無視してください（振込日をご返信いただけると助かります）。まだの場合は、以下をご確認ください。"
+ ],
+ "invpay.mail.paidSubject": [
+  "Pagamento ricevuto — fattura {number}",
+  "Payment received — invoice {number}",
+  "Pago recibido — factura {number}",
+  "お支払いを確認しました — 請求書 {number}"
+ ],
+ "invpay.mail.paidIntro": [
+  "abbiamo ricevuto il pagamento di {amount} per la fattura {number}. Grazie!",
+  "we have received the payment of {amount} for invoice {number}. Thank you!",
+  "hemos recibido el pago de {amount} de la factura {number}. ¡Gracias!",
+  "請求書 {number} のお支払い {amount} を確認しました。ありがとうございます。"
+ ],
+ "partner.inv.payment": [
+  "Pagamento",
+  "Payment",
+  "Pago",
+  "お支払い"
+ ],
+ "partner.inv.payNow": [
+  "Paga ora",
+  "Pay now",
+  "Pagar ahora",
+  "今すぐ支払う"
+ ],
+ "partner.inv.howToPay": [
+  "Come pagare",
+  "How to pay",
+  "Cómo pagar",
+  "お支払い方法"
+ ],
+ "partner.inv.overdue": [
+  "Fatture scadute da pagare: {n} (in tutto {amount}). Apri «Paga ora» o «Come pagare» nella riga della fattura.",
+  "Overdue invoices to pay: {n} ({amount} in total). Open “Pay now” or “How to pay” on the invoice row.",
+  "Facturas vencidas por pagar: {n} ({amount} en total). Abre «Pagar ahora» o «Cómo pagar» en la fila de la factura.",
+  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の「今すぐ支払う」または「お支払い方法」を開いてください。"
+ ],
+ "partner.kpi.dueOverdue": [
+  "di cui scaduti {amount}",
+  "of which overdue {amount}",
+  "de los cuales vencidos {amount}",
+  "うち期限超過 {amount}"
+ ],
+ "pkg.payCard": [
+  "Paga ora con carta ({amount})",
+  "Pay now by card ({amount})",
+  "Pagar ahora con tarjeta ({amount})",
+  "カードで今すぐ支払う（{amount}）"
+ ],
+ "inv.pdf.reference": [
+  "Causale",
+  "Reference",
+  "Concepto",
+  "振込内容"
+ ],
+ "inv.pdf.referenceText": [
+  "Fattura {number}",
+  "Invoice {number}",
+  "Factura {number}",
+  "請求書 {number}"
  ]
 }

@@ -2,7 +2,9 @@
 import { html, raw } from '../html.js';
 import { cancellationState, paymentOptions } from '../bookings.js';
 import { pendingExtension } from '../changes.js';
-import { cancellable, packageStatus, packageTotal } from '../packages.js';
+import { bookingDue } from '../bookings.js';
+import { onlinePaymentsOpen } from '../opening.js';
+import { cancellable, packageStatus, packageTotal, payableLines } from '../packages.js';
 import { fmtDate, fmtInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
@@ -122,6 +124,7 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
   const late = optionLines.some((b) => cancellationState(b).percent < 100);
   const hidden = html`<input type="hidden" name="t" value="${group.token}">${owner ? html`<input type="hidden" name="next" value="${u(`/b2b/packages/${group.ref}`)}">` : ''}`;
   const payLeft = bookings.filter((b) => b.status === 'held');
+  const cardNow = onlinePaymentsOpen(app) ? payableLines(app.db, group.id).filter((b) => b.status === 'confirmed') : []; // confermati a fattura: si può anticipare con la carta
 
   const body = html`
 <section class="page-head"><div class="wrap narrow">
@@ -162,6 +165,7 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
       </div>`
       : ''}
     ${payLeft.length ? html`<p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${group.ref}${q}&lang=${lang}">${t('booking.payNow')}</a></p>` : ''}
+    ${cardNow.length ? html`<div class="pay-later"><p class="small muted">${t('invpay.booking.cardHint')}</p><p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${group.ref}${q}&lang=${lang}">${t('pkg.payCard', { amount: money(cardNow.reduce((a, b) => a + bookingDue(b), 0)) })}</a></p></div>` : ''}
 
     ${confirmed.length
       ? html`<p class="btn-row"><a class="btn btn-outline" href="${base}/calendar.ics${q}">${t('booking.addCalendar')}</a></p>

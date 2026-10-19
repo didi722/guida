@@ -2,6 +2,7 @@
 // Solo lettura del database: nessuna regola di prenotazione qui, quelle stanno in bookings.js.
 import { addDays, addMonths, dayOfWeek, isDate, isMonth, localToInstant, monthDates, nowRome } from './time.js';
 import { CREDITABLE_STATUS } from './invoices.js';
+import { ensurePayRef, invoiceDue, isPayable, overdueInvoices } from './invoicePayments.js';
 
 /** Le schede dell'elenco, nell'ordine in cui si mostrano. */
 export const PARTNER_VIEWS = ['upcoming', 'options', 'past', 'cancelled', 'all'];
@@ -154,11 +155,13 @@ export function partnerSummary(app, accountId, nowMs = Date.now()) {
        WHERE account_id = ? AND payment_status = 'unpaid' AND ((status = 'confirmed' AND payment_method = 'invoice') OR (status = 'cancelled' AND retained_cents > 0))`,
     )
     .get(accountId);
+  // di cui scaduto: le fatture emesse non incassate oltre la scadenza
+  const late = overdueInvoices(db, today).filter((x) => x.inv.account_id === accountId);
   return {
     upcoming: { count: Number(up.n), pax: Number(up.pax) },
     options: { count: Number(opt.n), nextMs: opt.next ? Date.parse(opt.next) : null },
     month: { count: Number(month.n), cents: Number(month.cents), month: monthStart.slice(0, 7) },
-    due: { count: Number(due.n), cents: Number(due.cents) },
+    due: { count: Number(due.n), cents: Number(due.cents), overdueCount: late.length, overdueCents: late.reduce((a, x) => a + x.dueCents, 0) },
   };
 }
 
@@ -166,10 +169,16 @@ export function partnerSummary(app, accountId, nowMs = Date.now()) {
 export function partnerInvoices(db, accountId) {
   return db
     .prepare(
-      `SELECT id, number, doc_type, status, issue_date, total_cents, payable_cents, currency, related_id FROM invoices
+      `SELECT id, number, doc_type, status, issue_date, total_cents, payable_cents, currency, related_id, credited, paid_at, paid_method, payments_json, pay_ref, pay_token FROM invoices
        WHERE account_id = ? AND number IS NOT NULL AND status IN (${CREDITABLE_STATUS.map(() => '?').join(',')}) ORDER BY issue_date DESC, id DESC`,
     )
-    .all(accountId, ...CREDITABLE_STATUS);
+    .all(accountId, ...CREDITABLE_STATUS)
+    .map((i) => {
+      // da pagare: serve il riferimento per aprire la pagina di pagamento (si crea al primo bisogno)
+      if (!isPayable(i) || !invoiceDue(i) || (i.pay_ref && i.pay_token)) return i;
+      const p = ensurePayRef(db, i);
+      return { ...i, pay_ref: p.pay_ref, pay_token: p.pay_token };
+    });
 }
 
 /** Una fattura dell'agenzia (null se non è sua o non è stata ancora emessa). */

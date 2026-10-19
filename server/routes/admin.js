@@ -33,6 +33,7 @@ import { feedbackAdminPage } from '../views/admin-feedback.js';
 import { invoiceForSource } from '../invoices.js';
 import { getPackage, packageBookings } from '../packages.js';
 import { pendingExtension, pendingExtensions } from '../changes.js';
+import { overdueInvoices } from '../invoicePayments.js';
 import { LANGS } from '../langs.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage } from '../views/admin.js';
 
@@ -206,7 +207,7 @@ export function adminRouter(app) {
     const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(nowIso).n;
     const options = db.prepare(`SELECT COUNT(DISTINCT COALESCE('g' || group_id, 'b' || id)) n, MIN(option_expires_at) next FROM bookings WHERE status = 'option' AND option_expires_at > ?`).get(nowIso); // un pacchetto è una sola opzione
     const invoicesDue = app.invoices.queue().filter((i) => i.overdue).length;
-    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, today, view, days, calendar, pendingPartners, held, options: { ...options, requests: pendingExtensions(db).length }, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
+    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, invoicesOverdue: overdueInvoices(db).length, today, view, days, calendar, pendingPartners, held, options: { ...options, requests: pendingExtensions(db).length }, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
   });
 
   // ───── impegni privati in agenda: un tour preso fuori dal sito (email, di persona…) toglie quelle ore dalle disponibilità ─────

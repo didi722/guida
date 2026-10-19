@@ -150,7 +150,7 @@ export async function renderInvoicePdf(app, inv) {
       const when = p.paid ? t('inv.pdf.paid') : p.dueDate ? t('inv.pdf.dueOn', { date: fmtDate(p.dueDate, lang, 'date') }) : '';
       ensure(doc, 34);
       doc.font('R').fontSize(10).fillColor(C.ink).text(fold(`${label}${when ? ` – ${when}` : ''}: ${C2(p.cents, lang)}`), PAGE.m, doc.y, { width: CW });
-      if (p.method === 'MP05' && p.iban && !p.paid) doc.font('R').fontSize(9.5).fillColor(C.muted).text(fold(`${t('inv.pdf.iban')}: ${p.iban}${p.bank ? ` · ${p.bank}` : ''}`), PAGE.m, doc.y, { width: CW });
+      if (p.method === 'MP05' && p.iban && !p.paid) doc.font('R').fontSize(9.5).fillColor(C.muted).text(fold(`${t('inv.pdf.iban')}: ${p.iban}${p.bank ? ` · ${p.bank}` : ''} · ${t('inv.pdf.reference')}: ${t('inv.pdf.referenceText', { number: inv.number })}`), PAGE.m, doc.y, { width: CW });
       doc.moveDown(0.3);
     }
   }

@@ -50,7 +50,7 @@ const INVOICE = {
   'invoice.seller.name': '', 'invoice.seller.firstName': 'Mario', 'invoice.seller.lastName': 'Rossi', 'invoice.seller.fiscalCode': 'rssmra80a01h501u', 'invoice.seller.regime': 'RF19',
   'invoice.seller.address.street': 'Calle del Test 1', 'invoice.seller.address.zip': '30100', 'invoice.seller.address.city': 'Venezia', 'invoice.seller.address.province': 've',
   'invoice.vatBp': '0', 'invoice.nature': 'N2.2', 'invoice.bollo': 'auto', 'invoice.contributionPercent': '0', 'invoice.withholdingPercent': '0', 'invoice.withholdingCause': 'A',
-  'invoice.notes': 'Operazione in regime forfettario.', 'invoice.legalReference': 'Regime forfettario', 'invoice.iban': 'IT60 X054 2811 1010 0000 0123 456', 'invoice.bank': 'Banca di Prova', 'invoice.b2bDueDays': '30', 'invoice.giftInvoiceAt': 'sale', 'invoice.startDate': '2027-01-01',
+  'invoice.notes': 'Operazione in regime forfettario.', 'invoice.legalReference': 'Regime forfettario', 'invoice.iban': 'IT60 X054 2811 1010 0000 0123 456', 'invoice.bank': 'Banca di Prova', 'invoice.b2bDueDays': '30', 'reminders.overdue.enabled': '1', 'reminders.overdue.firstAfterDays': '1', 'reminders.overdue.everyDays': '7', 'reminders.overdue.max': '3', 'invoice.giftInvoiceAt': 'sale', 'invoice.startDate': '2027-01-01',
 };
 
 test('contatti e regole: si cambiano dal pannello, valgono subito, restano dopo il riavvio e si ripristinano', async () => {

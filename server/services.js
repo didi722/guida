@@ -2,6 +2,7 @@
 import { BookingError, bookingDue, cancelBooking, confirmOption, confirmPaid, createBooking, expireBooking, expireHolds, expireOptions, extendOption, getBooking, getBookingByRef, markRefund, optionsDueForReminder, releaseOption } from './bookings.js';
 import { notifyGuideOption, sendBookingCancelled, sendBookingConfirmed, sendOptionCreated, sendOptionExpired, sendOptionExtended, sendOptionReleased, sendOptionReminder, sendSlotLostRefund } from './emails.js';
 import { resolveExtensions } from './changes.js';
+import { invoiceForSource } from './invoices.js';
 import { onlinePaymentsOpen } from './opening.js';
 import { fmtDate, localToInstant } from './time.js';
 
@@ -209,8 +210,15 @@ export function createServices(app) {
   app.jobs.push((nowMs) => svc.sweep(nowMs));
   app.jobs.push((nowMs) => svc.sweepOptions(nowMs));
 
-  /** Prenotazione confermata ma ancora da pagare (pagamento il giorno del servizio, o prenotata prima dell'apertura degli incassi): si può pagare online dalla sua pagina. */
-  const payableLater = (b, nowMs = Date.now()) => b.status === 'confirmed' && b.channel === 'b2c' && b.payment_status === 'unpaid' && b.payment_method === 'onsite' && bookingDue(b) > 0 && onlinePaymentsOpen(app, nowMs) && localToInstant(b.date, b.start_time) > nowMs;
+  /**
+   * Prenotazione confermata ma ancora da pagare, che si può pagare online dalla sua pagina: di un privato che paga il giorno del servizio (o ha prenotato
+   * prima dell'apertura degli incassi), e di un'agenzia che paga a fattura ma vuole saldare subito (finché la prenotazione non è in una fattura: poi si paga la fattura).
+   */
+  const payableLater = (b, nowMs = Date.now()) => {
+    if (b.status !== 'confirmed' || b.payment_status !== 'unpaid' || bookingDue(b) <= 0 || !onlinePaymentsOpen(app, nowMs)) return false;
+    if (b.channel === 'b2c') return b.payment_method === 'onsite' && localToInstant(b.date, b.start_time) > nowMs;
+    return b.payment_method === 'invoice' && !invoiceForSource(db, 'booking', b.id);
+  };
   svc.payableLater = payableLater;
 
   // Le prenotazioni si pagano con lo stesso meccanismo (webhook, ripresa, pagina demo) di gift card e acconti.

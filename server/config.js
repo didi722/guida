@@ -132,6 +132,13 @@ export function createConfig(overrides = {}) {
       enabled: bool(e.REMINDERS_ENABLED, true), // la sera prima del tour (clienti privati e agenzie) e, alle agenzie, prima che finisca la cancellazione gratuita: orario, punto d'incontro, come contattarti
       sendHour: num(e.REMINDER_SEND_HOUR, 18), // ora di Venezia
       penaltyHours: num(e.PENALTY_REMINDER_HOURS, 24), // alle agenzie: così tante ore prima che la cancellazione gratuita finisca
+      // solleciti delle fatture scadute e non pagate (alle agenzie): il primo dopo qualche giorno dalla scadenza, poi a intervalli, fino a un massimo
+      overdue: {
+        enabled: bool(e.OVERDUE_REMINDERS_ENABLED, true),
+        firstAfterDays: num(e.OVERDUE_FIRST_AFTER_DAYS, 1),
+        everyDays: num(e.OVERDUE_EVERY_DAYS, 7),
+        max: num(e.OVERDUE_MAX_REMINDERS, 3),
+      },
     },
 
     // «Invita un amico» (tour condivisi): ogni invito è un codice sconto univoco, valido una volta sola per quella partenza

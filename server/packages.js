@@ -5,6 +5,7 @@
 import { BookingError, activeOptionCount, bookingDue, cancellationState, confirmOption, createBooking, releaseOption } from './bookings.js';
 import { daySlots } from './availability.js';
 import { themeChoice } from './choices.js';
+import { invoiceForSource } from './invoices.js';
 import { tx } from './db.js';
 import { firmTiers, maxActiveOptions, optionWindow } from './optionPolicy.js';
 import { policyFor } from './policy.js';
@@ -190,7 +191,7 @@ export function payableLines(db, groupId, nowMs = Date.now(), { late = false } =
   return packageBookings(db, groupId).filter((b) => {
     if (b.payment_status !== 'unpaid' || bookingDue(b) <= 0) return false;
     if (b.status === 'held') return late || b.hold_expires_at > now;
-    if (b.status === 'confirmed') return b.payment_method === 'invoice';
+    if (b.status === 'confirmed') return b.payment_method === 'invoice' && !invoiceForSource(db, 'booking', b.id); // già in una fattura: si paga la fattura
     return late && b.status === 'expired' && b.payment_method === 'card' && !b.cancelled_at; // attesa scaduta (non un'opzione lasciata scadere)
   });
 }

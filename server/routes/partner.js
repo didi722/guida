@@ -74,7 +74,7 @@ export function partnerRouter(app) {
   r.get('/b2b/bookings/:ref', needPartner, (req, res, next) => {
     const b = own(req);
     if (!b) return next();
-    send(res, bookingPage(res.locals.ctx, b, { flash: String(req.query.flash ?? ''), nextUrl: `/${req.lang}/b2b/bookings/${b.ref}`, owner: true, invoice: invoiceOfBooking(db, b.id), group: b.group_id ? getPackage(db, b.group_id) : null }));
+    send(res, bookingPage(res.locals.ctx, b, { flash: String(req.query.flash ?? ''), payLater: app.services.payableLater(b), nextUrl: `/${req.lang}/b2b/bookings/${b.ref}`, owner: true, invoice: invoiceOfBooking(db, b.id), group: b.group_id ? getPackage(db, b.group_id) : null }));
   });
   r.get('/b2b/bookings/:ref/voucher.pdf', needPartner, async (req, res, next) => {
     const b = own(req);

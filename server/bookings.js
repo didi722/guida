@@ -237,8 +237,9 @@ export function confirmPaid(app, bookingId, paymentIntent = null, nowMs = Date.n
     if (!b) throw new BookingError('invalid', 'booking not found');
     if (b.status === 'confirmed') {
       if (paymentIntent && !b.stripe_payment_intent) {
-        // chi aveva scelto di pagare il giorno del servizio (o prenotato prima dell'apertura degli incassi) può pagare online dalla pagina della prenotazione
-        const payNow = b.payment_status === 'unpaid' && b.payment_method === 'onsite';
+        // chi aveva scelto di pagare il giorno del servizio (o prenotato prima dell'apertura degli incassi), e un'agenzia che paga a fattura ma vuole saldare subito,
+        // può pagare online dalla pagina della prenotazione
+        const payNow = b.payment_status === 'unpaid' && (b.payment_method === 'onsite' || (b.channel === 'b2b' && b.payment_method === 'invoice'));
         db.prepare(`UPDATE bookings SET stripe_payment_intent = ?${payNow ? ", payment_status = 'paid', payment_method = 'card'" : ''} WHERE id = ?`).run(paymentIntent, b.id);
         if (payNow) return { outcome: 'paid_later', booking: getBooking(db, b.id) };
       }

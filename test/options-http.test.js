@@ -107,8 +107,8 @@ test('opzione: le regole si fanno rispettare (troppo vicino, limite, spenta per 
   try {
     const { partner, agency } = s;
     const opt = (over = {}) => partner('/it/book/checkout', form({ ...checkout(over), action: 'option' }));
-    // a 2 giorni dal tour l'opzione non c'è: si prenota direttamente
-    const near = `/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(3)}&time=10:00&pax=2`;
+    // a meno di 3 giorni dal tour l'opzione non c'è, a qualunque ora del giorno si provi: si prenota direttamente
+    const near = `/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(2)}&time=10:00&pax=2`;
     const nearPage = nb(await (await partner(near)).text());
     assert.ok(!nearPage.includes('option-submit'));
     assert.match(nearPage, /Per una data così vicina non si può opzionare/);

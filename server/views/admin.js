@@ -144,12 +144,13 @@ function agendaCalendar(ctx, cal, today) {
   ${selectedItems.length ? html`<div class="card">${selectedItems.map((b) => agendaRow(ctx, b))}</div>` : html`<p class="muted">Nessun servizio in questo giorno.</p>`}</section>`;
 }
 
-export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, feedUrl, flash, problems, preOpening = null }) {
+export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, invoicesOverdue = 0, feedUrl, flash, problems, preOpening = null }) {
   const selectedDay = calendar?.selected ?? today;
   const body = html`
 ${calendarWarning(problems)}
 ${preOpening ? html`<div class="notice notice-info" role="note"><strong>Pre-apertura:</strong> fino al ${fmtDate(preOpening, 'it', 'date')} il sito accetta prenotazioni (solo per date da quel giorno in poi) senza incassare online: i privati pagano il giorno del servizio, le agenzie a fattura. <a href="/admin/settings?s=rules#rules">Cambia la data</a></div>` : ''}
 ${options.requests ? html`<div class="notice notice-info" role="note"><strong>${options.requests} ${options.requests === 1 ? 'richiesta di proroga' : 'richieste di proroga'} da decidere.</strong> <a href="/admin/bookings?f=options">Apri le opzioni</a></div>` : ''}
+${invoicesOverdue ? html`<div class="notice notice-err" role="alert"><strong>${invoicesOverdue === 1 ? '1 fattura scaduta e non incassata' : `${invoicesOverdue} fatture scadute e non incassate`}.</strong> <a href="/admin/invoices?tab=issued">Apri le fatture</a></div>` : ''}
 ${invoicesDue ? html`<div class="notice notice-err" role="alert"><strong>${invoicesDue} ${invoicesDue === 1 ? 'voce' : 'voci'} da fatturare oltre i 12 giorni.</strong> <a href="/admin/invoices">Apri le fatture</a></div>` : ''}
 <div class="grid grid-4 kpis">
   <div class="card pad kpi"><span class="muted">Oggi</span><strong>${(view === 'list' ? days.find((d) => d.date === today)?.items.length : calendar?.todayCount) ?? 0}</strong><small>servizi</small></div>

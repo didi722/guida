@@ -1026,3 +1026,16 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .ext-pending { margin: 14px 0 0; }
 .ext-request form { margin: 8px 0 0; }
 .change-card .btn-row { margin-bottom: 0; }
+
+/* ───────── Pagamento delle fatture ───────── */
+.pay-box { margin: 14px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); }
+.pay-box h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.pay-box .summary-list > div:last-child { border-bottom: 0; }
+.copy-row { margin-top: 12px; }
+.copy-row > .muted { display: block; margin-bottom: 4px; font-size: 0.85rem; }
+.copy-line { display: flex; gap: 8px; align-items: center; } .copy-line .copy-field { flex: 1; min-width: 0; margin: 0; }
+.pay-block { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); } .pay-block h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.pay-card h3 { margin: 1.5rem 0 4px; font-size: 1.15rem; }
+.pay-card form .btn { margin-top: 6px; }
+.partner-table .chip { white-space: normal; line-height: 1.35; }
+@media (max-width: 640px) { .copy-line { flex-wrap: wrap; } .copy-line .btn { flex: 1 1 100%; } .pay-box .copy-field { font-size: 0.74rem; padding-inline: 10px; } }

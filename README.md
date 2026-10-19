@@ -31,6 +31,7 @@ Sito web per una guida turistica abilitata a Venezia: **tour a piccoli gruppi**,
 - **Promemoria alle agenzie**: la sera prima del tour, **24 ore prima che finisca la cancellazione gratuita** (una sola volta) e, per le opzioni, prima della scadenza.
 - **Date lontane**: se l'agenzia prenota direttamente un servizio fra più di 21 giorni, la cancellazione gratuita dura solo 48 ore (poi rimborso ridotto fino al termine normale): così conviene **opzionare**, che non impegna. Tutto regolabile in Impostazioni › Opzioni per le agenzie.
 - **Pacchetti**: un'agenzia prenota **più servizi insieme** (guida, meet & greet, tour leader…) con **una sola opzione, una sola scadenza, un solo pagamento** (anche con carta, in una sessione Stripe sola) **e una sola fattura**. Tutti i servizi o nessuno; un'unica email con un voucher per servizio e un solo calendario; ogni servizio resta una prenotazione normale.
+- **Pagamento chiaro delle fatture**: ogni fattura ha uno stato (da pagare entro…, scaduta, pagata) e una **pagina di pagamento** con importo, scadenza, **IBAN, causale** e **«Paga ora con carta»** (link riservato anche nelle email); la guida segna i bonifici arrivati, e le fatture scadute ricevono **solleciti automatici** (1 giorno dopo la scadenza, poi ogni 7, al massimo 3, regolabili).
 - **Modifiche e proroghe**: l'agenzia **cambia da sola persone, data od ore** (prezzo ricalcolato; opzione libera, prenotazione a fattura libera nel periodo gratuito e solo in aumento dopo; spostare la data non allunga i termini di annullo) e **chiede una proroga** dell'opzione, che la guida approva (con i giorni che vuole) o rifiuta dal pannello.
 - **Opzioni**: l'agenzia può **tenere una data senza pagare** mentre il suo cliente decide; la durata dipende da quanto manca al tour (tabella e limiti modificabili, anche per singolo partner), arriva un promemoria e, se non conferma, la data **si libera da sola**. Nessun addebito automatico: se paga a fattura il servizio si fattura dopo.
 
@@ -214,6 +215,8 @@ server/
   translate.js      traduzione automatica dei commenti (DeepL / Google), con cache nel database
   wallet.js         Google Wallet (JWT) e Apple Wallet (.pkpass con firma PKCS#7); png.js: il logo come PNG
   invoices.js       coda, bozze, emissione e note di credito
+  invoicePayments.js pagamento delle fatture: stato, scadenza, IBAN e causale, incasso, solleciti (testato)
+  invoiceServices.js fatture: invio, incasso, pagamento con carta (`IN-…`) e solleciti
   fatturapa.js      importi e XML FatturaPA (puro)
   pdf.js            voucher, buoni regalo, proposte (e pdf-invoice.js)
   payments.js       Stripe (HTTP diretto) + demo

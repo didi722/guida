@@ -15,6 +15,7 @@ import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
 import { quoteLines } from './hourly.js';
 import { changeBox, extensionBox } from './changes.js';
+import { bookingPayBlock } from './invoicePay.js';
 import { pendingExtension } from '../changes.js';
 import { extraHourOptions, parseServiceRecord } from '../rates.js';
 
@@ -334,7 +335,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       : ''}
 
     ${b.status === 'option' ? optionActions(ctx, b, { st, nextUrl, group }) : ''}
-    ${payLater ? html`<div class="pay-later"><p class="small muted">${t('booking.payOnlineHint')}</p><p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${b.ref}${q}&lang=${lang}">${t('booking.payOnlineNow')}</a></p></div>`
+    ${payLater ? html`<div class="pay-later"><p class="small muted">${t(b.channel === 'b2b' ? 'invpay.booking.cardHint' : 'booking.payOnlineHint')}</p><p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${b.ref}${q}&lang=${lang}">${t('booking.payOnlineNow')}</a></p></div>`
       : b.status === 'confirmed' && b.payment_method === 'onsite' && b.payment_status === 'unpaid' && isPreOpening(cfg) ? preOpenNotice(ctx) : ''}
 
     ${b.status === 'confirmed'
@@ -360,6 +361,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
         : st.started ? '' : html`<p class="small muted">${t('booking.contactForChanges')} <a href="mailto:${cfg.site.email}">${cfg.site.email}</a>${cfg.site.whatsapp ? html` · <a href="https://wa.me/${cfg.site.whatsapp}">WhatsApp</a>` : ''}</p>`}`
       : invoiceBtn ? html`<p class="btn-row">${invoiceBtn}</p>` : ''}
     ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && !invoice ? html`<p class="small muted">${t('partner.docs.invoiceLater')}</p>` : ''}
+    ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && b.payment_status === 'unpaid' ? bookingPayBlock(ctx, b, invoice) : ''}
   </div>
   ${owner ? changeBox(ctx, b) : ''}
   ${owner && isEditable(b)
