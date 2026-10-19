@@ -1,4 +1,5 @@
 // Assembla i moduli dell'applicazione (usato dal server e dai test, così non si disallineano).
+import { createAdminSecurity } from './adminSecurity.js';
 import { createBriefingServices } from './briefing.js';
 import { createCalendars } from './calendars.js';
 import { createChangeServices } from './changeServices.js';
@@ -27,6 +28,7 @@ import { createWaitlistServices } from './waitlistServices.js';
 export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl, assetVersion = '0' }) {
   const app = { cfg, db, content, assetVersion, jobs: [], limits: createLimits() };
   app.settings = createSettings({ cfg, db }); // prima di ogni altro modulo: applica alla configurazione i valori scelti dal pannello
+  app.adminSecurity = createAdminSecurity(app); // accesso a due passaggi e sessioni del pannello (serve già al primo accesso)
   /** Lavori periodici (ogni minuto): ogni modulo aggiunge i suoi a `app.jobs`. */
   app.runJobs = async (nowMs = Date.now()) => {
     for (const job of app.jobs) {

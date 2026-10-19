@@ -11,6 +11,7 @@
     "start": "node --disable-warning=ExperimentalWarning server/index.js",
     "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
     "sandbox": "node --disable-warning=ExperimentalWarning scripts/sandbox.mjs",
+    "admin:2fa-off": "node --disable-warning=ExperimentalWarning scripts/admin-2fa-off.mjs",
     "test": "node --disable-warning=ExperimentalWarning --test \"test/**/*.test.js\""
   },
   "dependencies": {

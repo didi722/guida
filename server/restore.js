@@ -12,6 +12,7 @@ import { getSetting, setSetting } from './db.js';
 import { splitLegacyAudiences } from './contentStore.js';
 import { MAX_LARGE_BYTES, MAX_SMALL_BYTES, MEDIA_NAME, detectImage } from './media.js';
 import { MIGRATIONS, migrate } from './migrations.js';
+import { PRIVATE_SETTINGS, scrubPrivateSettings } from './privateSettings.js';
 import { ZipError, openZip } from './zipread.js';
 
 export class RestoreError extends Error {
@@ -46,7 +47,7 @@ const CONTENT_PLAN = [
   { table: 'media', merge: true }, // la libreria delle immagini si unisce: non si perde nessuna foto
 ];
 const CONTENT_SETTINGS = ['site_images', 'rate_card']; // le foto del sito e le tariffe a ore tornano con i contenuti
-const KEEP_SETTINGS = ['last_backup_at', 'last_restore']; // restano quelli di adesso anche se si ripristina tutto
+const KEEP_SETTINGS = ['last_backup_at', 'last_restore', ...PRIVATE_SETTINGS]; // restano quelli di adesso anche se si ripristina tutto (compresa la sicurezza del pannello)
 
 const COUNTS = [
   ['tours', 'SELECT COUNT(*) AS n FROM content_tours'],
@@ -403,6 +404,7 @@ export function createRestoreServices(app) {
         fs.mkdirSync(snapDir, { recursive: true, mode: 0o700 });
         try {
           db.prepare('VACUUM INTO ?').run(path.join(snapDir, 'guida.sqlite'));
+          scrubPrivateSettings(path.join(snapDir, 'guida.sqlite'));
           const exported = app.content.export?.();
           if (exported) fs.writeFileSync(path.join(snapDir, 'contenuti.json'), JSON.stringify(exported, null, 2), { mode: 0o600 });
           fs.writeFileSync(path.join(snapDir, 'meta.json'), JSON.stringify({ id, at: new Date(nowMs).toISOString(), mode, backupAt: meta.backupAt, source: meta.source }), { mode: 0o600 });

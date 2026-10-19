@@ -1086,7 +1086,18 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .stmt-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; } .stmt-month { margin: 0; font-size: 1.5rem; }
 .stmt-note td { color: var(--muted); }
 @media (max-width: 640px) { .stmt-bar, .stmt-nav { flex-direction: column; align-items: stretch; } .stmt-nav .btn, .stmt-bar .btn-row .btn { width: 100%; text-align: center; } .stmt-month { order: -1; } }
+/* Sicurezza del pannello: due passaggi */
+.sec-steps { list-style: none; counter-reset: s; padding: 0; margin: 0 0 6px; display: grid; gap: 22px; }
+.sec-steps > li { counter-increment: s; position: relative; padding-left: 52px; }
+.sec-steps > li::before { content: counter(s); position: absolute; left: 0; top: -2px; width: 38px; height: 38px; border-radius: 50%; background: var(--gold); color: var(--ink); font-weight: 700; display: grid; place-items: center; }
+.qr-box { display: inline-block; margin: 10px 0 4px; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; line-height: 0; } .qr { max-width: 100%; height: auto; }
+.otp-key { display: inline-block; font-size: 1.1rem; letter-spacing: 0.08em; padding: 6px 10px; background: var(--gold-soft); border-radius: 8px; overflow-wrap: anywhere; }
+.otp-input { font-size: 1.4rem; letter-spacing: 0.16em; text-align: center; font-variant-numeric: tabular-nums; max-width: 16rem; }
+.recovery-codes { list-style: none; padding: 0; margin: 14px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; } .recovery-codes li { background: var(--gold-soft); border-radius: 8px; padding: 8px 12px; text-align: center; } .recovery-codes code { font-size: 1.1rem; letter-spacing: 0.1em; }
+.sec-forms { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 8px; } .card-inner { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; } .card-inner h3 { margin: 0 0 4px; font-size: 1.1rem; }
+@media (max-width: 640px) { .sec-steps > li { padding-left: 0; padding-top: 46px; } .otp-input { max-width: none; } }
 @media print {
   .admin-bar, .admin-subnav, .day-tools, .notice, footer, .tabs { display: none !important; }
   body.admin { background: #fff; } .day-item { break-inside: avoid; box-shadow: none; } .kpis { display: none; }
+  .recovery-codes li { background: #fff; border: 1px solid #999; }
 }

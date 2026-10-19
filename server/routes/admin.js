@@ -8,7 +8,7 @@ import { calendar, eventLines } from '../ics.js';
 import { getSetting, setSetting } from '../db.js';
 import { addDays, dayOfWeek, isDate, isMonth, isTime, monthDates, nowRome, toMin } from '../time.js';
 import { cleanText, safeEqual } from '../util.js';
-import { loginAdmin, logoutAdmin, send, sendPdf, tooMany } from '../http.js';
+import { loginAdmin, logoutAdmin, send, sendPdf, startSecondStep, tooMany } from '../http.js';
 import { parseCookies, setCookie } from '../auth.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { adminAgencyBookingRouter } from './admin-agency-booking.js';
@@ -27,6 +27,7 @@ import { adminBlogRouter } from './admin-blog.js';
 import { adminTextsRouter } from './admin-texts.js';
 import { adminSettingsRouter } from './admin-settings.js';
 import { adminBackupRouter } from './admin-backup.js';
+import { adminSecondStepRouter, adminSecurityRouter } from './admin-security.js';
 import { adminGuideRouter } from './admin-guide.js';
 import { adminInvoicesRouter } from './admin-invoices.js';
 import { adminTodayRouter } from './admin-today.js';
@@ -123,9 +124,15 @@ export function adminRouter(app) {
     if (!app.limits.login(`admin|${req.ip}`)) return tooMany(res);
     // gli spazi attorno si ignorano: la tastiera del telefono ne aggiunge uno dopo l'autocompletamento
     if (!safeEqual(String(req.body.password ?? '').trim(), cfg.admin.password)) return send(res, adminLoginPage(ctxOf(req), { error: 'Password errata.' }), 401);
-    loginAdmin(res, cfg);
+    // con i due passaggi attivi la password da sola non basta: si passa al codice (la sessione nasce solo dopo)
+    if (app.adminSecurity.enabled()) {
+      startSecondStep(res, app);
+      return res.redirect(303, '/admin/login/2fa');
+    }
+    loginAdmin(res, cfg, app.adminSecurity.sessionTag());
     res.redirect(303, '/admin');
   });
+  r.use(adminSecondStepRouter(app));
   // «Esci» riporta al sito pubblico (la home nella lingua del browser), non alla pagina di accesso
   r.post('/logout', form, (req, res) => {
     logoutAdmin(res, cfg);
@@ -157,6 +164,7 @@ export function adminRouter(app) {
   r.use(adminTextsRouter(app));
   r.use(adminSettingsRouter(app));
   r.use(adminBackupRouter(app));
+  r.use(adminSecurityRouter(app));
   r.use(adminGuideRouter(app));
 
   r.get('/feedback', (req, res) => {

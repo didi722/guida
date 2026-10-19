@@ -1757,3 +1757,11 @@ export async function sendStatementEmail(app, account, st, { attachments = [] } 
     replyTo: app.cfg.mail.notifyTo || undefined,
   });
 }
+
+/** Alla guida (in italiano): è successo qualcosa alla sicurezza del pannello (secondo passaggio acceso o spento, codice di emergenza usato, blocco dopo troppi errori). */
+export async function notifySecurity(app, { subject, lines, ip = '' }) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return false;
+  const body = [...lines, '', ip ? `Da: ${ip}` : null, `Quando: ${fmtInstant(Date.now(), 'it')}`, '', 'Se non sei stato tu, cambia subito la password del pannello (ADMIN_PASSWORD sul server): così tutti i dispositivi vengono scollegati.'].filter((l) => l !== null);
+  return app.mail.send({ to, subject: `${app.cfg.site.name} · ${subject}`, text: body.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${body.map((l) => html`${l}<br>`)}</div>`) });
+}

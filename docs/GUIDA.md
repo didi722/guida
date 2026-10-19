@@ -54,9 +54,31 @@ Le indicazioni di percorso si leggono così: **Sito › Tour B2C** vuol dire «t
 | **Clienti** | Partner · Sconti · Feedback |
 | **Conti** | Fatture · Statistiche |
 | **Sito** | Tour B2C · Tour B2B · Listino · Tariffe a ore · Blog · Pagine · Testi · Immagini · Impostazioni |
-| **Aiuto** | Guida · Backup · Email |
+| **Aiuto** | Guida · Backup · Sicurezza · Email |
 
 **Cambiare la password del pannello.** La password non si cambia dal pannello (per sicurezza): sta nella configurazione del server, nella variabile `ADMIN_PASSWORD`. Cambiala nel pannello del tuo hosting (sezione *Environment* / *Variables*), scrivila **senza virgolette** e riavvia il servizio. Usa una password lunga e unica.
+
+### Sicurezza del pannello: due passaggi e dispositivi
+Il pannello contiene i dati dei clienti e le fatture: oltre alla password puoi chiedere un **codice a tempo** che solo il tuo telefono sa produrre (accesso a due passaggi). Si gestisce in **Aiuto › Sicurezza**.
+
+**Attivarlo** (due minuti, serve il telefono):
+1. **Aiuto › Sicurezza › Attiva i due passaggi**.
+2. Installa sul telefono un'**app di autenticazione** (Google Authenticator, Microsoft Authenticator, Authy, 1Password, Bitwarden…), tocca *+* e **inquadra il codice QR**. Se non riesci, scrivi a mano la chiave sotto il codice (tipo *basata sul tempo*) oppure, **dal telefono stesso**, tocca *apri direttamente nell'app*.
+3. Scrivi il **codice di 6 cifre** che l'app mostra e tocca **Conferma e attiva**.
+4. Il sito ti mostra **10 codici di emergenza**: **scrivili o stampali subito** (c'è il pulsante *Stampa*) e conservali in un posto sicuro, non solo nel telefono. Non si possono rivedere.
+
+**Entrare dopo l'attivazione.** Scrivi la password, poi il **codice di 6 cifre** dell'app: cambia ogni 30 secondi e ognuno vale **una volta sola**. Se non viene accettato, controlla che l'**ora del telefono sia impostata in automatico**. Se non hai il telefono, apri *Non hai il telefono?* e scrivi un **codice di emergenza** (vale una volta; ti avvisiamo per email).
+
+**Cosa fa il sito per proteggerti**
+- Dopo **5 codici sbagliati di fila** il secondo passaggio si **blocca** per 15 minuti (poi 30, 60… fino a 6 ore) e **nemmeno il codice giusto passa** finché dura il blocco: così chi conosce la password non può indovinare i numeri. Un codice scritto a metà (meno di 6 cifre) non conta come tentativo.
+- All'indirizzo che riceve le notifiche arriva una **email** quando i due passaggi vengono accesi o spenti, quando si generano nuovi codici di emergenza, quando se ne usa uno e quando scatta un blocco.
+- La chiave **resta sul server**: non c'è nelle **copie di sicurezza** che scarichi e un **ripristino** non la tocca (e non spegne la protezione).
+
+**Dispositivi collegati.** Dopo l'accesso il pannello resta aperto **7 giorni** su quel browser. **Esci da tutti gli altri dispositivi** (stessa pagina) chiude le sessioni altrove e lascia aperta questa. Succede lo stesso quando **attivi** i due passaggi (gli altri devono rientrare con il codice) e quando **cambi la password** del pannello: in quel caso devono rientrare tutti, anche questo browser.
+
+**Nuovi codici di emergenza e spegnimento.** Nella stessa pagina: **Genera nuovi codici** (i vecchi smettono di valere) e **Disattiva**. In entrambi i casi devi scrivere un codice valido (dell'app o di emergenza): così una sessione lasciata aperta non basta a togliere la protezione.
+
+**Se perdi il telefono e anche i codici di emergenza.** Serve il server: dal terminale, nella cartella del sito, `npm run admin:2fa-off` (con Docker: `docker exec <contenitore> npm run admin:2fa-off`). Spegne i due passaggi e chiude tutte le sessioni; poi entri con la sola password e li riattivi con il telefono nuovo. Chi non ha accesso al server non può farlo: per questo i codici di emergenza vanno conservati.
 
 ## 3. Voglio… → vado in…
 
@@ -94,6 +116,7 @@ Le indicazioni di percorso si leggono così: **Sito › Tour B2C** vuol dire «t
 | Preparare la **proposta** di un programma di più giorni | **Agenda › Programmi** |
 | **Emettere una fattura** | **Conti › Fatture** |
 | Vedere **quanto ho incassato**, quale tour rende di più, lo scontrino medio | **Conti › Statistiche** |
+| Chiedere anche il **codice del telefono** per entrare nel pannello, o **chiudere le sessioni** aperte su altri dispositivi | **Aiuto › Sicurezza** ([come funziona](#sicurezza-del-pannello-due-passaggi-e-dispositivi)) |
 | Scaricare una **copia di sicurezza** | **Aiuto › Backup** |
 | **Rimettere il sito com'era** in una copia scaricata (o tornare indietro dopo un errore) | **Aiuto › Backup › Ripristina da una copia** |
 | Leggere le **email** mandate dal sito | **Aiuto › Email** |
@@ -592,6 +615,8 @@ Prenotazioni, clienti, fatture, tour, articoli, pagine, testi, impostazioni e fo
 - `contenuti.json`: tour, articoli, pagine e testi in formato leggibile (utile per consultarli o copiarli);
 - `LEGGIMI.txt`: le istruzioni per il ripristino.
 
+La copia **non contiene** la chiave dell'accesso a due passaggi né i codici di emergenza ([sezione 2](#sicurezza-del-pannello-due-passaggi-e-dispositivi)): restano solo sul server, e un ripristino non li cambia.
+
 **Quando.** Dopo ogni grande modifica (nuovi tour, tante foto, cambio prezzi) e **almeno una volta al mese**. La pagina ti ricorda quando hai scaricato l'ultima. Conserva il file **al sicuro**: contiene **dati personali dei clienti** (non mandarlo per email, non lasciarlo su computer condivisi). Molti hosting fanno anche copie automatiche del disco: chiedi al tuo se sono attive, ma la tua copia resta l'assicurazione in più.
 
 ### Ripristinare una copia
@@ -663,6 +688,8 @@ Con Posteo come mittente (`MAIL_FROM` con un indirizzo `@posteo.net`) il sito fu
 - La password è quella della variabile `ADMIN_PASSWORD`, **senza virgolette né spazi**. Dopo averla cambiata il servizio va riavviato.
 - Se la variabile è vuota in produzione il pannello è **disattivato**: impostala e riavvia.
 - Sul computer di prova (`npm run sandbox`) la password è `admin`.
+- **Con i due passaggi attivi il codice non viene accettato**: controlla che l'**ora del telefono sia in automatico** (un orologio sfasato di più di mezzo minuto non va), scrivi il codice che l'app mostra **adesso** (ognuno vale una sola volta: se lo hai appena usato aspetta il successivo) e che sia quello del pannello giusto se l'app ne ha più d'uno. Dopo **5 errori** il secondo passaggio si blocca per un po' (15 minuti la prima volta, fino a 6 ore): la pagina dice fino a che ora, e **durante il blocco non passa nulla**, nemmeno un codice di emergenza. Se non puoi aspettare e non hai né telefono né codici: `npm run admin:2fa-off` sul server ([sezione 2](#sicurezza-del-pannello-due-passaggi-e-dispositivi)).
+- **Dopo un aggiornamento mi chiede di nuovo la password**: può capitare una volta quando cambia il modo in cui il sito riconosce le sessioni, o dopo aver cambiato `ADMIN_PASSWORD` o attivato i due passaggi. È normale.
 
 **Ho cambiato qualcosa ma sul sito non lo vedo**
 - Ricarica la pagina (sul telefono: chiudi e riapri il browser). Le modifiche dal pannello sono immediate; le **foto** hanno una copia in cache e il browser può mostrare la vecchia per qualche istante.
@@ -723,6 +750,7 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 - [ ] **Stripe**: prima in modalità test (carte di prova), poi **in modalità reale** con il webhook configurato; **SMTP** funzionante. Fai una prenotazione di prova e un rimborso (in reale, con un importo piccolo).
 - [ ] **Orari di lavoro**, giorni di chiusura e **calendario personale** collegato (Agenda › Disponibilità).
 - [ ] **Dominio e HTTPS**, `BASE_URL` corretto, disco persistente, **primo backup**.
+- [ ] **Accesso a due passaggi** (Aiuto › Sicurezza): attivalo, **stampa i codici di emergenza** e conservali; scegli una password del pannello lunga e unica.
 - [ ] Se parti **prima della Partita IVA**: scrivi la data in **Incassi dal** e fai una prenotazione di prova da privato (deve proporre solo il pagamento di persona) e da agenzia (fattura o opzione).
 - [ ] Opzioni per le agenzie: guarda la tabella in **Impostazioni › Opzioni per le agenzie** e decidi se ti vanno bene i giorni e il limite.
 

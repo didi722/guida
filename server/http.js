@@ -37,15 +37,27 @@ export function sessionMiddleware(app) {
     req.acct = null;
     if (gs?.k === 'b2b') req.acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(gs.id) ?? null;
     const ga = verifyToken(cfg.sessionSecret, c.ga);
-    req.isAdmin = ga?.k === 'admin';
+    // il cookie vale finché porta il «segno» di adesso: «esci da tutti i dispositivi», l'attivazione dei due passaggi e il cambio di password lo rendono vecchio
+    req.isAdmin = ga?.k === 'admin' && ga.e === app.adminSecurity.sessionTag();
     next();
   };
 }
 
 export const loginPartner = (res, cfg, id) => setCookie(res, cfg, 'gs', signToken(cfg.sessionSecret, { k: 'b2b', id, exp: Date.now() + WEEK * 1000 }), { maxAgeSec: WEEK });
 export const logoutPartner = (res, cfg) => clearCookie(res, cfg, 'gs');
-export const loginAdmin = (res, cfg) => setCookie(res, cfg, 'ga', signToken(cfg.sessionSecret, { k: 'admin', exp: Date.now() + WEEK * 1000 }), { maxAgeSec: WEEK });
-export const logoutAdmin = (res, cfg) => clearCookie(res, cfg, 'ga');
+export const loginAdmin = (res, cfg, tag) => setCookie(res, cfg, 'ga', signToken(cfg.sessionSecret, { k: 'admin', e: tag, exp: Date.now() + WEEK * 1000 }), { maxAgeSec: WEEK });
+export const logoutAdmin = (res, cfg) => {
+  clearCookie(res, cfg, 'ga');
+  clearCookie(res, cfg, 'gp');
+};
+
+/** Tra la password e il codice del secondo passaggio: un cookie breve che vale solo per scrivere il codice, non apre il pannello. */
+const PRE_MS = 10 * 60_000;
+export const startSecondStep = (res, app) => setCookie(res, app.cfg, 'gp', signToken(app.cfg.sessionSecret, { k: 'admin-pre', e: app.adminSecurity.sessionTag(), exp: Date.now() + PRE_MS }), { maxAgeSec: PRE_MS / 1000 });
+export const inSecondStep = (req, app) => {
+  const p = verifyToken(app.cfg.sessionSecret, parseCookies(req.headers.cookie).gp);
+  return p?.k === 'admin-pre' && p.e === app.adminSecurity.sessionTag();
+};
 
 /** Contesto di rendering per le pagine pubbliche. */
 export function makeCtx(app, req, lang) {

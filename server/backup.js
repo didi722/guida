@@ -6,6 +6,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { getSetting, setSetting } from './db.js';
 import { MEDIA_NAME } from './media.js';
+import { scrubPrivateSettings } from './privateSettings.js';
 import { nowRome } from './time.js';
 
 const u16 = (n) => {
@@ -82,6 +83,7 @@ export async function* backupEntries(app, nowMs = Date.now(), snapshot = null) {
     const tmp = path.join(cfg.dataDir, `.backup-${crypto.randomBytes(4).toString('hex')}.sqlite`);
     try {
       db.prepare('VACUUM INTO ?').run(tmp); // fotografia coerente anche mentre il sito lavora
+      scrubPrivateSettings(tmp); // la chiave dell'accesso a due passaggi resta sul server
       yield { name: 'guida.sqlite', data: fs.readFileSync(tmp) };
     } finally {
       fs.rmSync(tmp, { force: true });
