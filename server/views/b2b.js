@@ -108,7 +108,7 @@ export function registerPage(ctx, { error = '', values = {}, done = false } = {}
 
 // ───────────────────────── Area riservata dell'agenzia ─────────────────────────
 /** Messaggi che le azioni dell'elenco (rilascia, conferma) possono lasciare al ritorno sulla dashboard. */
-const FLASH = ['option-confirmed', 'option-released', 'option-expired', 'option-error', 'cancelled', 'cancel-error'];
+const FLASH = ['option-confirmed', 'option-released', 'option-expired', 'option-error', 'cancelled', 'cancel-error', 'feed'];
 /** Lo stato di una prenotazione a parole (anche per l'esportazione): un'opzione scaduta non è una prenotazione «scaduta». */
 export const bookingStatusText = (t, b) => (b.status === 'expired' && b.option_expires_at ? t('b2b.bst.optionExpired') : t(`b2b.bst.${b.status}`));
 
@@ -249,7 +249,7 @@ export function accountPage(ctx, { acct, flash = '' }) {
  * Le prenotazioni dell'agenzia: riepilogo, ricerca e filtri, elenco con le azioni di ogni giorno (o calendario).
  * list: { rows, counts, total, page, pages, view } · summary: vedi partnerSummary · filters: vedi parseFilters.
  */
-export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mode = 'list', calendar = null }) {
+export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mode = 'list', calendar = null, feedUrl = '' }) {
   const { t, lang, u, app } = ctx;
   const { content } = app;
   const base = u('/b2b/bookings');
@@ -345,6 +345,14 @@ export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mo
         <p>${searching ? t('partner.results.none') : list.counts.all ? t('partner.results.noneHere') : t('partner.results.empty')}</p>
         <p class="btn-row center">${searching ? html`<a class="btn btn-outline" href="${base}?view=${filters.view}">${t('partner.filter.clear')}</a>` : html`<a class="btn btn-gold" href="${u('/book')}">${t('partner.nav.new')}</a>`}</p>
       </div>`}`}
+  ${feedUrl ? html`<div class="card pad spaced" id="calendario-telefono">
+    <h2 class="h-sub">${t('feed.title')}</h2>
+    <p class="small">${t('feed.text')}</p>
+    <p class="copy-line"><input class="copy-field" id="feed-url" readonly value="${feedUrl}" data-select-all aria-label="${t('feed.title')}"><button type="button" class="btn btn-outline btn-sm" data-copy="#feed-url" data-copied="${t('invpay.copied')}">${t('invpay.copy')}</button></p>
+    <p class="small muted">${t('feed.how')}</p>
+    <p class="small muted">${t('feed.privacy')}</p>
+    <form method="post" action="${u('/b2b/calendar/rotate')}" data-confirm="${t('feed.rotateAsk')}"><button class="btn btn-link-danger" type="submit">${t('feed.rotate')}</button></form>
+  </div>` : ''}
 </div></section>`;
   return page(ctx, { title: t('partner.nav.bookings'), path: `/${lang}/b2b/bookings`, body, noindex: true, activeNav: 'b2b-bookings', area: 'partner' });
 }

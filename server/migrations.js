@@ -533,6 +533,12 @@ CREATE TABLE account_logos (
 );
 `;
 
+const V24_AGENCY_FEED = `
+-- Calendario in abbonamento (.ics) di ogni agenzia: un indirizzo privato con una chiave che si può rigenerare.
+ALTER TABLE accounts ADD COLUMN ics_key TEXT;
+CREATE UNIQUE INDEX accounts_ics_key ON accounts(ics_key) WHERE ics_key IS NOT NULL;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -578,6 +584,8 @@ export const MIGRATIONS = [
   V22_WAITLIST,
   // v23 — logo, recapiti e ricarico dei documenti delle agenzie
   V23_AGENCY_DOCS,
+  // v24 — calendario in abbonamento delle agenzie
+  V24_AGENCY_FEED,
 ];
 
 export function migrate(db) {

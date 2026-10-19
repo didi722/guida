@@ -7372,5 +7372,89 @@
   "You have not uploaded your logo yet.",
   "Aún no has subido tu logo.",
   "ロゴはまだ登録されていません。"
+ ],
+ "feed.title": [
+  "Calendario sul telefono",
+  "Calendar on your phone",
+  "Calendario en el móvil",
+  "スマートフォンのカレンダー"
+ ],
+ "feed.text": [
+  "Aggiungi questo indirizzo come calendario in abbonamento: le tue opzioni (con la scadenza) e le tue prenotazioni confermate compaiono accanto ai tuoi impegni e si aggiornano da sole.",
+  "Add this address as a subscribed calendar: your options (with their deadline) and confirmed bookings appear next to your other events and update by themselves.",
+  "Añade esta dirección como calendario de suscripción: tus opciones (con su vencimiento) y tus reservas confirmadas aparecen junto a tus compromisos y se actualizan solas.",
+  "このアドレスを購読カレンダーとして追加すると、仮押さえ（期限付き）と確定した予約が他の予定と並んで表示され、自動的に更新されます。"
+ ],
+ "feed.how": [
+  "Google Calendar: Altri calendari › Da URL · Apple Calendar: File › Nuovo calendario in abbonamento · Outlook: Aggiungi calendario › Da Internet.",
+  "Google Calendar: Other calendars › From URL · Apple Calendar: File › New Calendar Subscription · Outlook: Add calendar › From Internet.",
+  "Google Calendar: Otros calendarios › Desde URL · Apple Calendar: Archivo › Nueva suscripción a calendario · Outlook: Agregar calendario › Desde Internet.",
+  "Googleカレンダー：他のカレンダー › URLで追加 ・ Appleカレンダー：ファイル › 新規カレンダー照会 ・ Outlook：カレンダーの追加 › インターネットから。"
+ ],
+ "feed.privacy": [
+  "L’indirizzo è privato: chi lo conosce vede i tuoi clienti e le tue date. Non condividerlo.",
+  "The address is private: anyone who has it can see your clients and dates. Do not share it.",
+  "La dirección es privada: quien la conozca ve tus clientes y tus fechas. No la compartas.",
+  "このアドレスは非公開です。知っている人はお客様と日程を見られるため、共有しないでください。"
+ ],
+ "feed.rotate": [
+  "Genera un nuovo indirizzo",
+  "Generate a new address",
+  "Generar una dirección nueva",
+  "新しいアドレスを作成"
+ ],
+ "feed.rotateAsk": [
+  "Il vecchio indirizzo smetterà di funzionare: dovrai aggiungere di nuovo quello nuovo al calendario. Continuare?",
+  "The old address will stop working: you will need to add the new one to your calendar again. Continue?",
+  "La dirección anterior dejará de funcionar: tendrás que añadir la nueva a tu calendario. ¿Continuar?",
+  "古いアドレスは使えなくなります。新しいアドレスをカレンダーに追加し直してください。続けますか？"
+ ],
+ "feed.calName": [
+  "{name} — le mie prenotazioni",
+  "{name} — my bookings",
+  "{name} — mis reservas",
+  "{name} — 私の予約"
+ ],
+ "feed.option": [
+  "OPZIONE",
+  "OPTION",
+  "OPCIÓN",
+  "仮押さえ"
+ ],
+ "feed.optionEnds": [
+  "Scade l’opzione",
+  "Option expires",
+  "Vence la opción",
+  "仮押さえの期限"
+ ],
+ "feed.optionEndsText": [
+  "Conferma o rilascia la data prima di questa ora: poi si libera da sola.",
+  "Confirm or release the date before this time: afterwards it is released automatically.",
+  "Confirma o libera la fecha antes de esta hora: después se libera sola.",
+  "この時刻までに確定または解除してください。過ぎると自動的に解除されます。"
+ ],
+ "feed.client": [
+  "Cliente",
+  "Client",
+  "Cliente",
+  "お客様"
+ ],
+ "feed.optionHold": [
+  "Opzione: la data resta trattenuta fino al {until}.",
+  "Option: the date is held until {until}.",
+  "Opción: la fecha queda retenida hasta el {until}.",
+  "仮押さえ：{until}まで日程を確保しています。"
+ ],
+ "feed.confirmed": [
+  "Confermata",
+  "Confirmed",
+  "Confirmada",
+  "確定"
+ ],
+ "booking.flash.feed": [
+  "Nuovo indirizzo creato: aggiungilo di nuovo al tuo calendario.",
+  "New address created: add it to your calendar again.",
+  "Dirección nueva creada: añádela de nuevo a tu calendario.",
+  "新しいアドレスを作成しました。カレンダーに追加し直してください。"
  ]
 }

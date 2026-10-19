@@ -1,7 +1,7 @@
 // Generazione di file iCalendar (.ics): un evento per prenotazione, orari in UTC.
 import { localToInstant } from './time.js';
 
-const esc = (s) => String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+const esc = (s) => String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
 function fold(line) {
@@ -37,7 +37,7 @@ export function eventLines({ uid, date, start, end, summary, description, locati
   ].filter(Boolean);
 }
 
-export function calendar(name, events) {
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Guida Venezia//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${esc(name)}`, 'X-WR-TIMEZONE:Europe/Rome', ...events.flat(), 'END:VCALENDAR'];
+export function calendar(name, events, { refreshHours = 0 } = {}) {
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Guida Venezia//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${esc(name)}`, 'X-WR-TIMEZONE:Europe/Rome', ...(refreshHours ? [`REFRESH-INTERVAL;VALUE=DURATION:PT${refreshHours}H`, `X-PUBLISHED-TTL:PT${refreshHours}H`] : []), ...events.flat(), 'END:VCALENDAR'];
   return lines.map(fold).join('\r\n') + '\r\n';
 }

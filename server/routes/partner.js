@@ -4,6 +4,7 @@
 import express from 'express';
 import { parseCookies, setCookie } from '../auth.js';
 import { getBookingByRef } from '../bookings.js';
+import { feedUrl } from '../agencyFeed.js';
 import { notifyGuideBookingEdited } from '../emails.js';
 import { getPackage } from '../packages.js';
 import { send, sendPdf } from '../http.js';
@@ -53,7 +54,7 @@ export function partnerRouter(app) {
     if (asked) setCookie(res, cfg, VIEW_COOKIE, asked, { maxAgeSec: YEAR });
     const filters = parseFilters(req.query);
     send(res, bookingsPage(ctx, {
-      acct: req.acct, mode, filters, summary: partnerSummary(app, req.acct.id, nowMs), flash: String(req.query.flash ?? ''),
+      acct: req.acct, mode, filters, summary: partnerSummary(app, req.acct.id, nowMs), flash: String(req.query.flash ?? ''), feedUrl: feedUrl(app, req.acct, req.lang),
       list: mode === 'list' ? partnerBookings(app, req.acct.id, filters, { nowMs }) : null,
       calendar: mode === 'cal' ? partnerCalendar(app, req.acct.id, { month: req.query.m, selected: req.query.d }, nowMs) : null,
     }));
