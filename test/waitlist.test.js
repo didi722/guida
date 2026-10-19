@@ -106,7 +106,7 @@ test('lista d’attesa: si chiede solo per una data senza posto; regole, doppion
   assert.equal(code(() => join(app, a, '2027-02-22')), 'mine', 'il posto è occupato da una sua pratica');
 
   const e = join(app, a, '2027-02-20');
-  assert.deepEqual({ ...e }, { id: e.id, account_id: a.id, tour_slug: SHARED, date: '2027-02-20', time: null, pax: 2, hours: null, tour_lang: null, status: 'waiting', created_at: new Date(NOW).toISOString(), notified_at: null, notified_time: null });
+  assert.deepEqual({ ...e }, { id: e.id, account_id: a.id, tour_slug: SHARED, date: '2027-02-20', time: null, pax: 2, hours: null, tour_lang: null, status: 'waiting', created_at: new Date(NOW).toISOString(), queued_at: new Date(NOW).toISOString(), notified_at: null, notified_time: null });
   assert.equal(code(() => join(app, a, '2027-02-20')), 'dup', 'già in lista');
   assert.equal(code(() => join(app, a, '2027-02-20', { time: '09:30' })), 'ok', 'un orario preciso è un altro avviso');
   assert.equal(code(() => join(app, a, '2027-02-20', { time: '09:30' })), 'dup');

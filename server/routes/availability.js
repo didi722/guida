@@ -4,7 +4,7 @@ import { dayOverviewFor, monthOverview } from '../availability.js';
 import { send, tooMany } from '../http.js';
 import { hourOptions, minHours, openTo } from '../rates.js';
 import { addDays, addMonths, isDate, isMonth, nowRome } from '../time.js';
-import { WaitlistError, entriesOf } from '../waitlist.js';
+import { WaitlistError, entriesOf, queueInfo } from '../waitlist.js';
 import { availabilityPage } from '../views/availability.js';
 import { needPartner, safeNext } from './guards.js';
 
@@ -35,7 +35,7 @@ export function availabilityRouter(app) {
     const tours = services();
     const tour = tours.find((x) => x.slug === String(req.query.tour ?? '')) ?? tours[0] ?? null;
     const today = nowRome(nowMs).date;
-    const entries = entriesOf(db, req.acct.id, today);
+    const entries = entriesOf(db, req.acct.id, today).map((e) => ({ ...e, queue: queueInfo(db, cfg, e, nowMs) }));
     if (!tour) return { tours, tour: null, entries };
     const pax = clampInt(req.query.pax, 1, tour.maxParticipants, Math.min(2, tour.maxParticipants));
     const hours = tour.pricing === 'hourly' ? (tour.chooseHours ? (hourOptions(tour.service).includes(Number(req.query.hours)) ? Number(req.query.hours) : minHours(tour.service)) : tour.durationMin / 60) : null;

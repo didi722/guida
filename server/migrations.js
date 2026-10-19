@@ -551,6 +551,12 @@ CREATE TABLE statement_sends (
 );
 `;
 
+const V26_WAITLIST_QUEUE = `
+-- Lista d'attesa a coda: l'ordine è quello in cui l'agenzia è entrata in lista (o si è rimessa in lista dopo un avviso)
+ALTER TABLE waitlist ADD COLUMN queued_at TEXT;
+UPDATE waitlist SET queued_at = created_at;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -600,6 +606,8 @@ export const MIGRATIONS = [
   V24_AGENCY_FEED,
   // v25 — estratto conto mensile alle agenzie
   V25_STATEMENTS,
+  // v26 — lista d'attesa a coda
+  V26_WAITLIST_QUEUE,
 ];
 
 export function migrate(db) {

@@ -146,6 +146,12 @@ export function createConfig(overrides = {}) {
     // estratto conto mensile alle agenzie (email con il PDF, i primi giorni del mese): disattivato finché non lo accendi dal pannello
     statements: { enabled: bool(e.STATEMENTS_ENABLED, false), day: num(e.STATEMENTS_DAY, 3) },
 
+    // lista d'attesa delle agenzie: chi è prima in lista è avvisata per prima e ha qualche ora di vantaggio, poi tocca alla successiva (0 = avvisi a tutte insieme)
+    waitlist: {
+      priorityHours: num(e.WAITLIST_PRIORITY_HOURS, 24),
+      openBelowHours: num(e.WAITLIST_OPEN_BELOW_HOURS, 72), // con il servizio più vicino di così non si aspetta il proprio turno: l'avviso parte a tutte
+    },
+
     // «Invita un amico» (tour condivisi): ogni invito è un codice sconto univoco, valido una volta sola per quella partenza
     invite: {
       enabled: bool(e.INVITE_ENABLED, true),

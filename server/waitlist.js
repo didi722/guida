@@ -6,12 +6,14 @@
 //   avrebbe posto senza le prenotazioni di altri: non per giorni chiusi, passati, fuori dalla finestra o dove il posto manca per le sue stesse pratiche;
 // - un avviso vale per un servizio, un giorno, un numero di persone e (facoltativo) un orario, una durata (servizi a ore) e una lingua;
 // - al massimo MAX_ACTIVE avvisi attivi per agenzia; non si ripete lo stesso avviso (servizio, giorno, orario, persone, durata e lingua);
-// - nessuno riserva la data per chi aspetta: gli avvisi partono a tutti gli interessati e la prende chi prenota per primo.
+// - nessuno riserva la data per chi aspetta: chi prenota per primo la ottiene. Gli avvisi partono nell'ordine di iscrizione: la prima agenzia in lista
+//   è avvisata per prima e ha qualche ora di vantaggio, poi tocca alla successiva (con il servizio vicino, o con il vantaggio spento, partono a tutte insieme).
 import { dayOverviewFor } from './availability.js';
 import { hourOptions, openTo } from './rates.js';
-import { addDays, isDate, isTime, nowRome } from './time.js';
+import { addDays, isDate, isTime, localToInstant, nowRome } from './time.js';
 
 export const MAX_ACTIVE = 10;
+const HOUR = 3_600_000;
 const iso = (ms) => new Date(ms).toISOString();
 const ACTIVE = `('waiting', 'notified')`;
 
@@ -67,15 +69,16 @@ export function joinWaitlist(app, account, src, nowMs = Date.now()) {
   if (!w.time && ov.state === 'mine') throw new WaitlistError('mine');
   if (db.prepare(`SELECT 1 FROM waitlist WHERE account_id = ? AND tour_slug = ? AND date = ? AND COALESCE(time, '') = ? AND pax = ? AND COALESCE(hours, 0) = ? AND COALESCE(tour_lang, '') = ? AND status IN ${ACTIVE}`).get(account.id, w.tour.slug, w.date, w.time ?? '', w.pax, w.hours ?? 0, w.tourLang ?? '')) throw new WaitlistError('dup');
   if (db.prepare(`SELECT COUNT(*) AS n FROM waitlist WHERE account_id = ? AND status IN ${ACTIVE} AND date >= ?`).get(account.id, today).n >= MAX_ACTIVE) throw new WaitlistError('limit');
-  const id = Number(db.prepare(`INSERT INTO waitlist (account_id, tour_slug, date, time, pax, hours, tour_lang, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(account.id, w.tour.slug, w.date, w.time, w.pax, w.hours, w.tourLang, iso(nowMs)).lastInsertRowid);
+  const id = Number(db.prepare(`INSERT INTO waitlist (account_id, tour_slug, date, time, pax, hours, tour_lang, created_at, queued_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(account.id, w.tour.slug, w.date, w.time, w.pax, w.hours, w.tourLang, iso(nowMs), iso(nowMs)).lastInsertRowid);
   return getEntry(db, id);
 }
 
 /** L'agenzia toglie un suo avviso. */
 export const removeEntry = (db, accountId, id) => db.prepare(`UPDATE waitlist SET status = 'cancelled' WHERE id = ? AND account_id = ? AND status IN ${ACTIVE}`).run(id, accountId).changes === 1;
 
-/** Dopo un avviso già scattato l'agenzia può rimettersi in lista (qualcun altro è stato più veloce, o ha cambiato idea). */
-export const rearmEntry = (db, accountId, id, today) => db.prepare(`UPDATE waitlist SET status = 'waiting', notified_at = NULL, notified_time = NULL WHERE id = ? AND account_id = ? AND status = 'notified' AND date >= ?`).run(id, accountId, today).changes === 1;
+/** Dopo un avviso già scattato l'agenzia può rimettersi in lista (qualcun altro è stato più veloce, o ha cambiato idea): va in fondo alla coda. */
+export const rearmEntry = (db, accountId, id, today, nowMs = Date.now()) =>
+  db.prepare(`UPDATE waitlist SET status = 'waiting', notified_at = NULL, notified_time = NULL, queued_at = ? WHERE id = ? AND account_id = ? AND status = 'notified' AND date >= ?`).run(iso(nowMs), id, accountId, today).changes === 1;
 
 /** Gli avvisi con la data passata non servono più. */
 export const expireEntries = (db, today) => db.prepare(`UPDATE waitlist SET status = 'expired' WHERE status IN ${ACTIVE} AND date < ?`).run(today).changes;
@@ -98,7 +101,7 @@ export const waitingEntries = (db, today) =>
   db
     .prepare(
       `SELECT w.*, a.email AS acct_email, a.contact_name AS acct_name, a.company AS acct_company, a.lang AS acct_lang FROM waitlist w JOIN accounts a ON a.id = w.account_id
-       WHERE w.status = 'waiting' AND w.date >= ? AND a.status = 'approved' ORDER BY w.date, w.id`,
+       WHERE w.status = 'waiting' AND w.date >= ? AND a.status = 'approved' ORDER BY w.date, COALESCE(w.queued_at, w.created_at), w.id`,
     )
     .all(today);
 
@@ -128,3 +131,57 @@ export const recoveredCount = (db, sinceIso) => db.prepare(`SELECT COUNT(*) AS n
 
 /** Avvisi già scattati e ancora aperti, o chiusi con una prenotazione: servono al riepilogo del pannello. */
 export const notifiedCount = (db, sinceIso) => db.prepare(`SELECT COUNT(*) AS n FROM waitlist WHERE notified_at IS NOT NULL AND notified_at >= ?`).get(sinceIso).n;
+
+// ───────────── la coda ─────────────
+/** L'ordine di iscrizione conta solo se il vantaggio è acceso e il servizio non è troppo vicino (allora l'avviso parte a tutte). */
+export function exclusiveNow(cfg, entry, nowMs = Date.now()) {
+  const w = cfg.waitlist;
+  if (!w?.priorityHours) return false;
+  return localToInstant(entry.date, entry.time ?? '00:00') - nowMs >= (w.openBelowHours ?? 0) * HOUR;
+}
+
+/** Il vantaggio di un avviso già scattato dura ancora? (Finisce `priorityHours` ore dopo l'avviso.) */
+export const advantageRunning = (cfg, entry, nowMs = Date.now()) => {
+  const hours = cfg.waitlist?.priorityHours;
+  return !!hours && entry.status === 'notified' && !!entry.notified_at && Date.parse(entry.notified_at) + hours * HOUR > nowMs;
+};
+export const advantageEnd = (cfg, entry) => Date.parse(entry.notified_at) + cfg.waitlist.priorityHours * HOUR;
+
+/** Le altre agenzie con un avviso attivo che si contende lo stesso posto (stesso servizio e giorno, orari compatibili), in ordine di iscrizione. */
+export const rivalsOf = (db, entry) =>
+  db
+    .prepare(
+      `SELECT w.*, a.company AS acct_company FROM waitlist w JOIN accounts a ON a.id = w.account_id
+       WHERE w.tour_slug = ? AND w.date = ? AND w.account_id != ? AND w.status IN ${ACTIVE} AND a.status = 'approved' AND (? IS NULL OR w.time IS NULL OR w.time = ?) ORDER BY COALESCE(w.queued_at, w.created_at), w.id`,
+    )
+    .all(entry.tour_slug, entry.date, entry.account_id, entry.time, entry.time);
+
+/** `a` è entrata in lista prima di `b`? (A parità di istante conta il numero.) */
+export const queuedBefore = (a, b) => {
+  const ka = a.queued_at ?? a.created_at;
+  const kb = b.queued_at ?? b.created_at;
+  return ka < kb || (ka === kb && a.id < b.id);
+};
+
+/**
+ * Il posto in coda di un avviso: `ahead` le agenzie arrivate prima che sono ancora da avvisare o hanno il vantaggio in corso,
+ * `behind` quelle arrivate dopo e ancora da avvisare.
+ */
+export function queueOf(db, cfg, entry, nowMs = Date.now()) {
+  const rivals = rivalsOf(db, entry);
+  return {
+    ahead: rivals.filter((r) => queuedBefore(r, entry) && (r.status === 'waiting' || advantageRunning(cfg, r, nowMs))),
+    behind: rivals.filter((r) => queuedBefore(entry, r) && r.status === 'waiting'),
+  };
+}
+
+/**
+ * Per le pagine: se la coda conta per questo avviso, quante agenzie ci sono davanti e dietro, e fino a quando dura il suo vantaggio
+ * (solo se qualcuna aspetta il suo turno).
+ * @returns {{exclusive: boolean, ahead: number, behind: number, until: number|null}}
+ */
+export function queueInfo(db, cfg, entry, nowMs = Date.now()) {
+  if (!exclusiveNow(cfg, entry, nowMs)) return { exclusive: false, ahead: 0, behind: 0, until: null };
+  const { ahead, behind } = queueOf(db, cfg, entry, nowMs);
+  return { exclusive: true, ahead: ahead.length, behind: behind.length, until: behind.length && advantageRunning(cfg, entry, nowMs) ? advantageEnd(cfg, entry) : null };
+}

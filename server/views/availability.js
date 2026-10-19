@@ -2,7 +2,7 @@
 import { html, raw } from '../html.js';
 import { LANG_META, localeOf } from '../langs.js';
 import { hourOptions } from '../rates.js';
-import { dayOfWeek, fmtDate, fmtMonth, monthDates, nowRome } from '../time.js';
+import { dayOfWeek, fmtDate, fmtInstant, fmtMonth, monthDates, nowRome } from '../time.js';
 import { MAX_ACTIVE } from '../waitlist.js';
 import { breadcrumbs, hoursLabel, homeCrumb } from './components.js';
 import { page } from './layout.js';
@@ -76,8 +76,9 @@ function grid(ctx, v) {
 
 /** Il giorno scelto: gli orari liberi con il collegamento al pagamento e, se non c'è posto, «Avvisami se si libera». */
 function dayDetail(ctx, v) {
-  const { t, lang, u } = ctx;
+  const { t, lang, u, app } = ctx;
   const { tour, pax, hours, tourLang, selected, day, entries, here } = v;
+  const queue = app.cfg.waitlist;
   if (!selected || !day) return '';
   const checkout = (time) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour.slug)}&date=${selected}&time=${time}&pax=${pax}${tour.chooseHours && hours != null ? `&hours=${hours}` : ''}${tourLang ? `&tl=${tourLang}` : ''}`;
   const waiting = (time) => entries.some((e) => e.tour_slug === tour.slug && e.date === selected && (e.time ?? '') === time && e.pax === pax);
@@ -91,7 +92,7 @@ function dayDetail(ctx, v) {
       <input type="hidden" name="tour" value="${tour.slug}"><input type="hidden" name="date" value="${selected}"><input type="hidden" name="pax" value="${pax}">
       ${tour.chooseHours && hours != null ? html`<input type="hidden" name="hours" value="${hours}">` : ''}${tourLang ? html`<input type="hidden" name="tl" value="${tourLang}">` : ''}
       <input type="hidden" name="next" value="${here}">
-      <p class="muted small">${t('wl.hint')}</p>
+      <p class="muted small">${t('wl.hint')}${queue?.priorityHours ? html` ${t('wl.hintQueue', { hours: queue.priorityHours, below: queue.openBelowHours })}` : ''}</p>
       <div class="wait-row">
         ${options.length > 1 || (options.length === 1 && options[0] !== '') ? html`<label class="field"><span class="label">${t('wl.time')}</span><select name="time">${options.map((x) => html`<option value="${x}">${x || t('wl.anyTime')}</option>`)}</select></label>` : html`<input type="hidden" name="time" value="${options[0] ?? ''}">`}
         <button class="btn btn-gold" type="submit">${t('wl.cta')}</button>
@@ -112,6 +113,14 @@ function dayDetail(ctx, v) {
   </section>`;
 }
 
+/** Dove si è in coda: chi aspetta sa se è la prima, quante agenzie ha davanti, e chi è stata avvisata per prima fino a quando ha il vantaggio. */
+function queueNote(t, lang, e) {
+  const q = e.queue;
+  if (!q?.exclusive) return '';
+  if (e.status === 'notified') return q.until ? html`<small class="muted">${t('wl.q.advantage', { when: fmtInstant(q.until, lang) })}</small>` : '';
+  return html`<small class="muted">${q.ahead ? t('wl.q.ahead', { n: q.ahead }) : q.behind ? t('wl.q.first') : ''}</small>`;
+}
+
 /** «La mia lista d'attesa»: le date che l'agenzia segue, con lo stato e i pulsanti per toglierle o riattivarle. */
 function waitlist(ctx, v) {
   const { t, lang, u, app } = ctx;
@@ -125,7 +134,7 @@ function waitlist(ctx, v) {
     return html`<div class="agenda-item wait-item">
       <span class="agenda-time"><strong>${dd}/${mm}</strong><small>${e.date.slice(0, 4)}</small></span>
       <span class="agenda-main"><strong>${title(e)}</strong><small>${fmtDate(e.date, lang, 'weekday')} · ${e.time ?? t('wl.anyTime')} · ${t('avail.pax', { n: e.pax })}${e.hours != null && app.content.tour(e.tour_slug)?.chooseHours ? ` · ${hoursLabel(t, lang, e.hours)}` : ''}${e.tour_lang ? ` · ${LANG_META[e.tour_lang]?.name ?? e.tour_lang}` : ''}</small></span>
-      <span class="agenda-state"><span class="chip ${notified ? 'chip-ok' : 'chip-warn'}">${notified ? t('wl.st.notified', { when: fmtDate(nowRome(Date.parse(e.notified_at)).date, lang, 'short') }) : t('wl.st.waiting')}</span>
+      <span class="agenda-state"><span class="wait-status"><span class="chip ${notified ? 'chip-ok' : 'chip-warn'}">${notified ? t('wl.st.notified', { when: fmtDate(nowRome(Date.parse(e.notified_at)).date, lang, 'short') }) : t('wl.st.waiting')}</span>${queueNote(t, lang, e)}</span>
         <span class="wait-actions">${notified ? html`<a class="btn btn-sm btn-gold" href="${search}">${t('wl.book')}</a>${post('rearm', t('wl.rearm'))}` : ''}${post('remove', t('wl.remove'))}</span></span>
     </div>`;
   };

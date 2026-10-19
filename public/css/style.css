@@ -1053,13 +1053,14 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .agenda-day .notice { margin-top: 12px; } .agenda-day .slot-list + p { margin-top: 12px; }
 .wait-form { margin-top: 14px; } .wait-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; } .wait-row .field { margin: 0; min-width: 200px; }
 .wait-item { align-items: start; } .wait-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; } .wait-actions form { margin: 0; }
+.wait-status { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; min-width: 0; } .wait-status small { max-width: 32ch; }
 @media (max-width: 640px) {
   .avail-grid .acal-cell { min-height: 52px; }
   .acal-count.is-free { background: var(--ok-bg); color: var(--ok); border: 1.5px solid var(--ok); }
   .acal-count.is-held, .acal-count.is-full, .acal-count.is-mine, .acal-count.is-dot { min-width: 12px; width: 12px; height: 12px; padding: 0; }
   .acal-count.is-free.is-dot { background: var(--ok); border: 0; }
   .acal-count.is-held { background: transparent; border: 2px dashed var(--warn); } .acal-count.is-full { background: var(--muted); } .acal-count.is-mine { background: var(--gold); }
-  .wait-item { grid-template-columns: 54px 1fr; } .wait-item .agenda-state { grid-column: 1 / -1; align-items: flex-start; }
+  .wait-item { grid-template-columns: 54px 1fr; } .wait-item .agenda-state { grid-column: 1 / -1; flex-direction: column; align-items: flex-start; } .wait-status { align-items: flex-start; } .wait-status small { max-width: none; }
   .wait-actions { justify-content: flex-start; }
 }
 

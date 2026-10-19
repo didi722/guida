@@ -217,6 +217,15 @@ export const SECTIONS = [
     ],
   },
   {
+    id: 'waitlist',
+    title: 'Lista d’attesa delle agenzie',
+    intro: 'Un’agenzia che trova una data occupata può chiedere di essere avvisata se si libera. Se in lista sono in più d’una, vengono avvisate nell’ordine in cui si sono iscritte: la prima ha qualche ora di vantaggio, poi l’avviso passa alla successiva. La data non viene bloccata per nessuno: se qualcuno la prenota prima, è sua.',
+    fields: [
+      { key: 'waitlist.priorityHours', type: 'int', min: 0, max: 168, unit: 'ore', label: 'Vantaggio per chi è prima in lista', hint: '0 = gli avvisi partono a tutte le agenzie insieme' },
+      { key: 'waitlist.openBelowHours', type: 'int', min: 0, max: 720, unit: 'ore', label: 'Servizio vicino: avviso a tutte insieme', hint: 'se il servizio è fra meno di così tante ore non si aspetta il proprio turno' },
+    ],
+  },
+  {
     id: 'invite',
     title: 'Invita un amico',
     intro: 'Chi ha prenotato un tour condiviso a posti può mandare a un amico un codice sconto tutto suo, valido una volta sola e solo per quella partenza: l’amico si unisce al gruppo e tu riempi i posti liberi.',

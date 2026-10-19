@@ -7067,6 +7067,36 @@
   "Ver los horarios y reservar",
   "時間を見て予約する"
  ],
+ "wl.mail.advantage": [
+  "Sei stata avvisata per prima: hai tempo fino al {when} prima che la data venga segnalata anche alle altre agenzie in lista.",
+  "You were notified first: you have until {when} before the date is also flagged to the other agencies on the list.",
+  "Te hemos avisado la primera: tienes hasta el {when} antes de que la fecha se comunique también a las demás agencias de la lista.",
+  "あなたが最初に通知されました。{when}までは、リストにある他の代理店には通知されません。"
+ ],
+ "wl.q.first": [
+  "Sei la prima in lista: sarai avvisata per prima.",
+  "You are first on the list: you will be notified first.",
+  "Eres la primera de la lista: te avisaremos la primera.",
+  "あなたは待機リストの先頭です。最初に通知されます。"
+ ],
+ "wl.q.ahead": [
+  "Davanti a te in lista: {n}. Ti scriviamo quando tocca a te.",
+  "Ahead of you on the list: {n}. We will write to you when it is your turn.",
+  "Delante de ti en la lista: {n}. Te escribiremos cuando sea tu turno.",
+  "あなたの前に待機している代理店：{n}件。順番が来たらご連絡します。"
+ ],
+ "wl.q.advantage": [
+  "Hai un vantaggio fino al {when}: poi l’avviso passa alle altre agenzie in lista.",
+  "You have a head start until {when}: after that the alert goes to the other agencies on the list.",
+  "Tienes ventaja hasta el {when}: después el aviso pasa a las demás agencias de la lista.",
+  "{when}まで優先されます。その後、リストの他の代理店にも通知されます。"
+ ],
+ "wl.hintQueue": [
+  "Le agenzie in lista sono avvisate nell’ordine di iscrizione: la prima ha {hours} h di vantaggio, poi tocca alla successiva. Se il servizio è fra meno di {below} h l’avviso parte a tutte insieme.",
+  "Agencies on the list are notified in the order they joined: the first has a {hours} h head start, then it is the next one’s turn. If the service is less than {below} h away, everyone is notified at once.",
+  "Las agencias de la lista reciben el aviso por orden de inscripción: la primera tiene {hours} h de ventaja y luego le toca a la siguiente. Si el servicio es dentro de menos de {below} h, el aviso llega a todas a la vez.",
+  "待機リストの代理店には登録順に通知されます。先頭の代理店には{hours}時間の優先期間があり、その後に次の代理店へ進みます。サービスまで{below}時間未満の場合は、全員に同時に通知されます。"
+ ],
  "quote.title": [
   "Preventivo",
   "Quote",

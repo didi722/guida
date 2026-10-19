@@ -1648,14 +1648,15 @@ export async function sendInviteEmail(app, b, invite, link, nowMs = Date.now()) 
 const waitTourTitle = (app, slug, lang) => app.content.tour(slug)?.i18n[lang]?.title ?? slug;
 
 /** All'agenzia: la data che aspettava è di nuovo prenotabile (`slots`: gli orari liberi adesso). Nessuno la tiene da parte: chi prenota per primo la ottiene. @returns {Promise<boolean>} false se l'email non è partita */
-export async function sendWaitlistFree(app, e, slots) {
+export async function sendWaitlistFree(app, e, slots, { advantageUntilMs = null } = {}) {
   const lang = normLang(e.acct_lang);
   const t = makeT(lang);
   const tr = T[lang];
   const title = waitTourTitle(app, e.tour_slug, lang);
   const times = slots.slice(0, 8).map((s) => s.time).join(', ');
   const intro = t('wl.mail.intro', { tour: title, date: fmtDate(e.date, lang), times });
-  const note = t('wl.mail.note');
+  // chi è avvisata per prima ha un vantaggio: poi la data viene segnalata anche alle altre agenzie in lista (ma non è bloccata per nessuno)
+  const note = advantageUntilMs ? `${t('wl.mail.advantage', { when: fmtInstant(advantageUntilMs, lang) })} ${t('wl.mail.note')}` : t('wl.mail.note');
   const cta = t('wl.mail.cta');
   const link = `${app.cfg.baseUrl}/${lang}/book?date=${e.date}&pax=${e.pax}&tour=${encodeURIComponent(e.tour_slug)}`;
   const manage = `${app.cfg.baseUrl}/${lang}/b2b/availability#lista`;
