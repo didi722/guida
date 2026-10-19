@@ -12,7 +12,7 @@ const one = (v) => (Array.isArray(v) ? v[0] : v);
 /** Il modulo (o l'indirizzo dell'anteprima) come ingresso per le regole: i campi non scritti restano quelli della prenotazione. */
 export function readEdit(src) {
   const input = {};
-  for (const k of ['pax', 'date', 'time', 'hours', 'extra']) if (one(src[k]) != null) input[k] = String(one(src[k])).trim();
+  for (const k of ['adults', 'children', 'infants', 'pax', 'date', 'time', 'hours', 'extra']) if (one(src[k]) != null) input[k] = String(one(src[k])).trim();
   input.priceMode = one(src.priceMode) === 'custom' ? 'custom' : one(src.priceMode) === 'auto' ? 'auto' : undefined;
   if (input.priceMode === 'custom') {
     const raw = String(one(src.price) ?? '').trim();
@@ -28,7 +28,11 @@ export function adminBookingEditRouter(app) {
   const { db } = app;
   const form = express.urlencoded({ extended: false, limit: '20kb' });
   const ctxOf = (req) => ({ app, req });
-  const valuesOf = (b, src) => editValues(app, b, currentParams(app, b), Object.fromEntries(['pax', 'date', 'time', 'hours', 'extra', 'priceMode', 'price', 'force', 'keepTerms', 'note'].filter((k) => one(src[k]) != null).map((k) => [k, String(one(src[k]))])));
+  const valuesOf = (b, src) => {
+    const over = Object.fromEntries(['adults', 'children', 'infants', 'pax', 'date', 'time', 'hours', 'extra', 'priceMode', 'price', 'force', 'keepTerms', 'note'].filter((k) => one(src[k]) != null).map((k) => [k, String(one(src[k]))]));
+    if (over.pax != null && !['adults', 'children', 'infants'].some((k) => over[k] != null)) Object.assign(over, { adults: over.pax, children: '0', infants: '0' }); // il solo «pax» vale tante persone adulte
+    return editValues(app, b, currentParams(app, b), over);
+  };
 
   r.get('/bookings/:id/edit', (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));

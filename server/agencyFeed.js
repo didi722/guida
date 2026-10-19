@@ -5,6 +5,7 @@ import { meetingOf } from './choices.js';
 import { calendar, eventLines } from './ics.js';
 import { makeT } from './i18n.js';
 import { normLang, pick } from './langs.js';
+import { partyExtra, partyOfBooking } from './party.js';
 import { addDays, fmtInstant, fromMin, nowRome, toMin } from './time.js';
 
 const newKey = () => crypto.randomBytes(24).toString('base64url');
@@ -61,7 +62,7 @@ export function agencyFeed(app, account, nowMs = Date.now()) {
         date: b.date,
         start: b.start_time,
         end: b.end_time,
-        summary: `${option ? `${t('feed.option')} · ` : ''}${title} · ${b.participants}${b.client_ref ? ` · ${b.client_ref}` : ''}`,
+        summary: `${option ? `${t('feed.option')} · ` : ''}${title} · ${b.participants}${partyExtra(partyOfBooking(b), lang)}${b.client_ref ? ` · ${b.client_ref}` : ''}`,
         description: [b.ref, `${t('feed.client')}: ${[b.name, b.phone].filter(Boolean).join(' · ')}`, option ? t('feed.optionHold', { until: fmtInstant(Date.parse(b.option_expires_at), lang) }) : t('feed.confirmed'), b.notes].filter(Boolean).join('\n'),
         location: meetingOf(tour, b, lang).text,
         url,

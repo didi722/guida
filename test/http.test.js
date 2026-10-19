@@ -1238,12 +1238,13 @@ test('partenza scelta: collegamento diretto al pagamento, con il numero di perso
     const checkoutHtml = await checkout.text();
     assert.match(checkoutHtml, /name="time" value="\d\d:\d\d"/);
     // il numero di persone si cambia in pagina: ricalcola i posti e tiene i dati già scritti
-    assert.match(checkoutHtml, /<select name="pax" id="pax-select" form="checkout-form"/);
+    assert.match(checkoutHtml, /<fieldset class="party" id="co-party" data-party /);
+    assert.match(checkoutHtml, /name="adults" id="co-party-adults" min="1" max="\d+" step="1" value="2" form="checkout-form"/);
     const q = new URL('http://x' + links[0]).searchParams;
     const changed = await f('/it/book/checkout', form({ tour: q.get('tour'), date: q.get('date'), time: q.get('time'), pax: '4', apply: '1', name: 'Mario Rossi', email: 'mario@example.com' }));
     assert.equal(changed.status, 200);
     const changedHtml = await changed.text();
-    assert.match(changedHtml, /<option value="4" selected>4<\/option>/);
+    assert.match(changedHtml, /name="adults" id="co-party-adults" min="1" max="\d+" step="1" value="4" form="checkout-form"/, 'il vecchio «pax» vale tante persone adulte');
     assert.match(changedHtml, /value="Mario Rossi"/);
     assert.equal((await f('/it/book/checkout', form({ tour: q.get('tour'), date: q.get('date'), time: q.get('time'), pax: '99', apply: '1' }))).status, 400, 'più persone dei posti: partenza non più disponibile');
     // «Prenota» (senza data) porta all'elenco dei tour: da lì si sceglie il tour e il suo calendario

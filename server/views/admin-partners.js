@@ -1,5 +1,6 @@
 import { html, raw } from '../html.js';
 import { makeT } from '../i18n.js';
+import { partyCompact, partyOfBooking } from '../party.js';
 import { accountTiers, tierInputOf } from '../policy.js';
 import { tierSentences } from '../policyText.js';
 import { accountPrices, unitPriceFor } from '../pricing.js';
@@ -170,7 +171,7 @@ ${others.length
 
 <h2 class="h-sub spaced">Prenotazioni</h2>
 ${bookings.length
-  ? html`<div class="card table-wrap"><table class="table"><tbody>${bookings.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')} ${b.start_time}</a></td><td>${content.tour(b.tour_slug)?.i18n.it.title}</td><td class="num">${b.participants}</td><td><span class="chip ${chip(b.status)}">${statusLabel(b)}</span></td><td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}</tbody></table></div>`
+  ? html`<div class="card table-wrap"><table class="table"><tbody>${bookings.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')} ${b.start_time}</a></td><td>${content.tour(b.tour_slug)?.i18n.it.title}</td><td class="num">${partyCompact(partyOfBooking(b))}</td><td><span class="chip ${chip(b.status)}">${statusLabel(b)}</span></td><td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}</tbody></table></div>`
   : html`<p class="muted">Ancora nessuna prenotazione.</p>`}`;
   return adminLayout(ctx, { title: a.company, active: '/admin/partners', body, flash, error, scripts: `<script src="/js/admin-partner.js?v=${app.assetVersion}" defer></script><script src="/js/b2b-register.js?v=${app.assetVersion}" defer></script>` });
 }

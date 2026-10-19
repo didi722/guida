@@ -4,6 +4,7 @@ import { cancellationState, paymentOptions } from '../bookings.js';
 import { pendingExtension } from '../changes.js';
 import { bookingDue } from '../bookings.js';
 import { onlinePaymentsOpen } from '../opening.js';
+import { partyCompact, partyOfBooking, partyText } from '../party.js';
 import { cancellable, packageStatus, packageTotal, payableLines } from '../packages.js';
 import { fmtDate, fmtInstant } from '../time.js';
 import { formatMoney } from '../util.js';
@@ -45,7 +46,7 @@ export function packageCartPage(ctx, { acct, summary, values = {}, error = '', f
     (l) => html`<tr class="${l.ok ? '' : 'pb-expired'}">
       <td data-label="${t('s.service')}">${l.p ? html`<strong>${l.p.tour.i18n[lang].title}</strong><small class="muted">${l.p.hours != null ? hoursLabel(t, lang, l.p.hours) : fmtDuration(l.p.tour.durationMin, lang)}</small>` : html`<span class="muted">${l.src.tour}</span>`}${l.ok ? '' : html`<br><span class="chip chip-err">${t(`pkg.line.${l.reason}`)}</span>`}</td>
       <td data-label="${t('s.date')}"><strong>${fmtDate(l.src.date, lang, 'short')}</strong><small class="muted">${l.src.time}${l.slot ? `–${l.slot.end}` : ''}</small></td>
-      <td class="num" data-label="${t('s.guests')}">${l.src.pax}</td>
+      <td class="num" data-label="${t('s.guests')}">${l.p ? html`${l.p.pax}${l.p.party.children || l.p.party.infants ? html`<small class="muted">${partyText(l.p.party, lang)}</small>` : ''}` : '—'}</td>
       <td class="num" data-label="${t('s.total')}">${l.pricing ? money(l.pricing.dueCents) : '—'}</td>
       <td class="pb-actions"><div class="pb-actions-in"><form method="post" action="${u(`/b2b/package/remove/${l.id}`)}"><button class="btn btn-link-danger btn-sm" type="submit">${t('pkg.remove')}</button></form></div></td>
     </tr>`,
@@ -146,7 +147,7 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
         return html`<tr class="pb-${b.status}">
           <td data-label="${t('s.service')}"><a class="pb-title" href="${lineUrl(b)}">${tour?.i18n[lang].title ?? b.tour_slug}</a><small class="muted">${b.ref}</small></td>
           <td data-label="${t('s.date')}"><strong>${fmtDate(b.date, lang, 'short')}</strong><small class="muted">${b.start_time}–${b.end_time}</small></td>
-          <td class="num" data-label="${t('s.guests')}">${b.participants}</td>
+          <td class="num" data-label="${t('s.guests')}">${partyCompact(partyOfBooking(b))}</td>
           <td data-label="${t('b2b.state')}"><span class="chip ${bookingStatusChip(b)}">${bookingStatusText(t, b)}</span>${b.status === 'confirmed' && !isDone(b) ? html`<small class="muted">${cancelCell(b)}</small>` : ''}</td>
           <td class="num" data-label="${t('s.total')}">${money(b.total_cents - (b.gift_cents ?? 0), b.currency)}</td>
         </tr>`;

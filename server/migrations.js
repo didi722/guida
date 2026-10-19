@@ -698,6 +698,13 @@ const V34_WAITLIST_ORDER = `
 ALTER TABLE waitlist ADD COLUMN position INTEGER;
 `;
 
+const V35_PARTY = `
+-- Composizione dei partecipanti: «participants» resta il totale (tutti occupano un posto); i bambini (fino a 12 anni, metà prezzo) e gli infanti (fino a 3 anni, gratis)
+-- sono contati a parte, gli adulti sono il resto. Le prenotazioni di prima sono tutte di adulti.
+ALTER TABLE bookings ADD COLUMN children INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN infants INTEGER NOT NULL DEFAULT 0;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -763,6 +770,8 @@ export const MIGRATIONS = [
   V33_PERIOD_CANCEL,
   // v34 — ordine della lista d'attesa deciso dalla guida
   V34_WAITLIST_ORDER,
+  // v35 — adulti, bambini e infanti
+  V35_PARTY,
 ];
 
 export function migrate(db) {

@@ -1,4 +1,5 @@
 // Prezzi, codici sconto e buoni regalo (solo database, nessuna rete).
+import { adultsOnly, partyListeners, partyPriceCents } from './party.js';
 import { applyPartnerDiscount, extraHourOptions } from './rates.js';
 import { nowRome } from './time.js';
 
@@ -31,17 +32,23 @@ export function unitPriceFor(tour, channel, account = null) {
   return applyPartnerDiscount(tour.priceCents, account?.discount_percent);
 }
 
-/** Preventivo di un servizio a ore: le ore sono quelle scelte dal cliente, oppure la durata del tour se è fissa. */
-export function hourlyQuote(app, tour, { pax = 1, channel, account = null, date = null, time = null, hours = null, earpieces = false }) {
+/**
+ * Preventivo di un servizio a ore: le ore sono quelle scelte dal cliente, oppure la durata del tour se è fissa.
+ * Le persone contano solo per gli auricolari: li usano gli adulti e i bambini, non gli infanti (`party`, oppure `pax` persone).
+ */
+export function hourlyQuote(app, tour, { pax = 1, party = null, channel, account = null, date = null, time = null, hours = null, earpieces = false }) {
   const base = tour.durationMin / 60;
   const h = tour.chooseHours ? Number(hours) : extraHourOptions(tour, channel).includes(Number(hours) - base) ? Number(hours) : base; // le agenzie possono allungare un servizio fisso con ore extra
-  return app.rates.quote({ service: tour.service, channel, hours: h, date, time, pax, earpieces, roundHours: !!tour.roundHours, discountPercent: channel === 'b2b' ? (account?.discount_percent ?? 0) : 0 });
+  return app.rates.quote({ service: tour.service, channel, hours: h, date, time, pax: party ? partyListeners(party) : pax, earpieces, roundHours: !!tour.roundHours, discountPercent: channel === 'b2b' ? (account?.discount_percent ?? 0) : 0 });
 }
 
-/** Prezzo di listino in centesimi: a persona (× partecipanti) oppure a gruppo. Per i servizi a ore vale `previewPricing`. */
-export function priceFor(tour, pax, channel, account = null) {
+/**
+ * Prezzo di listino in centesimi: a persona (adulti a prezzo pieno, bambini a metà, infanti gratis) oppure a gruppo.
+ * `party` è la composizione ({ adults, children, infants }); un numero vale «tante persone adulte». Per i servizi a ore vale `previewPricing`.
+ */
+export function priceFor(tour, party, channel, account = null) {
   const unit = unitPriceFor(tour, channel, account);
-  return tour.model === 'person' ? unit * pax : unit;
+  return tour.model === 'person' ? partyPriceCents(unit, typeof party === 'number' ? adultsOnly(party) : party) : unit;
 }
 
 // ───────────── codici ─────────────
@@ -113,11 +120,12 @@ export function checkGiftCode(db, rawCode, nowMs) {
  * Calcola il prezzo con sconto e buoni regalo (senza modificare nulla).
  * Solo il canale B2C usa codici e buoni: i partner hanno già le loro tariffe.
  */
-export function previewPricing(app, { tour, pax, channel, account = null, date, time = null, hours = null, earpieces = false, email = '', promoCode = '', giftCodes = '', nowMs = Date.now(), ignoreBookingId = null }) {
+export function previewPricing(app, { tour, pax, party = null, channel, account = null, date, time = null, hours = null, earpieces = false, email = '', promoCode = '', giftCodes = '', nowMs = Date.now(), ignoreBookingId = null }) {
   const { db } = app;
+  const people = party ?? adultsOnly(Number(pax)); // senza composizione: tutti adulti
   // servizi a ore: il prezzo viene dalle tariffe a ore (ore, festivo, notturno, auricolari)
-  const quote = tour.pricing === 'hourly' ? hourlyQuote(app, tour, { pax, channel, account, date, time, hours, earpieces }) : null;
-  const listCents = quote ? (quote.ok ? quote.totalCents : 0) : priceFor(tour, pax, channel, account);
+  const quote = tour.pricing === 'hourly' ? hourlyQuote(app, tour, { party: people, channel, account, date, time, hours, earpieces }) : null;
+  const listCents = quote ? (quote.ok ? quote.totalCents : 0) : priceFor(tour, people, channel, account);
   const out = { listCents, discountCents: 0, totalCents: listCents, giftCents: 0, dueCents: listCents, promo: null, gifts: [], errors: {}, quote };
   if (channel !== 'b2c') return out;
 

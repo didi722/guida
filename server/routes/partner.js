@@ -66,7 +66,7 @@ export function partnerRouter(app) {
   r.get('/b2b/bookings.csv', needPartner, (req, res) => {
     const { t } = res.locals.ctx;
     const { rows } = partnerBookings(app, req.acct.id, { ...parseFilters(req.query), actorId: req.actor?.userId ?? null }, { limit: null });
-    const head = [t('s.ref'), t('f.clientRef'), t('partner.edit.name'), t('s.service'), t('s.date'), t('s.time'), t('s.guests'), t('b2b.state'), t('partner.col.booked'), t('s.total'), t('partner.col.invoice'), t('partner.col.by')];
+    const head = [t('s.ref'), t('f.clientRef'), t('partner.edit.name'), t('s.service'), t('s.date'), t('s.time'), t('s.guests'), t('party.children'), t('party.infants'), t('b2b.state'), t('partner.col.booked'), t('s.total'), t('partner.col.invoice'), t('partner.col.by')];
     res
       .type('text/csv; charset=utf-8')
       .set({ 'Content-Disposition': 'attachment; filename="prenotazioni.csv"', 'Cache-Control': 'private, no-store' })

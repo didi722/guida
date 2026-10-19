@@ -1,8 +1,9 @@
 import { html, raw } from '../html.js';
+import { adultsOnly, bookingPeopleShort, readPartyOr } from '../party.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
 import { adminLayout } from './admin.js';
-import { ADMIN_CTX, phoneField } from './fields.js';
+import { ADMIN_CTX, partyField, phoneField } from './fields.js';
 
 const eur = (c) => formatMoney(c, 'it');
 
@@ -38,7 +39,7 @@ export function agencyBookingPage(ctx, { agencies, tours, values: v = {}, error 
   <div class="form-grid">
     <label class="field"><span class="label">Data</span><input type="date" name="date" required value="${v.date ?? ''}"></label>
     <label class="field"><span class="label">Ora di inizio</span><input type="time" name="time" required value="${v.time ?? '09:00'}"></label>
-    <label class="field"><span class="label">Persone</span><select name="pax" required>${Array.from({ length: 25 }, (_, n) => n + 1).map((n) => html`<option value="${n}" ${String(n) === String(v.pax ?? '2') ? raw('selected') : ''}>${n}</option>`)}</select></label>
+    <div class="span-2">${partyField(ADMIN_CTX, { party: readPartyOr(v, adultsOnly(2), { max: 25 }), max: 25, id: 'ab-party', label: 'Persone' })}<p class="small muted">Nei servizi a persona i bambini pagano la metà e gli infanti niente; nei servizi a gruppo o a ore il prezzo non cambia.</p></div>
     <label class="field"><span class="label">Ore <em>(solo servizi a ore a scelta)</em></span><input name="hours" inputmode="decimal" placeholder="es. 4 o 5,5" value="${v.hours ?? ''}"></label>
   </div>
   <div class="form-grid">
@@ -56,7 +57,7 @@ export function agencyBookingPage(ctx, { agencies, tours, values: v = {}, error 
 export function agencyBookingDonePage(ctx, { booking: b, account, tour, tempPassword, mailed }) {
   const body = html`
 <div class="card pad">
-  <p><strong>Registrata.</strong> ${tour.i18n.it.title} · ${fmtDate(b.date, 'it')} ${b.start_time}–${b.end_time} · ${b.participants} pers. · ${eur(b.total_cents)}${b.payment_status === 'paid' ? ' · già pagata' : ' · da fatturare'}</p>
+  <p><strong>Registrata.</strong> ${tour.i18n.it.title} · ${fmtDate(b.date, 'it')} ${b.start_time}–${b.end_time} · ${bookingPeopleShort(b)} · ${eur(b.total_cents)}${b.payment_status === 'paid' ? ' · già pagata' : ' · da fatturare'}</p>
   <p>Agenzia: <strong>${account.company}</strong> (${account.email}). La prenotazione è nell’agenda e nella sua area, con la pratica <code>${b.ref}</code>.${mailed ? ' Le ho inviato la conferma con il voucher.' : ''}</p>
   ${tempPassword ? html`<div class="notice notice-ok" role="status"><strong>Nuova agenzia creata.</strong> Password provvisoria (la vedi solo qui): <code>${tempPassword}</code><br>Comunicala all’agenzia: entra su <em>Area agenzie</em> con la sua email e, se la perde, può scegliersene una nuova con <em>Password dimenticata</em>.</div>` : ''}
   <p class="btn-row"><a class="btn btn-gold" href="/admin/bookings/${b.id}">Apri la prenotazione</a> <a class="btn btn-outline" href="/admin/agenda/agency">Registrane un’altra</a> <a class="btn btn-outline" href="/admin?v=cal&m=${b.date.slice(0, 7)}&d=${b.date}#giorno">Vedi in agenda</a></p>

@@ -2,7 +2,9 @@ import { art } from '../art.js';
 import { esc, html, raw } from '../html.js';
 import { paymentOptions, unitPriceFor } from '../bookings.js';
 import { fmtDate, nowRome } from '../time.js';
+import { CHILD_PERCENT, adultsOnly } from '../party.js';
 import { page, icon } from './layout.js';
+import { partyField } from './fields.js';
 import { giftBand } from './gift.js';
 import { hoursLabel } from './components.js';
 import { DEFAULT_MEETING } from '../choices.js';
@@ -223,14 +225,14 @@ export function tourPage(ctx, tour, { quotes = [], reviewStats = null } = {}) {
   const hourly = tour.pricing === 'hourly';
   const hoursDefault = hourly && tour.chooseHours ? startHours(tour) : null;
   const widget = html`
-<aside class="book-card" id="book" data-widget ${hourly ? raw('data-hourly') : ''} data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-duration="${tour.durationMin}" data-unit="${p.unit}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
+<aside class="book-card" id="book" data-widget ${hourly ? raw('data-hourly') : ''} data-tour="${tour.slug}" data-model="${tour.model}" data-max="${tour.maxParticipants}" data-duration="${tour.durationMin}" data-unit="${p.unit}" data-child-pct="${CHILD_PERCENT}" data-lang="${lang}" data-min-date="${minDate}" data-book-url="${u('/book/checkout')}" data-i18n="${JSON.stringify(widgetI18n)}">
   <div class="book-head">
     <p class="price-big">${p.money}<small> / ${p.per}</small></p>
     ${channel === 'b2b' ? html`<span class="chip chip-accent">${t('b2b.partnerRate')}</span>` : ''}
   </div>
   ${channel !== 'b2b' && invitePercentFor(ctx.app, tour) ? html`<p class="invite-note"><span class="chip chip-accent">${t('tour.inviteTag', { percent: invitePercentFor(ctx.app, tour) })}</span> <small class="muted">${t('tour.inviteNote')}</small></p>` : ''}
   <h2 class="sr-only">${t('w.title')}</h2>
-  <label class="field"><span class="label">${t('w.persons')}</span><select data-pax>${Array.from({ length: tour.maxParticipants }, (_, n) => n + 1).map((n) => html`<option value="${n}" ${n === Math.min(2, tour.maxParticipants) ? raw('selected') : ''}>${n}</option>`)}</select></label>
+  ${partyField(ctx, { party: adultsOnly(Math.min(2, tour.maxParticipants)), max: tour.maxParticipants, priced: tour.model === 'person' && !hourly, id: 'w-party', compact: true })}
   ${hoursDefault != null ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select data-hours>${hourOptions(tour.service).map((h) => html`<option value="${h}" ${h === hoursDefault ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>${tour.roundHours ? html`<small class="muted">${t('hourly.note.round')}</small>` : ''}</label>` : ''}
   ${tour.languages.length > 1 ? html`<label class="field"><span class="label">${t('w.tourLang')}</span><select data-tour-lang>${tour.languages.map((l) => html`<option value="${l}" ${l === (tour.languages.includes(lang) ? lang : tour.languages[0]) ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}</select></label>` : ''}
   <div class="cal" data-cal><p class="muted small">${t('w.loading')}</p></div>

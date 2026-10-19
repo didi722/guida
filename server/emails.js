@@ -18,6 +18,7 @@ import { TEAM_INVITE_DAYS } from './team.js';
 import { brandOf } from './agencyDocs.js';
 import { clientView } from './quotes.js';
 import { meetingOf, themeText } from './choices.js';
+import { bookingPeople, bookingPeopleShort, partyExtra, partyOfBooking, peopleShort } from './party.js';
 import { ensurePayRef, groupIban, invoiceDue, invoicePayUrl, isPayable, payInstructions } from './invoicePayments.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
@@ -162,6 +163,9 @@ const T = {
   },
 };
 
+/** La parola per le persone nelle email («partecipanti», «guests»…). */
+const guestWord = (lang) => T[lang].people.toLowerCase();
+
 export function bookingUrl(app, b, lang = normLang(b.lang)) {
   return `${app.cfg.baseUrl}/${lang}/booking/${b.ref}?t=${b.token}`;
 }
@@ -174,7 +178,7 @@ function summaryRows(app, b, lang, { option = false } = {}) {
     [tr.tour, ti.title],
     [tr.date, fmtDate(b.date, lang)],
     [tr.time, timeRange(b, lang)],
-    [tr.people, String(b.participants)],
+    [tr.people, `${b.participants}${partyExtra(partyOfBooking(b), lang)}`],
     [tr.meeting, meetingOf(app.content.tour(b.tour_slug), b, lang).text],
   ];
   if (b.tour_lang && LANG_META[b.tour_lang]) rows.splice(5, 0, [makeT(lang)('s.tourLang'), LANG_META[b.tour_lang].name]);
@@ -203,7 +207,7 @@ export function icsFor(app, b, lang = normLang(b.lang)) {
       start: b.start_time,
       end: b.end_time,
       summary: `${ti.title} (${app.cfg.site.name})`,
-      description: `${b.ref} — ${b.participants} ${T[lang].people.toLowerCase()}`,
+      description: `${b.ref} — ${bookingPeople(b, lang, { noun: guestWord(lang) })}`,
       location: meetingOf(app.content.tour(b.tour_slug), b, lang).text,
       url: bookingUrl(app, b, lang),
     }),
@@ -310,7 +314,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
   const lines = [
     `${label} ${b.ref} (${b.channel.toUpperCase()})`,
     `${tour.i18n.it.title}`,
-    `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${b.participants} pers.`,
+    `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${bookingPeopleShort(b)}`,
     themeText(b, 'it') ? `Scelta del cliente: ${themeText(b, 'it')}` : null,
     tour.meetingChoice ? `Punto d’incontro: ${meetingOf(tour, b, 'it').text}${b.pickup ? '' : ' (standard: il cliente non ha indicato nulla)'}` : null,
     b.tour_lang && LANG_META[b.tour_lang] ? `Lingua del tour: ${LANG_META[b.tour_lang].name}` : null,
@@ -463,7 +467,7 @@ export async function notifyGuideOption(app, b, kind) {
   const lines = [
     `${label} ${b.ref}${account ? ` — ${account.company}` : ''}`,
     tour?.i18n.it.title ?? b.tour_slug,
-    `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${b.participants} pers.`,
+    `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${bookingPeopleShort(b)}`,
     b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
     b.booked_by_name ? `Prenotata da: ${b.booked_by_name}` : null,
     kind === 'created' ? `Trattenuta fino al ${fmtInstant(Date.parse(b.option_expires_at), 'it')}; se l’agenzia non conferma, si libera da sola.` : null,
@@ -488,7 +492,7 @@ export async function notifyGuideBookingEdited(app, before, after) {
   ].filter(([, a, b]) => (a ?? '') !== (b ?? ''));
   const lines = [
     `Prenotazione modificata dall’agenzia: ${before.ref}${account ? ` — ${account.company}` : ''}`,
-    `${tour?.i18n.it.title ?? before.tour_slug} · ${fmtDate(before.date, 'it')} · ${before.start_time}–${before.end_time} · ${before.participants} pers.`,
+    `${tour?.i18n.it.title ?? before.tour_slug} · ${fmtDate(before.date, 'it')} · ${before.start_time}–${before.end_time} · ${bookingPeopleShort(before)}`,
     ...changes.map(([label, a, b]) => `${label}: ${a || '—'} → ${b || '—'}`),
     '',
     `${app.cfg.baseUrl}/admin/bookings/${before.id}`,
@@ -639,7 +643,7 @@ export async function sendQuoteToClient(app, q, { to, replyTo, pdf }) {
   const valid = t('qm.valid', { date: fmtDate(q.valid_until, lang) });
   const reply = t('qm.reply', { agency: brand.name });
   const sentBy = t('qm.sentBy', { site, agency: brand.name });
-  const rows = view.lines.map((l) => ({ title: l.title, when: `${fmtDate(l.date, lang)} · ${l.when} · ${t('quote.pax', { n: l.pax })}`, price: money(l.cents) }));
+  const rows = view.lines.map((l) => ({ title: l.title, when: `${fmtDate(l.date, lang)} · ${l.when} · ${t('quote.pax', { n: l.pax })}${partyExtra(l.party, lang)}`, price: money(l.cents) }));
   return app.mail.send({
     to,
     subject: t('qm.subject', { agency: brand.name, ref: q.ref }),
@@ -696,7 +700,7 @@ export async function notifyGuideQuote(app, q) {
     `Preventivo accettato ${q.ref} — ${account?.company ?? ''}`,
     `Il cliente (${q.client_name}) ha accettato il preventivo dell'agenzia. Nessuna data è trattenuta: se l'agenzia prenota, lo vedrai qui.`,
     '',
-    ...view.lines.map((l) => `${fmtDate(l.date, 'it', 'short')} · ${l.when} · ${l.title} · ${l.pax} pers.`),
+    ...view.lines.map((l) => `${fmtDate(l.date, 'it', 'short')} · ${l.when} · ${l.title} · ${peopleShort(l.party)}`),
     `Tariffa dell'agenzia: ${formatMoney(q.net_cents, 'it', q.currency)}`,
     '',
     `${app.cfg.baseUrl}/admin/partners/${q.account_id}`,
@@ -1037,7 +1041,7 @@ export async function sendReminder(app, b) {
     [tr.tour, ti.title],
     [tr.date, fmtDate(b.date, lang)],
     [tr.time, timeRange(b, lang)],
-    [tr.people, String(b.participants)],
+    [tr.people, `${b.participants}${partyExtra(partyOfBooking(b), lang)}`],
     [tr.meeting, meet.text],
     [tr.ref, b.ref],
     ...(b.client_ref ? [[tr.file, b.client_ref]] : []),
@@ -1484,7 +1488,7 @@ export async function notifyGuideInvoice(app, inv, kind, extra = '') {
 
 
 // ───────────── Modifiche dell'agenzia e richieste di proroga ─────────────
-const changeLine = (app, b, lang) => `${b.participants} ${T[lang].people.toLowerCase()} · ${fmtDate(b.date, lang, 'short')} · ${timeRange(b, lang)} · ${formatMoney(bookingDue(b), lang, b.currency)}`;
+const changeLine = (app, b, lang) => `${bookingPeople(b, lang, { noun: guestWord(lang) })} · ${fmtDate(b.date, lang, 'short')} · ${timeRange(b, lang)} · ${formatMoney(bookingDue(b), lang, b.currency)}`;
 
 /** All'agenzia: la prenotazione (o l'opzione) è stata modificata. Per una prenotazione confermata ci sono il nuovo voucher e il calendario aggiornato. */
 export async function sendBookingChanged(app, before, after, nowMs = Date.now(), { note = '', refundCents = 0 } = {}) {
@@ -1536,8 +1540,8 @@ export async function notifyGuideBookingChanged(app, before, after) {
   const lines = [
     `${after.status === 'option' ? 'Opzione modificata' : 'Prenotazione modificata'} dall’agenzia ${after.ref}${account ? ` — ${account.company}` : ''}`,
     tour?.i18n.it.title ?? after.tour_slug,
-    `Prima: ${before.participants} pers. · ${fmtDate(before.date, 'it')} ${before.start_time}–${before.end_time} · ${money(bookingDue(before))}`,
-    `Ora:   ${after.participants} pers. · ${fmtDate(after.date, 'it')} ${after.start_time}–${after.end_time} · ${money(bookingDue(after))}`,
+    `Prima: ${bookingPeopleShort(before)} · ${fmtDate(before.date, 'it')} ${before.start_time}–${before.end_time} · ${money(bookingDue(before))}`,
+    `Ora:   ${bookingPeopleShort(after)} · ${fmtDate(after.date, 'it')} ${after.start_time}–${after.end_time} · ${money(bookingDue(after))}`,
     after.client_ref ? `Rif. pratica: ${after.client_ref}` : null,
     after.status === 'option' ? `Trattenuta fino al ${fmtInstant(Date.parse(after.option_expires_at), 'it')}.` : null,
     '',
@@ -1599,7 +1603,7 @@ export function icsForPackage(app, group, bookings, lang = normLang(group.lang))
           start: b.start_time,
           end: b.end_time,
           summary: `${tourText(app, b.tour_slug, lang).title} (${app.cfg.site.name})`,
-          description: `${group.ref} · ${b.ref} — ${b.participants} ${T[lang].people.toLowerCase()}`,
+          description: `${group.ref} · ${b.ref} — ${bookingPeople(b, lang, { noun: guestWord(lang) })}`,
           location: meetingOf(app.content.tour(b.tour_slug), b, lang).text,
           url: packageUrl(app, group, lang),
         }),
@@ -1615,7 +1619,7 @@ async function sendPackageMail(app, group, bookings, { subject, intro, until = n
   const money = (c) => formatMoney(c, lang, group.currency);
   const rows = shown.map((b) => ({
     when: `${fmtDate(b.date, lang, 'short')} · ${timeRange(b, lang)}`,
-    what: `${tourText(app, b.tour_slug, lang).title} · ${b.participants} ${T[lang].people.toLowerCase()}`,
+    what: `${tourText(app, b.tour_slug, lang).title} · ${bookingPeople(b, lang, { noun: guestWord(lang) })}`,
     price: money(bookingDue(b)),
     note: policy ? policyLine(b, lang, nowMs) : '',
   }));
@@ -1764,7 +1768,7 @@ export async function notifyGuidePackage(app, group, bookings, kind, extra = '')
     group.booked_by_name ? `Prenotato da: ${group.booked_by_name}` : null,
     group.notes ? `Note: ${group.notes}` : null,
     '',
-    ...bookings.map((b) => `${fmtDate(b.date, 'it', 'short')} · ${b.start_time}–${b.end_time} · ${app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug} · ${b.participants} pers. · ${formatMoney(bookingDue(b), 'it', b.currency)} (${b.ref})`),
+    ...bookings.map((b) => `${fmtDate(b.date, 'it', 'short')} · ${b.start_time}–${b.end_time} · ${app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug} · ${bookingPeopleShort(b)} · ${formatMoney(bookingDue(b), 'it', b.currency)} (${b.ref})`),
     `Totale: ${formatMoney(bookings.reduce((s, b) => s + bookingDue(b), 0), 'it', group.currency)}`,
     kind === 'option' ? `Trattenuti fino al ${untilGroup(bookings, 'it')}; se l’agenzia non conferma, si liberano da soli.` : null,
     extra || null,
@@ -1871,7 +1875,7 @@ export async function sendDayBriefing(app, sheet, { attachments = [] } = {}) {
     const who = s.b2b ? [s.agency, s.clientRef, s.name, s.phone].filter(Boolean).join(' · ') : [s.name, s.phone].filter(Boolean).join(' · ');
     return [
       `${s.start}–${s.end}  ${s.title}${s.confirmed ? '' : ' (OPZIONE)'}`,
-      `   ${n(s.people, 'persona', 'persone')}${s.tourLang ? ` · ${s.tourLang}` : ''}${s.service ? ` · ${s.service}` : ''}`,
+      `   ${s.peopleLine}${s.tourLang ? ` · ${s.tourLang}` : ''}${s.service ? ` · ${s.service}` : ''}`,
       s.meeting ? `   Incontro: ${s.meeting}` : null,
       who ? `   ${s.b2b ? 'Agenzia' : 'Cliente'}: ${who}` : null,
       s.notes ? `   Note: ${s.notes}` : null,

@@ -10,6 +10,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { writeZip } from './backup.js';
 import { makeT } from './i18n.js';
+import { partyExtra, partyOfBooking } from './party.js';
 import { brandIcon } from './png.js';
 import { fmtDate, localToInstant } from './time.js';
 
@@ -123,7 +124,7 @@ export function googleSaveUrl(app, b, lang, nowMs = Date.now()) {
     barcode: { type: 'QR_CODE', value: b.ref, alternateText: b.ref },
     textModulesData: [
       { id: 'meeting', header: t('s.meeting'), body: meet.text },
-      { id: 'guests', header: t('s.guests'), body: String(b.participants) },
+      { id: 'guests', header: t('s.guests'), body: `${b.participants}${partyExtra(partyOfBooking(b), lang)}` },
       { id: 'ref', header: t('s.ref'), body: b.ref },
     ],
     linksModuleData: { uris: [{ id: 'booking', uri: bookingUrl, description: t('wallet.manage') }] },
@@ -234,7 +235,7 @@ export async function applePass(app, b, lang, nowMs = Date.now()) {
       primaryFields: [{ key: 'tour', label: t('s.service').toUpperCase(), value: ti.title }],
       secondaryFields: [{ key: 'when', label: t('s.date').toUpperCase(), value: when }],
       auxiliaryFields: [
-        { key: 'guests', label: t('s.guests').toUpperCase(), value: String(b.participants) },
+        { key: 'guests', label: t('s.guests').toUpperCase(), value: `${b.participants}${partyExtra(partyOfBooking(b), lang)}` },
         { key: 'ref', label: t('s.ref').toUpperCase(), value: b.ref },
       ],
       backFields: [

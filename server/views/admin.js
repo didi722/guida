@@ -1,6 +1,7 @@
 import { html, raw } from '../html.js';
 import { bookingDue, cancellationState } from '../bookings.js';
 import { makeT } from '../i18n.js';
+import { bookingPeople, bookingPeopleShort, partyCompact, partyOfBooking } from '../party.js';
 import { splitAmounts } from '../policy.js';
 import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { dayOfWeek, fmtDate, fmtMonth, monthDates, nowRome } from '../time.js';
@@ -56,6 +57,7 @@ export function adminLayout(ctx, { title, active, body, flash = '', error = '', 
 <script src="/js/main.js?v=${app.assetVersion}" defer></script>
 <script src="/js/datepicker.js?v=${app.assetVersion}" defer></script>
 <script src="/js/combo.js?v=${app.assetVersion}" defer></script>
+<script src="/js/party.js?v=${app.assetVersion}" defer></script>
 <script src="/js/keep-scroll.js?v=${app.assetVersion}" data-links defer></script>
 ${raw(scripts)}
 </body></html>`;
@@ -88,7 +90,7 @@ function bookingRow(ctx, b) {
   return html`<a class="agenda-item" href="/admin/bookings/${b.id}">
     <span class="agenda-time"><strong>${b.start_time}</strong><small>${b.end_time}</small></span>
     <span class="agenda-main"><strong>${tour?.i18n.it.title ?? b.tour_slug}</strong>
-      <small>${b.participants} pers.${b.tour_lang ? ` · ${b.tour_lang.toUpperCase()}` : ''} · ${b.name}${b.client_ref ? ' · ' + b.client_ref : ''}${b.channel === 'b2b' ? ' · B2B' : ''}</small></span>
+      <small>${bookingPeopleShort(b)}${b.tour_lang ? ` · ${b.tour_lang.toUpperCase()}` : ''} · ${b.name}${b.client_ref ? ' · ' + b.client_ref : ''}${b.channel === 'b2b' ? ' · B2B' : ''}</small></span>
     <span class="agenda-state"><span class="chip ${chipFor(b.status)}">${statusLabel(b)}</span><small>${b.status === 'option' ? `fino al ${untilIt(b.option_expires_at)}` : `${PAY_IT[b.payment_method]} · ${PAYSTATUS_IT[b.payment_status]}`}</small></span>
   </a>`;
 }
@@ -201,7 +203,7 @@ ${items.length
   ? html`<div class="card table-wrap"><table class="table"><thead><tr><th>Data</th><th>Servizio</th><th>Cliente</th><th class="num">Pers.</th><th>Stato</th><th class="num">Totale</th></tr></thead><tbody>
     ${items.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')}</a><br><small class="muted">${b.start_time}–${b.end_time}</small></td>
       <td>${ctx.app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug}<br><small class="muted">${b.ref}${b.channel === 'b2b' ? ' · B2B' : ''}${b.group_ref ? ` · pacchetto ${b.group_ref}` : ''}</small></td>
-      <td>${b.name}<br><small class="muted">${b.client_ref ?? b.email}</small></td><td class="num">${b.participants}</td>
+      <td>${b.name}<br><small class="muted">${b.client_ref ?? b.email}</small></td><td class="num">${partyCompact(partyOfBooking(b))}</td>
       <td><span class="chip ${chipFor(b.status)}">${statusLabel(b)}</span><br><small class="muted">${b.status === 'option' ? `fino al ${untilIt(b.option_expires_at)}` : `${PAY_IT[b.payment_method]} · ${PAYSTATUS_IT[b.payment_status]}`}</small></td>
       <td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}
   </tbody></table></div>`
@@ -219,10 +221,13 @@ function cancelPreview(b, st) {
   return `Secondo la politica: oggi ${st.percent}% → ${retainedCents ? `penale ${formatMoney(retainedCents, 'it', b.currency)} da fatturare` : 'nessuna penale'}`;
 }
 
+/** La composizione registrata in una riga dello storico delle modifiche (le più vecchie non hanno bambini né infanti). */
+const snapParty = (s) => ({ adults: s.pax - (s.children ?? 0) - (s.infants ?? 0), children: s.children ?? 0, infants: s.infants ?? 0 });
+
 /** Una modifica in una riga: solo ciò che è cambiato (persone, data, orario, prezzo). */
 function changeSummary(before, after, currency) {
   const parts = [];
-  if (before.pax !== after.pax) parts.push(`persone ${before.pax} → ${after.pax}`);
+  if (before.pax !== after.pax || (before.children ?? 0) !== (after.children ?? 0) || (before.infants ?? 0) !== (after.infants ?? 0)) parts.push(`persone ${partyCompact(snapParty(before))} → ${partyCompact(snapParty(after))}`);
   if (before.date !== after.date) parts.push(`data ${fmtDate(before.date, 'it', 'short')} → ${fmtDate(after.date, 'it', 'short')}`);
   if (before.time !== after.time || before.end !== after.end) parts.push(`orario ${before.time}–${before.end} → ${after.time}–${after.end}`);
   if (before.totalCents !== after.totalCents) parts.push(`prezzo ${formatMoney(before.totalCents, 'it', currency)} → ${formatMoney(after.totalCents, 'it', currency)}${after.custom ? ' (concordato)' : ''}`);
@@ -245,7 +250,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, p
     <dl class="summary-list">
       <div><dt>Data</dt><dd>${fmtDate(b.date, 'it')}</dd></div>
       <div><dt>Orario</dt><dd>${b.start_time}–${b.end_time}</dd></div>
-      <div><dt>Persone</dt><dd>${b.participants}</dd></div>
+      <div><dt>Persone</dt><dd>${bookingPeople(b, 'it')}</dd></div>
       ${tour?.meetingChoice ? html`<div><dt>Punto d’incontro</dt><dd>${meetingOf(tour, b, 'it').text}${b.pickup ? '' : html` <span class="muted">(standard: il cliente non ha indicato nulla)</span>`}</dd></div>` : ''}
       ${themeText(b, 'it') ? html`<div><dt>Scelta del cliente</dt><dd>${themeText(b, 'it')}</dd></div>` : ''}
       ${b.tour_lang && LANG_META[b.tour_lang] ? html`<div><dt>Lingua del tour</dt><dd>${LANG_META[b.tour_lang].name}</dd></div>` : ''}

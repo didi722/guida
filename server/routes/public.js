@@ -223,7 +223,7 @@ export function publicRouter(app) {
   };
 
   const pricingFor = (req, p, values, channel) =>
-    previewPricing(app, { tour: p.tour, pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, email: values.email ?? '', promoCode: values.promo, giftCodes: values.gift });
+    previewPricing(app, { tour: p.tour, party: p.party, channel, account: channel === 'b2b' ? req.acct : null, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, email: values.email ?? '', promoCode: values.promo, giftCodes: values.gift });
 
   r.post('/book/checkout', form, async (req, res) => {
     const ctx = res.locals.ctx;
@@ -248,7 +248,7 @@ export function publicRouter(app) {
     const wantsOption = b.action === 'option' && channel === 'b2b'; // «Opziona»: la data resta trattenuta senza pagare
     try {
       const billing = channel === 'b2b' ? { company: req.acct.company, vat: req.acct.vat, sdi: req.acct.sdi_code, pec: req.acct.pec, address: req.acct.address } : values.invoice ? { text: values.billing } : null;
-      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, bookedBy: channel === 'b2b' ? bookedBy(req.actor) : null, ...values, phone: phone.value, promoCode: values.promo, giftCodes: values.gift, billing, option: wantsOption }, req.lang);
+      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, party: p.party, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, bookedBy: channel === 'b2b' ? bookedBy(req.actor) : null, ...values, phone: phone.value, promoCode: values.promo, giftCodes: values.gift, billing, option: wantsOption }, req.lang);
       res.redirect(303, redirect);
     } catch (e) {
       if (!(e instanceof BookingError)) throw e;

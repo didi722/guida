@@ -6,6 +6,7 @@ import { makeT } from './i18n.js';
 import { normLang, pick } from './langs.js';
 import { COLORS as C, CW, PAGE, box, createDoc, ensure, finishDoc, fold, keyValueRows, title as titleBlock } from './pdf.js';
 import { quoteBookings } from './quotes.js';
+import { partyExtra, partyOfBooking } from './party.js';
 import { timeRange } from './rates.js';
 import { fmtDate, nowRome } from './time.js';
 import { formatMoney } from './util.js';
@@ -81,7 +82,7 @@ export async function renderQuotePdf(app, { account, bookings, markup = 0, round
     serviceBlock(doc, {
       name: ti.title,
       price: money(cents),
-      details: `${fmtDate(b.date, lang)}  ·  ${timeRange(b, lang).replace('–', ' – ')}  ·  ${t('quote.pax', { n: b.participants })}`,
+      details: `${fmtDate(b.date, lang)}  ·  ${timeRange(b, lang).replace('–', ' – ')}  ·  ${t('quote.pax', { n: b.participants })}${partyExtra(partyOfBooking(b), lang)}`,
       meeting: meet.text ? `${t('s.meeting')}: ${meet.text}` : '',
       included: included.length ? `${t('pdf.included')}: ${included.join('  ·  ')}` : '',
     });

@@ -521,7 +521,7 @@ const cell = (v) => {
 /** Testo libero (nomi inseriti da chiunque): un apice davanti impedisce che Excel o Sheets lo eseguano come formula. */
 const text = (v) => (/^[=+\-@\t\r]/.test(String(v ?? '')) ? `'${v}` : v);
 
-export const CSV_HEAD = ['Riferimento', 'Data servizio', 'Ora', 'Tour', 'Canale', 'Partner', 'Persone', 'Listino', 'Sconto', 'Buono regalo', 'Totale', 'Da pagare', 'Metodo di pagamento', 'Stato pagamento', 'Stato', 'Rimborso', 'Penale', 'Lingua', 'Data prenotazione'];
+export const CSV_HEAD = ['Riferimento', 'Data servizio', 'Ora', 'Tour', 'Canale', 'Partner', 'Persone', 'Listino', 'Sconto', 'Buono regalo', 'Totale', 'Da pagare', 'Metodo di pagamento', 'Stato pagamento', 'Stato', 'Rimborso', 'Penale', 'Lingua', 'Data prenotazione', 'Bambini', 'Infanti'];
 
 /**
  * Una riga per prenotazione del periodo (di qualsiasi stato, con gli stessi filtri della pagina), in CSV:
@@ -558,6 +558,8 @@ export function bookingsCsv(db, f, { nowMs = Date.now(), tourTitle = (slug) => s
       money(b.retained_cents ?? 0),
       LANG_META[b.lang]?.name ?? b.lang,
       b.bookedOn,
+      b.children ?? 0,
+      b.infants ?? 0,
     ]
       .map(cell)
       .join(';'),

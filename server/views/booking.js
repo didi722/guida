@@ -11,7 +11,8 @@ import { inviteLink } from '../invites.js';
 import { firmTiers } from '../optionPolicy.js';
 import { DEFAULT_MEETING, hasThemes, meetingOf, themeText } from '../choices.js';
 import { icon, page } from './layout.js';
-import { phoneField } from './fields.js';
+import { partyField, phoneField } from './fields.js';
+import { adultsOnly, bookingPeople, childPriceCents, partyWord } from '../party.js';
 import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia, whoOf } from './components.js';
 import { quoteLines } from './hourly.js';
@@ -85,7 +86,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
 }
 
 // ───────────────────────── Checkout ─────────────────────────
-export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, error = '', channel, pricing, option = null, hours: serviceHours = null, earpieces = false }) {
+export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pax), slot, values = {}, error = '', channel, pricing, option = null, hours: serviceHours = null, earpieces = false }) {
   const extraOptions = extraHourOptions(tour, channel);
   const { t, lang, u, app, acct } = ctx;
   const who = whoOf(ctx) ?? {}; // chi prenota (il titolare o un collaboratore): nome ed email proposti nel modulo
@@ -94,7 +95,9 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
   const rates = hourly ? app.rates.get() : null;
   const duration = hourly ? serviceHours * 60 : tour.durationMin;
   const ti = tour.i18n[lang];
-  pricing ??= { listCents: priceFor(tour, pax, channel, acct), discountCents: 0, totalCents: priceFor(tour, pax, channel, acct), giftCents: 0, dueCents: priceFor(tour, pax, channel, acct), promo: null, gifts: [], errors: {} };
+  pricing ??= { listCents: priceFor(tour, party, channel, acct), discountCents: 0, totalCents: priceFor(tour, party, channel, acct), giftCents: 0, dueCents: priceFor(tour, party, channel, acct), promo: null, gifts: [], errors: {} };
+  const perPerson = tour.model === 'person' && !hourly; // i bambini e gli infanti cambiano il prezzo solo nei servizi a persona
+  const unit = perPerson ? unitPriceFor(tour, channel, acct) : 0;
   const nothingToPay = pricing.dueCents === 0;
   const options = paymentOptions(app, tour, channel, acct);
   const startMs = localToInstant(date, time);
@@ -204,12 +207,17 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
       <dl class="summary-list">
         <div><dt>${t('s.date')}</dt><dd>${fmtDate(date, lang)}</dd></div>
         <div><dt>${t('s.time')}</dt><dd>${time}–${slot.end} <span class="muted">(${hourly ? hoursLabel(t, lang, serviceHours) : fmtDuration(duration, lang)})</span></dd></div>
-        <div><dt><label for="pax-select">${t('s.guests')}</label></dt><dd><select name="pax" id="pax-select" form="checkout-form" class="pax-select">${Array.from({ length: Math.max(pax, Math.min(25, tour.maxParticipants, slot.left ?? tour.maxParticipants)) }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select><noscript> <button class="btn btn-outline btn-sm" type="submit" name="apply" value="1" form="checkout-form" formnovalidate>${t('checkout.update')}</button></noscript></dd></div>
+        <div class="summary-party">${partyField(ctx, { party, max: Math.max(pax, Math.min(25, tour.maxParticipants, slot.left ?? tour.maxParticipants)), priced: perPerson, form: 'checkout-form', id: 'co-party', label: t('s.guests') })}<noscript><button class="btn btn-outline btn-sm" type="submit" name="apply" value="1" form="checkout-form" formnovalidate>${t('checkout.update')}</button></noscript></div>
         ${extraOptions.length
           ? html`<div><dt><label for="extra-select">${t('hourly.f.extra')}</label></dt><dd><select name="extra" id="extra-select" form="checkout-form" data-apply><option value="0">${t('hourly.extra.none')}</option>${extraOptions.map((n) => html`<option value="${n}" ${n === serviceHours - tour.durationMin / 60 ? raw('selected') : ''}>+ ${hoursLabel(t, lang, n)}</option>`)}</select></dd></div>`
           : ''}
         <div><dt>${t('s.meeting')}</dt><dd>${tour.meetingChoice ? t(isB2b ? 'meeting.summaryB2b' : 'meeting.summary') : ti.meetingPoint}</dd></div>
         ${offered.length > 1 || slot.lang ? html`<div><dt>${t('s.tourLang')}</dt><dd>${LANG_META[tourLang].name}</dd></div>` : ''}
+        ${perPerson && (party.children || party.infants)
+          ? html`<div class="row-line"><dt>${partyWord('adults', party.adults, lang)} <small class="muted">(${formatMoney(unit, lang)})</small></dt><dd>${formatMoney(unit * party.adults, lang)}</dd></div>
+            ${party.children ? html`<div class="row-line"><dt>${partyWord('children', party.children, lang)} <small class="muted">(${formatMoney(childPriceCents(unit), lang)})</small></dt><dd>${formatMoney(childPriceCents(unit) * party.children, lang)}</dd></div>` : ''}
+            ${party.infants ? html`<div class="row-line"><dt>${partyWord('infants', party.infants, lang)}</dt><dd>${t('party.free')}</dd></div>` : ''}`
+          : ''}
         ${pricing.quote?.ok ? quoteLines(t, lang, pricing.quote, { total: false }) : ''}
         ${!pricing.quote && (pricing.discountCents || pricing.giftCents) ? html`<div><dt>${t('s.list')}</dt><dd>${formatMoney(pricing.listCents, lang)}</dd></div>` : ''}
         ${pricing.discountCents ? html`<div class="row-discount"><dt>${t('s.discount')} · ${pricing.promo.code}</dt><dd>−${formatMoney(pricing.discountCents, lang)}</dd></div>` : ''}
@@ -325,7 +333,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       <div><dt>${t('s.service')}</dt><dd>${ti.title}</dd></div>
       <div><dt>${t('s.date')}</dt><dd>${fmtDate(b.date, lang)}</dd></div>
       <div><dt>${t('s.time')}</dt><dd>${b.start_time}–${b.end_time}${service ? html` <span class="muted">(${hoursLabel(t, lang, service.hours)})</span>` : ''}</dd></div>
-      <div><dt>${t('s.guests')}</dt><dd>${b.participants}</dd></div>
+      <div><dt>${t('s.guests')}</dt><dd>${bookingPeople(b, lang)}</dd></div>
       <div><dt>${t('s.meeting')}</dt><dd>${meet.text}${meet.url ? html` · <a href="${meet.url}" target="_blank" rel="noopener">${t('tour.openMap')}</a>` : ''}</dd></div>
       ${b.tour_lang && LANG_META[b.tour_lang] ? html`<div><dt>${t('s.tourLang')}</dt><dd>${LANG_META[b.tour_lang].name}</dd></div>` : ''}
       ${themeText(b, lang) ? html`<div><dt>${t('f.theme')}</dt><dd>${themeText(b, lang)}</dd></div>` : ''}

@@ -1,6 +1,7 @@
 import express from 'express';
 import { daySlots, monthAvailability } from '../availability.js';
 import { priceFor } from '../bookings.js';
+import { partyTotal, readParty } from '../party.js';
 import { hourlyQuote } from '../pricing.js';
 import { hourOptions, openTo } from '../rates.js';
 import { isDate, isMonth, nowRome } from '../time.js';
@@ -19,8 +20,8 @@ export function apiRouter(app) {
   // ───── disponibilità (usata dal calendario nella pagina del tour) ─────
   function parse(req) {
     const tour = content.tour(String(req.query.tour ?? ''));
-    const pax = Number.parseInt(req.query.pax, 10);
-    if (!tour?.active || !openTo(app.rates.get(), tour, channelOf(req.acct)) || !Number.isInteger(pax) || pax < 1 || pax > tour.maxParticipants) return null;
+    const party = readParty(req.query, { max: tour?.maxParticipants }); // adults, children, infants (o solo pax: tutte adulte)
+    if (!tour?.active || !openTo(app.rates.get(), tour, channelOf(req.acct)) || !party) return null;
     // servizio a ore: la durata è quella del tour, oppure quella scelta dal cliente (tra quelle ammesse); il prezzo dipende da data e ora (festivo, notturno)
     let hours = null;
     if (tour.pricing === 'hourly') {
@@ -28,7 +29,7 @@ export function apiRouter(app) {
       if (tour.chooseHours && !hourOptions(tour.service).includes(hours)) return null;
     }
     const tl = String(req.query.tl ?? '');
-    return { tour, pax, hours, durationMin: hours == null ? null : Math.round(hours * 60), tourLang: tour.languages.includes(tl) ? tl : null }; // «tl»: la lingua del tour che si vuole; le partenze già in un'altra lingua non compaiono
+    return { tour, pax: partyTotal(party), party, hours, durationMin: hours == null ? null : Math.round(hours * 60), tourLang: tour.languages.includes(tl) ? tl : null }; // «tl»: la lingua del tour che si vuole; le partenze già in un'altra lingua non compaiono
   }
 
   r.get('/api/availability', noStore, (req, res) => {
@@ -47,9 +48,9 @@ export function apiRouter(app) {
     const date = String(req.query.date ?? '');
     if (!p || !isDate(date)) return res.status(400).json({ error: 'bad request' });
     const channel = channelOf(req.acct);
-    const quoteOf = (s) => hourlyQuote(app, p.tour, { pax: p.pax, channel, account: channel === 'b2b' ? req.acct : null, date, time: s.time, hours: p.hours });
+    const quoteOf = (s) => hourlyQuote(app, p.tour, { party: p.party, channel, account: channel === 'b2b' ? req.acct : null, date, time: s.time, hours: p.hours });
     const slots = daySlots(db, cfg, p.tour, date, { pax: p.pax, channel, nowMs: Date.now(), tourLang: p.tourLang, durationMin: p.durationMin })
-      .map((s) => (p.hours == null ? { ...s, totalCents: priceFor(p.tour, p.pax, channel, req.acct) } : { ...s, totalCents: quoteOf(s).totalCents, quoteOk: quoteOf(s).ok }))
+      .map((s) => (p.hours == null ? { ...s, totalCents: priceFor(p.tour, p.party, channel, req.acct) } : { ...s, totalCents: quoteOf(s).totalCents, quoteOk: quoteOf(s).ok }))
       .filter((s) => s.quoteOk !== false);
     res.json({ date, slots });
   });

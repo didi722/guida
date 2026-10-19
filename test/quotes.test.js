@@ -124,7 +124,7 @@ test('ciò che vede il cliente: servizi in ordine di data con il suo prezzo e il
   assert.equal(v.totalCents, 21500);
   assert.equal(JSON.stringify(v).includes('5600'), false, 'né la tariffa di un servizio…');
   assert.equal(JSON.stringify(v).includes('17600'), false, '…né il totale della tariffa');
-  assert.deepEqual(Object.keys(v.lines[0]).sort(), ['cents', 'date', 'included', 'meeting', 'pax', 'title', 'when']);
+  assert.deepEqual(Object.keys(v.lines[0]).sort(), ['cents', 'date', 'included', 'meeting', 'party', 'pax', 'title', 'when']);
   assert.equal(clientView(s.app, q, 'it').lines[0].title, 'Tour di prova');
   assert.equal(clientView(s.app, q, 'es').lines[0].meeting, 'La plaza');
 });

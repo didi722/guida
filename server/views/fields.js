@@ -3,6 +3,7 @@
 import { html, raw } from '../html.js';
 import { LANG_COUNTRY, countries, dialOf, isCountry, isMainOfDial, splitPhone } from '../countries.js';
 import { makeT } from '../i18n.js';
+import { CHILD_MAX_AGE, CHILD_PERCENT, INFANT_MAX_AGE, MAX_PARTY, adultsOnly, partyTotal } from '../party.js';
 
 /** Il pannello è in italiano: i suoi moduli usano lo stesso campo del sito con le frasi italiane. */
 export const ADMIN_CTX = { t: makeT('it'), lang: 'it' };
@@ -66,3 +67,36 @@ export function billingFields(ctx, v = {}, { lead = '' } = {}) {
       <label class="field" data-it><span class="label">${t('b2b.reg.pec')} <em>${t('b2b.reg.pecHint')}</em></span><input type="email" name="pec" maxlength="200" value="${val('pec')}"></label>
     </div>`;
 }
+
+/**
+ * Adulti, bambini e infanti: tre contatori con − e + (public/js/party.js; senza JavaScript restano normali caselle numeriche).
+ * `max` è il totale massimo (i posti della partenza, o il massimo del servizio). `priced`: i bambini e gli infanti cambiano il prezzo (servizi a persona);
+ * altrimenti (servizi a gruppo o a ore) la composizione serve solo alla guida e lo si dice. `form` collega i campi a un modulo che sta altrove nella pagina.
+ * I campi si chiamano `adults`, `children` e `infants`. `autosubmit`: a ogni cambio il modulo si invia da solo (come per gli altri campi con `data-autosubmit`).
+ */
+export function partyField(ctx, { party = adultsOnly(2), max = MAX_PARTY, priced = true, form = '', id = 'party', label, compact = false, autosubmit = false } = {}) {
+  const { t } = ctx;
+  const rows = [
+    ['adults', t('party.adults'), t('party.adults.age', { from: CHILD_MAX_AGE + 1 }), 1],
+    ['children', t('party.children'), `${t('party.children.age', { from: INFANT_MAX_AGE + 1, to: CHILD_MAX_AGE })}${priced ? ` · ${t('party.children.price', { pct: CHILD_PERCENT })}` : ''}`, 0],
+    ['infants', t('party.infants'), `${t('party.infants.age', { from: 0, to: INFANT_MAX_AGE })}${priced ? ` · ${t('party.infants.price')}` : ''}`, 0],
+  ];
+  const total = partyTotal(party);
+  const formAttr = form ? raw(`form="${form}"`) : '';
+  return html`<fieldset class="${compact ? 'party party-compact' : 'party'}" id="${id}" data-party${autosubmit ? raw(' data-autosubmit') : ''} data-max="${max}" data-total-one="${t('w.person1')}" data-total-many="${t('w.personN')}" data-total-label="${t('party.total', { text: '{text}' })}" data-need-adult="${t('party.needAdult')}" data-max-hit="${t('party.maxHit', { n: max })}">
+    <legend class="label">${label ?? t('w.persons')}</legend>
+    <div class="party-rows">${rows.map(([key, name, hint, min]) => html`<div class="party-row">
+      <label class="party-name" for="${id}-${key}">${name}<small>${hint}</small></label>
+      <div class="party-stepper">
+        <button type="button" data-step="-1" data-for="${key}" aria-label="${t(`party.minus${key[0].toUpperCase()}${key.slice(1)}`)}" hidden>−</button>
+        <input type="number" inputmode="numeric" name="${key}" id="${id}-${key}" min="${min}" max="${max}" step="1" value="${party[key]}" ${formAttr} required>
+        <button type="button" data-step="1" data-for="${key}" aria-label="${t(`party.plus${key[0].toUpperCase()}${key.slice(1)}`)}" hidden>+</button>
+      </div>
+    </div>`)}</div>
+    <p class="party-total" data-party-total aria-live="polite">${t('party.total', { text: peopleOnly(total, t) })}</p>
+    ${priced ? '' : html`<p class="small muted party-note">${t('party.groupNote')}</p>`}
+  </fieldset>`;
+}
+
+/** «3 persone» / «1 persona» nella lingua della pagina (il numero totale, senza la composizione). */
+const peopleOnly = (n, t) => (n === 1 ? t('w.person1') : t('w.personN', { n }));

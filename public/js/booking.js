@@ -7,6 +7,7 @@
   var model = root.dataset.model;
   var max = parseInt(root.dataset.max, 10);
   var unit = parseInt(root.dataset.unit, 10);
+  var childPct = parseInt(root.dataset.childPct, 10) || 50; // bambini: percentuale del prezzo (gli infanti non pagano)
   var lang = root.dataset.lang;
   var minDate = root.dataset.minDate;
   var bookUrl = root.dataset.bookUrl;
@@ -16,12 +17,15 @@
   var slotsEl = root.querySelector('[data-slots]');
   var summary = root.querySelector('[data-summary]');
   var cont = root.querySelector('[data-continue]');
-  var paxSel = root.querySelector('[data-pax]'); // numero di persone (menu a tendina)
+  var partyBox = root.querySelector('[data-party]'); // adulti, bambini e infanti (public/js/party.js tiene i limiti)
+  var inA = root.querySelector('input[name="adults"]');
+  var inC = root.querySelector('input[name="children"]');
+  var inI = root.querySelector('input[name="infants"]');
 
   var langSel = root.querySelector('[data-tour-lang]');
   var hoursSel = root.querySelector('[data-hours]'); // servizio a ore: quante ore, scelte dal cliente
   var hourly = root.hasAttribute('data-hourly');
-  var state = { tl: langSel ? langSel.value : '', pax: Math.min(2, max), month: minDate.slice(0, 7), days: {}, date: null, time: null, slots: [], loading: false };
+  var state = { tl: langSel ? langSel.value : '', a: Math.min(2, max), c: 0, i: 0, pax: Math.min(2, max), month: minDate.slice(0, 7), days: {}, date: null, time: null, slots: [], loading: false };
   var seq = 0;
 
   var locale = { it: 'it-IT', es: 'es-ES', ja: 'ja-JP' }[lang] || 'en-GB';
@@ -29,8 +33,10 @@
   function fill(s, vars) { return s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k]; }); }
   function total() {
     if (hourly) { var s = state.slots.filter(function (x) { return x.time === state.time; })[0]; return s ? s.totalCents : 0; }
-    return model === 'person' ? unit * state.pax : unit;
+    return model === 'person' ? unit * state.a + Math.round(unit * childPct / 100) * state.c : unit;
   }
+  function count(input) { var n = parseInt(input.value, 10); return isFinite(n) && n >= 0 ? n : 0; }
+  function partyParam() { return '&adults=' + state.a + '&children=' + state.c + '&infants=' + state.i; }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function monthLabel(m) {
     var p = m.split('-');
@@ -55,7 +61,7 @@
     var my = ++seq;
     state.loading = true; state.error = false;
     renderCal();
-    getJson('/api/availability?tour=' + encodeURIComponent(tour) + '&month=' + state.month + '&pax=' + state.pax + tlParam())
+    getJson('/api/availability?tour=' + encodeURIComponent(tour) + '&month=' + state.month + partyParam() + tlParam())
       .then(function (d) { if (my !== seq) return; state.days = d.days || {}; state.loading = false; renderCal(); })
       .catch(function () { if (my !== seq) return; state.loading = false; state.error = true; renderCal(); });
   }
@@ -64,7 +70,7 @@
     var my = ++seq;
     slotsEl.hidden = false;
     slotsEl.replaceChildren(el('p', 'muted small', L.loading));
-    getJson('/api/slots?tour=' + encodeURIComponent(tour) + '&date=' + state.date + '&pax=' + state.pax + tlParam())
+    getJson('/api/slots?tour=' + encodeURIComponent(tour) + '&date=' + state.date + partyParam() + tlParam())
       .then(function (d) { if (my !== seq) return; state.slots = d.slots || []; renderSlots(); })
       .catch(function () { if (my !== seq) return; slotsEl.replaceChildren(el('p', 'muted small', L.error)); });
   }
@@ -140,12 +146,11 @@
   }
 
   function update() {
-    paxSel.value = String(state.pax);
     if (state.date && state.time) {
       summary.hidden = false;
       var dateStr = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(state.date + 'T12:00:00Z'));
       summary.replaceChildren(el('span', null, dateStr + ' · ' + timeSpan() + ' · ' + (state.pax === 1 ? L.person1 : fill(L.personN, { n: state.pax }))), el('strong', null, L.total + ' ' + money.format(total() / 100)));
-      cont.href = bookUrl + '?tour=' + encodeURIComponent(tour) + '&date=' + state.date + '&time=' + state.time + '&pax=' + state.pax + tlParam();
+      cont.href = bookUrl + '?tour=' + encodeURIComponent(tour) + '&date=' + state.date + '&time=' + state.time + partyParam() + tlParam();
       cont.setAttribute('aria-disabled', 'false');
     } else {
       summary.hidden = true;
@@ -155,14 +160,15 @@
   }
 
   cont.addEventListener('click', function (e) { if (cont.getAttribute('aria-disabled') === 'true') e.preventDefault(); });
-  function setPax(n) {
-    n = Math.max(1, Math.min(max, n));
-    if (n === state.pax) return;
-    state.pax = n; state.time = null;
+  function onParty() {
+    var a = Math.max(1, count(inA)), c = count(inC), i = count(inI);
+    if (a + c + i > max) return; // (party.js non lo lascia succedere)
+    if (a === state.a && c === state.c && i === state.i) return;
+    state.a = a; state.c = c; state.i = i; state.pax = a + c + i; state.time = null;
     update(); loadMonth();
     if (state.date) loadSlots();
   }
-  paxSel.addEventListener('change', function () { setPax(Number(paxSel.value)); });
+  partyBox.addEventListener('change', onParty);
 
   if (hoursSel) hoursSel.addEventListener('change', function () { state.time = null; update(); loadMonth(); if (state.date) loadSlots(); });
   if (langSel) langSel.addEventListener('change', function () { state.tl = langSel.value; state.time = null; update(); loadMonth(); if (state.date) loadSlots(); });

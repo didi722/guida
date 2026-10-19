@@ -3,6 +3,7 @@
 import { bookingDue } from './bookings.js';
 import { meetingOf, themeText } from './choices.js';
 import { LANG_META } from './langs.js';
+import { partyOfBooking, peopleText } from './party.js';
 import { parseServiceRecord, serviceNote } from './rates.js';
 import { fmtInstant } from './time.js';
 
@@ -25,6 +26,7 @@ export function daySheet(app, date, nowMs = Date.now()) {
     const tour = content.tour(b.tour_slug);
     const meet = meetingOf(tour, b, 'it');
     const confirmed = b.status === 'confirmed';
+    const party = partyOfBooking(b);
     const collect = confirmed && b.payment_method === 'onsite' && b.payment_status === 'unpaid' ? bookingDue(b) : 0;
     return {
       id: b.id,
@@ -34,6 +36,8 @@ export function daySheet(app, date, nowMs = Date.now()) {
       end: b.end_time,
       title: tour?.i18n.it.title ?? b.tour_slug,
       people: b.participants,
+      party,
+      peopleLine: peopleText(party, 'it'), // «4 persone (2 adulti, 1 bambino, 1 infante)»
       tourLang: b.tour_lang && LANG_META[b.tour_lang] ? LANG_META[b.tour_lang].name : '',
       b2b: b.channel === 'b2b',
       name: b.name,

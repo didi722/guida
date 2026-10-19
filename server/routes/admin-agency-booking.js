@@ -11,6 +11,7 @@ import { emailInUse } from '../team.js';
 import { isDate, isTime, nowRome } from '../time.js';
 import { cleanText, isEmail, parseEuros } from '../util.js';
 import { optionalPhone } from '../countries.js';
+import { readParty } from '../party.js';
 
 const ERRORS = {
   tour: 'Scegli un servizio per le agenzie.',
@@ -43,7 +44,8 @@ export function adminAgencyBookingRouter(app) {
     const tour = tours().find((x) => x.slug === String(b.tour ?? ''));
     if (!tour) return fail('tour');
     if (!isDate(b.date) || !isTime(b.time)) return fail('datetime');
-    const pax = Number.parseInt(b.pax, 10);
+    const party = readParty(b, { max: tour.maxParticipants }); // adulti, bambini, infanti (o solo «pax»: tutte adulte)
+    if (!party) return fail('participants');
     const price = String(b.price ?? '').trim() === '' ? null : parseEuros(b.price);
     if (String(b.price ?? '').trim() !== '' && (price === null || price < 0)) return fail('price');
 
@@ -71,7 +73,7 @@ export function adminAgencyBookingRouter(app) {
 
     try {
       const booking = createBooking(app, {
-        tourSlug: tour.slug, date: b.date, time: b.time, pax, hours: b.hours === '' || b.hours == null ? null : Number(b.hours),
+        tourSlug: tour.slug, date: b.date, time: b.time, party, hours: b.hours === '' || b.hours == null ? null : Number(b.hours),
         channel: 'b2b', account, name: account.contact_name, email: account.email, phone: account.phone, lang: account.lang,
         clientRef: cleanText(b.clientRef, 120), notes: cleanText(b.notes, 1000),
         manual: { totalCents: price, paid: b.paid === '1' },

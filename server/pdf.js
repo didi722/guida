@@ -15,6 +15,7 @@ import { formatGiftCode } from './pricing.js';
 import { fmtDate, fmtInstant, nowRome } from './time.js';
 import { formatMoney } from './util.js';
 import { meetingOf, themeText } from './choices.js';
+import { partyExtra, partyOfBooking } from './party.js';
 
 export const PAGE = { w: 595.28, h: 841.89, m: 48 };
 export const CW = PAGE.w - PAGE.m * 2; // larghezza utile
@@ -327,7 +328,7 @@ export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = 
   const items = [
     [t('s.date'), fmtDate(b.date, lang), { bold: true }],
     [t('s.time'), timeRange(b, lang).replace('–', ' – '), { bold: true }],
-    [t('s.guests'), String(b.participants)],
+    [t('s.guests'), `${b.participants}${partyExtra(partyOfBooking(b), lang)}`],
     [t('s.meeting'), meet.text, meet.url ? { sub: { text: t('tour.openMap'), url: meet.url } } : {}],
     ...(themeText(b, lang) ? [[t('f.theme'), themeText(b, lang)]] : []),
     ...(b.tour_lang && LANG_META[b.tour_lang] ? [[t('s.tourLang'), LANG_META[b.tour_lang].name]] : []),

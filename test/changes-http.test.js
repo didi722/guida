@@ -72,7 +72,8 @@ test('cambia persone, data o ore: pagina, elenco degli orari con il prezzo, conf
     assert.equal((await anon(`/it/b2b/bookings/${o.ref}/change`)).status, 302, 'serve l’accesso');
     const page = await text(await partner(`/it/b2b/bookings/${o.ref}/change?pax=6`));
     assert.match(page, /Finché è un’opzione puoi cambiare liberamente/);
-    assert.match(page, /name="pax"[^>]*data-autosubmit/);
+    assert.match(page, /<fieldset class="party" id="ch-party" data-party data-autosubmit /);
+    assert.match(page, /name="adults" id="ch-party-adults" min="1" max="\d+" step="1" value="6"/, 'il vecchio «pax» vale tante persone adulte');
     assert.match(page, /<option value="10:00" selected>10:00–12:30 · [\d.,]+ €[^<]*\(\+[^)]+\) · attuale<\/option>/, 'orario con prezzo, differenza ed etichetta dell’attuale');
     assert.match(page, /<option value="15:00" >15:00–17:30/);
     assert.match(page, /Conferma la modifica/);

@@ -893,6 +893,120 @@
   "{n} personas",
   "{n}名"
  ],
+ "party.adults": [
+  "Adulti",
+  "Adults",
+  "Adultos",
+  "大人"
+ ],
+ "party.adults.age": [
+  "da {from} anni",
+  "age {from}+",
+  "desde {from} años",
+  "{from}歳以上"
+ ],
+ "party.children": [
+  "Bambini",
+  "Children",
+  "Niños",
+  "子ども"
+ ],
+ "party.children.age": [
+  "{from}–{to} anni",
+  "ages {from}–{to}",
+  "{from}–{to} años",
+  "{from}〜{to}歳"
+ ],
+ "party.children.price": [
+  "prezzo al {pct}%",
+  "{pct}% of the price",
+  "{pct}% del precio",
+  "料金{pct}%"
+ ],
+ "party.infants": [
+  "Infanti",
+  "Infants",
+  "Bebés",
+  "乳幼児"
+ ],
+ "party.infants.age": [
+  "{from}–{to} anni",
+  "ages {from}–{to}",
+  "{from}–{to} años",
+  "{from}〜{to}歳"
+ ],
+ "party.infants.price": [
+  "gratis",
+  "free",
+  "gratis",
+  "無料"
+ ],
+ "party.groupNote": [
+  "Il prezzo è per tutto il gruppo: bambini e infanti non lo cambiano, ma aiutano la guida a organizzarsi.",
+  "The price covers the whole group: children and infants do not change it, but they help the guide to prepare.",
+  "El precio es para todo el grupo: los niños y los bebés no lo cambian, pero ayudan al guía a organizarse.",
+  "料金はグループ全体の金額です。子どもや乳幼児がいても変わりませんが、ガイドの準備に役立ちます。"
+ ],
+ "party.total": [
+  "Totale: {text}",
+  "Total: {text}",
+  "Total: {text}",
+  "合計：{text}"
+ ],
+ "party.minusAdults": [
+  "Un adulto in meno",
+  "One adult fewer",
+  "Un adulto menos",
+  "大人を1名減らす"
+ ],
+ "party.plusAdults": [
+  "Un adulto in più",
+  "One adult more",
+  "Un adulto más",
+  "大人を1名増やす"
+ ],
+ "party.minusChildren": [
+  "Un bambino in meno",
+  "One child fewer",
+  "Un niño menos",
+  "子どもを1名減らす"
+ ],
+ "party.plusChildren": [
+  "Un bambino in più",
+  "One child more",
+  "Un niño más",
+  "子どもを1名増やす"
+ ],
+ "party.minusInfants": [
+  "Un infante in meno",
+  "One infant fewer",
+  "Un bebé menos",
+  "乳幼児を1名減らす"
+ ],
+ "party.plusInfants": [
+  "Un infante in più",
+  "One infant more",
+  "Un bebé más",
+  "乳幼児を1名増やす"
+ ],
+ "party.needAdult": [
+  "Serve almeno un adulto.",
+  "At least one adult is needed.",
+  "Hace falta al menos un adulto.",
+  "大人が少なくとも1名必要です。"
+ ],
+ "party.maxHit": [
+  "Massimo {n} persone in questa partenza.",
+  "At most {n} guests on this departure.",
+  "Máximo {n} personas en esta salida.",
+  "この出発は最大{n}名までです。"
+ ],
+ "party.free": [
+  "gratis",
+  "free",
+  "gratis",
+  "無料"
+ ],
  "w.pickDate": [
   "Scegli la data",
   "Pick a date",

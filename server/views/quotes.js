@@ -3,6 +3,7 @@
 import { html, raw } from '../html.js';
 import { ROUNDS, brandOf, readProfile } from '../agencyDocs.js';
 import { LANGS, LANG_META, normLang } from '../langs.js';
+import { partyExtra, partyOfLine } from '../party.js';
 import { QUOTE_MAX_SENDS, MARKUP_MAX, clientView, quoteLines, statusOf, validityBounds } from '../quotes.js';
 import { fmtDate, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
@@ -58,7 +59,7 @@ export function newQuotePage(ctx, { acct, summary, values = {}, error = '' }) {
   ${summary.lines.length
     ? html`<h2 class="h-sub">${t('quotes.new.services')}</h2>
   <div class="table-wrap card"><table class="table"><tbody>
-    ${valid.map((l) => html`<tr><td><strong>${title(l)}</strong><br><small class="muted">${fmtDate(l.p.date, lang, 'short')} · ${l.p.time} · ${t('quote.pax', { n: l.p.pax })}${l.ok ? '' : html` · <span class="field-error">${t('quotes.live.gone')}</span>`}</small></td><td class="num">${formatMoney(l.pricing.totalCents, lang)}</td></tr>`)}
+    ${valid.map((l) => html`<tr><td><strong>${title(l)}</strong><br><small class="muted">${fmtDate(l.p.date, lang, 'short')} · ${l.p.time} · ${t('quote.pax', { n: l.p.pax })}${partyExtra(l.p.party, lang)}${l.ok ? '' : html` · <span class="field-error">${t('quotes.live.gone')}</span>`}</small></td><td class="num">${formatMoney(l.pricing.totalCents, lang)}</td></tr>`)}
   </tbody></table></div>
   <p class="small muted">${t('quotes.new.yourRate', { amount: formatMoney(summary.totalCents, lang) })}</p>
   ${summary.allOk
@@ -110,7 +111,7 @@ export function quoteDetailPage(ctx, { q, live, replyTo, team = false, flash = '
         ${lines.map((l, i) => {
           const tour = app.content.tour(l.slug);
           const check = live?.lines[i];
-          return html`<div><dt><strong>${tour?.i18n[lang]?.title ?? l.slug}</strong><br><small>${fmtDate(l.date, lang, 'short')} · ${l.time} · ${t('quote.pax', { n: l.pax })}</small>${check ? html`<br><small class="${check.ok ? 'muted' : 'field-error'}">${check.ok ? t('quotes.live.ok') : t('quotes.live.gone')}</small>${check.changed ? html`<br><small class="field-error">${t('quotes.live.changed', { now: money(check.netNow), was: money(l.netCents) })}</small>` : ''}` : ''}</dt><dd>${money(l.netCents)}</dd></div>`;
+          return html`<div><dt><strong>${tour?.i18n[lang]?.title ?? l.slug}</strong><br><small>${fmtDate(l.date, lang, 'short')} · ${l.time} · ${t('quote.pax', { n: l.pax })}${partyExtra(partyOfLine(l), lang)}</small>${check ? html`<br><small class="${check.ok ? 'muted' : 'field-error'}">${check.ok ? t('quotes.live.ok') : t('quotes.live.gone')}</small>${check.changed ? html`<br><small class="field-error">${t('quotes.live.changed', { now: money(check.netNow), was: money(l.netCents) })}</small>` : ''}` : ''}</dt><dd>${money(l.netCents)}</dd></div>`;
         })}
         <div class="summary-total"><dt>${t('quotes.detail.yourRate')}</dt><dd>${money(q.net_cents)}</dd></div>
       </dl>
@@ -171,7 +172,7 @@ export function publicQuotePage(ctx, { q, done = '', error = '' }) {
   <div class="card pad">
     <h2 class="h-sub">${t('qp.services')}</h2>
     <dl class="summary-list">
-      ${view.lines.map((l) => html`<div><dt><strong>${l.title}</strong><br><small>${fmtDate(l.date, lang)} · ${l.when} · ${t('quote.pax', { n: l.pax })}</small>${l.meeting ? html`<br><small class="muted">${t('s.meeting')}: ${l.meeting}</small>` : ''}</dt><dd>${money(l.cents)}</dd></div>`)}
+      ${view.lines.map((l) => html`<div><dt><strong>${l.title}</strong><br><small>${fmtDate(l.date, lang)} · ${l.when} · ${t('quote.pax', { n: l.pax })}${partyExtra(l.party, lang)}</small>${l.meeting ? html`<br><small class="muted">${t('s.meeting')}: ${l.meeting}</small>` : ''}</dt><dd>${money(l.cents)}</dd></div>`)}
       <div class="summary-total"><dt>${t('quote.total')}</dt><dd>${money(view.totalCents)}</dd></div>
     </dl>
     <p class="small muted">${t('quote.valid')}: ${fmtDate(q.valid_until, lang)}</p>

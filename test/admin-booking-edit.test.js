@@ -349,7 +349,8 @@ test('pagine: la scheda ha il pulsante, l’anteprima mostra cosa cambia, si app
 
     const page = await text(await admin(`/admin/bookings/${bk.id}/edit`));
     assert.match(page, /Modifica la prenotazione/);
-    assert.match(page, /name="pax"[^>]*value="4"/);
+    assert.match(page, /name="adults" id="ed-party-adults"[^>]*value="4"/);
+    assert.match(page, /name="children" id="ed-party-children"[^>]*value="0"/);
     assert.match(page, new RegExp(`name="date"[^>]*value="${d}"`));
     assert.match(page, /name="priceMode" value="auto" checked/);
 
@@ -393,7 +394,7 @@ test('pagine: la scheda ha il pulsante, l’anteprima mostra cosa cambia, si app
     assert.equal(err.status, 400);
     const errPage = await text(err);
     assert.match(errPage, /Il prezzo non è valido/);
-    assert.match(errPage, /name="pax"[^>]*value="7"/);
+    assert.match(errPage, /name="adults" id="ed-party-adults"[^>]*value="7"/, 'i valori scritti restano nel modulo');
     assert.equal(getBooking(app.db, bk.id).participants, 6, 'nulla è cambiato');
 
     // una prenotazione annullata non si modifica

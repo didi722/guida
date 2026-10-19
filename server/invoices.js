@@ -7,6 +7,7 @@ import { formatGiftCode } from './pricing.js';
 import { addDays, fmtDate, isDate, nowRome } from './time.js';
 import { cleanText } from './util.js';
 import { normLang } from './langs.js';
+import { bookingPeople, bookingPeopleShort } from './party.js';
 import { parseServiceRecord, serviceNote } from './rates.js';
 import { vatWithoutPrefix } from './vat.js';
 
@@ -115,7 +116,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
       return {
         ...common,
         ref: b.ref,
-        label: `Penale di annullo · ${title} · ${fmtDate(b.date, 'it', 'short')} ${b.start_time} · ${b.participants} pers.`,
+        label: `Penale di annullo · ${title} · ${fmtDate(b.date, 'it', 'short')} ${b.start_time} · ${bookingPeopleShort(b)}`,
         date: cancelDate,
         served: true,
         channel: b.channel,
@@ -125,7 +126,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
         customer: acct ? acct.company : b.name,
         buyer: acct ? buyerFromAccount(acct) : buyerFromPerson(b.name, b.email, b.lang),
         hint: b.billing_json ? (JSON.parse(b.billing_json).text ?? null) : null,
-        description: `Penale di annullo – ${title} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${b.participants} ${b.participants === 1 ? 'persona' : 'persone'}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
+        description: `Penale di annullo – ${title} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${bookingPeople(b, 'it')}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
         amountCents: kept,
         payments: [{ method: paidPart ? ({ card: 'MP08', onsite: 'MP01', invoice: 'MP05' }[b.payment_method] ?? null) : 'MP05', cents: kept, paid: paidPart }],
         dueBy: addDays(cancelDate, 12),
@@ -144,7 +145,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
     return {
       ...common,
       ref: b.ref,
-      label: `${tour?.i18n.it.title ?? b.tour_slug} · ${fmtDate(b.date, 'it', 'short')} ${b.start_time} · ${b.participants} pers.`,
+      label: `${tour?.i18n.it.title ?? b.tour_slug} · ${fmtDate(b.date, 'it', 'short')} ${b.start_time} · ${bookingPeopleShort(b)}`,
       package: pkg?.ref ?? null,
       date: b.date,
       served,
@@ -155,7 +156,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
       customer: acct ? acct.company : b.name,
       buyer: acct ? buyerFromAccount(acct) : buyerFromPerson(b.name, b.email, b.lang),
       hint: b.billing_json ? (JSON.parse(b.billing_json).text ?? null) : null,
-      description: `${tour?.i18n.it.title ?? b.tour_slug} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${b.participants} ${b.participants === 1 ? 'persona' : 'persone'}${serviceNote(parseServiceRecord(b.service_json)) ? ` – ${serviceNote(parseServiceRecord(b.service_json))}` : ''}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
+      description: `${tour?.i18n.it.title ?? b.tour_slug} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${bookingPeople(b, 'it')}${serviceNote(parseServiceRecord(b.service_json)) ? ` – ${serviceNote(parseServiceRecord(b.service_json))}` : ''}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
       amountCents: cents,
       payments,
       dueBy: addDays(trigger, 12),

@@ -9,7 +9,7 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 /** Righe di dettaglio di un servizio: [etichetta, testo, {strong?, color?}]. */
 function detailLines(s) {
   const lines = [];
-  lines.push(['Persone', [plural(s.people, 'persona', 'persone'), s.tourLang, s.service].filter(Boolean).join(' · ')]);
+  lines.push(['Persone', [s.peopleLine, s.tourLang, s.service].filter(Boolean).join(' · ')]);
   if (s.meeting) lines.push(['Incontro', s.meeting]);
   if (s.theme) lines.push(['Tema', s.theme]);
   if (s.b2b) {

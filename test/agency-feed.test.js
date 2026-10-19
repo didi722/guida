@@ -11,7 +11,7 @@ import { cancelBooking, createBooking } from '../server/bookings.js';
 import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { createPackage, resolveLine } from '../server/packages.js';
-import { addDays, nowRome } from '../server/time.js';
+import { addDays, nowRome, toMin } from '../server/time.js';
 import { addAccount } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
@@ -145,8 +145,11 @@ test('contenuto: prenotazione confermata, opzione con scadenza, ordine e solo le
     assert.equal(exp.UID, `b${app.db.prepare('SELECT id FROM bookings WHERE ref = ?').get(opt.ref).id}-scadenza@localhost`);
     assert.match(exp.SUMMARY, /^⏰ Scade l’opzione · Cannaregio/);
     const expires = Date.parse(app.db.prepare('SELECT option_expires_at FROM bookings WHERE ref = ?').get(opt.ref).option_expires_at);
-    assert.equal(exp.DTSTART, stamp(Math.floor(expires / 60000) * 60000), 'il promemoria cade alla scadenza (al minuto)');
-    assert.equal(exp.DTEND, stamp(Math.floor(expires / 60000) * 60000 + 15 * 60000), 'dura un quarto d\'ora');
+    const startMs = Math.floor(expires / 60000) * 60000;
+    assert.equal(exp.DTSTART, stamp(startMs), 'il promemoria cade alla scadenza (al minuto)');
+    const startMin = toMin(nowRome(startMs).time);
+    const minutes = Math.min(23 * 60 + 59, startMin + 15) - startMin; // non passa la mezzanotte: nell'ultimo quarto d'ora del giorno dura meno
+    assert.equal(exp.DTEND, stamp(startMs + minutes * 60000), 'dura un quarto d\'ora (al massimo fino a fine giornata)');
     assert.equal(exp.URL, `http://localhost/it/b2b/bookings/${opt.ref}`);
 
     assert.ok(!/Altro cliente|Cliente B2C/.test(ics), 'nessuna prenotazione di altri');

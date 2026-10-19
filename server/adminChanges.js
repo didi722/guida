@@ -12,10 +12,11 @@
 // - incassata in altro modo, o pagata con buoni regalo: il prezzo non cambia.
 import { loadAvailabilityContext, slotsForDay } from './availability.js';
 import { bookingDue, getBooking } from './bookings.js';
-import { currentParams, movedTiers, policyBase } from './changes.js';
+import { askedParty, currentParams, movedTiers, policyBase } from './changes.js';
 import { tx } from './db.js';
 import { invoiceForSource } from './invoices.js';
 import { optionWindow } from './optionPolicy.js';
+import { sameParty } from './party.js';
 import { freeHoursOf, hasFreeTier, parseTiers, singleTier } from './policy.js';
 import { previewPricing } from './pricing.js';
 import { parseServiceRecord, serviceRecord } from './rates.js';
@@ -37,7 +38,7 @@ const fail = (error, extra = {}) => ({ ok: false, error, ...extra });
 
 /**
  * Valuta una modifica (senza scrivere nulla): regole, disponibilità, nuovo prezzo, differenza e rimborso.
- * @param {{pax?: number|string, date?: string, time?: string, hours?: number|string, extra?: number|string, priceMode?: 'auto'|'custom', priceCents?: number|null, force?: boolean, keepTerms?: boolean}} input
+ * @param {{party?: object, adults?: number|string, children?: number|string, infants?: number|string, pax?: number|string, date?: string, time?: string, hours?: number|string, extra?: number|string, priceMode?: 'auto'|'custom', priceCents?: number|null, force?: boolean, keepTerms?: boolean}} input
  *   i campi non indicati restano come sono; `priceMode` custom senza `priceCents` conferma il prezzo di adesso; `force` salta il controllo delle disponibilità;
  *   `keepTerms`: spostando la data le scadenze di annullo restano quelle di prima (di base ripartono dalla nuova data)
  * @returns {{ok: true, ...}|{ok: false, error: string}}
@@ -50,7 +51,7 @@ export function evaluateAdminChange(app, b, input = {}, nowMs = Date.now()) {
   if (!tour) return fail('invalid');
   const cur = currentParams(app, b);
   const asked = {
-    pax: input.pax ?? cur.pax,
+    ...askedParty(input, cur),
     date: input.date ?? cur.date,
     time: input.time ?? cur.time,
     hours: tour.chooseHours ? (input.hours ?? cur.hours) : null,
@@ -68,10 +69,10 @@ export function evaluateAdminChange(app, b, input = {}, nowMs = Date.now()) {
 
   // il prezzo: ricalcolato dal listino quando cambia qualcosa che conta, oppure scritto dalla guida
   const account = b.account_id ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
-  const auto = previewPricing(app, { tour, pax: p.pax, channel: b.channel, account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs, ignoreBookingId: b.id });
+  const auto = previewPricing(app, { tour, party: p.party, channel: b.channel, account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs, ignoreBookingId: b.id });
   if (auto.quote && !auto.quote.ok) return fail('invalid');
   const mode = input.priceMode === 'auto' || input.priceMode === 'custom' ? input.priceMode : b.custom_price ? 'custom' : 'auto';
-  const priceRelevant = p.pax !== b.participants || newDuration !== oldDuration || (tour.pricing === 'hourly' && !sameSlot);
+  const priceRelevant = !sameParty(p.party, cur.party) || newDuration !== oldDuration || (tour.pricing === 'hourly' && !sameSlot);
   let price;
   if (mode === 'custom') {
     const cents = input.priceCents ?? b.total_cents;
@@ -95,7 +96,7 @@ export function evaluateAdminChange(app, b, input = {}, nowMs = Date.now()) {
     } else if (b.payment_status === 'paid') return fail('paid');
   }
 
-  if (sameSlot && p.pax === b.participants && newDuration === oldDuration && price.totalCents === b.total_cents && price.custom === b.custom_price) return fail('nochange');
+  if (sameSlot && sameParty(p.party, cur.party) && newDuration === oldDuration && price.totalCents === b.total_cents && price.custom === b.custom_price) return fail('nochange');
 
   // la disponibilità: solo se cambia qualcosa che occupa posto; la guida può escluderla (ha già deciso lei)
   let slot = null;
@@ -122,7 +123,7 @@ export function evaluateAdminChange(app, b, input = {}, nowMs = Date.now()) {
     started,
     forced: !!input.force,
     from: { ...cur, end: b.end_time, totalCents: b.total_cents, dueCents: dueNow },
-    to: { pax: p.pax, date: p.date, time: p.time, end, hours: p.hours, extra: asked.extra, durationMin: p.durationMin, totalCents: price.totalCents, dueCents: dueNew },
+    to: { pax: p.pax, party: p.party, date: p.date, time: p.time, end, hours: p.hours, extra: asked.extra, durationMin: p.durationMin, totalCents: price.totalCents, dueCents: dueNew },
     price,
     quote: auto.quote,
     deltaCents,
@@ -133,7 +134,7 @@ export function evaluateAdminChange(app, b, input = {}, nowMs = Date.now()) {
   };
 }
 
-const snapshot = (b) => ({ pax: b.participants, date: b.date, time: b.start_time, end: b.end_time, totalCents: b.total_cents, hours: parseServiceRecord(b.service_json)?.hours ?? null, custom: !!b.custom_price });
+const snapshot = (b) => ({ pax: b.participants, children: b.children ?? 0, infants: b.infants ?? 0, date: b.date, time: b.start_time, end: b.end_time, totalCents: b.total_cents, hours: parseServiceRecord(b.service_json)?.hours ?? null, custom: !!b.custom_price });
 
 /**
  * Applica la modifica (una transazione) e la scrive nel registro delle modifiche. Lancia AdminChangeError se non si può.
@@ -149,10 +150,10 @@ export function modifyBookingAdmin(app, bookingId, input, { note = '' } = {}, no
     const { to, price } = ev;
     const now = iso(nowMs);
     db.prepare(
-      `UPDATE bookings SET participants = ?, date = ?, start_time = ?, end_time = ?, list_cents = ?, discount_cents = ?, total_cents = ?, custom_price = ?, service_json = ?,
+      `UPDATE bookings SET participants = ?, children = ?, infants = ?, date = ?, start_time = ?, end_time = ?, list_cents = ?, discount_cents = ?, total_cents = ?, custom_price = ?, service_json = ?,
          cancel_policy_json = ?, free_cancel_until = ?, option_expires_at = ?, modified_at = ? WHERE id = ?`,
     ).run(
-      to.pax, to.date, to.time, to.end, price.listCents, price.discountCents, price.totalCents, price.custom,
+      to.pax, to.party.children, to.party.infants, to.date, to.time, to.end, price.listCents, price.discountCents, price.totalCents, price.custom,
       ev.quote ? JSON.stringify(serviceRecord(ev.quote)) : b.service_json,
       JSON.stringify(ev.tiers), iso(ev.freeUntilMs), ev.expiresMs != null ? iso(ev.expiresMs) : null, now, b.id,
     );

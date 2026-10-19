@@ -615,13 +615,13 @@ test('CSV: BOM, a capo \\r\\n, «;» e virgola decimale, una riga per prenotazio
   assert.ok(csv.endsWith('\r\n') && !/[^\r]\n/.test(csv), 'a capo \\r\\n');
   const table = parseCsv(csv);
   assert.deepEqual(table[0], CSV_HEAD);
-  assert.equal(CSV_HEAD.length, 19);
+  assert.equal(CSV_HEAD.length, 21);
   assert.deepEqual(CSV_HEAD.slice(0, 4), ['Riferimento', 'Data servizio', 'Ora', 'Tour']);
   assert.equal(table.length - 1, 13, 'c1–c13: ogni stato, anche annullate, in attesa e scadute');
-  assert.ok(table.every((row) => row.length === 19));
+  assert.ok(table.every((row) => row.length === 21));
   const byRef = Object.fromEntries(table.slice(1).map((row) => [row[0], row]));
   const c4 = byRef[b.c4.ref];
-  assert.deepEqual(c4, [b.c4.ref, '2027-02-11', '09:30', 'Tour condiviso', 'Privato', '', '3', '105,00', '0,00', '50,00', '105,00', '55,00', 'Sul posto', 'Da incassare', 'Confermata', '0,00', '0,00', 'Italiano', '2027-01-04']);
+  assert.deepEqual(c4, [b.c4.ref, '2027-02-11', '09:30', 'Tour condiviso', 'Privato', '', '3', '105,00', '0,00', '50,00', '105,00', '55,00', 'Sul posto', 'Da incassare', 'Confermata', '0,00', '0,00', 'Italiano', '2027-01-04', '0', '0']);
   const c3 = byRef[b.c3.ref];
   assert.deepEqual([c3[7], c3[8], c3[10], c3[11], c3[12], c3[13], c3[17]], ['70,00', '7,00', '63,00', '63,00', 'Carta', 'Pagata', 'Español']);
   const c8 = byRef[b.c8.ref];
@@ -668,7 +668,7 @@ test('CSV: i testi inseriti da chiunque non si eseguono come formule e i separat
     const csv = bookingsCsv(x.db, parseFilters(FEB, { nowMs: NOW }), { nowMs: NOW, tourTitle: () => '=1+1' });
     const lines = csv.replace(/^\ufeff/, '').split('\r\n');
     const partners = lines.slice(1, 6).map((l) => splitRow(l));
-    assert.deepEqual(partners.map((row) => row.length), [19, 19, 19, 19, 19], 'le virgolette tengono insieme i «;» dentro un testo');
+    assert.deepEqual(partners.map((row) => row.length), [21, 21, 21, 21, 21], 'le virgolette tengono insieme i «;» dentro un testo');
     assert.deepEqual(
       partners.map((row) => row[5]),
       ['\'=HYPERLINK("http://evil.example";"clic")', 'Rossi; "Figli" srl', "'+39 Viaggi", "'-1 Tour", "'@somma"],

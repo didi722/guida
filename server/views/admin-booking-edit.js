@@ -1,10 +1,12 @@
 // Pannello › Prenotazione › Modifica: persone, data, orario, ore e prezzo, con l'anteprima di ciò che cambia (e di ciò che succede ai soldi).
 import { html, raw } from '../html.js';
 import { hourChoices } from '../changes.js';
+import { adultsOnly, partyCompact, readPartyOr, sameParty } from '../party.js';
 import { fmtDate, fmtInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { hoursLabel } from './components.js';
 import { adminLayout } from './admin.js';
+import { ADMIN_CTX, partyField } from './fields.js';
 import { makeT } from '../i18n.js';
 
 const t = makeT('it');
@@ -35,7 +37,9 @@ const PAY_HOW = { invoice: 'a fattura', onsite: 'sul posto', card: 'con carta', 
 export function editValues(app, b, cur, over = {}) {
   const tour = app.content.tour(b.tour_slug);
   return {
-    pax: String(cur.pax),
+    adults: String(cur.party.adults),
+    children: String(cur.party.children),
+    infants: String(cur.party.infants),
     date: cur.date,
     time: cur.time,
     hours: tour?.chooseHours && cur.hours != null ? String(cur.hours) : '',
@@ -56,7 +60,7 @@ function previewBox(b, p) {
   if (!p.ok) return html`<div class="notice notice-err" role="alert">${EDIT_ERRORS[p.error === 'option' && p.reason === 'period' ? 'optionPeriod' : p.error] ?? 'La modifica non è possibile.'}${p.reason && p.reason !== 'period' ? html` <small>(${p.reason})</small>` : ''}</div>`;
   const cur = b.currency;
   const rows = [
-    ['Persone', `${p.from.pax} → ${p.to.pax}`, p.from.pax !== p.to.pax],
+    ['Persone', `${partyCompact(p.from.party)} → ${partyCompact(p.to.party)}`, !sameParty(p.from.party, p.to.party)],
     ['Data', `${fmtDate(p.from.date, 'it', 'short')} → ${fmtDate(p.to.date, 'it', 'short')}`, p.from.date !== p.to.date],
     ['Orario', `${p.from.time}–${p.from.end} → ${p.to.time}–${p.to.end}`, p.from.time !== p.to.time || p.from.end !== p.to.end],
     ['Totale', `${eur(p.from.totalCents, cur)} → ${eur(p.to.totalCents, cur)}${p.price.custom ? ' (prezzo concordato)' : ''}`, p.from.totalCents !== p.to.totalCents || !!p.price.custom !== !!b.custom_price],
@@ -90,7 +94,7 @@ export function bookingEditPage(ctx, b, { values: v, preview = null, error = '' 
 ${previewBox(b, preview)}
 <form class="card pad form" method="post" action="${base}/edit">
   <div class="form-grid">
-    <label class="field"><span class="label">Persone</span><input type="number" name="pax" min="1" max="${tour?.maxParticipants ?? 99}" required value="${v.pax}"></label>
+    <div class="span-2">${partyField(ADMIN_CTX, { party: readPartyOr(v, adultsOnly(1), { max: tour?.maxParticipants ?? 99 }), max: tour?.maxParticipants ?? 99, priced: tour?.model === 'person' && tour?.pricing !== 'hourly', id: 'ed-party', label: 'Persone' })}</div>
     <label class="field"><span class="label">Data</span><input type="date" name="date" required value="${v.date}"></label>
     ${times
       ? html`<label class="field"><span class="label">Orario</span><select name="time">${times.map((x) => html`<option value="${x}" ${x === v.time ? raw('selected') : ''}>${x}</option>`)}</select></label>`

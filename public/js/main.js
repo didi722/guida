@@ -85,10 +85,16 @@
 
   // Campi che ricaricano la pagina quando cambiano (per esempio persone, data e ore nella modifica di una prenotazione)
   document.querySelectorAll('[data-autosubmit]').forEach(function (el) {
-    el.addEventListener('change', function () {
+    var wait = 0;
+    var go = function () {
       var f = el.form;
       if (!f) return;
       if (f.requestSubmit) f.requestSubmit(); else f.submit();
+    };
+    el.addEventListener('change', function () {
+      if (!el.hasAttribute('data-party')) return go();
+      clearTimeout(wait); // adulti, bambini, infanti: più tocchi ravvicinati su − e + fanno un solo invio
+      wait = setTimeout(go, 500);
     });
   });
 

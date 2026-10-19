@@ -201,7 +201,7 @@ export function bookingsCsv(rows, { content, statusLabel, head }) {
   };
   const money = (c) => (c / 100).toFixed(2).replace('.', ',');
   const lines = rows.map((b) =>
-    [b.ref, b.client_ref, b.name, content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug, b.date, b.start_time, b.participants, statusLabel(b), b.created_at.slice(0, 10), money(b.total_cents - (b.gift_cents ?? 0)), b.invoice?.number ?? '', b.booked_by_name ?? ''].map(cell).join(';'),
+    [b.ref, b.client_ref, b.name, content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug, b.date, b.start_time, b.participants, b.children ?? 0, b.infants ?? 0, statusLabel(b), b.created_at.slice(0, 10), money(b.total_cents - (b.gift_cents ?? 0)), b.invoice?.number ?? '', b.booked_by_name ?? ''].map(cell).join(';'),
   );
   return `﻿${[head.join(';'), ...lines].join('\r\n')}\r\n`;
 }

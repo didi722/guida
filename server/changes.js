@@ -12,6 +12,7 @@ import { cancellationState, getBooking } from './bookings.js';
 import { tx } from './db.js';
 import { invoiceForSource } from './invoices.js';
 import { optionWindow } from './optionPolicy.js';
+import { adultsOnly, partyOfBooking, partyParams, sameParty } from './party.js';
 import { freeHoursOf, hasFreeTier, parseTiers, refundPercentAt, singleTier } from './policy.js';
 import { previewPricing } from './pricing.js';
 import { extraHourOptions, hourOptions, parseServiceRecord, serviceRecord } from './rates.js';
@@ -35,7 +36,18 @@ export function currentParams(app, b) {
   const tour = app.content.tour(b.tour_slug);
   const hours = parseServiceRecord(b.service_json)?.hours ?? null;
   const fixed = tour?.pricing === 'hourly' && !tour.chooseHours ? tour.durationMin / 60 : null; // durata fissa, con eventuali ore in più
-  return { pax: b.participants, date: b.date, time: b.start_time, hours: tour?.chooseHours ? hours : null, extra: fixed != null && hours != null ? Math.max(0, hours - fixed) : 0 };
+  return { pax: b.participants, party: partyOfBooking(b), date: b.date, time: b.start_time, hours: tour?.chooseHours ? hours : null, extra: fixed != null && hours != null ? Math.max(0, hours - fixed) : 0 };
+}
+
+/**
+ * Le persone che chiede una modifica, come campi di modulo: `party` (adulti, bambini, infanti), oppure i campi `adults`, `children` e `infants`,
+ * oppure solo `pax` (tutte adulte); se non c'è nulla restano quelle di adesso.
+ */
+export function askedParty(input, cur) {
+  if (input.party) return partyParams(input.party);
+  if (['adults', 'children', 'infants'].some((k) => input[k] != null)) return { adults: input.adults ?? '0', children: input.children ?? '0', infants: input.infants ?? '0' };
+  if (input.pax != null) return partyParams(adultsOnly(Number(input.pax)));
+  return partyParams(cur.party);
 }
 
 /** Le durate che l'agenzia può scegliere per questo servizio: [] se non ha ore da scegliere. */
@@ -92,7 +104,7 @@ export function movedTiers(b, newStartMs) {
 
 /**
  * Valuta una modifica proposta (senza scrivere nulla): regole, disponibilità, nuovo prezzo, nuove scadenze.
- * @param {{pax?: number|string, date?: string, time?: string, hours?: number|string, extra?: number|string}} input i campi non indicati restano come sono
+ * @param {{party?: object, adults?: number|string, children?: number|string, infants?: number|string, pax?: number|string, date?: string, time?: string, hours?: number|string, extra?: number|string}} input i campi non indicati restano come sono
  * @returns {{ok: true, ...}|{ok: false, error: string, rules: object}}
  */
 export function evaluateChange(app, b, input, nowMs = Date.now()) {
@@ -103,7 +115,7 @@ export function evaluateChange(app, b, input, nowMs = Date.now()) {
   const account = db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id);
   const cur = currentParams(app, b);
   const asked = {
-    pax: input.pax ?? cur.pax,
+    ...askedParty(input, cur),
     date: input.date ?? cur.date,
     time: input.time ?? cur.time,
     hours: tour.chooseHours ? (input.hours ?? cur.hours) : null,
@@ -115,21 +127,21 @@ export function evaluateChange(app, b, input, nowMs = Date.now()) {
   const oldDuration = toMin(b.end_time) - toMin(b.start_time);
   const newDuration = p.durationMin ?? tour.durationMin;
   const sameSlot = p.date === b.date && p.time === b.start_time;
-  if (sameSlot && p.pax === b.participants && newDuration === oldDuration) return { ok: false, error: 'nochange', rules };
+  if (sameSlot && sameParty(p.party, cur.party) && newDuration === oldDuration) return { ok: false, error: 'nochange', rules };
   if (startMs <= nowMs) return { ok: false, error: 'invalid', rules };
 
-  // dopo il periodo gratuito: solo aumenti, sullo stesso orario
+  const pricing = previewPricing(app, { tour, party: p.party, channel: 'b2b', account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs, ignoreBookingId: b.id });
+  if (pricing.quote && !pricing.quote.ok) return { ok: false, error: 'invalid', rules };
+
+  // dopo il periodo gratuito: solo aumenti, sullo stesso orario (né meno persone né meno ore, né un conto più basso)
   if (rules.mode === 'increase') {
     if (!sameSlot) return { ok: false, error: 'moveLocked', rules };
-    if (p.pax < b.participants || newDuration < oldDuration) return { ok: false, error: 'reduceLocked', rules };
+    if (p.pax < b.participants || newDuration < oldDuration || pricing.totalCents < b.total_cents) return { ok: false, error: 'reduceLocked', rules };
   }
 
   const ctx = loadAvailabilityContext(db, cfg, p.date, p.date, nowMs);
   const slot = slotsForDay(ctx, cfg, tour, p.date, { pax: p.pax, channel: 'b2b', nowMs, ignoreId: b.id, skipNotice: sameSlot, durationMin: p.durationMin, tourLang: b.tour_lang || null }).find((s) => s.time === p.time);
   if (!slot) return { ok: false, error: 'unavailable', rules };
-
-  const pricing = previewPricing(app, { tour, pax: p.pax, channel: 'b2b', account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs, ignoreBookingId: b.id });
-  if (pricing.quote && !pricing.quote.ok) return { ok: false, error: 'invalid', rules };
 
   // le scadenze di annullo (se si sposta la data) e, per un'opzione, la scadenza dell'opzione
   const dateChanged = !sameSlot;
@@ -146,7 +158,7 @@ export function evaluateChange(app, b, input, nowMs = Date.now()) {
     rules,
     dateChanged,
     from: { ...cur, end: b.end_time, totalCents: b.total_cents },
-    to: { pax: p.pax, date: p.date, time: p.time, end: slot.end, hours: p.hours, extra: asked.extra, durationMin: p.durationMin, totalCents: pricing.totalCents },
+    to: { pax: p.pax, party: p.party, date: p.date, time: p.time, end: slot.end, hours: p.hours, extra: asked.extra, durationMin: p.durationMin, totalCents: pricing.totalCents },
     pricing,
     slot,
     deltaCents: pricing.totalCents - b.total_cents,
@@ -168,7 +180,7 @@ export function changeSlots(app, b, input, nowMs = Date.now()) {
   const tour = app.content.tour(b.tour_slug);
   const cur = currentParams(app, b);
   const date = input.date ?? cur.date;
-  const base = { pax: input.pax ?? cur.pax, hours: tour.chooseHours ? (input.hours ?? cur.hours) : null, extra: tour.pricing === 'hourly' && !tour.chooseHours ? (input.extra ?? cur.extra) : 0 };
+  const base = { ...askedParty(input, cur), hours: tour.chooseHours ? (input.hours ?? cur.hours) : null, extra: tour.pricing === 'hourly' && !tour.chooseHours ? (input.extra ?? cur.extra) : 0 };
   const probe = readSlot(app, { tour: b.tour_slug, ...base, date, time: b.start_time }, 'b2b');
   if (!probe) return [];
   const account = db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id);
@@ -179,14 +191,14 @@ export function changeSlots(app, b, input, nowMs = Date.now()) {
   const all = [...normal, ...own.filter((s) => !normal.some((x) => x.time === s.time))].sort((a, c) => a.time.localeCompare(c.time));
   return all.map((s) => {
     const ev = evaluateChange(app, b, { ...base, date, time: s.time }, nowMs);
-    const pricing = previewPricing(app, { tour, pax: probe.pax, channel: 'b2b', account, date, time: s.time, hours: probe.hours, earpieces: probe.earpieces, nowMs, ignoreBookingId: b.id });
+    const pricing = previewPricing(app, { tour, party: probe.party, channel: 'b2b', account, date, time: s.time, hours: probe.hours, earpieces: probe.earpieces, nowMs, ignoreBookingId: b.id });
     // con questa data la cancellazione gratuita varrebbe ancora? (spostare prima avvicina i termini)
     const percent = ev.ok ? refundPercentAt(ev.tiers, localToInstant(date, s.time), nowMs) : null;
     return { time: s.time, end: s.end, left: s.left, totalCents: pricing.totalCents, deltaCents: pricing.totalCents - b.total_cents, current: date === b.date && s.time === b.start_time, ok: ev.ok || ev.error === 'nochange', error: ev.ok ? undefined : ev.error, percent };
   });
 }
 
-const snapshot = (b) => ({ pax: b.participants, date: b.date, time: b.start_time, end: b.end_time, totalCents: b.total_cents, hours: parseServiceRecord(b.service_json)?.hours ?? null });
+const snapshot = (b) => ({ pax: b.participants, children: b.children ?? 0, infants: b.infants ?? 0, date: b.date, time: b.start_time, end: b.end_time, totalCents: b.total_cents, hours: parseServiceRecord(b.service_json)?.hours ?? null });
 
 /**
  * Applica la modifica (una transazione). Lancia ChangeError se non si può.
@@ -202,10 +214,10 @@ export function modifyBooking(app, bookingId, input, { by = 'customer' } = {}, n
     const { to, pricing } = ev;
     const now = iso(nowMs);
     db.prepare(
-      `UPDATE bookings SET participants = ?, date = ?, start_time = ?, end_time = ?, list_cents = ?, discount_cents = ?, total_cents = ?, service_json = ?,
+      `UPDATE bookings SET participants = ?, children = ?, infants = ?, date = ?, start_time = ?, end_time = ?, list_cents = ?, discount_cents = ?, total_cents = ?, service_json = ?,
          cancel_policy_json = ?, free_cancel_until = ?, option_expires_at = ?, modified_at = ? WHERE id = ?`,
     ).run(
-      to.pax, to.date, to.time, to.end, pricing.listCents, pricing.discountCents, pricing.totalCents,
+      to.pax, to.party.children, to.party.infants, to.date, to.time, to.end, pricing.listCents, pricing.discountCents, pricing.totalCents,
       pricing.quote ? JSON.stringify(serviceRecord(pricing.quote)) : null,
       JSON.stringify(ev.tiers), iso(ev.freeUntilMs), ev.expiresMs != null ? iso(ev.expiresMs) : null, now, b.id,
     );

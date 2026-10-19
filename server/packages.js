@@ -29,7 +29,7 @@ const iso = (ms) => new Date(ms).toISOString();
 
 // ───────────── il pacchetto in preparazione (carrello) ─────────────
 /** I campi che si conservano per ogni servizio aggiunto (con la lunghezza massima). I dati di contatto servono da proposta nel modulo finale. */
-const LINE_FIELDS = { tour: 80, date: 10, time: 5, pax: 3, hours: 6, extra: 3, tourLang: 5, theme: 8, themeNote: 500, pickup: 200, name: 120, email: 200, phone: 40, lang: 5, clientRef: 120, notes: 1000 };
+const LINE_FIELDS = { tour: 80, date: 10, time: 5, pax: 3, adults: 3, children: 3, infants: 3, hours: 6, extra: 3, tourLang: 5, theme: 8, themeNote: 500, pickup: 200, name: 120, email: 200, phone: 40, lang: 5, clientRef: 120, notes: 1000 };
 
 /** Dal modulo ai soli campi che si conservano per un servizio del pacchetto. */
 export function cleanLine(src = {}) {
@@ -129,7 +129,7 @@ export function cartSummary(app, account, nowMs = Date.now(), userId = null) {
     if (!p) return line;
     line.slot = openSlotOf(app, p, nowMs);
     line.reason = line.slot ? null : 'unavailable';
-    line.pricing = previewPricing(app, { tour: p.tour, pax: p.pax, channel: 'b2b', account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs });
+    line.pricing = previewPricing(app, { tour: p.tour, party: p.party, channel: 'b2b', account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs });
     line.startMs = localToInstant(p.date, p.time);
     line.option = optionWindow({ options: cfg.options, account, startMs: line.startMs, nowMs });
     line.firm = firmTiers({ options: cfg.options, tiers: policyFor(cfg, p.tour, 'b2b', account, p.date), startMs: line.startMs, nowMs });
@@ -253,7 +253,7 @@ export function createPackage(app, account, lines, common, nowMs = Date.now()) {
         createBooking(
           app,
           {
-            tourSlug: line.tour.slug, date: line.date, time: line.time, pax: line.pax, hours: line.hours, earpieces: line.earpieces,
+            tourSlug: line.tour.slug, date: line.date, time: line.time, pax: line.pax, party: line.party, hours: line.hours, earpieces: line.earpieces,
             tourLang: line.tourLang, theme: line.theme, themeNote: line.themeNote, pickup: line.pickup,
             channel: 'b2b', account, name, email, phone: group.phone, lang: group.lang, clientRef: group.client_ref, notes: group.notes, billing,
             paymentMethod: common.paymentMethod, option: wantsOption, optionExpiresMs, skipOptionLimit: true, groupId, bookedBy: common.bookedBy,

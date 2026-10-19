@@ -3,6 +3,7 @@ import { tx } from './db.js';
 import { daySlots, loadAvailabilityContext, slotsForDay } from './availability.js';
 import { fromMin, isDate, isTime, localToInstant, toMin } from './time.js';
 import { openTo, serviceRecord } from './rates.js';
+import { adultsOnly, isValidParty, partyTotal } from './party.js';
 import { previewPricing, priceFor, redeemGifts, reserveGiftsAgain, restoreGifts, unitPriceFor } from './pricing.js';
 import { cleanText, isEmail, newRef, newToken } from './util.js';
 import { LANGS, normLang } from './langs.js';
@@ -85,8 +86,9 @@ export function createBooking(app, input, nowMs = Date.now()) {
   const account = input.account ?? null;
   if (channel === 'b2b' && account?.status !== 'approved') throw new BookingError('account', 'account not approved');
 
-  const pax = Number(input.pax);
-  if (!Number.isInteger(pax) || pax < 1 || pax > tour.maxParticipants) throw new BookingError('invalid', 'participants');
+  const party = input.party ?? adultsOnly(Number(input.pax)); // senza composizione: tutti adulti
+  if (!isValidParty(party, tour.maxParticipants)) throw new BookingError('invalid', 'participants');
+  const pax = partyTotal(party); // il totale occupa i posti; il prezzo a persona viene dalla composizione
   if (!isDate(input.date) || !isTime(input.time)) throw new BookingError('invalid', 'datetime');
 
   const name = cleanText(input.name, 120);
@@ -105,7 +107,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
     const ctx = loadAvailabilityContext(db, cfg, input.date, input.date, nowMs);
     // servizi a ore: la durata è quella scelta (o fissa del tour) e il prezzo viene dalle tariffe a ore
     const quoteInput = { hours: input.hours, earpieces: !!input.earpieces };
-    const pricing = previewPricing(app, { tour, pax, channel, account, date: input.date, time: input.time, ...quoteInput, email, promoCode: input.promoCode, giftCodes: input.giftCodes, nowMs });
+    const pricing = previewPricing(app, { tour, pax, party, channel, account, date: input.date, time: input.time, ...quoteInput, email, promoCode: input.promoCode, giftCodes: input.giftCodes, nowMs });
     if (pricing.quote && !pricing.quote.ok) throw new BookingError('invalid', `hours (${pricing.quote.reason})`);
     const durationMin = pricing.quote ? Math.round(pricing.quote.hours * 60) : null;
 
@@ -161,6 +163,8 @@ export function createBooking(app, input, nowMs = Date.now()) {
       end_time: slot.end,
       buffer_min: cfg.policy.bufferMin,
       participants: pax,
+      children: party.children,
+      infants: party.infants,
       channel,
       account_id: account?.id ?? null,
       group_id: input.groupId ?? null,

@@ -17,8 +17,13 @@ const numOr = (v) => {
   const n = Number(v);
   return v !== '' && v != null && Number.isFinite(n) ? n : undefined;
 };
-/** Dal modulo ai soli campi che si possono cambiare (quelli non validi o assenti restano come sono). */
-const readChange = (src = {}) => ({ pax: intOr(src.pax), date: isDate(src.date) ? src.date : undefined, time: isTime(src.time) ? src.time : undefined, hours: numOr(src.hours), extra: numOr(src.extra) });
+/** Dal modulo ai soli campi che si possono cambiare (quelli non validi o assenti restano come sono). Le persone: adulti, bambini e infanti, oppure solo `pax` (tutte adulte). */
+const readChange = (src = {}) => {
+  const out = { date: isDate(src.date) ? src.date : undefined, time: isTime(src.time) ? src.time : undefined, hours: numOr(src.hours), extra: numOr(src.extra) };
+  if (['adults', 'children', 'infants'].some((k) => src[k] != null && src[k] !== '')) Object.assign(out, { adults: String(src.adults ?? ''), children: String(src.children ?? ''), infants: String(src.infants ?? '') });
+  else out.pax = intOr(src.pax);
+  return out;
+};
 
 export function changesRouter(app) {
   const r = express.Router();

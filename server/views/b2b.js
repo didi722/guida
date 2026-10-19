@@ -4,6 +4,7 @@ import { maxActiveOptions, normalizeOptionTiers } from '../optionPolicy.js';
 import { PARTNER_VIEWS, hasSearch, isDone } from '../partner.js';
 import { accountTiers, hasOwnPolicy } from '../policy.js';
 import { localeOf } from '../langs.js';
+import { partyCompact, partyOfBooking } from '../party.js';
 import { isSimplePolicy, tierSentencesHours } from '../policyText.js';
 import { daysInMonth, fmtDate, fmtInstant, fmtMonth, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
@@ -213,7 +214,7 @@ function agencyCalendar(ctx, cal) {
   ${selectedItems.length
     ? html`<div class="card">${selectedItems.map((b) => html`<a class="agenda-item" href="${u(`/b2b/bookings/${b.ref}`)}">
       <span class="agenda-time"><strong>${b.start_time}</strong><small>${b.end_time}</small></span>
-      <span class="agenda-main"><strong>${b.client_ref || b.name}</strong><small>${title(b)} · ${b.participants} · ${b.client_ref ? `${b.name} · ` : ''}${b.ref}</small></span>
+      <span class="agenda-main"><strong>${b.client_ref || b.name}</strong><small>${title(b)} · ${partyCompact(partyOfBooking(b))} · ${b.client_ref ? `${b.name} · ` : ''}${b.ref}</small></span>
       <span class="agenda-state">${statusChip(ctx, b)}</span>
     </a>`)}</div>`
     : html`<p class="muted">${t('partner.cal.none')}</p>`}</section>`;
@@ -358,7 +359,7 @@ export function bookingsPage(ctx, { acct, team = false, filters, list, summary, 
           <td data-label="${t('partner.col.file')}"><a class="pb-title" href="${detail(b)}">${b.client_ref || b.name}</a><small class="muted">${b.client_ref ? `${b.name} · ` : ''}${b.ref}${b.group_ref ? html` · <a href="${u(`/b2b/packages/${b.group_ref}`)}">${t('pkg.chip', { ref: b.group_ref })}</a>` : ''}</small>${team && b.booked_by_name ? html`<small class="muted">${t('partner.by', { name: b.booked_by_name })}</small>` : ''}</td>
           <td data-label="${t('s.service')}">${tour?.i18n[lang].title ?? b.tour_slug}<small class="muted">${b.start_time}–${b.end_time}</small></td>
           <td data-label="${t('s.date')}"><strong>${fmtDate(b.date, lang, 'short')}</strong><small class="muted">${t('partner.bookedOn', { date: fmtDate(nowRome(Date.parse(b.created_at)).date, lang, 'short') })}</small></td>
-          <td class="num" data-label="${t('s.guests')}">${b.participants}</td>
+          <td class="num" data-label="${t('s.guests')}">${partyCompact(partyOfBooking(b))}</td>
           <td data-label="${t('b2b.state')}">${statusChip(ctx, b)}</td>
           <td class="num" data-label="${t('s.total')}">${formatMoney(b.total_cents, lang, b.currency)}</td>
           <td class="pb-actions"><div class="pb-actions-in">

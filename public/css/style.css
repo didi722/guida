@@ -346,6 +346,25 @@ textarea { resize: vertical; min-height: 90px; }
 .stepper button { width: 44px; height: 42px; border: 0; background: transparent; font-size: 1.4rem; cursor: pointer; color: var(--accent-text); font-family: inherit; }
 .stepper button:hover { background: var(--gold-soft); }
 .stepper output { min-width: 36px; text-align: center; font-weight: 700; font-size: 1.1rem; }
+/* adulti, bambini e infanti: tre righe con − e + (public/js/party.js); senza JavaScript restano le caselle numeriche */
+.party { border: 0; margin: 0 0 14px; padding: 0; min-width: 0; }
+.party legend { padding: 0; float: none; }
+.party-rows { display: grid; gap: 8px; }
+.party-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 8px 8px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--field); }
+.party-name { display: block; margin: 0; font-weight: 700; line-height: 1.25; cursor: pointer; }
+.party-name small { display: block; font-weight: 400; font-size: 0.8rem; color: var(--muted); letter-spacing: 0; text-transform: none; }
+.party-stepper { display: inline-flex; align-items: center; flex: none; }
+.party-stepper button { width: 38px; height: 38px; border: 1.5px solid var(--line); border-radius: 50%; background: var(--card); color: var(--accent-text); font: inherit; font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0; display: inline-grid; place-items: center; }
+.party-stepper button:hover:not(:disabled) { background: var(--gold-soft); border-color: var(--bronze); }
+.party-stepper button:disabled { opacity: 0.35; cursor: default; }
+.party-stepper input { width: 3.2em; min-width: 0; height: 38px; border: 0; background: transparent; text-align: center; font-weight: 700; font-size: 1.1rem; padding: 0 2px; margin: 0; box-shadow: none; }
+.party.is-ready .party-stepper input { -moz-appearance: textfield; appearance: textfield; }
+.party.is-ready .party-stepper input::-webkit-outer-spin-button, .party.is-ready .party-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.party-total { margin: 8px 2px 0; font-size: 0.9rem; font-weight: 700; color: var(--ink); }
+.party-note { margin: 4px 2px 0; }
+.party-compact .party-row { padding: 6px 6px 6px 12px; }
+.party-compact .party-stepper button, .party-compact .party-stepper input { height: 34px; }
+.party-compact .party-stepper button { width: 34px; }
 .cal { margin: 6px 0 14px; transition: opacity 0.2s; } .cal.is-loading { opacity: 0.55; }
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .cal-title { text-transform: capitalize; font-size: 1.05rem; }
@@ -795,6 +814,7 @@ body.admin { --header-h: 64px; }
 .hourly-hint a { white-space: nowrap; }
 @media (max-width: 900px) { .choice-grid { grid-template-columns: 1fr; gap: 20px; } .choice-body { padding: 18px 18px 20px; } }
 .summary-list .pax-select { width: auto; min-width: 4.5em; padding: 6px 30px 6px 12px; margin: 0; font-size: 1rem; }
+.summary-list > .summary-party { display: block; padding: 12px 0 2px; } .summary-list > .summary-party .party { margin: 0 0 10px; } .summary-list .summary-party .label { color: var(--muted); font-size: 0.9rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
 .summary-list dt label { cursor: pointer; }
 
 /* Admin: impostazioni */

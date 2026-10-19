@@ -5,6 +5,7 @@
 import { MARKUP_MAX, ROUNDS, buildQuote, parseMarkup, parseRound, readProfile } from './agencyDocs.js';
 import { meetingOf } from './choices.js';
 import { LANGS, normLang, pick } from './langs.js';
+import { partyOfBooking } from './party.js';
 import { PackageError, cartAdd, cartSummary, openSlotOf, resolveLine } from './packages.js';
 import { previewPricing } from './pricing.js';
 import { serviceRecord, timeRange } from './rates.js';
@@ -79,6 +80,8 @@ export function createQuote(app, account, actor, input, nowMs = Date.now()) {
     time: l.p.time,
     endTime: l.slot.end,
     pax: l.p.pax,
+    children: l.p.party.children,
+    infants: l.p.party.infants,
     pickup: l.p.pickup || '',
     service: l.pricing.quote?.ok ? serviceRecord(l.pricing.quote) : null,
     netCents: l.pricing.totalCents,
@@ -124,6 +127,8 @@ function virtualBookings(q) {
     start_time: l.time,
     end_time: l.endTime,
     participants: l.pax,
+    children: l.children ?? 0,
+    infants: l.infants ?? 0,
     status: 'option',
     channel: 'b2b',
     pickup: l.pickup || null,
@@ -147,7 +152,7 @@ export function clientView(app, q, lang = normLang(q.lang)) {
     const tour = app.content.tour(b.tour_slug);
     const ti = tour ? pick(tour.i18n, lang) : { title: b.tour_slug, includes: [] };
     const meet = tour ? meetingOf(tour, b, lang) : { text: '' };
-    return { title: ti.title, date: b.date, when: timeRange(b, lang), pax: b.participants, meeting: meet.text, included: (ti.includes ?? []).slice(0, 5), cents };
+    return { title: ti.title, date: b.date, when: timeRange(b, lang), pax: b.participants, party: partyOfBooking(b), meeting: meet.text, included: (ti.includes ?? []).slice(0, 5), cents };
   });
   return { lines, totalCents: built.totalCents };
 }
@@ -180,7 +185,7 @@ export function liveCheck(app, account, q, nowMs = Date.now()) {
     const p = resolveLine(app, l.src);
     if (!p) return { ok: false, netNow: null, changed: false };
     const ok = !!openSlotOf(app, p, nowMs);
-    const netNow = previewPricing(app, { tour: p.tour, pax: p.pax, channel: 'b2b', account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs }).totalCents;
+    const netNow = previewPricing(app, { tour: p.tour, party: p.party, channel: 'b2b', account, date: p.date, time: p.time, hours: p.hours, earpieces: p.earpieces, nowMs }).totalCents;
     return { ok, netNow, changed: netNow !== l.netCents };
   });
   return { ok: lines.every((l) => l.ok), netNow: lines.reduce((s, l) => s + (l.netNow ?? 0), 0), lines };

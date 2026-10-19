@@ -15,10 +15,14 @@
     btn.classList.add('is-busy');
     if (optionBtn) optionBtn.classList.add('is-busy');
   });
-  // cambio del numero di persone: ricalcola prezzo e posti tenendo i dati già scritti
-  var pax = document.getElementById('pax-select');
+  // cambio delle persone (adulti, bambini, infanti): ricalcola prezzo e posti tenendo i dati già scritti; più tocchi ravvicinati su − e + fanno una ricarica sola
+  var party = document.querySelector('[data-party]');
   var apply = document.getElementById('pax-apply');
-  if (pax && apply && form) pax.addEventListener('change', function () { if (form.requestSubmit) form.requestSubmit(apply); else apply.click(); });
+  var again = 0;
+  if (party && apply && form) party.addEventListener('change', function () {
+    clearTimeout(again);
+    again = setTimeout(function () { if (form.requestSubmit) form.requestSubmit(apply); else apply.click(); }, 600);
+  });
   // altri campi che cambiano il prezzo (auricolari nei servizi a ore)
   document.querySelectorAll('[data-apply]').forEach(function (el) {
     if (apply && form) el.addEventListener('change', function () { if (form.requestSubmit) form.requestSubmit(apply); else apply.click(); });

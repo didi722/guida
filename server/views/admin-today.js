@@ -31,7 +31,7 @@ export function dayPage(ctx, { sheet, flash = '' }) {
       <h3>${s.title}</h3>
       ${s.confirmed ? '' : html`<span class="chip chip-warn">Opzione</span>`}${s.collectCents ? html`<span class="chip chip-err">Da incassare ${eur(s.collectCents)}</span>` : ''}</header>
     <dl class="summary-list">
-      ${row('Persone', [plural(s.people, 'persona', 'persone'), s.tourLang, s.service].filter(Boolean).join(' · '))}
+      ${row('Persone', [s.peopleLine, s.tourLang, s.service].filter(Boolean).join(' · '))}
       ${s.meeting ? html`<div><dt>Incontro</dt><dd>${s.meeting}${s.meetingUrl ? html` · <a href="${s.meetingUrl}" target="_blank" rel="noopener">mappa</a>` : ''}</dd></div>` : ''}
       ${row('Tema', s.theme)}
       ${s.b2b ? html`${row('Agenzia', [s.agency, s.agencyContact].filter(Boolean).join(' · '))}${row('Cliente', [s.clientRef, s.name, s.phone].filter(Boolean).join(' · '))}` : row('Cliente', [s.name, s.phone, s.email].filter(Boolean).join(' · '))}
