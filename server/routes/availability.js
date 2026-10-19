@@ -77,7 +77,7 @@ export function availabilityRouter(app) {
   r.post('/b2b/waitlist', needPartner, form, async (req, res) => {
     if (!app.limits.booking(ip(req))) return tooMany(res);
     try {
-      await app.waitlist.join(req.acct, req.body, Date.now());
+      await app.waitlist.join(req.acct, req.body, Date.now(), req.actor?.userId ?? null); // l'avviso arriva a chi l'ha chiesto
     } catch (e) {
       if (!(e instanceof WaitlistError)) throw e;
       return back(req, res, `err-${e.code}`);

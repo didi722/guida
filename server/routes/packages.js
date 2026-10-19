@@ -6,6 +6,7 @@ import { icsForPackage } from '../emails.js';
 import { send, tooMany } from '../http.js';
 import { LANGS, normLang } from '../langs.js';
 import { PackageError, cartAdd, cartClear, cartRemove, cartSummary, getPackageByRef, packageBookings, MAX_PACKAGE_LINES } from '../packages.js';
+import { bookedBy } from '../team.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
 import { packageCartPage, packagePage } from '../views/packages.js';
 import { needPartner, safeNext } from './guards.js';
@@ -22,6 +23,9 @@ export function packagesRouter(app) {
     next();
   });
 
+  /** Il pacchetto in preparazione è personale: vuoto per il titolare, l'id del collaboratore per gli altri. */
+  const uid = (req) => req.actor?.userId ?? null;
+
   const errorText = (t, e) => {
     if (e.code === 'full') return t('pkg.err.full', { n: MAX_PACKAGE_LINES });
     if (e.code === 'option') return t(`option.err.${['tooClose', 'limit', 'period'].includes(e.message) ? e.message : 'disabled'}`);
@@ -32,7 +36,7 @@ export function packagesRouter(app) {
 
   // ───── il pacchetto in preparazione ─────
   r.get('/b2b/package', needPartner, (req, res) => {
-    send(res, packageCartPage(res.locals.ctx, { acct: req.acct, summary: cartSummary(app, req.acct), flash: String(req.query.flash ?? '') }));
+    send(res, packageCartPage(res.locals.ctx, { acct: req.acct, summary: cartSummary(app, req.acct, Date.now(), uid(req)), flash: String(req.query.flash ?? '') }));
   });
 
   // «Aggiungi al pacchetto» dal riepilogo prima di prenotare (stessi campi del modulo di prenotazione)
@@ -40,16 +44,16 @@ export function packagesRouter(app) {
     const ctx = res.locals.ctx;
     if (!app.limits.booking(ip(req))) return tooMany(res);
     try {
-      cartAdd(app, req.acct, req.body);
+      cartAdd(app, req.acct, req.body, Date.now(), uid(req));
     } catch (e) {
       if (!(e instanceof PackageError)) throw e;
-      return send(res, packageCartPage(ctx, { acct: req.acct, summary: cartSummary(app, req.acct), error: errorText(ctx.t, e) }), e.code === 'unavailable' ? 409 : 400);
+      return send(res, packageCartPage(ctx, { acct: req.acct, summary: cartSummary(app, req.acct, Date.now(), uid(req)), error: errorText(ctx.t, e) }), e.code === 'unavailable' ? 409 : 400);
     }
     res.redirect(303, `/${req.lang}/b2b/package?flash=added`);
   });
 
   r.post('/b2b/package/remove/:id', needPartner, form, (req, res) => {
-    cartRemove(db, req.acct.id, req.params.id);
+    cartRemove(db, req.acct.id, req.params.id, uid(req));
     res.redirect(303, `/${req.lang}/b2b/package?flash=removed`);
   });
 
@@ -60,9 +64,9 @@ export function packagesRouter(app) {
     const b = req.body;
     if (!app.limits.booking(ip(req))) return tooMany(res);
     const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200).toLowerCase(), phone: cleanText(b.phone, 40), lang: LANGS.includes(String(b.lang)) ? String(b.lang) : req.lang, clientRef: cleanText(b.clientRef, 120), notes: cleanText(b.notes, 1000), paymentMethod: String(b.paymentMethod ?? '') };
-    const summary = cartSummary(app, req.acct);
+    const summary = cartSummary(app, req.acct, Date.now(), uid(req));
     if (!summary.lines.length) return res.redirect(303, `/${req.lang}/b2b/package`);
-    const rerender = (error, status = 400) => send(res, packageCartPage(ctx, { acct: req.acct, summary: cartSummary(app, req.acct), values, error }), status);
+    const rerender = (error, status = 400) => send(res, packageCartPage(ctx, { acct: req.acct, summary: cartSummary(app, req.acct, Date.now(), uid(req)), values, error }), status);
     if (!b.consent) return rerender(t('err.consent'));
     if (values.name.length < 2 || !isEmail(values.email)) return rerender(t('err.fields'));
     if (!summary.allOk) return rerender(t('pkg.err.stale'), 409);
@@ -71,8 +75,8 @@ export function packagesRouter(app) {
     const method = methods.includes(values.paymentMethod) ? values.paymentMethod : methods[0];
     if (!wantsOption && !method) return rerender(t('err.payment'));
     try {
-      const { redirect } = await app.packages.book(req.acct, summary.lines.map((l) => l.p), { ...values, option: wantsOption, paymentMethod: wantsOption ? undefined : method }, req.lang);
-      cartClear(db, req.acct.id);
+      const { redirect } = await app.packages.book(req.acct, summary.lines.map((l) => l.p), { ...values, option: wantsOption, paymentMethod: wantsOption ? undefined : method, bookedBy: bookedBy(req.actor) }, req.lang);
+      cartClear(db, req.acct.id, uid(req));
       res.redirect(303, redirect);
     } catch (e) {
       if (!(e instanceof PackageError)) throw e;

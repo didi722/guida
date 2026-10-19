@@ -3,11 +3,12 @@ import { BUDGETS, GROUP_TYPES, INTERESTS, programDays, proposalExpired } from '.
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
-import { breadcrumbs } from './components.js';
+import { breadcrumbs, whoOf } from './components.js';
 
 export function programsPage(ctx, { values = {}, error = '' } = {}) {
   const { t, lang, acct } = ctx;
   const isB2b = acct?.status === 'approved';
+  const who = whoOf(ctx) ?? {};
   const v = (k, d = '') => values[k] ?? d;
   const picked = new Set([].concat(values.interests ?? []));
   const body = html`
@@ -24,8 +25,8 @@ export function programsPage(ctx, { values = {}, error = '' } = {}) {
   <form class="card pad form" method="post" action="/${lang}/programs">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
     <div class="form-grid">
-      <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? acct.contact_name : '')}"></label>
-      <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? acct.email : '')}"></label>
+      <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? who.name : '')}"></label>
+      <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? who.email : '')}"></label>
       <label class="field"><span class="label">${t('f.phone')} <em>${t('f.optional')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', isB2b ? (acct.phone ?? '') : '')}"></label>
       ${isB2b
         ? html`<label class="field"><span class="label">${t('pg.f.company')}</span><input name="company" maxlength="160" value="${v('company', acct.company)}"></label>

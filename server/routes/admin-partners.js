@@ -5,6 +5,7 @@ import { sendPartnerApproved } from '../emails.js';
 import { send } from '../http.js';
 import { MAX_HOURS, MAX_TIERS, validateTiers } from '../policy.js';
 import { accountPrices } from '../pricing.js';
+import { listMembers, removeMember } from '../team.js';
 import { cleanText, parseEuros } from '../util.js';
 import { partnerDetailPage, partnersPage } from '../views/admin-partners.js';
 
@@ -16,6 +17,7 @@ const FLASH = {
   copied: 'Copiato.',
   options: 'Opzioni aggiornate.',
   vat: 'Partita IVA controllata: l’esito è qui sotto.',
+  teamRemoved: 'Accesso tolto: quel collaboratore non può più entrare.',
 };
 const ERR = {
   price: 'Un prezzo non è valido: scrivi un importo in euro, per esempio 24,50 (lascia vuoto per usare la tariffa standard).',
@@ -48,7 +50,7 @@ export function adminPartnersRouter(app) {
     const bookings = db.prepare('SELECT * FROM bookings WHERE account_id = ? ORDER BY date DESC LIMIT 100').all(a.id);
     const others = db.prepare('SELECT id, company FROM accounts WHERE id != ? ORDER BY company').all(a.id);
     const openOptions = activeOptionCount(db, a.id);
-    send(res, partnerDetailPage(ctxOf(req), a, { bookings, others, openOptions, flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
+    send(res, partnerDetailPage(ctxOf(req), a, { bookings, others, team: listMembers(db, a.id), openOptions, flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
   });
 
   // stato, sconto, pagamento a fattura, note
@@ -63,6 +65,14 @@ export function adminPartnersRouter(app) {
     );
     if (justApproved) await sendPartnerApproved(app, get(a.id));
     res.redirect(303, here(a.id, 'ok', justApproved ? 'approved' : 'partner'));
+  });
+
+  // toglie l'accesso a un collaboratore dell'agenzia (le sue prenotazioni restano)
+  r.post('/partners/:id/team/:uid/remove', form, (req, res, next) => {
+    const a = get(req.params.id);
+    if (!a) return next();
+    removeMember(db, a.id, Number(req.params.uid));
+    res.redirect(303, `${here(a.id, 'ok', 'teamRemoved')}#team`);
   });
 
   // controlla la partita IVA adesso (formato e VIES)

@@ -15,6 +15,7 @@ import { cleanText, isEmail, safeEqual } from '../util.js';
 import { loginPartner, logoutPartner, send, sendPdf, tooMany } from '../http.js';
 import { invoiceOfBooking } from '../partner.js';
 import { inviteByToken, markUsed } from '../partnerInvites.js';
+import { bookedBy, emailInUse, loginTarget, touchLogin } from '../team.js';
 import { formalSummary } from '../vat.js';
 import { tx } from '../db.js';
 import { applePass, googleSaveUrl, walletOptions } from '../wallet.js';
@@ -243,7 +244,7 @@ export function publicRouter(app) {
     const wantsOption = b.action === 'option' && channel === 'b2b'; // «Opziona»: la data resta trattenuta senza pagare
     try {
       const billing = channel === 'b2b' ? { company: req.acct.company, vat: req.acct.vat, sdi: req.acct.sdi_code, pec: req.acct.pec, address: req.acct.address } : values.invoice ? { text: values.billing } : null;
-      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, ...values, promoCode: values.promo, giftCodes: values.gift, billing, option: wantsOption }, req.lang);
+      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, bookedBy: channel === 'b2b' ? bookedBy(req.actor) : null, ...values, promoCode: values.promo, giftCodes: values.gift, billing, option: wantsOption }, req.lang);
       res.redirect(303, redirect);
     } catch (e) {
       if (!(e instanceof BookingError)) throw e;
@@ -363,46 +364,56 @@ export function publicRouter(app) {
     const ctx = res.locals.ctx;
     const email = cleanText(req.body.email, 200).toLowerCase();
     if (!app.limits.login(`${ip(req)}|${email}`)) return tooMany(res);
-    const acct = db.prepare('SELECT * FROM accounts WHERE email = ?').get(email);
-    const ok = acct && (await verifyPassword(String(req.body.password ?? ''), acct.password_hash));
+    const who = loginTarget(db, email); // il titolare dell'agenzia o un suo collaboratore
+    const ok = who && (await verifyPassword(String(req.body.password ?? ''), (who.user ?? who.acct).password_hash));
     if (!ok) return send(res, loginPage(ctx, { error: ctx.t('b2b.loginError'), email }), 401);
-    loginPartner(res, cfg, acct.id);
+    if (who.user) touchLogin(db, who.user.id);
+    loginPartner(res, cfg, who.acct.id, who.user?.id);
     res.redirect(303, safeNext(req.body.next) || `/${req.lang}/b2b/account`);
   });
   // password dimenticata: un collegamento firmato per email (vale un'ora e smette di valere appena la password cambia)
-  const resetFingerprint = (acct) => crypto.createHash('sha256').update(acct.password_hash).digest('hex').slice(0, 24);
-  const resetAccount = (token) => {
+  const resetFingerprint = (row) => crypto.createHash('sha256').update(row.password_hash).digest('hex').slice(0, 24);
+  /** Chi sta cambiando la password: il titolare o un collaboratore (il collegamento porta `u`), purché la password sia ancora quella di quando è stato scritto. */
+  const resetTarget = (token) => {
     const p = verifyToken(cfg.sessionSecret, token);
     if (p?.k !== 'pwreset') return null;
     const acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(p.id));
-    return acct && p.f === resetFingerprint(acct) ? acct : null;
+    if (!acct) return null;
+    const user = p.u ? db.prepare('SELECT * FROM account_users WHERE id = ? AND account_id = ? AND password_hash IS NOT NULL').get(Number(p.u), acct.id) : null;
+    if (p.u && !user) return null;
+    return p.f === resetFingerprint(user ?? acct) ? { acct, user } : null;
   };
   r.get('/b2b/forgot', (req, res) => send(res, forgotPage(res.locals.ctx)));
   r.post('/b2b/forgot', form, async (req, res) => {
     const ctx = res.locals.ctx;
     const email = cleanText(req.body.email, 200).toLowerCase();
     if (!app.limits.forgot(`${ip(req)}|${email}`)) return tooMany(res);
-    const acct = isEmail(email) ? db.prepare("SELECT * FROM accounts WHERE email = ? AND status IN ('approved', 'pending')").get(email) : null;
-    if (acct) {
-      const token = signToken(cfg.sessionSecret, { k: 'pwreset', id: acct.id, f: resetFingerprint(acct), exp: Date.now() + 3600_000 });
+    const who = isEmail(email) ? loginTarget(db, email) : null;
+    if (who && ['approved', 'pending'].includes(who.acct.status)) {
+      const { acct, user } = who;
+      const token = signToken(cfg.sessionSecret, { k: 'pwreset', id: acct.id, ...(user ? { u: user.id } : {}), f: resetFingerprint(user ?? acct), exp: Date.now() + 3600_000 });
+      const person = user ? { email: user.email, contact_name: user.name, lang: user.lang } : acct;
       try {
-        await sendPartnerPasswordReset(app, acct, `${cfg.baseUrl}/${normLang(acct.lang)}/b2b/reset/${token}`);
+        await sendPartnerPasswordReset(app, person, `${cfg.baseUrl}/${normLang(person.lang)}/b2b/reset/${token}`);
       } catch (e) {
         console.error('[b2b] email di nuova password non inviata:', e.message);
       }
     }
     send(res, forgotPage(ctx, { sent: true })); // stessa risposta se l'email non esiste: non si rivela chi è registrato
   });
-  r.get('/b2b/reset/:token', (req, res) => send(res, resetAccount(req.params.token) ? resetPage(res.locals.ctx, { token: req.params.token }) : resetPage(res.locals.ctx, { invalid: true }), resetAccount(req.params.token) ? 200 : 400));
+  r.get('/b2b/reset/:token', (req, res) => send(res, resetTarget(req.params.token) ? resetPage(res.locals.ctx, { token: req.params.token }) : resetPage(res.locals.ctx, { invalid: true }), resetTarget(req.params.token) ? 200 : 400));
   r.post('/b2b/reset/:token', form, async (req, res) => {
     const ctx = res.locals.ctx;
-    const acct = resetAccount(req.params.token);
-    if (!acct) return send(res, resetPage(ctx, { invalid: true }), 400);
+    const who = resetTarget(req.params.token);
+    if (!who) return send(res, resetPage(ctx, { invalid: true }), 400);
     const pw = String(req.body.password ?? '');
     if (pw.length < 10) return send(res, resetPage(ctx, { token: req.params.token, error: ctx.t('err.password') }), 400);
     if (pw !== String(req.body.password2 ?? '')) return send(res, resetPage(ctx, { token: req.params.token, error: ctx.t('b2b.reset.mismatch') }), 400);
-    db.prepare('UPDATE accounts SET password_hash = ? WHERE id = ?').run(await hashPassword(pw), acct.id);
-    loginPartner(res, cfg, acct.id);
+    const hashed = await hashPassword(pw);
+    if (who.user) db.prepare('UPDATE account_users SET password_hash = ? WHERE id = ?').run(hashed, who.user.id);
+    else db.prepare('UPDATE accounts SET password_hash = ? WHERE id = ?').run(hashed, who.acct.id);
+    if (who.user) touchLogin(db, who.user.id);
+    loginPartner(res, cfg, who.acct.id, who.user?.id);
     res.redirect(303, `/${req.lang}/b2b/account`);
   });
   r.post('/b2b/logout', form, (req, res) => {
@@ -430,10 +441,11 @@ export function publicRouter(app) {
     if (v.country === 'IT' && !/^[A-Z0-9]{7}$/.test(v.sdi_code) && !isEmail(v.pec)) return fail(t('err.sdi'));
     if (v.website && !/^https?:\/\/\S+$/i.test(v.website)) return fail(t('err.fields'));
     if (!b.consent) return fail(t('err.consent'));
-    if (db.prepare('SELECT 1 FROM accounts WHERE email = ?').get(v.email)) return fail(t('err.exists'));
+    const hashed = await hashPassword(String(b.password));
+    if (emailInUse(db, v.email)) return fail(t('err.exists')); // (il controllo e l'inserimento stanno di seguito, senza attese in mezzo)
     const info = db
       .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, contact_name, phone, website, message, lang, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(v.email, await hashPassword(String(b.password)), v.company, v.vat, v.sdi_code || null, v.pec || null, v.country, v.address || null, v.contact_name, v.phone, v.website || null, v.message || null, req.lang, new Date().toISOString());
+      .run(v.email, hashed, v.company, v.vat, v.sdi_code || null, v.pec || null, v.country, v.address || null, v.contact_name, v.phone, v.website || null, v.message || null, req.lang, new Date().toISOString());
     const acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(info.lastInsertRowid));
     await sendPartnerRegistered(app, acct, { vat: formalSummary(vat) });
     loginPartner(res, cfg, acct.id);
@@ -469,12 +481,12 @@ export function publicRouter(app) {
     if (v.country === 'IT' && !/^[A-Z0-9]{7}$/.test(v.sdi_code) && !isEmail(v.pec)) return fail(t('err.sdi'));
     if (v.website && !/^https?:\/\/\S+$/i.test(v.website)) return fail(t('err.fields'));
     if (!b.consent) return fail(t('err.consent'));
-    if (db.prepare('SELECT 1 FROM accounts WHERE email = ?').get(v.email)) return fail(t('err.exists'));
     const hash = await hashPassword(String(b.password));
     const now = new Date().toISOString();
     let acct;
     try {
       acct = tx(db, () => {
+        if (emailInUse(db, v.email)) throw new Error('UNIQUE: indirizzo già in uso'); // di un account, o di un collaboratore invitato nel frattempo
         const info = db
           .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, contact_name, phone, website, message, lang, status, created_at, approved_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,'approved',?,?)`)
           .run(v.email, hash, v.company, v.vat, v.sdi_code || null, v.pec || null, v.country, v.address || null, v.contact_name, v.phone, v.website || null, v.message || null, normLang(invite.lang), now, now);

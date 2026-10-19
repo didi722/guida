@@ -14,6 +14,7 @@ import { isSimplePolicy, tierSentences } from './policyText.js';
 import { inviteOffer } from './invites.js';
 import { INVITE_DAYS } from './partnerInvites.js';
 import { vatLabel } from './vat.js';
+import { TEAM_INVITE_DAYS } from './team.js';
 import { meetingOf, themeText } from './choices.js';
 import { ensurePayRef, groupIban, invoiceDue, invoicePayUrl, isPayable, payInstructions } from './invoicePayments.js';
 
@@ -314,6 +315,7 @@ export async function notifyGuide(app, b, kind, refundCents = 0) {
     parseServiceRecord(b.service_json) ? `Servizio a ore: ${serviceNote(parseServiceRecord(b.service_json))}` : null,
     `${b.name} <${b.email}>${b.phone ? ' · ' + b.phone : ''}`,
     b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
+    b.booked_by_name ? `Prenotata da: ${b.booked_by_name}` : null,
     b.notes ? `Note: ${b.notes}` : null,
     `Totale: ${formatMoney(b.total_cents, 'it', b.currency)}${b.discount_cents ? ` (sconto ${b.promo_code}: −${formatMoney(b.discount_cents, 'it', b.currency)})` : ''}${b.gift_cents ? ` · buono regalo: −${formatMoney(b.gift_cents, 'it', b.currency)}` : ''} · pagamento: ${b.payment_method} (${b.payment_status})`,
     kind === 'cancelled' ? `Rimborso: ${refundCents ? formatMoney(refundCents, 'it', b.currency) : 'nessuno'}${b.cancel_percent != null ? ` (${b.cancel_percent}%)` : ''}${b.retained_cents > 0 ? ` · penale: ${formatMoney(b.retained_cents, 'it', b.currency)}${b.payment_status === 'unpaid' ? ' (da fatturare)' : ' (trattenuta)'}` : ''}${b.cancelled_by ? ` · annullata da: ${b.cancelled_by}` : ''}` : null,
@@ -461,6 +463,7 @@ export async function notifyGuideOption(app, b, kind) {
     tour?.i18n.it.title ?? b.tour_slug,
     `${fmtDate(b.date, 'it')} · ${b.start_time}–${b.end_time} · ${b.participants} pers.`,
     b.client_ref ? `Rif. pratica: ${b.client_ref}` : null,
+    b.booked_by_name ? `Prenotata da: ${b.booked_by_name}` : null,
     kind === 'created' ? `Trattenuta fino al ${fmtInstant(Date.parse(b.option_expires_at), 'it')}; se l’agenzia non conferma, si libera da sola.` : null,
     `Totale: ${formatMoney(b.total_cents, 'it', b.currency)}`,
     '',
@@ -576,6 +579,34 @@ export async function sendPartnerInvite(app, invite, url) {
       ),
     ),
     replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/**
+ * A un collaboratore appena invitato dal titolare dell'agenzia: il collegamento personale per scegliere la password.
+ * @returns {Promise<boolean>} false se l'email non è partita
+ */
+export async function sendTeamInvite(app, { account, inviter, user }, url) {
+  const lang = normLang(user.lang);
+  const t = makeT(lang);
+  const tr = T[lang];
+  const site = app.cfg.site.name;
+  const hello = greet(lang, user.name);
+  const sign = `${bye(lang)} ${site}`;
+  const intro = t('team.mail.intro', { inviter, company: account.company, site });
+  const valid = t('pinv.mail.valid', { days: TEAM_INVITE_DAYS });
+  return app.mail.send({
+    to: user.email,
+    subject: t('team.mail.subject', { company: account.company, site }),
+    text: [hello, '', intro, '', `${t('team.mail.cta')}: ${url}`, '', valid, '', tr.contactLine, sign].join('\n'),
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${hello}</p><p>${intro}</p><p><a href="${url}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('team.mail.cta')}</a></p><p style="color:#666;font-size:13px">${valid}</p><p style="color:#666;font-size:13px">${tr.contactLine}<br>${sign}</p>`,
+      ),
+    ),
+    replyTo: account.email,
   });
 }
 
@@ -1636,6 +1667,7 @@ export async function notifyGuidePackage(app, group, bookings, kind, extra = '')
     `${label} ${group.ref}${account ? ` — ${account.company}` : ''}`,
     `${group.name} <${group.email}>${group.phone ? ' · ' + group.phone : ''}`,
     group.client_ref ? `Rif. pratica: ${group.client_ref}` : null,
+    group.booked_by_name ? `Prenotato da: ${group.booked_by_name}` : null,
     group.notes ? `Note: ${group.notes}` : null,
     '',
     ...bookings.map((b) => `${fmtDate(b.date, 'it', 'short')} · ${b.start_time}–${b.end_time} · ${app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug} · ${b.participants} pers. · ${formatMoney(bookingDue(b), 'it', b.currency)} (${b.ref})`),

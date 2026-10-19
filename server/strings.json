@@ -2165,6 +2165,246 @@
   "El enlace es personal y vale {days} días, una sola vez.",
   "このリンクはご本人専用で、{days}日間・1回のみ有効です。"
  ],
+ "team.nav": [
+  "Team",
+  "Team",
+  "Equipo",
+  "チーム"
+ ],
+ "team.title": [
+  "Il tuo team",
+  "Your team",
+  "Tu equipo",
+  "チーム"
+ ],
+ "team.lead": [
+  "Aggiungi i colleghi che lavorano con te: ognuno entra con la sua email e la sua password e lavora sulle prenotazioni dell’agenzia. Tu, come titolare, decidi chi può entrare.",
+  "Add the colleagues who work with you: each one signs in with their own email and password and works on the agency’s bookings. As the account owner, you decide who gets in.",
+  "Añade a los compañeros que trabajan contigo: cada uno entra con su correo y su contraseña y trabaja con las reservas de la agencia. Tú, como titular, decides quién puede entrar.",
+  "一緒に働く同僚を追加してください。各自が自分のメールアドレスとパスワードでログインし、エージェンシーの予約を扱えます。誰が入れるかは、アカウントのオーナーであるあなたが決めます。"
+ ],
+ "team.owner": [
+  "Titolare",
+  "Owner",
+  "Titular",
+  "オーナー"
+ ],
+ "team.member": [
+  "Collaboratore",
+  "Colleague",
+  "Colaborador",
+  "メンバー"
+ ],
+ "team.status.invited": [
+  "Invito mandato",
+  "Invitation sent",
+  "Invitación enviada",
+  "招待済み"
+ ],
+ "team.status.invitedNote": [
+  "Non ha ancora scelto la password",
+  "Hasn’t chosen a password yet",
+  "Aún no ha elegido la contraseña",
+  "パスワードは未設定です"
+ ],
+ "team.status.expired": [
+  "Invito scaduto",
+  "Invitation expired",
+  "Invitación caducada",
+  "招待の期限切れ"
+ ],
+ "team.status.expiredNote": [
+  "Rinvialo per dargli un collegamento nuovo",
+  "Resend it to give them a new link",
+  "Reenvíala para darle un enlace nuevo",
+  "再送して新しいリンクを送ってください"
+ ],
+ "team.status.active": [
+  "Attivo",
+  "Active",
+  "Activo",
+  "有効"
+ ],
+ "team.lastLogin": [
+  "Ultimo accesso: {date}",
+  "Last sign-in: {date}",
+  "Último acceso: {date}",
+  "最終ログイン：{date}"
+ ],
+ "team.neverLogin": [
+  "Non ha ancora fatto l’accesso",
+  "Hasn’t signed in yet",
+  "Aún no ha accedido",
+  "まだログインしていません"
+ ],
+ "team.add.title": [
+  "Aggiungi un collaboratore",
+  "Add a colleague",
+  "Añadir un colaborador",
+  "メンバーを追加する"
+ ],
+ "team.add.emailNote": [
+  "Con questo indirizzo entrerà. Riceverà un collegamento per scegliere la password.",
+  "This is the address they’ll sign in with. They’ll receive a link to choose a password.",
+  "Con este correo entrará. Recibirá un enlace para elegir la contraseña.",
+  "このアドレスでログインします。パスワード設定用のリンクが届きます。"
+ ],
+ "team.add.lang": [
+  "Lingua dell’invito",
+  "Language of the invitation",
+  "Idioma de la invitación",
+  "招待の言語"
+ ],
+ "team.add.submit": [
+  "Invia l’invito",
+  "Send the invitation",
+  "Enviar la invitación",
+  "招待を送る"
+ ],
+ "team.resend": [
+  "Rinvia l’invito",
+  "Resend the invitation",
+  "Reenviar la invitación",
+  "招待を再送する"
+ ],
+ "team.remove": [
+  "Rimuovi",
+  "Remove",
+  "Quitar",
+  "削除"
+ ],
+ "team.removeAsk": [
+  "Rimuovere {name}? Non potrà più entrare; le prenotazioni che ha fatto restano.",
+  "Remove {name}? They will no longer be able to sign in; the bookings they made will stay.",
+  "¿Quitar a {name}? Ya no podrá entrar; las reservas que hizo se quedan.",
+  "{name}さんを削除しますか？ログインできなくなります。これまでの予約は残ります。"
+ ],
+ "team.empty": [
+  "Per ora lavori da solo: aggiungi un collega qui sotto.",
+  "For now you’re working on your own: add a colleague below.",
+  "Por ahora trabajas solo: añade un compañero más abajo.",
+  "現在はお一人で利用中です。下のフォームから同僚を追加できます。"
+ ],
+ "team.err.name": [
+  "Scrivi il nome e il cognome del collega.",
+  "Please enter your colleague’s full name.",
+  "Escribe el nombre y los apellidos del compañero.",
+  "同僚の氏名を入力してください。"
+ ],
+ "team.err.exists": [
+  "Questo indirizzo è già usato per un altro accesso: scegline un altro.",
+  "This address is already used for another account: please choose a different one.",
+  "Este correo ya se usa para otro acceso: elige otro.",
+  "このアドレスはすでに別のアカウントで使われています。別のアドレスをご指定ください。"
+ ],
+ "team.err.limit": [
+  "Hai raggiunto il numero massimo di collaboratori ({n}).",
+  "You’ve reached the maximum number of colleagues ({n}).",
+  "Has alcanzado el número máximo de colaboradores ({n}).",
+  "メンバーの上限（{n}人）に達しました。"
+ ],
+ "team.err.gone": [
+  "Quell’invito non si può più rinviare: il collaboratore ha già scelto la password, oppure non c’è più.",
+  "That invitation can no longer be resent: the colleague has already chosen a password, or no longer exists.",
+  "Esa invitación ya no se puede reenviar: el colaborador ya ha elegido la contraseña, o ya no existe.",
+  "この招待は再送できません。すでにパスワードが設定されているか、メンバーが存在しません。"
+ ],
+ "team.ok.invited": [
+  "Invito mandato a {email}.",
+  "Invitation sent to {email}.",
+  "Invitación enviada a {email}.",
+  "{email}に招待を送りました。"
+ ],
+ "team.ok.resent": [
+  "Nuovo invito mandato a {email}: il collegamento di prima non vale più.",
+  "New invitation sent to {email}: the previous link no longer works.",
+  "Nueva invitación enviada a {email}: el enlace anterior ya no vale.",
+  "{email}に新しい招待を送りました。以前のリンクは無効になります。"
+ ],
+ "team.ok.removed": [
+  "Collaboratore rimosso: non può più entrare.",
+  "Colleague removed: they can no longer sign in.",
+  "Colaborador quitado: ya no puede entrar.",
+  "メンバーを削除しました。ログインできなくなります。"
+ ],
+ "team.ok.mailFailed": [
+  "Il collaboratore è stato aggiunto ma l’email non è partita: tocca «Rinvia l’invito» per riprovare.",
+  "The colleague was added but the email didn’t go out: tap “Resend the invitation” to try again.",
+  "El colaborador se ha añadido pero el correo no ha salido: toca «Reenviar la invitación» para reintentarlo.",
+  "メンバーを追加しましたが、メールを送信できませんでした。「招待を再送する」でもう一度お試しください。"
+ ],
+ "join.title": [
+  "Scegli la tua password",
+  "Choose your password",
+  "Elige tu contraseña",
+  "パスワードを設定する"
+ ],
+ "join.lead": [
+  "{company} ti ha invitato a lavorare sulle sue prenotazioni. Scegli una password per entrare.",
+  "{company} has invited you to work on its bookings. Choose a password to sign in.",
+  "{company} te ha invitado a trabajar con sus reservas. Elige una contraseña para entrar.",
+  "{company}から予約管理への招待が届いています。ログイン用のパスワードを設定してください。"
+ ],
+ "join.submit": [
+  "Entra nell’area agenzia",
+  "Enter the agency area",
+  "Entrar en el área de agencias",
+  "エージェンシーエリアに入る"
+ ],
+ "join.invalid.title": [
+  "Invito non valido",
+  "Invalid invitation",
+  "Invitación no válida",
+  "無効な招待です"
+ ],
+ "join.invalid.text": [
+  "Questo collegamento non è valido oppure l’invito è stato annullato. Chiedi a chi ti ha invitato di mandartene uno nuovo.",
+  "This link is not valid or the invitation was cancelled. Ask whoever invited you to send you a new one.",
+  "Este enlace no es válido o la invitación se ha cancelado. Pide a quien te invitó que te envíe una nueva.",
+  "このリンクは無効か、招待が取り消されています。招待した方に新しい招待を依頼してください。"
+ ],
+ "join.expired.title": [
+  "Invito scaduto",
+  "Invitation expired",
+  "Invitación caducada",
+  "招待の期限が切れています"
+ ],
+ "join.expired.text": [
+  "Questo invito è scaduto: chiedi a chi ti ha invitato di mandartene uno nuovo.",
+  "This invitation has expired: ask whoever invited you to send you a new one.",
+  "Esta invitación ha caducado: pide a quien te invitó que te envíe una nueva.",
+  "この招待は期限切れです。招待した方に新しい招待を依頼してください。"
+ ],
+ "join.used.title": [
+  "Password già scelta",
+  "Password already chosen",
+  "Contraseña ya elegida",
+  "パスワードは設定済みです"
+ ],
+ "join.used.text": [
+  "Hai già scelto la password con questo invito: accedi con la tua email.",
+  "You have already chosen a password with this invitation: sign in with your email.",
+  "Ya has elegido la contraseña con esta invitación: accede con tu correo.",
+  "この招待ですでにパスワードを設定済みです。メールアドレスでログインしてください。"
+ ],
+ "team.mail.subject": [
+  "{company} ti invita su {site}",
+  "{company} invites you to {site}",
+  "{company} te invita a {site}",
+  "{company}より{site}へのご招待"
+ ],
+ "team.mail.intro": [
+  "{inviter} ti invita a lavorare sulle prenotazioni di {company} nell’area riservata alle agenzie di {site}: tariffe, prenotazioni, fatture e date libere, con il tuo accesso personale.",
+  "{inviter} invites you to work on {company}’s bookings in the agency area of {site}: rates, bookings, invoices and free dates, with your own personal sign-in.",
+  "{inviter} te invita a trabajar con las reservas de {company} en el área reservada a agencias de {site}: tarifas, reservas, facturas y fechas libres, con tu acceso personal.",
+  "{inviter}さんが、{site}のエージェンシー専用エリアで{company}の予約を扱うようあなたを招待しました。料金、予約、請求書、空き日程を、あなた専用のログインで利用できます。"
+ ],
+ "team.mail.cta": [
+  "Scegli la tua password",
+  "Choose your password",
+  "Elige tu contraseña",
+  "パスワードを設定する"
+ ],
  "b2b.status": [
   "Stato dell’account",
   "Account status",
@@ -4900,6 +5140,30 @@
   "Booked on",
   "Reservada el",
   "予約日"
+ ],
+ "partner.col.by": [
+  "Prenotata da",
+  "Booked by",
+  "Reservada por",
+  "予約者"
+ ],
+ "partner.by": [
+  "Prenotata da {name}",
+  "Booked by {name}",
+  "Reservada por {name}",
+  "予約者：{name}"
+ ],
+ "partner.filter.mine": [
+  "Solo le mie",
+  "Only mine",
+  "Solo las mías",
+  "自分の予約のみ"
+ ],
+ "partner.filter.team": [
+  "Tutto il team",
+  "Whole team",
+  "Todo el equipo",
+  "チーム全員"
  ],
  "partner.col.invoice": [
   "Fattura",

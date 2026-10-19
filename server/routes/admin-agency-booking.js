@@ -7,6 +7,7 @@ import { hashPassword } from '../auth.js';
 import { sendBookingConfirmed } from '../emails.js';
 import { agencyBookingDonePage, agencyBookingPage } from '../views/admin-agency-booking.js';
 import { send } from '../http.js';
+import { emailInUse } from '../team.js';
 import { isDate, isTime, nowRome } from '../time.js';
 import { cleanText, isEmail, parseEuros } from '../util.js';
 
@@ -52,7 +53,7 @@ export function adminAgencyBookingRouter(app) {
       const contact = cleanText(b.contact_name, 120);
       const email = cleanText(b.email, 200).toLowerCase();
       if (!company || !contact || !isEmail(email)) return fail('newAgency');
-      if (db.prepare('SELECT 1 FROM accounts WHERE email = ?').get(email)) return fail('exists');
+      if (emailInUse(db, email)) return fail('exists');
       tempPassword = crypto.randomBytes(9).toString('base64url');
       const discount = Math.min(100, Math.max(0, Number(String(b.discount ?? '0').replace(',', '.')) || 0));
       const info = db

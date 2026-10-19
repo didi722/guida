@@ -7,6 +7,7 @@ import { LANGS, LANG_META, localeOf } from '../langs.js';
 import { minHours, openTo } from '../rates.js';
 import { invitePercentFor } from '../invites.js';
 import { MEDIA_NAME, smallName } from '../media.js';
+import { actorOf } from '../team.js';
 
 /** <option> di tutte le lingue del sito, con quella indicata selezionata. */
 export const langOptions = (selected) => html`${LANGS.map((l) => html`<option value="${l}" ${l === selected ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}`;
@@ -186,6 +187,9 @@ export const crossIcon = raw('<svg class="i-cross" viewBox="0 0 24 24" aria-hidd
 export const areaOf = (ctx) => (ctx.acct?.status === 'approved' ? 'partner' : '');
 
 /** Il primo gradino delle briciole di pane: la home del sito, o l'area dell'agenzia. */
+/** Chi sta lavorando in area agenzie (il titolare o un collaboratore): il suo nome e la sua email vanno proposti nei moduli di prenotazione. */
+export const whoOf = (ctx) => ctx.actor ?? (ctx.acct ? actorOf(ctx.acct) : null);
+
 export const homeCrumb = (ctx) => (areaOf(ctx) ? [ctx.t('nav.agencyArea'), ctx.u('/b2b/account')] : [ctx.t('nav.home'), `/${ctx.lang}/`]);
 
 export function breadcrumbs(ctx, items) {

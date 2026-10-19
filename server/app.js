@@ -17,6 +17,7 @@ import { availabilityRouter } from './routes/availability.js';
 import { changesRouter } from './routes/changes.js';
 import { invoicePayRouter } from './routes/invoicePay.js';
 import { packagesRouter } from './routes/packages.js';
+import { teamRouter } from './routes/team.js';
 import { partnerRouter } from './routes/partner.js';
 import { publicRouter } from './routes/public.js';
 import { featuresRouter } from './routes/features.js';
@@ -89,6 +90,7 @@ export function createApp(overrides = {}) {
   const pub = publicRouter(app);
   const partner = partnerRouter(app);
   const packages = packagesRouter(app);
+  const team = teamRouter(app);
   const changes = changesRouter(app);
   const availability = availabilityRouter(app);
   const agencyDocs = agencyDocsRouter(app);
@@ -96,7 +98,7 @@ export function createApp(overrides = {}) {
   const statement = statementRouter(app);
   const invoicePay = invoicePayRouter(app);
   const features = featuresRouter(app);
-  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, changes, availability, agencyDocs, agencyFeed, statement, invoicePay, features);
+  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, team, changes, availability, agencyDocs, agencyFeed, statement, invoicePay, features);
 
   // 404 (nella lingua dell'URL se possibile)
   server.use((req, res) => {

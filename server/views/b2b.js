@@ -11,7 +11,7 @@ import { SERVICES, openTo } from '../rates.js';
 import { payState } from '../invoicePayments.js';
 import { page } from './layout.js';
 import { stateText } from './invoicePay.js';
-import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, timeLeft } from './components.js';
+import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, timeLeft, whoOf } from './components.js';
 import { ratesBlock, ratesNotes, rateCard, supplementsBox } from './hourly.js';
 
 const COUNTRIES = ['IT', 'DE', 'FR', 'ES', 'GB', 'US', 'NL', 'AT', 'CH', 'BE', 'PT', 'PL', 'CZ', 'SE', 'DK', 'NO', 'IE', 'JP', 'CN', 'KR', 'AU', 'CA', 'BR', 'IN', 'AE', 'OTHER'];
@@ -223,7 +223,7 @@ function pendingPage(ctx, acct) {
   const body = html`
 <section class="page-head"><div class="wrap narrow">
   ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('nav.agencyArea')]])}
-  <h1>${acct.company}</h1><p class="muted">${acct.contact_name} · ${acct.email}</p>
+  <h1>${acct.company}</h1><p class="muted">${whoOf(ctx).name} · ${whoOf(ctx).email}</p>
 </div></section>
 <section class="section tight"><div class="wrap narrow">
   <div class="card pad"><h2>${t('b2b.status')}</h2>
@@ -263,8 +263,8 @@ export function accountPage(ctx, { acct, flash = '' }) {
   const body = html`
 <section class="page-head partner-head"><div class="wrap">
   <div class="account-head">
-    <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${acct.contact_name} · ${acct.email}</p></div>
-    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a></div>
+    <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${whoOf(ctx).name} · ${whoOf(ctx).email}</p></div>
+    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a>${whoOf(ctx).owner ? html`<a class="btn btn-outline" href="${u('/b2b/team')}">${t('team.nav')}</a>` : ''}</div>
   </div>
 </div></section>
 <section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">
@@ -282,7 +282,7 @@ export function accountPage(ctx, { acct, flash = '' }) {
  * Le prenotazioni dell'agenzia: riepilogo, ricerca e filtri, elenco con le azioni di ogni giorno (o calendario).
  * list: { rows, counts, total, page, pages, view } · summary: vedi partnerSummary · filters: vedi parseFilters.
  */
-export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mode = 'list', calendar = null, feedUrl = '' }) {
+export function bookingsPage(ctx, { acct, team = false, filters, list, summary, flash = '', mode = 'list', calendar = null, feedUrl = '' }) {
   const { t, lang, u, app } = ctx;
   const { content } = app;
   const base = u('/b2b/bookings');
@@ -290,7 +290,7 @@ export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mo
   // link che conservano ricerca e date e cambiano solo ciò che serve (scheda, pagina)
   const qs = (over = {}) => {
     const p = new URLSearchParams();
-    for (const [k, v] of Object.entries({ q: filters.q, from: filters.from, to: filters.to, bfrom: filters.bfrom, bto: filters.bto, view: filters.view, ...over })) if (v) p.set(k, String(v));
+    for (const [k, v] of Object.entries({ q: filters.q, from: filters.from, to: filters.to, bfrom: filters.bfrom, bto: filters.bto, mine: filters.mine ? '1' : '', view: filters.view, ...over })) if (v) p.set(k, String(v));
     return p.toString() ? `?${p}` : '';
   };
   const detail = (b) => u(`/b2b/bookings/${b.ref}`);
@@ -332,6 +332,7 @@ export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mo
 
   <form class="filters" method="get" action="${base}">
     ${filters.explicit ? html`<input type="hidden" name="view" value="${filters.view}">` : ''}
+    ${filters.mine ? html`<input type="hidden" name="mine" value="1">` : ''}
     <label class="field filters-q"><span class="sr-only">${t('partner.search.label')}</span><input type="search" name="q" value="${filters.q}" maxlength="80" placeholder="${t('partner.search.ph')}" autocomplete="off"></label>
     <button class="btn btn-dark" type="submit">${t('partner.search.btn')}</button>
     <details class="filters-more" ${filters.from || filters.to || filters.bfrom || filters.bto ? raw('open') : ''}><summary>${t('partner.filter.dates')}</summary>
@@ -342,7 +343,7 @@ export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mo
         <label class="field"><span class="label">${t('partner.filter.bookTo')}</span><input type="date" name="bto" value="${filters.bto}"></label>
       </div>
     </details>
-    ${searching ? html`<p class="filters-links small"><a href="${base}?view=${filters.view}">${t('partner.filter.clear')}</a></p>` : ''}
+    ${searching || team ? html`<p class="filters-links small">${team ? html`<a href="${base}${qs({ mine: filters.mine ? '' : '1', page: '' })}">${filters.mine ? t('partner.filter.team') : t('partner.filter.mine')}</a>` : ''}${searching && team ? ' · ' : ''}${searching ? html`<a href="${base}?view=${filters.view}">${t('partner.filter.clear')}</a>` : ''}</p>` : ''}
   </form>
 
   ${list.rows.length
@@ -351,7 +352,7 @@ export function bookingsPage(ctx, { acct, filters, list, summary, flash = '', mo
       ${list.rows.map((b) => {
         const tour = content.tour(b.tour_slug);
         return html`<tr class="pb-${b.status}">
-          <td data-label="${t('partner.col.file')}"><a class="pb-title" href="${detail(b)}">${b.client_ref || b.name}</a><small class="muted">${b.client_ref ? `${b.name} · ` : ''}${b.ref}${b.group_ref ? html` · <a href="${u(`/b2b/packages/${b.group_ref}`)}">${t('pkg.chip', { ref: b.group_ref })}</a>` : ''}</small></td>
+          <td data-label="${t('partner.col.file')}"><a class="pb-title" href="${detail(b)}">${b.client_ref || b.name}</a><small class="muted">${b.client_ref ? `${b.name} · ` : ''}${b.ref}${b.group_ref ? html` · <a href="${u(`/b2b/packages/${b.group_ref}`)}">${t('pkg.chip', { ref: b.group_ref })}</a>` : ''}</small>${team && b.booked_by_name ? html`<small class="muted">${t('partner.by', { name: b.booked_by_name })}</small>` : ''}</td>
           <td data-label="${t('s.service')}">${tour?.i18n[lang].title ?? b.tour_slug}<small class="muted">${b.start_time}–${b.end_time}</small></td>
           <td data-label="${t('s.date')}"><strong>${fmtDate(b.date, lang, 'short')}</strong><small class="muted">${t('partner.bookedOn', { date: fmtDate(nowRome(Date.parse(b.created_at)).date, lang, 'short') })}</small></td>
           <td class="num" data-label="${t('s.guests')}">${b.participants}</td>

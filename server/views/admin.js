@@ -283,6 +283,7 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, p
       <div><dt>Lingua</dt><dd>${langName(b.lang)}</dd></div>
       ${account ? html`<div><dt>Partner</dt><dd><a href="/admin/partners/${account.id}">${account.company}</a></dd></div>` : ''}
       ${b.client_ref ? html`<div><dt>Rif. pratica</dt><dd>${b.client_ref}</dd></div>` : ''}
+      ${b.booked_by_name ? html`<div><dt>Prenotata da</dt><dd>${b.booked_by_name}</dd></div>` : ''}
       ${b.notes ? html`<div><dt>Note del cliente</dt><dd>${b.notes}</dd></div>` : ''}
       ${b.billing_json ? html`<div><dt>Dati fattura</dt><dd>${Object.values(JSON.parse(b.billing_json)).join(' · ')}</dd></div>` : ''}
     </dl>

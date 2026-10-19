@@ -11,6 +11,7 @@ import { send, sendPdf } from '../http.js';
 import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerSummary } from '../partner.js';
 import { renderInvoicePdf } from '../pdf-invoice.js';
 import { renderVoucherPdf } from '../pdf.js';
+import { teamSize } from '../team.js';
 import { cleanText } from '../util.js';
 import { LANGS } from '../langs.js';
 import { needPartner, toLogin } from './guards.js';
@@ -49,12 +50,12 @@ export function partnerRouter(app) {
     const ctx = res.locals.ctx;
     const nowMs = Date.now();
     const asked = ['cal', 'list'].includes(req.query.v) ? req.query.v : null;
-    const listParams = ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page'].some((k) => req.query[k] !== undefined);
+    const listParams = ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page', 'mine'].some((k) => req.query[k] !== undefined);
     const mode = asked ?? (listParams ? 'list' : parseCookies(req.headers.cookie)[VIEW_COOKIE] === 'cal' ? 'cal' : 'list');
     if (asked) setCookie(res, cfg, VIEW_COOKIE, asked, { maxAgeSec: YEAR });
-    const filters = parseFilters(req.query);
+    const filters = { ...parseFilters(req.query), actorId: req.actor?.userId ?? null };
     send(res, bookingsPage(ctx, {
-      acct: req.acct, mode, filters, summary: partnerSummary(app, req.acct.id, nowMs), flash: String(req.query.flash ?? ''), feedUrl: feedUrl(app, req.acct, req.lang),
+      acct: req.acct, team: teamSize(db, req.acct.id) > 0, mode, filters, summary: partnerSummary(app, req.acct.id, nowMs), flash: String(req.query.flash ?? ''), feedUrl: feedUrl(app, req.acct, req.lang),
       list: mode === 'list' ? partnerBookings(app, req.acct.id, filters, { nowMs }) : null,
       calendar: mode === 'cal' ? partnerCalendar(app, req.acct.id, { month: req.query.m, selected: req.query.d }, nowMs) : null,
     }));
@@ -63,8 +64,8 @@ export function partnerRouter(app) {
   // elenco filtrato in un foglio di calcolo (per la contabilità dell'agenzia)
   r.get('/b2b/bookings.csv', needPartner, (req, res) => {
     const { t } = res.locals.ctx;
-    const { rows } = partnerBookings(app, req.acct.id, parseFilters(req.query), { limit: null });
-    const head = [t('s.ref'), t('f.clientRef'), t('partner.edit.name'), t('s.service'), t('s.date'), t('s.time'), t('s.guests'), t('b2b.state'), t('partner.col.booked'), t('s.total'), t('partner.col.invoice')];
+    const { rows } = partnerBookings(app, req.acct.id, { ...parseFilters(req.query), actorId: req.actor?.userId ?? null }, { limit: null });
+    const head = [t('s.ref'), t('f.clientRef'), t('partner.edit.name'), t('s.service'), t('s.date'), t('s.time'), t('s.guests'), t('b2b.state'), t('partner.col.booked'), t('s.total'), t('partner.col.invoice'), t('partner.col.by')];
     res
       .type('text/csv; charset=utf-8')
       .set({ 'Content-Disposition': 'attachment; filename="prenotazioni.csv"', 'Cache-Control': 'private, no-store' })

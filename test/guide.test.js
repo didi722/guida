@@ -45,7 +45,7 @@ test('guida: i nomi di pulsanti e schede citati nella guida esistono nel pannell
     'Esporta CSV', 'Come sono calcolati i numeri', 'Salva i testi di questa pagina', 'Carica nuove foto', 'Salva la pagina', 'Prenotazioni aperte fino a', 'Prima data fatturabile', 'Calendario sul telefono', 'Pagamenti in corso',
     'Programmi da preparare', 'Partner da approvare', 'Promemoria al cliente', 'Domande frequenti', 'Mostra sul sito', 'Pagina con tutte le recensioni', 'Cosa dicono i clienti', 'Ripristina da una copia', 'Carica e controlla', 'Solo i contenuti', 'Torna a questa versione', 'Copie salvate prima di un ripristino', 'Annulla, non cambiare niente', 'Elenco, 14 giorni', 'Calendario', 'Elimina la bozza', 'Apri come la vede il cliente', 'PDF della proposta', 'Nascondi', 'Foto', 'Grassetto', 'Anteprima',
     'Aggiungi il periodo', 'Copia giornaliera fuori dal server', 'Prova la connessione', 'Esegui una copia adesso', 'Copie presenti', 'Attiva i due passaggi', 'Conferma e attiva', 'Esci da tutti gli altri dispositivi', 'Genera nuovi codici', 'Incassi dalla banca', 'Controlla i bonifici', 'Segna come incassate le fatture selezionate',
-    'Invia l’invito', 'Verifica ora', 'Rinvia', 'Verifica P.IVA', 'Inviti',
+    'Invia l’invito', 'Verifica ora', 'Rinvia', 'Verifica P.IVA', 'Inviti', 'Togli l’accesso',
     'Salva le tariffe', 'Prova il calcolatore', 'Ripristina le tariffe iniziali', 'Quali giorni sono festivi', 'Chi vede le tariffe', 'Ogni ora in più', 'Il cliente sceglie quante ore', 'A chi è rivolto', 'Prezzo fisso',
   ];
   const missing = LABELS.filter((l) => !sources.includes(l) && !sources.replace(/ /g, ' ').includes(l));

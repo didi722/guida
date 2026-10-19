@@ -7,6 +7,7 @@ import { addDays, fmtDate, localToInstant, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
 import { vatLabel } from '../vat.js';
 import { adminLayout, statusLabel } from './admin.js';
+import { memberState } from './team.js';
 
 const ST = { pending: 'Da approvare', approved: 'Approvato', rejected: 'Rifiutato', suspended: 'Sospeso' };
 const chip = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', option: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
@@ -67,7 +68,7 @@ ${items.length
   return adminLayout(ctx, { title: 'Partner B2B', active: '/admin/partners', body });
 }
 
-export function partnerDetailPage(ctx, a, { bookings, others, openOptions = 0, flash = '', error = '' }) {
+export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOptions = 0, flash = '', error = '' }) {
   const { app } = ctx;
   const { cfg, content } = app;
   const tours = content.tours.filter((x) => x.pricing !== 'hourly' && x.audience === 'b2b'); // il listino dedicato riguarda i tour B2B
@@ -103,6 +104,21 @@ export function partnerDetailPage(ctx, a, { bookings, others, openOptions = 0, f
     <label class="field"><span class="label">Note interne</span><textarea name="admin_notes" rows="3" maxlength="2000">${a.admin_notes ?? ''}</textarea></label>
     <button class="btn btn-gold" type="submit">Salva${a.status === 'pending' ? ' (e approva se imposti "Approvato")' : ''}</button>
   </form>
+</div>
+
+<h2 class="h-sub spaced" id="team">Team ${team.length ? html`<span class="chip">${team.length}</span>` : ''}</h2>
+<div class="card pad">
+  <p class="muted">Chi lavora per questa agenzia con un accesso suo. Il titolare (${a.contact_name}) invita e toglie i collaboratori dalla pagina <strong>Team</strong> della sua area; se serve puoi togliere un accesso anche da qui (per esempio se il titolare non risponde): chi viene tolto non entra più, le sue prenotazioni restano.</p>
+  ${team.length
+    ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Collaboratore</th><th>Stato</th><th></th></tr></thead><tbody>
+    ${team.map((m) => {
+      const state = memberState(m);
+      return html`<tr><td><strong>${m.name}</strong><br><small class="muted">${m.email}</small></td>
+        <td>${state === 'active' ? html`<span class="chip chip-ok">Attivo</span><br><small class="muted">${m.last_login_at ? `ultimo accesso ${new Date(m.last_login_at).toLocaleDateString('it-IT')}` : 'non ha ancora fatto l’accesso'}</small>` : state === 'expired' ? html`<span class="chip chip-err">Invito scaduto</span>` : html`<span class="chip chip-warn">Invito mandato</span><br><small class="muted">non ha ancora scelto la password</small>`}</td>
+        <td class="actions"><form method="post" action="/admin/partners/${a.id}/team/${m.id}/remove" data-confirm="Togliere l’accesso a ${m.name}? Non potrà più entrare; le prenotazioni che ha fatto restano."><button class="btn btn-sm btn-link-danger" type="submit">Togli l’accesso</button></form></td></tr>`;
+    })}
+    </tbody></table></div>`
+    : html`<p class="muted">Nessun collaboratore: l’agenzia lavora solo con l’accesso del titolare.</p>`}
 </div>
 
 <h2 class="h-sub spaced" id="listino">Listino dedicato</h2>

@@ -42,7 +42,7 @@ const PARTNER_NAV = [
 export function page(ctx, { title, description = '', path, body, bodyClass = '', ld = null, noindex = false, article = false, ogImage = null, activeNav = '', scripts = '', area = '' }) {
   const { app, lang, t } = ctx;
   const partner = area === 'partner' && ctx.acct?.status === 'approved'; // barra e piè di pagina dell'area agenzie
-  const cart = partner ? cartCount(app.db, ctx.acct.id) : 0; // servizi nel pacchetto in preparazione: la voce compare solo se ce ne sono
+  const cart = partner ? cartCount(app.db, ctx.acct.id, ctx.actor?.userId ?? null) : 0; // servizi nel pacchetto in preparazione: la voce compare solo se ce ne sono
   const { cfg } = app;
   const demo = app.payments.demo; // istanza di prova (pagamenti simulati): non si indicizza e lo si dice a chiare lettere
   noindex = noindex || demo;

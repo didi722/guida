@@ -58,15 +58,18 @@ export function openSlotOf(app, line, nowMs = Date.now()) {
   return daySlots(app.db, app.cfg, tour, date, { pax, channel: 'b2b', nowMs, durationMin, tourLang: tourLang || null }).find((s) => s.time === time) ?? null;
 }
 
-/** I servizi aggiunti e non ancora prenotati, dal più vecchio. */
-export function cartItems(db, accountId) {
+/**
+ * I servizi aggiunti e non ancora prenotati, dal più vecchio. Il pacchetto in preparazione è personale: ogni persona dell'agenzia ha il suo
+ * (`userId` vuoto = il titolare).
+ */
+export function cartItems(db, accountId, userId = null) {
   return db
-    .prepare('SELECT * FROM cart_items WHERE account_id = ? ORDER BY id')
-    .all(accountId)
+    .prepare('SELECT * FROM cart_items WHERE account_id = ? AND user_id IS ? ORDER BY id')
+    .all(accountId, userId)
     .map((r) => ({ id: r.id, src: JSON.parse(r.data_json), createdAt: r.created_at }));
 }
 
-export const cartCount = (db, accountId) => db.prepare('SELECT COUNT(*) n FROM cart_items WHERE account_id = ?').get(accountId).n;
+export const cartCount = (db, accountId, userId = null) => db.prepare('SELECT COUNT(*) n FROM cart_items WHERE account_id = ? AND user_id IS ?').get(accountId, userId).n;
 
 /** L'ora d'inizio e quella in cui la guida è di nuovo libera (con la pausa tra un servizio e l'altro), in minuti dall'inizio del giorno. */
 function span(app, line) {
@@ -89,7 +92,7 @@ const sameService = (a, b) => a.tour.slug === b.tour.slug && a.date === b.date &
  * se si sovrappone a un altro servizio del pacchetto o se il pacchetto è già pieno.
  * @returns {number} l'id della riga del carrello
  */
-export function cartAdd(app, account, src, nowMs = Date.now()) {
+export function cartAdd(app, account, src, nowMs = Date.now(), userId = null) {
   const { db } = app;
   const clean = cleanLine(src);
   const line = resolveLine(app, clean);
@@ -102,24 +105,24 @@ export function cartAdd(app, account, src, nowMs = Date.now()) {
   }
   if (!openSlotOf(app, line, nowMs)) throw new PackageError('unavailable', 'non più disponibile');
   return tx(db, () => {
-    const others = cartItems(db, account.id).map((it) => resolveLine(app, it.src)).filter(Boolean);
+    const others = cartItems(db, account.id, userId).map((it) => resolveLine(app, it.src)).filter(Boolean);
     if (others.length >= MAX_PACKAGE_LINES) throw new PackageError('full', 'pacchetto pieno');
     if (others.some((o) => sameService(o, line))) throw new PackageError('duplicate', 'già nel pacchetto'); // per cambiare le persone si toglie e si riaggiunge
     if (others.some((o) => overlaps(app, o, line))) throw new PackageError('overlap', 'si sovrappone a un altro servizio del pacchetto');
-    return Number(db.prepare('INSERT INTO cart_items(account_id, data_json, created_at) VALUES(?,?,?)').run(account.id, JSON.stringify(clean), iso(nowMs)).lastInsertRowid);
+    return Number(db.prepare('INSERT INTO cart_items(account_id, user_id, data_json, created_at) VALUES(?,?,?,?)').run(account.id, userId, JSON.stringify(clean), iso(nowMs)).lastInsertRowid);
   });
 }
 
-export const cartRemove = (db, accountId, id) => db.prepare('DELETE FROM cart_items WHERE id = ? AND account_id = ?').run(Number(id), accountId).changes === 1;
-export const cartClear = (db, accountId) => db.prepare('DELETE FROM cart_items WHERE account_id = ?').run(accountId).changes;
+export const cartRemove = (db, accountId, id, userId = null) => db.prepare('DELETE FROM cart_items WHERE id = ? AND account_id = ? AND user_id IS ?').run(Number(id), accountId, userId).changes === 1;
+export const cartClear = (db, accountId, userId = null) => db.prepare('DELETE FROM cart_items WHERE account_id = ? AND user_id IS ?').run(accountId, userId).changes;
 
 /**
  * Il pacchetto in preparazione com'è adesso: ogni servizio con il suo prezzo e se si può ancora prenotare, il totale, se si può opzionare
  * (una sola scadenza per tutti: la più vicina) e i dati di contatto da proporre (quelli dell'ultimo servizio aggiunto).
  */
-export function cartSummary(app, account, nowMs = Date.now()) {
+export function cartSummary(app, account, nowMs = Date.now(), userId = null) {
   const { db, cfg } = app;
-  const items = cartItems(db, account.id);
+  const items = cartItems(db, account.id, userId);
   const lines = items.map((it, index) => {
     const p = resolveLine(app, it.src);
     const line = { id: it.id, index, src: it.src, p, ok: false, reason: p ? null : 'invalid', slot: null, pricing: null, startMs: null, option: null, firm: null };
@@ -236,6 +239,8 @@ export function createPackage(app, account, lines, common, nowMs = Date.now()) {
       notes: cleanText(common.notes, 1000) || null,
       lang: common.lang,
       currency: cfg.policy.currency,
+      booked_by_user: common.bookedBy?.userId ?? null,
+      booked_by_name: cleanText(common.bookedBy?.name, 120) || null,
       created_at: iso(nowMs),
     };
     const cols = Object.keys(group);
@@ -251,7 +256,7 @@ export function createPackage(app, account, lines, common, nowMs = Date.now()) {
             tourSlug: line.tour.slug, date: line.date, time: line.time, pax: line.pax, hours: line.hours, earpieces: line.earpieces,
             tourLang: line.tourLang, theme: line.theme, themeNote: line.themeNote, pickup: line.pickup,
             channel: 'b2b', account, name, email, phone: group.phone, lang: group.lang, clientRef: group.client_ref, notes: group.notes, billing,
-            paymentMethod: common.paymentMethod, option: wantsOption, optionExpiresMs, skipOptionLimit: true, groupId,
+            paymentMethod: common.paymentMethod, option: wantsOption, optionExpiresMs, skipOptionLimit: true, groupId, bookedBy: common.bookedBy,
           },
           nowMs,
         );

@@ -606,6 +606,34 @@ CREATE TABLE partner_invites (
 CREATE INDEX idx_partner_invites_email ON partner_invites(email);
 `;
 
+const V30_TEAM = `
+-- Più persone per agenzia: ogni collaboratore ha il suo accesso (email e password) e lavora sulle prenotazioni dell'agenzia.
+-- Il titolare resta nell'account (accounts); qui ci sono gli altri. La password è vuota finché non la sceglie dal collegamento dell'invito
+-- (del quale si conserva solo l'impronta).
+CREATE TABLE account_users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  name TEXT NOT NULL,
+  lang TEXT NOT NULL DEFAULT 'it',
+  password_hash TEXT,
+  token_hash TEXT UNIQUE,
+  token_expires_at TEXT,
+  invited_at TEXT NOT NULL,
+  activated_at TEXT,
+  last_login_at TEXT
+);
+CREATE INDEX idx_account_users_account ON account_users(account_id);
+-- Chi ha prenotato: il collaboratore (vuoto = il titolare, o la guida dal pannello) e il suo nome com'era allora
+ALTER TABLE bookings ADD COLUMN booked_by_user INTEGER;
+ALTER TABLE bookings ADD COLUMN booked_by_name TEXT;
+ALTER TABLE booking_groups ADD COLUMN booked_by_user INTEGER;
+ALTER TABLE booking_groups ADD COLUMN booked_by_name TEXT;
+-- Il pacchetto in preparazione è personale; l'avviso della lista d'attesa va a chi l'ha chiesto (vuoto = il titolare)
+ALTER TABLE cart_items ADD COLUMN user_id INTEGER;
+ALTER TABLE waitlist ADD COLUMN user_id INTEGER;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -663,6 +691,7 @@ export const MIGRATIONS = [
   V28_PERIODS,
   // v29 — verifica della partita IVA e inviti alle agenzie
   V29_PARTNER_ONBOARDING,
+  V30_TEAM,
 ];
 
 export function migrate(db) {

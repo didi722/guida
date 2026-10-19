@@ -14,8 +14,8 @@ export function createWaitlistServices(app) {
 
   const svc = {
     /** L'agenzia chiede di essere avvisata: se la data si libera riceve un'email. La guida sa che qualcuno aspetta (e chi tiene la data). */
-    async join(account, input, nowMs = Date.now()) {
-      const entry = joinWaitlist(app, account, input, nowMs);
+    async join(account, input, nowMs = Date.now(), userId = null) {
+      const entry = joinWaitlist(app, account, input, nowMs, userId);
       try {
         await notifyGuideWaitlist(app, entry, account, blockersOf(db, entry, nowMs));
       } catch (err) {

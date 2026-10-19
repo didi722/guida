@@ -57,7 +57,7 @@ export const entriesOf = (db, accountId, today) => db.prepare(`SELECT * FROM wai
  * L'agenzia chiede di essere avvisata se questa data si libera.
  * @throws {WaitlistError} invalid | closed (non si può seguire: giorno chiuso, passato…) | free (si può già prenotare) | mine | dup | limit
  */
-export function joinWaitlist(app, account, src, nowMs = Date.now()) {
+export function joinWaitlist(app, account, src, nowMs = Date.now(), userId = null) {
   const { db, cfg } = app;
   const w = readWait(app, src);
   if (!w) throw new WaitlistError('invalid');
@@ -67,9 +67,9 @@ export function joinWaitlist(app, account, src, nowMs = Date.now()) {
   if (w.time ? ov.slots.some((s) => s.time === w.time) : ov.slots.length > 0) throw new WaitlistError('free');
   if (w.time ? !ov.possible.some((s) => s.time === w.time) : !ov.possible.length) throw new WaitlistError('closed');
   if (!w.time && ov.state === 'mine') throw new WaitlistError('mine');
-  if (db.prepare(`SELECT 1 FROM waitlist WHERE account_id = ? AND tour_slug = ? AND date = ? AND COALESCE(time, '') = ? AND pax = ? AND COALESCE(hours, 0) = ? AND COALESCE(tour_lang, '') = ? AND status IN ${ACTIVE}`).get(account.id, w.tour.slug, w.date, w.time ?? '', w.pax, w.hours ?? 0, w.tourLang ?? '')) throw new WaitlistError('dup');
+  if (db.prepare(`SELECT 1 FROM waitlist WHERE account_id = ? AND tour_slug = ? AND date = ? AND COALESCE(time, '') = ? AND pax = ? AND COALESCE(hours, 0) = ? AND COALESCE(tour_lang, '') = ? AND user_id IS ? AND status IN ${ACTIVE}`).get(account.id, w.tour.slug, w.date, w.time ?? '', w.pax, w.hours ?? 0, w.tourLang ?? '', userId)) throw new WaitlistError('dup'); // lo stesso avviso lo può chiedere anche un collega: l'email va a ciascuno
   if (db.prepare(`SELECT COUNT(*) AS n FROM waitlist WHERE account_id = ? AND status IN ${ACTIVE} AND date >= ?`).get(account.id, today).n >= MAX_ACTIVE) throw new WaitlistError('limit');
-  const id = Number(db.prepare(`INSERT INTO waitlist (account_id, tour_slug, date, time, pax, hours, tour_lang, created_at, queued_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(account.id, w.tour.slug, w.date, w.time, w.pax, w.hours, w.tourLang, iso(nowMs), iso(nowMs)).lastInsertRowid);
+  const id = Number(db.prepare(`INSERT INTO waitlist (account_id, user_id, tour_slug, date, time, pax, hours, tour_lang, created_at, queued_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(account.id, userId, w.tour.slug, w.date, w.time, w.pax, w.hours, w.tourLang, iso(nowMs), iso(nowMs)).lastInsertRowid);
   return getEntry(db, id);
 }
 
@@ -100,7 +100,8 @@ export function settleBooked(db, nowMs = Date.now()) {
 export const waitingEntries = (db, today) =>
   db
     .prepare(
-      `SELECT w.*, a.email AS acct_email, a.contact_name AS acct_name, a.company AS acct_company, a.lang AS acct_lang FROM waitlist w JOIN accounts a ON a.id = w.account_id
+      `SELECT w.*, COALESCE(u.email, a.email) AS acct_email, COALESCE(u.name, a.contact_name) AS acct_name, a.company AS acct_company, COALESCE(u.lang, a.lang) AS acct_lang
+       FROM waitlist w JOIN accounts a ON a.id = w.account_id LEFT JOIN account_users u ON u.id = w.user_id AND u.password_hash IS NOT NULL
        WHERE w.status = 'waiting' AND w.date >= ? AND a.status = 'approved' ORDER BY w.date, COALESCE(w.queued_at, w.created_at), w.id`,
     )
     .all(today);

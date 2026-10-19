@@ -164,6 +164,8 @@ export function createBooking(app, input, nowMs = Date.now()) {
       channel,
       account_id: account?.id ?? null,
       group_id: input.groupId ?? null,
+      booked_by_user: channel === 'b2b' ? input.bookedBy?.userId ?? null : null, // chi dell'agenzia ha prenotato (vuoto: il titolare, o la guida dal pannello)
+      booked_by_name: channel === 'b2b' ? cleanText(input.bookedBy?.name, 120) || null : null,
       name,
       email,
       phone: cleanText(input.phone, 40) || null,

@@ -4,6 +4,7 @@
 import crypto from 'node:crypto';
 import { tx } from './db.js';
 import { normLang } from './langs.js';
+import { emailInUse } from './team.js';
 import { cleanText, isEmail } from './util.js';
 
 export const INVITE_DAYS = 14;
@@ -38,7 +39,7 @@ const fields = (input) => ({
 export function createInvite(db, input, nowMs = Date.now()) {
   const email = cleanText(input.email, 254).toLowerCase();
   if (!isEmail(email)) throw new InviteError('email');
-  if (db.prepare('SELECT 1 FROM accounts WHERE email = ?').get(email)) throw new InviteError('exists');
+  if (emailInUse(db, email)) throw new InviteError('exists');
   const f = fields(input);
   return tx(db, () => {
     const token = newToken();
@@ -93,7 +94,7 @@ export function renewInvite(db, id, nowMs = Date.now()) {
   return tx(db, () => {
     const i = getInvite(db, id);
     if (!i || i.used_at || i.cancelled_at) return null;
-    if (db.prepare('SELECT 1 FROM accounts WHERE email = ?').get(i.email)) return null; // nel frattempo si è registrata da sola
+    if (emailInUse(db, i.email)) return null; // nel frattempo si è registrata da sola
     const token = newToken();
     db.prepare('UPDATE partner_invites SET token_hash = ?, expires_at = ?, sent_at = NULL WHERE id = ?').run(hash(token), new Date(nowMs + INVITE_DAYS * DAY).toISOString(), id);
     return { invite: getInvite(db, id), token };

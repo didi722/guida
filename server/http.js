@@ -1,5 +1,6 @@
 import { clearCookie, parseCookies, rateLimiter, setCookie, signToken, verifyToken } from './auth.js';
 import { isLang, makeT } from './i18n.js';
+import { actorOf } from './team.js';
 
 export const send = (res, view, status = 200) => res.status(status).type('html').send(String(view));
 
@@ -18,6 +19,7 @@ export function createLimits() {
     login: rateLimiter({ windowMs: 10 * 60_000, max: 10 }),
     register: rateLimiter({ windowMs: 60 * 60_000, max: 6 }),
     forgot: rateLimiter({ windowMs: 60 * 60_000, max: 5 }), // richieste di nuova password
+    team: rateLimiter({ windowMs: 60 * 60_000, max: 20 }), // inviti ai collaboratori (per agenzia)
     api: rateLimiter({ windowMs: 60_000, max: 150 }),
     codes: rateLimiter({ windowMs: 10 * 60_000, max: 30 }), // tentativi con codici sconto / buoni regalo
     docs: rateLimiter({ windowMs: 10 * 60_000, max: 40 }), // preventivi PDF e caricamento del logo delle agenzie
@@ -34,8 +36,22 @@ export function sessionMiddleware(app) {
   return (req, res, next) => {
     const c = parseCookies(req.headers.cookie);
     const gs = verifyToken(cfg.sessionSecret, c.gs);
+    // req.acct è sempre l'agenzia; req.actor è chi sta lavorando (il titolare o un collaboratore: la sessione di un collaboratore porta anche `u`)
     req.acct = null;
-    if (gs?.k === 'b2b') req.acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(gs.id) ?? null;
+    req.actor = null;
+    if (gs?.k === 'b2b') {
+      const acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(gs.id) ?? null;
+      if (acct && !gs.u) {
+        req.acct = acct;
+        req.actor = actorOf(acct);
+      } else if (acct && Number.isSafeInteger(Number(gs.u))) {
+        const user = db.prepare('SELECT * FROM account_users WHERE id = ? AND account_id = ? AND password_hash IS NOT NULL').get(Number(gs.u), acct.id); // tolto dal titolare: la sessione smette di valere subito
+        if (user) {
+          req.acct = acct;
+          req.actor = actorOf(acct, user);
+        }
+      }
+    }
     const ga = verifyToken(cfg.sessionSecret, c.ga);
     // il cookie vale finché porta il «segno» di adesso: «esci da tutti i dispositivi», l'attivazione dei due passaggi e il cambio di password lo rendono vecchio
     req.isAdmin = ga?.k === 'admin' && ga.e === app.adminSecurity.sessionTag();
@@ -43,7 +59,7 @@ export function sessionMiddleware(app) {
   };
 }
 
-export const loginPartner = (res, cfg, id) => setCookie(res, cfg, 'gs', signToken(cfg.sessionSecret, { k: 'b2b', id, exp: Date.now() + WEEK * 1000 }), { maxAgeSec: WEEK });
+export const loginPartner = (res, cfg, id, userId = null) => setCookie(res, cfg, 'gs', signToken(cfg.sessionSecret, { k: 'b2b', id, ...(userId ? { u: userId } : {}), exp: Date.now() + WEEK * 1000 }), { maxAgeSec: WEEK });
 export const logoutPartner = (res, cfg) => clearCookie(res, cfg, 'gs');
 export const loginAdmin = (res, cfg, tag) => setCookie(res, cfg, 'ga', signToken(cfg.sessionSecret, { k: 'admin', e: tag, exp: Date.now() + WEEK * 1000 }), { maxAgeSec: WEEK });
 export const logoutAdmin = (res, cfg) => {
@@ -61,7 +77,7 @@ export const inSecondStep = (req, app) => {
 
 /** Contesto di rendering per le pagine pubbliche. */
 export function makeCtx(app, req, lang) {
-  return { app, req, lang, t: makeT(lang), u: (p) => `/${lang}${p}`, acct: req.acct, scripts: '' };
+  return { app, req, lang, t: makeT(lang), u: (p) => `/${lang}${p}`, acct: req.acct, actor: req.actor, scripts: '' };
 }
 
 export function langMiddleware(app, lang) {

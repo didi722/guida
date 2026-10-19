@@ -17,8 +17,8 @@ const dateOf = (v) => (isDate(one(v, 10)) ? one(v, 10) : '');
  * chi cerca un cliente non vuole sentirsi dire «nessuna» perché la sua pratica è già passata.
  */
 export function parseFilters(query = {}) {
-  const f = { q: one(query.q, 80), from: dateOf(query.from), to: dateOf(query.to), bfrom: dateOf(query.bfrom), bto: dateOf(query.bto) };
-  const searching = !!(f.q || f.from || f.to || f.bfrom || f.bto);
+  const f = { q: one(query.q, 80), from: dateOf(query.from), to: dateOf(query.to), bfrom: dateOf(query.bfrom), bto: dateOf(query.bto), mine: one(query.mine, 2) === '1' }; // mine: solo ciò che ho prenotato io (chi ha un team)
+  const searching = !!(f.q || f.from || f.to || f.bfrom || f.bto || f.mine);
   const asked = one(query.view, 12);
   f.explicit = PARTNER_VIEWS.includes(asked); // la scheda l'ha scelta chi guarda (altrimenti vale quella di default)
   f.view = f.explicit ? asked : searching ? 'all' : 'upcoming';
@@ -28,7 +28,7 @@ export function parseFilters(query = {}) {
 }
 
 /** Il filtro attivo, senza scheda né pagina: serve per i link delle schede e per capire se mostrare «azzera». */
-export const hasSearch = (f) => !!(f.q || f.from || f.to || f.bfrom || f.bto);
+export const hasSearch = (f) => !!(f.q || f.from || f.to || f.bfrom || f.bto || f.mine);
 
 /** Una prenotazione scaduta senza essere mai stata un'opzione era solo un pagamento non completato: all'agenzia non interessa. */
 const VISIBLE = `NOT (status = 'expired' AND option_expires_at IS NULL)`;
@@ -41,6 +41,7 @@ function searchSql(f) {
     cond.push(`(client_ref LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\' OR ref LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\')`);
     args.push(like, like, like, like);
   }
+  if (f.mine) (cond.push('booked_by_user IS ?'), args.push(f.actorId ?? null)); // il titolare è «vuoto»: le sue, quelle fatte dal pannello e le vecchie
   if (f.from) (cond.push('date >= ?'), args.push(f.from));
   if (f.to) (cond.push('date <= ?'), args.push(f.to));
   // «prenotata il»: created_at è un istante UTC, i giorni si contano a Venezia
@@ -197,7 +198,7 @@ export function bookingsCsv(rows, { content, statusLabel, head }) {
   };
   const money = (c) => (c / 100).toFixed(2).replace('.', ',');
   const lines = rows.map((b) =>
-    [b.ref, b.client_ref, b.name, content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug, b.date, b.start_time, b.participants, statusLabel(b), b.created_at.slice(0, 10), money(b.total_cents - (b.gift_cents ?? 0)), b.invoice?.number ?? ''].map(cell).join(';'),
+    [b.ref, b.client_ref, b.name, content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug, b.date, b.start_time, b.participants, statusLabel(b), b.created_at.slice(0, 10), money(b.total_cents - (b.gift_cents ?? 0)), b.invoice?.number ?? '', b.booked_by_name ?? ''].map(cell).join(';'),
   );
   return `﻿${[head.join(';'), ...lines].join('\r\n')}\r\n`;
 }

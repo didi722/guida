@@ -11,7 +11,7 @@ import { documentsBox } from './agencyDocs.js';
 import { page } from './layout.js';
 import { bookingStatusText } from './b2b.js';
 import { extensionBox } from './changes.js';
-import { breadcrumbs, fmtDuration, homeCrumb, hoursLabel, langOptions, timeLeft } from './components.js';
+import { breadcrumbs, fmtDuration, homeCrumb, hoursLabel, langOptions, timeLeft, whoOf } from './components.js';
 
 const checkoutScript = (ctx) => raw(`<script src="/js/checkout.js?v=${ctx.app.assetVersion}" defer></script>`);
 
@@ -24,6 +24,7 @@ const FLASH = ['confirmed', 'released', 'expired', 'error', 'cancelled', 'cancel
  */
 export function packageCartPage(ctx, { acct, summary, values = {}, error = '', flash = '' }) {
   const { t, lang, u, app } = ctx;
+  const who = whoOf(ctx) ?? {}; // chi sta preparando il pacchetto: nome ed email proposti se mancano
   const { lines, option, firm } = summary;
   const v = (k, d = '') => values[k] ?? summary.contact[k] ?? d;
   const money = (c) => formatMoney(c, lang);
@@ -64,8 +65,8 @@ export function packageCartPage(ctx, { acct, summary, values = {}, error = '', f
       <form class="card pad form spaced" method="post" action="${u('/b2b/package')}" id="checkout-form">
         <h2>${t('pkg.details')}</h2>
         <div class="form-grid">
-          <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', acct.contact_name)}"></label>
-          <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', acct.email)}"></label>
+          <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', who.name)}"></label>
+          <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', who.email)}"></label>
           <label class="field"><span class="label">${t('f.phone')} <em>${t('f.phoneB2b')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', acct.phone ?? '')}"></label>
           <label class="field"><span class="label">${t('f.lang')}</span><select name="lang">${langOptions(v('lang', lang))}</select></label>
         </div>
@@ -136,7 +137,7 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
 </div></section>
 <section class="section tight"><div class="wrap narrow">
   <div class="card pad">
-    <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${group.ref}</strong>${group.client_ref ? html` · <span class="muted">${t('f.clientRef')}</span> <strong>${group.client_ref}</strong>` : ''}</p>
+    <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${group.ref}</strong>${group.client_ref ? html` · <span class="muted">${t('f.clientRef')}</span> <strong>${group.client_ref}</strong>` : ''}${owner && group.booked_by_name ? html` · <span class="muted">${t('partner.by', { name: group.booked_by_name })}</span>` : ''}</p>
     <div class="table-wrap"><table class="table table-stack partner-table"><thead><tr><th>${t('s.service')}</th><th>${t('s.date')}</th><th class="num">${t('s.guests')}</th><th>${t('b2b.state')}</th><th class="num">${t('s.total')}</th></tr></thead><tbody>
       ${bookings.map((b) => {
         const tour = app.content.tour(b.tour_slug);

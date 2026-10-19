@@ -12,7 +12,7 @@ import { firmTiers } from '../optionPolicy.js';
 import { DEFAULT_MEETING, hasThemes, meetingOf, themeText } from '../choices.js';
 import { icon, page } from './layout.js';
 import { walletOptions } from '../wallet.js';
-import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
+import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia, whoOf } from './components.js';
 import { quoteLines } from './hourly.js';
 import { changeBox, extensionBox } from './changes.js';
 import { documentsBox } from './agencyDocs.js';
@@ -87,6 +87,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
 export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, error = '', channel, pricing, option = null, hours: serviceHours = null, earpieces = false }) {
   const extraOptions = extraHourOptions(tour, channel);
   const { t, lang, u, app, acct } = ctx;
+  const who = whoOf(ctx) ?? {}; // chi prenota (il titolare o un collaboratore): nome ed email proposti nel modulo
   const { cfg } = app;
   const hourly = tour.pricing === 'hourly';
   const rates = hourly ? app.rates.get() : null;
@@ -134,8 +135,8 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
     <button type="submit" name="apply" value="1" formnovalidate hidden tabindex="-1" id="pax-apply"></button>
     <h2>${isB2b ? t('checkout.contactB2b') : t('checkout.contact')}</h2>
     <div class="form-grid">
-      <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? acct.contact_name : '')}"></label>
-      <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? acct.email : '')}"></label>
+      <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? who.name : '')}"></label>
+      <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? who.email : '')}"></label>
       <label class="field"><span class="label">${t('f.phone')} <em>${isB2b ? t('f.phoneB2b') : t('f.optional')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', isB2b ? (acct.phone ?? '') : '')}"></label>
       ${tourLangField}
       ${tour.meetingChoice ? html`<label class="field wide"><span class="label">${t('f.pickup')} <em>${t('f.optional')}</em></span><input name="pickup" maxlength="200" value="${v('pickup')}" placeholder="${t('f.pickupHint')}" autocomplete="off"><small class="muted">${isB2b ? t('f.pickupNoteB2b') : t('f.pickupNote', { place: DEFAULT_MEETING.text[lang] })}</small></label>` : ''}
@@ -327,6 +328,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       ${themeText(b, lang) ? html`<div><dt>${t('f.theme')}</dt><dd>${themeText(b, lang)}</dd></div>` : ''}
       <div><dt>${t('s.name')}</dt><dd>${b.name} · ${b.email}${b.phone ? ' · ' + b.phone : ''}</dd></div>
       ${b.client_ref ? html`<div><dt>${t('f.clientRef')}</dt><dd>${b.client_ref}</dd></div>` : ''}
+      ${owner && b.booked_by_name ? html`<div><dt>${t('partner.col.by')}</dt><dd>${b.booked_by_name}</dd></div>` : ''}
       ${b.notes ? html`<div><dt>${t('f.notes')}</dt><dd>${b.notes}</dd></div>` : ''}
       ${service ? quoteLines(t, lang, service, { total: false }) : ''}
       ${b.discount_cents ? html`<div class="row-discount"><dt>${t('booking.discountLine', { code: b.promo_code ?? '' })}</dt><dd>−${formatMoney(b.discount_cents, lang, b.currency)}</dd></div>` : ''}
