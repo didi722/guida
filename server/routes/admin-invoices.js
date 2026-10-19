@@ -22,7 +22,7 @@ const FLASH = {
   paid: 'Incasso registrato: le prenotazioni della fattura risultano pagate e l’agenzia ha ricevuto la ricevuta.',
   unpaid: 'Incasso annullato: la fattura torna da incassare.',
   reminded: 'Sollecito inviato all’agenzia.',
-  noreminder: 'Nessun sollecito inviato: la fattura non è da pagare o manca l’email dell’intestatario.',
+  noreminder: 'Nessun sollecito inviato: la fattura non è da pagare, manca l’email dell’intestatario o l’invio non è riuscito (controlla le impostazioni della posta).',
 };
 
 const arr = (v) => [].concat(v ?? []).map(String);

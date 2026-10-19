@@ -494,6 +494,26 @@ ALTER TABLE invoices ADD COLUMN overdue_reminders INTEGER NOT NULL DEFAULT 0;
 CREATE UNIQUE INDEX invoices_pay_ref ON invoices(pay_ref) WHERE pay_ref IS NOT NULL;
 `;
 
+const V22_WAITLIST = `
+-- Lista d'attesa delle agenzie: «avvisami se si libera» (una data tenuta in opzione, o completa).
+CREATE TABLE waitlist (
+  id            INTEGER PRIMARY KEY,
+  account_id    INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  tour_slug     TEXT NOT NULL,
+  date          TEXT NOT NULL,
+  time          TEXT,                                                       -- NULL = un orario qualsiasi di quel giorno
+  pax           INTEGER NOT NULL,
+  hours         REAL,                                                       -- servizi a ore: la durata voluta
+  tour_lang     TEXT,                                                       -- partenze condivise: la lingua voluta
+  status        TEXT NOT NULL DEFAULT 'waiting',                            -- waiting | notified | booked | cancelled | expired
+  created_at    TEXT NOT NULL,
+  notified_at   TEXT,
+  notified_time TEXT                                                        -- il primo orario che si è liberato
+);
+CREATE INDEX waitlist_status_date ON waitlist(status, date);
+CREATE INDEX waitlist_account ON waitlist(account_id, status);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -535,6 +555,8 @@ export const MIGRATIONS = [
   V19_PACKAGES,
   V20_CHANGES,
   V21_INVOICE_PAYMENTS,
+  // v22 — lista d'attesa delle agenzie
+  V22_WAITLIST,
 ];
 
 export function migrate(db) {

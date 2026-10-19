@@ -15,6 +15,7 @@ import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia } from './components.js';
 import { quoteLines } from './hourly.js';
 import { changeBox, extensionBox } from './changes.js';
+import { bookTabs } from './availability.js';
 import { bookingPayBlock } from './invoicePay.js';
 import { pendingExtension } from '../changes.js';
 import { extraHourOptions, parseServiceRecord } from '../rates.js';
@@ -40,6 +41,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
 </div></section>
 
 <section class="section tight"><div class="wrap">
+  ${channel === 'b2b' ? bookTabs(ctx, 'search') : ''}
   <form class="card pad search-card" method="get" action="${u('/book')}">
     <label class="field"><span class="label">${t('quick.date')}</span><input type="date" name="date" min="${minDate}" value="${date ?? ''}" required></label>
     <label class="field"><span class="label">${t('quick.guests')}</span><select name="pax">${Array.from({ length: 25 }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select></label>
@@ -71,6 +73,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
             </article>`;
           })}</div>`
         : html`<div class="card pad empty"><p>${t('book.none')}</p>
+            ${channel === 'b2b' ? html`<p><a href="${u('/b2b/availability')}?${new URLSearchParams({ ...(tourSlug ? { tour: tourSlug } : {}), pax: String(pax), m: date.slice(0, 7) })}">${t('avail.noneHint')}</a></p>` : ''}
             ${suggestions.length ? html`<p>${t('book.nextDates')}</p><p class="date-chips">${suggestions.map((d) => html`<a class="chip chip-link" href="${u('/book')}?date=${d}&pax=${pax}${tourSlug ? '&tour=' + tourSlug : ''}${kinds.shown ? '&kinds=1' + (kinds.private ? '&kind=private' : '') + (kinds.shared ? '&kind=shared' : '') : ''}">${fmtDate(d, lang, 'weekday')}</a>`)}</p>` : ''}
             <p class="small muted">${t('book.askUs')} <a href="${u('/contact')}">${t('nav.contact')}</a></p></div>`}`
     : html`<p class="muted spaced">${t('book.pickPrompt')}</p>

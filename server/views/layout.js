@@ -121,7 +121,8 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   ${partner
     ? html`${PARTNER_NAV.map(([k, p, label]) => html`<a href="${u(p)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
   ${cart ? html`<a href="${u('/b2b/package')}" ${activeNav === 'b2b-package' ? raw('aria-current="page"') : ''}>${t('pkg.nav', { n: cart })}</a>` : ''}
-  <a href="${u('/book')}" ${activeNav === 'book' ? raw('aria-current="page"') : ''}>${t('partner.nav.new')}</a>`
+  <a href="${u('/book')}" ${activeNav === 'book' ? raw('aria-current="page"') : ''}>${t('partner.nav.new')}</a>
+  <a href="${u('/b2b/availability')}">${t('avail.nav')}</a>`
     : html`${NAV.map(([k, label]) => html`<a href="${u('/' + k)}" ${activeNav === k ? raw('aria-current="page"') : ''}>${t(label)}</a>`)}
   <a href="${u('/gift')}" ${activeNav === 'gift' ? raw('aria-current="page"') : ''}>${t('nav.gift')}</a>
   <a href="${u('/contact')}">${t('nav.contact')}</a>`}

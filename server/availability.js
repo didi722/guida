@@ -58,7 +58,7 @@ export function loadAvailabilityContext(db, cfg, fromDate, toDate, nowMs, { igno
   const bookings = groupBy(
     db
       .prepare(
-        `SELECT id, tour_slug, date, start_time, end_time, buffer_min, participants, tour_lang FROM bookings
+        `SELECT id, tour_slug, date, start_time, end_time, buffer_min, participants, tour_lang, status, account_id FROM bookings
          WHERE date BETWEEN ? AND ? AND ${LIVE_BOOKING_SQL}`, // confermate, in pagamento e opzioni non scadute
       )
       .all(fromDate, toDate, new Date(nowMs).toISOString(), new Date(nowMs).toISOString()),
@@ -161,6 +161,51 @@ export function monthAvailability(db, cfg, tour, month, { pax = 1, channel = 'b2
     if (n) days[d] = n;
   }
   return days;
+}
+
+/**
+ * Le «viste» delle prenotazioni di un intervallo, per capire PERCHÉ un giorno non ha posto:
+ * tutte; solo le confermate (senza opzioni e pagamenti in corso); senza quelle dell'agenzia; nessuna.
+ */
+function overviewViews(ctx, accountId) {
+  const keep = (pred) => ({ ...ctx, bookings: new Map([...ctx.bookings].map(([d, rows]) => [d, rows.filter(pred)])) });
+  return { all: ctx, firm: keep((b) => b.status === 'confirmed'), others: accountId ? keep((b) => b.account_id !== accountId) : ctx, none: { ...ctx, bookings: new Map() } };
+}
+
+/**
+ * Com'è un giorno per un servizio (calendario delle agenzie):
+ *  - `free`: ci sono orari prenotabili (`slots`);
+ *  - `mine`: sarebbe libero senza le prenotazioni dell'agenzia stessa;
+ *  - `held`: occupato solo da opzioni o pagamenti in corso: se vengono rilasciati si libera da solo;
+ *  - `full`: occupato da prenotazioni confermate;
+ *  - `null`: non si può prenotare comunque (la guida non lavora, giorno passato o troppo lontano, preavviso, impegni…).
+ * `possible`: gli orari che ci sarebbero senza alcuna prenotazione (serve a sapere se un orario esiste).
+ */
+function dayOverview(views, cfg, tour, date, opts) {
+  const slots = slotsForDay(views.all, cfg, tour, date, opts);
+  const possible = slotsForDay(views.none, cfg, tour, date, opts);
+  if (slots.length) return { state: 'free', slots, possible };
+  if (!possible.length) return { state: null, slots, possible };
+  if (views.others !== views.all && slotsForDay(views.others, cfg, tour, date, opts).length) return { state: 'mine', slots, possible };
+  return { state: slotsForDay(views.firm, cfg, tour, date, opts).length ? 'held' : 'full', slots, possible };
+}
+
+/** Il mese di un servizio giorno per giorno: `{ 'AAAA-MM-GG': { state, n } }` (solo i giorni in cui qualcosa si può dire). */
+export function monthOverview(db, cfg, tour, month, { pax = 1, channel = 'b2c', nowMs, durationMin = null, tourLang = null, accountId = null }) {
+  const dates = monthDates(month);
+  const views = overviewViews(loadAvailabilityContext(db, cfg, dates[0], dates.at(-1), nowMs), accountId);
+  const out = {};
+  for (const d of dates) {
+    const { state, slots } = dayOverview(views, cfg, tour, d, { pax, channel, nowMs, durationMin, tourLang });
+    if (state) out[d] = { state, n: slots.length };
+  }
+  return out;
+}
+
+/** Un giorno di un servizio: lo stato (vedi sopra), gli orari liberi e quelli possibili. */
+export function dayOverviewFor(db, cfg, tour, date, { pax = 1, channel = 'b2c', nowMs, durationMin = null, tourLang = null, accountId = null }) {
+  const views = overviewViews(loadAvailabilityContext(db, cfg, date, date, nowMs), accountId);
+  return dayOverview(views, cfg, tour, date, { pax, channel, nowMs, durationMin, tourLang });
 }
 
 export function daySlots(db, cfg, tour, date, opts) {

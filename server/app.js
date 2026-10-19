@@ -10,6 +10,7 @@ import { LANGS } from './i18n.js';
 import { openTo } from './rates.js';
 import { langMiddleware, makeCtx, preferredLang, sameOrigin, securityHeaders, send, sessionMiddleware } from './http.js';
 import { brandIcon } from './png.js';
+import { availabilityRouter } from './routes/availability.js';
 import { changesRouter } from './routes/changes.js';
 import { invoicePayRouter } from './routes/invoicePay.js';
 import { packagesRouter } from './routes/packages.js';
@@ -86,9 +87,10 @@ export function createApp(overrides = {}) {
   const partner = partnerRouter(app);
   const packages = packagesRouter(app);
   const changes = changesRouter(app);
+  const availability = availabilityRouter(app);
   const invoicePay = invoicePayRouter(app);
   const features = featuresRouter(app);
-  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, changes, invoicePay, features);
+  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, changes, availability, invoicePay, features);
 
   // 404 (nella lingua dell'URL se possibile)
   server.use((req, res) => {

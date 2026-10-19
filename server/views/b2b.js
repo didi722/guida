@@ -231,7 +231,7 @@ export function accountPage(ctx, { acct, flash = '' }) {
 <section class="page-head partner-head"><div class="wrap">
   <div class="account-head">
     <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${acct.contact_name} · ${acct.email}</p></div>
-    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a>${canQuote ? html`<a class="btn btn-outline btn-lg" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline btn-lg" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a></div>
+    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline btn-lg" href="${u('/b2b/availability')}">${t('avail.nav')}</a>${canQuote ? html`<a class="btn btn-outline btn-lg" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline btn-lg" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a></div>
   </div>
 </div></section>
 <section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">

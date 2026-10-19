@@ -1643,3 +1643,50 @@ export async function sendInviteEmail(app, b, invite, link, nowMs = Date.now()) 
   app.db.prepare('UPDATE invites SET sent_at = ? WHERE id = ?').run(new Date(nowMs).toISOString(), invite.id);
   return true;
 }
+
+// ───────────── Lista d'attesa delle agenzie («avvisami se si libera») ─────────────
+const waitTourTitle = (app, slug, lang) => app.content.tour(slug)?.i18n[lang]?.title ?? slug;
+
+/** All'agenzia: la data che aspettava è di nuovo prenotabile (`slots`: gli orari liberi adesso). Nessuno la tiene da parte: chi prenota per primo la ottiene. @returns {Promise<boolean>} false se l'email non è partita */
+export async function sendWaitlistFree(app, e, slots) {
+  const lang = normLang(e.acct_lang);
+  const t = makeT(lang);
+  const tr = T[lang];
+  const title = waitTourTitle(app, e.tour_slug, lang);
+  const times = slots.slice(0, 8).map((s) => s.time).join(', ');
+  const intro = t('wl.mail.intro', { tour: title, date: fmtDate(e.date, lang), times });
+  const note = t('wl.mail.note');
+  const cta = t('wl.mail.cta');
+  const link = `${app.cfg.baseUrl}/${lang}/book?date=${e.date}&pax=${e.pax}&tour=${encodeURIComponent(e.tour_slug)}`;
+  const manage = `${app.cfg.baseUrl}/${lang}/b2b/availability#lista`;
+  return app.mail.send({
+    to: e.acct_email,
+    subject: t('wl.mail.subject', { tour: title, date: fmtDate(e.date, lang, 'short') }),
+    text: [tr.hello(e.acct_name), '', intro, '', `${cta}: ${link}`, '', note, `${t('wl.title')}: ${manage}`, '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
+    html: String(layout(app, lang, html`<p>${tr.hello(e.acct_name)}</p><p>${intro}</p><p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${cta}</a></p><p style="color:#555">${note} <a href="${manage}">${t('wl.title')}</a></p><p style="color:#555">${tr.contactLine}</p><p>${tr.bye}<br>${app.cfg.site.name}</p>`)),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/** Avviso alla guida (in italiano): un'agenzia aspetta una data; `blockers` sono le prenotazioni di altri che la occupano adesso. */
+export async function notifyGuideWaitlist(app, e, account, blockers = []) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  const title = waitTourTitle(app, e.tour_slug, 'it');
+  const who = (b) => (b.company ? ` di ${b.company}` : '');
+  const blocker = (b) =>
+    b.status === 'option'
+      ? `opzione ${b.ref}${who(b)} (${b.start_time}), scade il ${fmtInstant(Date.parse(b.option_expires_at), 'it')}`
+      : b.status === 'held'
+        ? `pagamento in corso ${b.ref}${who(b)} (${b.start_time})`
+        : `prenotazione confermata ${b.ref}${who(b)} (${b.start_time})`;
+  const lines = [
+    `Lista d’attesa: ${account.company} aspetta una data`,
+    `${title} · ${fmtDate(e.date, 'it')}${e.time ? ` ore ${e.time}` : ' (qualsiasi orario)'} · ${e.pax} ${e.pax === 1 ? 'persona' : 'persone'}`,
+    blockers.length ? 'Adesso la occupano:' : null,
+    ...blockers.slice(0, 6).map((b) => `- ${blocker(b)}`),
+    '',
+    'Se si libera l’agenzia riceve l’avviso da sola. Tutta la lista: ' + `${app.cfg.baseUrl}/admin/waitlist`,
+  ].filter((x) => x !== null);
+  await app.mail.send({ to, subject: `Lista d’attesa: ${account.company} — ${title}, ${e.date}`, text: lines.join('\n'), html: String(html`<div style="font-family:Arial,sans-serif">${lines.map((l) => html`${l}<br>`)}</div>`) });
+}

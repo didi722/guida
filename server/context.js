@@ -20,6 +20,7 @@ import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
 import { createServices } from './services.js';
 import { createTranslator } from './translate.js';
+import { createWaitlistServices } from './waitlistServices.js';
 
 export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl, assetVersion = '0' }) {
   const app = { cfg, db, content, assetVersion, jobs: [], limits: createLimits() };
@@ -42,6 +43,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.services = createServices(app);
   app.packages = createPackageServices(app);
   app.changes = createChangeServices(app);
+  app.waitlist = createWaitlistServices(app);
   app.gifts = createGiftServices(app);
   app.reviews = createReviewServices(app);
   app.translate = createTranslator(app, fetchImpl);

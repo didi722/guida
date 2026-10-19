@@ -6724,5 +6724,347 @@
   "Invoice {number}",
   "Factura {number}",
   "請求書 {number}"
+ ],
+ "avail.nav": [
+  "Date libere",
+  "Free dates",
+  "Fechas libres",
+  "空き日"
+ ],
+ "avail.tab.search": [
+  "Cerca per data",
+  "Search by date",
+  "Buscar por fecha",
+  "日付で探す"
+ ],
+ "avail.title": [
+  "Date libere",
+  "Free dates",
+  "Fechas libres",
+  "空き日"
+ ],
+ "avail.lead": [
+  "Scegli il servizio e quante persone siete: vedi a colpo d’occhio i giorni liberi del mese, senza provare una data alla volta.",
+  "Pick the service and the size of your group: see the free days of the month at a glance, without trying one date at a time.",
+  "Elige el servicio y cuántas personas sois: ve de un vistazo los días libres del mes, sin probar fecha por fecha.",
+  "サービスと人数を選ぶと、1日ずつ試さなくても、その月の空き日がひと目で分かります。"
+ ],
+ "avail.service": [
+  "Servizio",
+  "Service",
+  "Servicio",
+  "サービス"
+ ],
+ "avail.anyLang": [
+  "Qualsiasi lingua",
+  "Any language",
+  "Cualquier idioma",
+  "どの言語でも"
+ ],
+ "avail.show": [
+  "Mostra",
+  "Show",
+  "Mostrar",
+  "表示"
+ ],
+ "avail.grid": [
+  "Date libere di {month}",
+  "Free dates in {month}",
+  "Fechas libres de {month}",
+  "{month}の空き日"
+ ],
+ "avail.free.one": [
+  "{n} orario",
+  "{n} time slot",
+  "{n} horario",
+  "{n}枠"
+ ],
+ "avail.free.many": [
+  "{n} orari",
+  "{n} time slots",
+  "{n} horarios",
+  "{n}枠"
+ ],
+ "avail.st.free": [
+  "Libero",
+  "Free",
+  "Libre",
+  "空きあり"
+ ],
+ "avail.st.held": [
+  "In opzione",
+  "On hold",
+  "En opción",
+  "仮押さえ中"
+ ],
+ "avail.st.full": [
+  "Completo",
+  "Full",
+  "Completo",
+  "満席"
+ ],
+ "avail.st.mine": [
+  "Tua pratica",
+  "Your booking",
+  "Tu reserva",
+  "ご自身の予約"
+ ],
+ "avail.lg.free": [
+  "libero",
+  "free",
+  "libre",
+  "空きあり"
+ ],
+ "avail.lg.held": [
+  "tenuto da altri: puoi farti avvisare",
+  "held by someone else: you can ask to be notified",
+  "retenido por otros: puedes pedir que te avisemos",
+  "他社が仮押さえ中：空いたら通知を受け取れます"
+ ],
+ "avail.lg.full": [
+  "completo",
+  "full",
+  "completo",
+  "満席"
+ ],
+ "avail.lg.mine": [
+  "la tua pratica",
+  "your booking",
+  "tu reserva",
+  "ご自身の予約"
+ ],
+ "avail.hint": [
+  "tocca un giorno per vedere gli orari",
+  "tap a day to see the times",
+  "toca un día para ver los horarios",
+  "日をタップすると時間が表示されます"
+ ],
+ "avail.pax": [
+  "Persone: {n}",
+  "Guests: {n}",
+  "Personas: {n}",
+  "人数：{n}"
+ ],
+ "avail.day.free": [
+  "Orari liberi",
+  "Free times",
+  "Horarios libres",
+  "空いている時間"
+ ],
+ "avail.day.held": [
+  "Questa data è occupata da un’opzione o da un pagamento in corso di un altro operatore. Se viene rilasciata, si libera da sola.",
+  "This date is taken by another operator’s option or by a payment in progress. If it is released, it frees up by itself.",
+  "Esta fecha está ocupada por una opción o un pago en curso de otro operador. Si se libera, vuelve a estar disponible sola.",
+  "この日は他社の仮押さえまたは支払い手続き中のため埋まっています。解除されれば自動的に空きになります。"
+ ],
+ "avail.day.full": [
+  "Questa data è già completa.",
+  "This date is already full.",
+  "Esta fecha ya está completa.",
+  "この日はすでに満席です。"
+ ],
+ "avail.day.mine": [
+  "Una tua pratica occupa già questa data: la trovi in Prenotazioni.",
+  "One of your bookings already takes this date: you will find it under Bookings.",
+  "Una reserva tuya ya ocupa esta fecha: la encuentras en Reservas.",
+  "ご自身の予約がすでにこの日を占めています。「予約一覧」でご確認ください。"
+ ],
+ "avail.day.none": [
+  "In questo giorno non c’è servizio o non è più prenotabile.",
+  "There is no service on this day, or it can no longer be booked.",
+  "Este día no hay servicio o ya no se puede reservar.",
+  "この日はサービスがないか、すでに予約できません。"
+ ],
+ "avail.day.otherTimes": [
+  "Un altro orario è occupato: puoi farti avvisare se si libera.",
+  "Another time is taken: you can ask to be notified if it frees up.",
+  "Otra hora está ocupada: puedes pedir que te avisemos si se libera.",
+  "別の時間は埋まっています。空いたら通知を受け取れます。"
+ ],
+ "avail.bookLink": [
+  "Non hai ancora una data? Guarda il calendario delle date libere →",
+  "No date in mind yet? See the calendar of free dates →",
+  "¿Aún no tienes fecha? Mira el calendario de fechas libres →",
+  "日程が未定ですか？空き日カレンダーを見る →"
+ ],
+ "avail.noneHint": [
+  "Data occupata? Guarda il calendario e fatti avvisare se si libera →",
+  "Date taken? Open the calendar and ask to be notified if it frees up →",
+  "¿Fecha ocupada? Abre el calendario y pide que te avisemos si se libera →",
+  "日程が埋まっていますか？カレンダーを開き、空いたら通知を受け取りましょう →"
+ ],
+ "avail.card.text": [
+  "Il calendario del mese per ogni servizio: i giorni liberi a colpo d’occhio e, se una data è occupata, l’avviso quando si libera.",
+  "The month calendar for each service: free days at a glance and, if a date is taken, a notice when it frees up.",
+  "El calendario del mes de cada servicio: los días libres de un vistazo y, si una fecha está ocupada, un aviso cuando se libera.",
+  "サービスごとの月間カレンダー。空き日がひと目で分かり、埋まっている日は空いたときに通知を受け取れます。"
+ ],
+ "avail.card.cta": [
+  "Guarda le date libere",
+  "See the free dates",
+  "Ver las fechas libres",
+  "空き日を見る"
+ ],
+ "avail.none": [
+  "Non ci sono servizi prenotabili.",
+  "There are no services to book.",
+  "No hay servicios reservables.",
+  "予約できるサービスがありません。"
+ ],
+ "wl.cta": [
+  "Avvisami se si libera",
+  "Notify me if it frees up",
+  "Avísame si se libera",
+  "空いたら通知する"
+ ],
+ "wl.time": [
+  "Orario",
+  "Time",
+  "Hora",
+  "時間"
+ ],
+ "wl.anyTime": [
+  "Qualsiasi orario",
+  "Any time",
+  "Cualquier hora",
+  "どの時間でも"
+ ],
+ "wl.hint": [
+  "Ti scriviamo appena la data torna prenotabile per il tuo gruppo. Nessuno la tiene da parte per te: la ottiene chi prenota per primo.",
+  "We will email you as soon as the date can be booked again for your group. Nobody holds it for you: whoever books first gets it.",
+  "Te escribimos en cuanto la fecha vuelva a poder reservarse para tu grupo. Nadie la guarda para ti: la consigue quien reserve primero.",
+  "この日が再び予約可能になったら、すぐにメールでお知らせします。確保はされません。先に予約した方が取得できます。"
+ ],
+ "wl.already": [
+  "Ti avviseremo appena si libera.",
+  "We will let you know as soon as it frees up.",
+  "Te avisaremos en cuanto se libere.",
+  "空き次第お知らせします。"
+ ],
+ "wl.title": [
+  "La mia lista d’attesa",
+  "My waiting list",
+  "Mi lista de espera",
+  "待機リスト"
+ ],
+ "wl.lead": [
+  "Ti scriviamo appena una di queste date torna libera. Puoi toglierle quando vuoi.",
+  "We will email you as soon as one of these dates frees up. You can remove them whenever you like.",
+  "Te escribimos en cuanto una de estas fechas se libere. Puedes quitarlas cuando quieras.",
+  "これらの日が空いたらすぐにメールでお知らせします。いつでも削除できます。"
+ ],
+ "wl.empty": [
+  "Non stai aspettando nessuna data. Se una data è occupata, toccala nel calendario e scegli «Avvisami se si libera».",
+  "You are not waiting for any date. If a date is taken, tap it in the calendar and choose “Notify me if it frees up”.",
+  "No esperas ninguna fecha. Si una fecha está ocupada, tócala en el calendario y elige «Avísame si se libera».",
+  "待機中の日はありません。埋まっている日はカレンダーでタップし、「空いたら通知する」を選んでください。"
+ ],
+ "wl.st.waiting": [
+  "In attesa",
+  "Waiting",
+  "En espera",
+  "待機中"
+ ],
+ "wl.st.notified": [
+  "Si è liberata il {when}",
+  "Freed up on {when}",
+  "Se liberó el {when}",
+  "{when}に空きが出ました"
+ ],
+ "wl.book": [
+  "Vedi gli orari",
+  "See the times",
+  "Ver los horarios",
+  "時間を見る"
+ ],
+ "wl.rearm": [
+  "Avvisami ancora",
+  "Notify me again",
+  "Avísame otra vez",
+  "もう一度通知する"
+ ],
+ "wl.remove": [
+  "Togli",
+  "Remove",
+  "Quitar",
+  "削除"
+ ],
+ "wl.flash.joined": [
+  "Fatto: ti scriviamo appena la data si libera.",
+  "Done: we will email you as soon as the date frees up.",
+  "Hecho: te escribimos en cuanto la fecha se libere.",
+  "完了しました。この日が空いたらメールでお知らせします。"
+ ],
+ "wl.flash.removed": [
+  "Avviso tolto.",
+  "Notice removed.",
+  "Aviso quitado.",
+  "通知を削除しました。"
+ ],
+ "wl.flash.rearmed": [
+  "Ti avviseremo di nuovo.",
+  "We will notify you again.",
+  "Te avisaremos de nuevo.",
+  "もう一度通知します。"
+ ],
+ "wl.err.invalid": [
+  "Dati non validi: riprova dal calendario.",
+  "Invalid data: please try again from the calendar.",
+  "Datos no válidos: inténtalo de nuevo desde el calendario.",
+  "入力が正しくありません。カレンダーからやり直してください。"
+ ],
+ "wl.err.closed": [
+  "Per questa data non si può chiedere l’avviso: il giorno è chiuso, passato o troppo lontano.",
+  "You cannot ask for a notice for this date: the day is closed, past or too far ahead.",
+  "Para esta fecha no se puede pedir aviso: el día está cerrado, pasado o demasiado lejano.",
+  "この日は通知を設定できません（休業日、過去の日、または先すぎる日です）。"
+ ],
+ "wl.err.free": [
+  "Questa data ha già posto: puoi prenotarla subito.",
+  "This date already has room: you can book it right away.",
+  "Esta fecha ya tiene plazas: puedes reservarla ahora mismo.",
+  "この日はすでに空きがあります。今すぐ予約できます。"
+ ],
+ "wl.err.mine": [
+  "Il posto è occupato da una tua pratica.",
+  "The spot is taken by one of your own bookings.",
+  "El sitio está ocupado por una reserva tuya.",
+  "この枠はご自身の予約で埋まっています。"
+ ],
+ "wl.err.dup": [
+  "Hai già un avviso per questa data.",
+  "You already have a notice for this date.",
+  "Ya tienes un aviso para esta fecha.",
+  "この日の通知はすでに設定済みです。"
+ ],
+ "wl.err.limit": [
+  "Hai già {max} avvisi attivi: togline uno per aggiungerne un altro.",
+  "You already have {max} active notices: remove one to add another.",
+  "Ya tienes {max} avisos activos: quita uno para añadir otro.",
+  "有効な通知がすでに{max}件あります。追加するには1件削除してください。"
+ ],
+ "wl.mail.subject": [
+  "Si è liberata una data: {tour}, {date}",
+  "A date has freed up: {tour}, {date}",
+  "Se ha liberado una fecha: {tour}, {date}",
+  "空きが出ました：{tour}、{date}"
+ ],
+ "wl.mail.intro": [
+  "buone notizie: {tour} è di nuovo prenotabile il {date} per il tuo gruppo. Orari liberi: {times}.",
+  "good news: {tour} can be booked again on {date} for your group. Free times: {times}.",
+  "buenas noticias: {tour} vuelve a poder reservarse el {date} para tu grupo. Horarios libres: {times}.",
+  "朗報です。{date}の{tour}が、グループで再び予約できるようになりました。空き時間：{times}。"
+ ],
+ "wl.mail.note": [
+  "Nessuno la tiene da parte per te: la ottiene chi prenota per primo. Se non ti serve più, togli l’avviso dalla tua lista d’attesa.",
+  "Nobody is holding it for you: whoever books first gets it. If you no longer need it, remove the notice from your waiting list.",
+  "Nadie la guarda para ti: la consigue quien reserve primero. Si ya no la necesitas, quita el aviso de tu lista de espera.",
+  "確保はされていません。先に予約した方が取得できます。不要になった場合は、待機リストから通知を削除してください。"
+ ],
+ "wl.mail.cta": [
+  "Vedi gli orari e prenota",
+  "See the times and book",
+  "Ver los horarios y reservar",
+  "時間を見て予約する"
  ]
 }

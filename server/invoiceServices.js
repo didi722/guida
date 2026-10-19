@@ -15,6 +15,8 @@ export function createInvoiceServices(app) {
     if (!inv) throw new InvoiceError('notfound', 'fattura non trovata');
     return inv;
   };
+  const RETRY_MS = 15 * 60_000;
+  const retryAfter = new Map(); // fattura → quando riprovare un sollecito che non è partito
   const svc = {
     settings: () => settingsOf(cfg),
     problems: () => configProblems(cfg),
@@ -148,11 +150,20 @@ export function createInvoiceServices(app) {
       const now = new Date(nowMs).toISOString();
       const claimed = db.prepare('UPDATE invoices SET overdue_reminded_at = ?, overdue_reminders = overdue_reminders + 1 WHERE id = ? AND overdue_reminders = ?').run(now, id, inv.overdue_reminders).changes;
       if (claimed !== 1) return false; // un altro giro l'ha già mandato
+      const rollback = () => {
+        db.prepare('UPDATE invoices SET overdue_reminded_at = ?, overdue_reminders = ? WHERE id = ?').run(inv.overdue_reminded_at, inv.overdue_reminders, id);
+        retryAfter.set(id, nowMs + RETRY_MS); // niente tentativi ogni minuto se la posta non funziona
+      };
+      let sent;
       try {
-        await sendInvoiceOverdue(app, getInvoice(db, id), { to: to.email, lang: to.lang });
+        sent = await sendInvoiceOverdue(app, getInvoice(db, id), { to: to.email, lang: to.lang });
       } catch (err) {
-        db.prepare('UPDATE invoices SET overdue_reminded_at = ?, overdue_reminders = ? WHERE id = ?').run(inv.overdue_reminded_at, inv.overdue_reminders, id); // riprova al prossimo giro
+        rollback();
         throw err;
+      }
+      if (sent === false) {
+        rollback();
+        return false;
       }
       await notifyGuideInvoice(app, getInvoice(db, id), 'overdue', `${st.state === 'overdue' ? `Scaduta da ${st.days} ${st.days === 1 ? 'giorno' : 'giorni'}` : 'Promemoria prima della scadenza'} · sollecito n. ${inv.overdue_reminders + 1} a ${to.email}`);
       return true;
@@ -161,7 +172,7 @@ export function createInvoiceServices(app) {
     /** Lavoro periodico: i solleciti delle fatture scadute. */
     async sweepOverdue(nowMs = Date.now()) {
       let n = 0;
-      for (const { inv } of remindersDue(app, nowMs)) if (await svc.remind(inv.id, nowMs)) n++;
+      for (const { inv } of remindersDue(app, nowMs)) if (!(retryAfter.get(inv.id) > nowMs) && (await svc.remind(inv.id, nowMs))) n++;
       return n;
     },
   };

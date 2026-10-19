@@ -12,7 +12,7 @@ import { meetingOf, themeText } from '../choices.js';
 
 // Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
 export const ADMIN_GROUPS = [
-  { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità']] },
+  { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità'], ['/admin/waitlist', 'Lista d’attesa']] },
   { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
   { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
   { label: 'Sito', items: [['/admin/tours', 'Tour B2C'], ['/admin/tours-b2b', 'Tour B2B'], ['/admin/prices', 'Listino'], ['/admin/rates', 'Tariffe a ore'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/settings', 'Impostazioni']] },
@@ -144,12 +144,13 @@ function agendaCalendar(ctx, cal, today) {
   ${selectedItems.length ? html`<div class="card">${selectedItems.map((b) => agendaRow(ctx, b))}</div>` : html`<p class="muted">Nessun servizio in questo giorno.</p>`}</section>`;
 }
 
-export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, invoicesOverdue = 0, feedUrl, flash, problems, preOpening = null }) {
+export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, invoicesOverdue = 0, waiting = 0, feedUrl, flash, problems, preOpening = null }) {
   const selectedDay = calendar?.selected ?? today;
   const body = html`
 ${calendarWarning(problems)}
 ${preOpening ? html`<div class="notice notice-info" role="note"><strong>Pre-apertura:</strong> fino al ${fmtDate(preOpening, 'it', 'date')} il sito accetta prenotazioni (solo per date da quel giorno in poi) senza incassare online: i privati pagano il giorno del servizio, le agenzie a fattura. <a href="/admin/settings?s=rules#rules">Cambia la data</a></div>` : ''}
 ${options.requests ? html`<div class="notice notice-info" role="note"><strong>${options.requests} ${options.requests === 1 ? 'richiesta di proroga' : 'richieste di proroga'} da decidere.</strong> <a href="/admin/bookings?f=options">Apri le opzioni</a></div>` : ''}
+${waiting ? html`<div class="notice notice-info" role="note"><strong>${waiting === 1 ? '1 agenzia aspetta' : `${waiting} agenzie aspettano`} una data libera.</strong> <a href="/admin/waitlist">Apri la lista d’attesa</a></div>` : ''}
 ${invoicesOverdue ? html`<div class="notice notice-err" role="alert"><strong>${invoicesOverdue === 1 ? '1 fattura scaduta e non incassata' : `${invoicesOverdue} fatture scadute e non incassate`}.</strong> <a href="/admin/invoices?tab=issued">Apri le fatture</a></div>` : ''}
 ${invoicesDue ? html`<div class="notice notice-err" role="alert"><strong>${invoicesDue} ${invoicesDue === 1 ? 'voce' : 'voci'} da fatturare oltre i 12 giorni.</strong> <a href="/admin/invoices">Apri le fatture</a></div>` : ''}
 <div class="grid grid-4 kpis">
