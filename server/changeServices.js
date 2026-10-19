@@ -1,4 +1,5 @@
 // Modifiche dell'agenzia e richieste di proroga: collega regole, database ed email.
+import { modifyBookingAdmin } from './adminChanges.js';
 import { getBooking } from './bookings.js';
 import { ChangeError, denyExtension, modifyBooking, requestExtension } from './changes.js';
 import { notifyGuideBookingChanged, notifyGuideExtensionRequest, sendBookingChanged, sendExtensionDenied } from './emails.js';
@@ -12,6 +13,39 @@ export function createChangeServices(app) {
       await sendBookingChanged(app, res.before, res.after, nowMs);
       await notifyGuideBookingChanged(app, res.before, res.after);
       return res;
+    },
+
+    /**
+     * La guida modifica una prenotazione dal pannello (persone, data, orario, ore, prezzo): si applica, la differenza pagata con carta si rimborsa
+     * e, se vuole, il cliente (o l'agenzia) riceve l'email con i dati nuovi, il voucher e il calendario aggiornati.
+     * @returns {Promise<{before: object, after: object, deltaCents: number, refundCents: number, refunded: boolean|null, mailed: boolean}>}
+     *   refunded: true se il rimborso è partito, false se resta da fare a mano (lo ricorda «Da fare»), null se non c'era nulla da rimborsare
+     */
+    async modifyAdmin(bookingId, input, { note = '', notify = true } = {}, nowMs = Date.now()) {
+      const res = modifyBookingAdmin(app, bookingId, input, { note }, nowMs);
+      const b = res.after;
+      let refunded = null;
+      if (res.refundCents > 0) {
+        refunded = false;
+        try {
+          if (b.stripe_payment_intent) {
+            await app.payments.refund({ paymentIntent: b.stripe_payment_intent, cents: res.refundCents, ref: `${b.ref}-mod${res.changeId}` });
+            refunded = true;
+          }
+        } catch (err) {
+          console.error(`[modifica] rimborso della differenza di ${b.ref} non riuscito:`, err.message);
+        }
+        db.prepare(`UPDATE bookings SET ${refunded ? 'refund_cents = refund_cents' : 'refund_pending_cents = refund_pending_cents'} + ? WHERE id = ?`).run(res.refundCents, b.id);
+      }
+      let mailed = false;
+      if (notify && b.email) {
+        try {
+          mailed = (await sendBookingChanged(app, res.before, getBooking(db, bookingId), nowMs, { note, refundCents: res.refundCents })) !== false;
+        } catch (err) {
+          console.error('[modifica] email non inviata:', err.message); // la modifica è fatta comunque
+        }
+      }
+      return { ...res, after: getBooking(db, bookingId), refunded, mailed };
     },
 
     /** L'agenzia chiede più tempo per un'opzione: la guida riceve la richiesta e decide dal pannello. */

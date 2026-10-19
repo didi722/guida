@@ -557,6 +557,12 @@ ALTER TABLE waitlist ADD COLUMN queued_at TEXT;
 UPDATE waitlist SET queued_at = created_at;
 `;
 
+const V27_ADMIN_CHANGES = `
+-- Modifiche fatte dalla guida dal pannello: la nota per il cliente e, se il rimborso della differenza non è riuscito, quanto resta da rimborsare a mano
+ALTER TABLE booking_changes ADD COLUMN note TEXT;
+ALTER TABLE bookings ADD COLUMN refund_pending_cents INTEGER NOT NULL DEFAULT 0;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -608,6 +614,8 @@ export const MIGRATIONS = [
   V25_STATEMENTS,
   // v26 — lista d'attesa a coda
   V26_WAITLIST_QUEUE,
+  // v27 — modifiche delle prenotazioni dal pannello
+  V27_ADMIN_CHANGES,
 ];
 
 export function migrate(db) {

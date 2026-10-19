@@ -41,6 +41,8 @@ export function todoList(app, nowMs = Date.now()) {
   const money = [];
   const refunds = db.prepare(`SELECT id, ref, tour_slug, date, total_cents FROM bookings WHERE payment_status = 'refund_failed' ORDER BY date`).all();
   for (const b of refunds) money.push({ tone: 'err', text: `Rimborso non riuscito: ${b.ref} · ${title(b.tour_slug)}, ${fmtDate(b.date, 'it', 'short')}`, meta: 'il denaro non è tornato al cliente: riprova dalla scheda o rimborsa da Stripe', href: `/admin/bookings/${b.id}` });
+  const pendingRefunds = db.prepare(`SELECT id, ref, tour_slug, date, refund_pending_cents FROM bookings WHERE refund_pending_cents > 0 ORDER BY date`).all();
+  for (const b of pendingRefunds) money.push({ tone: 'err', text: `Rimborso da fare: ${eur(b.refund_pending_cents)} · ${b.ref} · ${title(b.tour_slug)}, ${fmtDate(b.date, 'it', 'short')}`, meta: 'dopo una modifica il prezzo è sceso ma il rimborso sulla carta non è partito: rimborsa da Stripe e segnalo dalla scheda', href: `/admin/bookings/${b.id}` });
   const late = overdueInvoices(db, today);
   if (late.length) money.push({ tone: 'err', text: `${plural(late.length, 'fattura scaduta e non incassata', 'fatture scadute e non incassate')}`, meta: `in tutto ${eur(late.reduce((s, x) => s + x.dueCents, 0))}; i solleciti partono da soli`, href: '/admin/invoices?tab=issued' });
   const queue = app.invoices.queue(nowMs);

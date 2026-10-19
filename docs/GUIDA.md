@@ -332,7 +332,21 @@ Regole:
 - **Voucher PDF**, dati del **Cliente** (telefono, WhatsApp), **Note del cliente**, riferimento pratica e dati fattura.
 - **Note interne**: solo per te. **Salva note**.
 - **Segna come incassata**: per le prenotazioni a fattura o con pagamento sul posto, quando i soldi arrivano.
+- **Modifica persone, data, ore o prezzo**: cambia la prenotazione come decidi tu, con anteprima, email al cliente e storico ([sotto](#modificare-una-prenotazione-persone-data-orario-ore-prezzo)).
 - **Opzione** (solo per le agenzie): la scheda ha **Prolunga la scadenza** e **Rilascia la data**: vedi [Opzioni](#opzioni-tenere-una-data-senza-pagare).
+
+### Modificare una prenotazione (persone, data, orario, ore, prezzo)
+Un cliente chiama: «siamo in sei invece di quattro», «possiamo spostare al pomeriggio?». Nella scheda di una prenotazione confermata o di un'opzione tocca **Modifica persone, data, ore o prezzo**. Qui **decidi tu**: non valgono il preavviso minimo né i limiti delle modifiche che l'agenzia fa da sola (vedi [sotto](#cambiare-persone-data-o-ore-da-soli-e-chiedere-una-proroga)).
+
+- **Cosa puoi cambiare**: **persone**, **data**, **orario**, **durata** (servizi a ore) e **prezzo**. Cambia solo ciò che ti serve: il resto resta com'è.
+- **Anteprima, poi applica**: **Anteprima** non scrive nulla e mostra prima e dopo (persone, data, orario, totale), la differenza e cosa succede ai soldi; se qualcosa non va dice perché. **Applica la modifica** la fa.
+- **Il prezzo**: *Dal listino* lo ricalcola con le stesse tariffe di una prenotazione nuova quando cambiano persone, ore o orario (se non cambia nulla che conti, resta quello di adesso). Con *Prezzo concordato* scrivi tu l'importo: da quel momento **non si ricalcola più da solo** (anche cambiando le persone) finché non scegli di nuovo *Dal listino*. Le righe del preventivo di un servizio a ore (ore, festivo, notturno) restano. Con un **codice sconto** il prezzo non si ricalcola da solo: scrivi tu il nuovo importo.
+- **La disponibilità**: se sposti o aggiungi persone, il sito controlla che ci sia posto (senza contare il gruppo stesso). Spuntando **Non controllare la disponibilità** salti il controllo, per quando hai già deciso tu (come per le prenotazioni registrate a mano).
+- **Le scadenze di annullo**: spostando la data **ripartono dalla nuova data** (le stesse condizioni, contate dal nuovo giorno), così un cliente che sposti tu non perde la cancellazione gratuita. Con **mantieni le scadenze di annullo di prima** restano quelle di prima. In un'**opzione** la scadenza non si allunga mai spostando la data (per allungarla c'è *Prolunga*); in un pacchetto in opzione scadono tutti i servizi insieme.
+- **I soldi**: a **fattura** o **sul posto** (non ancora incassata) si aggiorna l'importo e basta. **Pagata con carta**: se costa **meno** la differenza **torna in automatico sulla carta**; se costerebbe **di più** non si può (la differenza non si incassa da qui: lascia il prezzo o abbassalo, e incassa il resto a parte). Se il rimborso sulla carta non parte, la modifica resta e compare **Rimborso da fare** in *Da fare* e nella scheda: rimborsa da Stripe e premi *Fatto, l'ho rimborsato*. **Già incassata** in altro modo, o pagata con **buoni regalo**: il prezzo non si cambia (data e orario sì).
+- **Cosa non si può cambiare**: una prenotazione **già in una fattura** (anche solo in bozza: prima elimina la bozza, oppure emetti una nota di credito), annullata, scaduta o in attesa di pagamento. A **servizio iniziato** puoi ancora **correggere persone, ore e prezzo** (per fatturare il vero), non la data.
+- **L'email**: con la spunta **Avvisa il cliente / l'agenzia** (accesa di base) parte un'email con i dati nuovi, il **voucher** e il **calendario** aggiornati, il tuo messaggio facoltativo e, se c'è, la riga sul rimborso. Il calendario in abbonamento dell'agenzia e la sua area si aggiornano da soli; se la data torna libera, la lista d'attesa fa il suo lavoro.
+- **Lo storico**: in fondo alla scheda, *Storico modifiche* elenca ogni cambiamento (dalla guida o dall'agenzia) con ora, ciò che è cambiato e il tuo messaggio.
 
 ### Annullare una prenotazione
 Nella scheda: **Annulla prenotazione**. Scegli **Rimborso e penale**:

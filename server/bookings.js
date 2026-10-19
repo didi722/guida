@@ -344,7 +344,7 @@ export function cancelBooking(app, bookingId, { by, reason = null, refund = 'aut
 }
 
 export function markRefund(db, bookingId, { ok, cents }) {
-  if (ok) db.prepare(`UPDATE bookings SET payment_status = 'refunded', refund_cents = ? WHERE id = ?`).run(cents, bookingId);
+  if (ok) db.prepare(`UPDATE bookings SET payment_status = 'refunded', refund_cents = refund_cents + ? WHERE id = ?`).run(cents, bookingId); // si somma a un'eventuale differenza già rimborsata per una modifica
   else db.prepare(`UPDATE bookings SET payment_status = 'refund_failed' WHERE id = ?`).run(bookingId);
 }
 

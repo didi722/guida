@@ -15,6 +15,7 @@ import { adminAgencyBookingRouter } from './admin-agency-booking.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
 import { adminMailRouter } from './admin-mail.js';
+import { adminBookingEditRouter } from './admin-booking-edit.js';
 import { adminPartnersRouter } from './admin-partners.js';
 import { adminStatementRouter } from './admin-statement.js';
 import { adminStatsRouter } from './admin-stats.js';
@@ -36,7 +37,7 @@ import { maskUrl } from '../calendars.js';
 import { feedbackAdminPage } from '../views/admin-feedback.js';
 import { invoiceForSource } from '../invoices.js';
 import { getPackage, packageBookings } from '../packages.js';
-import { pendingExtension, pendingExtensions } from '../changes.js';
+import { changeHistory, pendingExtension, pendingExtensions } from '../changes.js';
 import { overdueInvoices } from '../invoicePayments.js';
 import { LANGS } from '../langs.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage } from '../views/admin.js';
@@ -50,6 +51,7 @@ const FLASH = {
   cancelled: 'Prenotazione annullata e cliente avvisato.',
   notes: 'Note salvate.',
   paid: 'Prenotazione segnata come incassata.',
+  refunded: 'Rimborso segnato come fatto.',
   review: 'Richiesta di recensione aggiornata.',
   featured: 'Fatto: la modifica è già visibile sul sito.',
   reminder: 'Promemoria aggiornato.',
@@ -78,7 +80,13 @@ export function adminRouter(app) {
   const { cfg, db, services } = app;
   const form = express.urlencoded({ extended: false, limit: '50kb' });
   const ctxOf = (req) => ({ app, req });
-  const flash = (req) => FLASH[String(req.query.ok ?? '')] ?? '';
+  const flash = (req) => {
+    if (req.query.ok === 'edited') {
+      // modifica dal pannello: dice anche come è andata l'email e l'eventuale rimborso della differenza
+      return ['Prenotazione modificata.', { sent: 'Ho avvisato il cliente.', failed: 'Attenzione: l’email non è partita.' }[String(req.query.mail ?? '')], { done: 'La differenza è stata rimborsata sulla carta.', pending: 'Attenzione: il rimborso sulla carta non è partito: resta da fare a mano (lo trovi in «Da fare»).' }[String(req.query.refund ?? '')]].filter(Boolean).join(' ');
+    }
+    return FLASH[String(req.query.ok ?? '')] ?? '';
+  };
   const feedToken = crypto.createHmac('sha256', cfg.sessionSecret).update('ics-feed').digest('base64url').slice(0, 32);
 
   r.use((req, res, next) => {
@@ -131,6 +139,7 @@ export function adminRouter(app) {
 
   r.use(adminDiscountsRouter(app));
   r.use(adminAgencyBookingRouter(app));
+  r.use(adminBookingEditRouter(app));
   r.use(adminProgramsRouter(app));
   r.use(adminInvoicesRouter(app));
   r.use(adminWaitlistRouter(app));
@@ -272,7 +281,7 @@ export function adminRouter(app) {
     if (!b) return next();
     const account = b.account_id ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
     const group = b.group_id ? getPackage(db, b.group_id) : null;
-    send(res, bookingDetailPage(ctxOf(req), b, account, flash(req), invoiceForSource(db, 'booking', b.id), group ? { group, bookings: packageBookings(db, group.id) } : null, b.status === 'option' ? pendingExtension(db, b) : null));
+    send(res, bookingDetailPage(ctxOf(req), b, account, flash(req), invoiceForSource(db, 'booking', b.id), group ? { group, bookings: packageBookings(db, group.id) } : null, b.status === 'option' ? pendingExtension(db, b) : null, changeHistory(db, b.id)));
   });
   r.get('/bookings/:id/voucher.pdf', async (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));
@@ -299,6 +308,13 @@ export function adminRouter(app) {
     if (req.body.action === 'skip') app.reminders.skip(b.id);
     else if (b.status === 'confirmed' && b.channel === 'b2c' && !b.reminder_status) await app.reminders.send(b);
     res.redirect(303, `/admin/bookings/${b.id}?ok=reminder`);
+  });
+  // la differenza di prezzo era da rimborsare a mano (il rimborso sulla carta non è partito): fatto
+  r.post('/bookings/:id/refund-done', form, (req, res, next) => {
+    const b = getBooking(db, Number(req.params.id));
+    if (!b) return next();
+    db.prepare('UPDATE bookings SET refund_cents = refund_cents + refund_pending_cents, refund_pending_cents = 0 WHERE id = ? AND refund_pending_cents > 0').run(b.id);
+    res.redirect(303, `/admin/bookings/${b.id}?ok=refunded`);
   });
   r.post('/bookings/:id/paid', form, (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));

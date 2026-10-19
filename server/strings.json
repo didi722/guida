@@ -6377,6 +6377,12 @@
   "Ahora: {what}",
   "変更後：{what}"
  ],
+ "chg.mail.refund": [
+  "La differenza, {amount}, ti viene rimborsata sul metodo di pagamento originale (di solito entro 5–10 giorni lavorativi).",
+  "The difference, {amount}, is refunded to the original payment method (usually within 5–10 working days).",
+  "La diferencia, {amount}, se reembolsa al método de pago original (normalmente en 5–10 días laborables).",
+  "差額の{amount}は、元のお支払い方法に返金されます（通常5〜10営業日）。"
+ ],
  "chg.mail.deniedSubject": [
   "Proroga non concessa {ref}",
   "Extension not granted {ref}",

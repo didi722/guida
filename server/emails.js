@@ -1324,7 +1324,7 @@ export async function notifyGuideInvoice(app, inv, kind, extra = '') {
 const changeLine = (app, b, lang) => `${b.participants} ${T[lang].people.toLowerCase()} · ${fmtDate(b.date, lang, 'short')} · ${timeRange(b, lang)} · ${formatMoney(bookingDue(b), lang, b.currency)}`;
 
 /** All'agenzia: la prenotazione (o l'opzione) è stata modificata. Per una prenotazione confermata ci sono il nuovo voucher e il calendario aggiornato. */
-export async function sendBookingChanged(app, before, after, nowMs = Date.now()) {
+export async function sendBookingChanged(app, before, after, nowMs = Date.now(), { note = '', refundCents = 0 } = {}) {
   const lang = normLang(after.lang);
   const t = makeT(lang);
   const tr = T[lang];
@@ -1335,22 +1335,24 @@ export async function sendBookingChanged(app, before, after, nowMs = Date.now())
   const intro = isOption ? t('chg.mail.optionIntro', { until }) : t('chg.mail.intro');
   const was = t('chg.mail.was', { what: changeLine(app, before, lang) });
   const now = t('chg.mail.now', { what: changeLine(app, after, lang) });
+  const extra = [note ? `«${note}»` : '', refundCents > 0 ? t('chg.mail.refund', { amount: formatMoney(refundCents, lang, after.currency) }) : ''].filter(Boolean); // il messaggio della guida e, se serve, il rimborso
   const link = bookingUrl(app, after, lang);
   const rows = summaryRows(app, after, lang, { option: isOption });
   const attachments =
     after.status === 'confirmed'
       ? [{ filename: `${after.ref}.ics`, content: icsFor(app, after, lang), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }, ...(await pdfAttachment(`voucher-${after.ref}.pdf`, (pdf) => pdf.renderVoucherPdf(app, after, { lang, nowMs }), 'voucher'))]
       : [];
-  await app.mail.send({
+  return app.mail.send({
     to: after.email,
     subject,
-    text: [tr.hello(after.name), '', intro, '', was, now, '', ...rows.map(([k, v]) => `${k}: ${v}`), '', `${tr.manage}: ${link}`, '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
+    text: [tr.hello(after.name), '', intro, '', was, now, '', ...extra.flatMap((x) => [x, '']), ...rows.map(([k, v]) => `${k}: ${v}`), '', `${tr.manage}: ${link}`, '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
     html: String(
       layout(
         app,
         lang,
         html`<p>${tr.hello(after.name)}</p><p>${intro}</p>
         <p style="font-size:14px;color:#666">${was}<br><strong style="color:#1c1c1c">${now}</strong></p>
+        ${extra.map((x) => html`<p>${x}</p>`)}
         <table style="border-collapse:collapse;width:100%;font-size:15px">${rows.map(([k, v]) => html`<tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top">${k}</td><td style="padding:6px 0"><strong>${v}</strong></td></tr>`)}</table>
         <p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${tr.manage}</a></p>
         <p style="color:#666;font-size:13px">${tr.contactLine}<br>${tr.bye} ${app.cfg.site.name}</p>`,

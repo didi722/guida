@@ -218,7 +218,17 @@ function cancelPreview(b, st) {
   return `Secondo la politica: oggi ${st.percent}% → ${retainedCents ? `penale ${formatMoney(retainedCents, 'it', b.currency)} da fatturare` : 'nessuna penale'}`;
 }
 
-export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, pkg = null, extension = null) {
+/** Una modifica in una riga: solo ciò che è cambiato (persone, data, orario, prezzo). */
+function changeSummary(before, after, currency) {
+  const parts = [];
+  if (before.pax !== after.pax) parts.push(`persone ${before.pax} → ${after.pax}`);
+  if (before.date !== after.date) parts.push(`data ${fmtDate(before.date, 'it', 'short')} → ${fmtDate(after.date, 'it', 'short')}`);
+  if (before.time !== after.time || before.end !== after.end) parts.push(`orario ${before.time}–${before.end} → ${after.time}–${after.end}`);
+  if (before.totalCents !== after.totalCents) parts.push(`prezzo ${formatMoney(before.totalCents, 'it', currency)} → ${formatMoney(after.totalCents, 'it', currency)}${after.custom ? ' (concordato)' : ''}`);
+  return parts.join('; ') || 'nessun dato cambiato';
+}
+
+export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, pkg = null, extension = null, history = []) {
   const tour = ctx.app.content.tour(b.tour_slug);
   const st = cancellationState(b);
   const live = b.status === 'confirmed' || b.status === 'held' || b.status === 'option';
@@ -259,6 +269,9 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, p
       ${b.cancel_percent != null ? html`<div><dt>Esito dell'annullo</dt><dd>rimborso ${b.cancel_percent}%${b.refund_cents ? ` · rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)}` : ''}${b.retained_cents ? html` · <strong>penale ${formatMoney(b.retained_cents, 'it', b.currency)}</strong> ${b.payment_status === 'unpaid' ? 'da fatturare' : 'trattenuta'}` : ''}</dd></div>` : ''}` : ''}
       ${b.status === 'confirmed' || invoice ? invoiceRow(invoice, { warn: true }) : ''}
     </dl>
+    ${b.refund_pending_cents > 0 ? html`<div class="notice notice-err" role="alert"><p><strong>Rimborso da fare: ${formatMoney(b.refund_pending_cents, 'it', b.currency)}.</strong> La modifica ha abbassato il prezzo, ma il rimborso sulla carta non è partito: fallo da Stripe e poi segnalo qui.</p>
+      <form method="post" action="/admin/bookings/${b.id}/refund-done" class="inline-form" data-confirm="Hai già rimborsato ${formatMoney(b.refund_pending_cents, 'it', b.currency)} da Stripe?"><button class="btn btn-outline btn-sm" type="submit">Fatto, l’ho rimborsato</button></form></div>` : ''}
+    ${(b.status === 'confirmed' || b.status === 'option') && !invoice ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/edit">Modifica persone, data, ore o prezzo</a></p>` : ''}
     ${b.status === 'confirmed' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/voucher.pdf" target="_blank" rel="noopener">Voucher PDF</a> ${['it', 'en', 'es', 'ja'].map((l) => html`<a class="chip chip-link" href="/admin/bookings/${b.id}/voucher.pdf?vl=${l}" target="_blank" rel="noopener">${l.toUpperCase()}</a>`)}</p>` : ''}
   </div>
   <div class="card pad">
@@ -275,6 +288,9 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, p
     </dl>
   </div>
 </div>
+
+${history.length ? html`<div class="card pad"><h2>Storico modifiche</h2>
+  <ul class="plain">${history.map((h) => html`<li><strong>${new Date(h.created_at).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'medium', timeStyle: 'short' })}</strong> · ${h.by === 'admin' ? 'dalla guida' : 'dall’agenzia'}: ${changeSummary(h.before, h.after, b.currency)}${h.note ? html` <small class="muted">— «${h.note}»</small>` : ''}</li>`)}</ul></div>` : ''}
 
 <div class="grid grid-2 admin-detail">
   <form class="card pad form" method="post" action="/admin/bookings/${b.id}/notes">

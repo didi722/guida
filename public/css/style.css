@@ -1079,6 +1079,8 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .day-time { display: flex; flex-direction: column; line-height: 1.15; min-width: 3.4rem; } .day-time small { color: var(--muted); }
 .day-note dd { background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; }
 @media (max-width: 640px) { .todo-item { grid-template-columns: 1fr; gap: 6px; } .todo-go { display: none; } }
+/* Modifica di una prenotazione dal pannello */
+.inline-input { width: 8rem; max-width: 100%; min-width: 0; margin: 0 4px; } .check.price-custom { flex-wrap: wrap; align-items: center; }
 /* Estratto conto (area agenzie e pannello) */
 .stmt-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; margin: 0 0 16px; }
 .stmt-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; } .stmt-month { margin: 0; font-size: 1.5rem; }

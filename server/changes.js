@@ -68,7 +68,7 @@ export function changeRules(app, b, nowMs = Date.now()) {
 }
 
 /** Le scadenze di annullo di partenza: data di inizio e scaglioni di quando la prenotazione è stata fatta (prima di ogni spostamento). */
-function policyBase(b) {
+export function policyBase(b) {
   try {
     const base = b.policy_base_json ? JSON.parse(b.policy_base_json) : null;
     const tiers = parseTiers(base?.tiers);
