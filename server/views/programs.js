@@ -3,6 +3,7 @@ import { BUDGETS, GROUP_TYPES, INTERESTS, programDays, proposalExpired } from '.
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
+import { phoneField } from './fields.js';
 import { breadcrumbs, whoOf } from './components.js';
 
 export function programsPage(ctx, { values = {}, error = '' } = {}) {
@@ -27,7 +28,7 @@ export function programsPage(ctx, { values = {}, error = '' } = {}) {
     <div class="form-grid">
       <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? who.name : '')}"></label>
       <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? who.email : '')}"></label>
-      <label class="field"><span class="label">${t('f.phone')} <em>${t('f.optional')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', isB2b ? (acct.phone ?? '') : '')}"></label>
+      ${phoneField(ctx, { value: v('phone', isB2b ? (acct.phone ?? '') : ''), cc: v('phone_cc'), defaultCc: isB2b ? acct.country : '', label: html`${t('f.phone')} <em>${t('f.optional')}</em>` })}
       ${isB2b
         ? html`<label class="field"><span class="label">${t('pg.f.company')}</span><input name="company" maxlength="160" value="${v('company', acct.company)}"></label>
         <label class="field"><span class="label">${t('f.clientRef')} <em>${t('f.optional')}</em></span><input name="clientRef" maxlength="120" value="${v('clientRef')}"></label>`

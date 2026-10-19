@@ -11,7 +11,7 @@ import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { makeT } from '../server/i18n.js';
 import { addDays, nowRome } from '../server/time.js';
-import { addAccount } from './helpers.js';
+import { BILLING_IT, addAccount } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
 const tmp = path.join(ROOT, 'data', 'test-team-http-' + crypto.randomBytes(3).toString('hex'));
@@ -507,7 +507,7 @@ test('collisioni: un indirizzo di un collaboratore non può diventare un’agenz
   try {
     const { app, admin, anon } = s;
     await s.member();
-    const reg = { company: 'Venice DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Marco', phone: '+39 041 000', email: 'marco@lagoon.example', password: 'password-lunga-1', consent: '1' };
+    const reg = { company: 'Venice DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', ...BILLING_IT, contact_name: 'Marco', phone: '+39 041 000', email: 'marco@lagoon.example', password: 'password-lunga-1', consent: '1' };
     const res = await anon('/it/b2b/register', form(reg));
     assert.equal(res.status, 400);
     assert.ok((await text(res)).includes(makeT('it')('err.exists')));

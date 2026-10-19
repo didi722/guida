@@ -6,6 +6,7 @@ import { formatMoney } from '../util.js';
 import { adminLayout, invoiceRow } from './admin.js';
 import { langName } from '../langs.js';
 import { langOptions } from './components.js';
+import { ADMIN_CTX, phoneField } from './fields.js';
 
 const eur = (c, cur = 'EUR') => formatMoney(c, 'it', cur);
 const when = (iso) => (iso ? new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'short', timeStyle: 'short' }) : '');
@@ -48,7 +49,7 @@ ${items.length
     <div class="form-grid">
       <label class="field"><span class="label">Nome</span><input name="name" required maxlength="120" value="${values.name ?? ''}"></label>
       <label class="field"><span class="label">Email</span><input type="email" name="email" required maxlength="200" value="${values.email ?? ''}"></label>
-      <label class="field"><span class="label">Telefono</span><input name="phone" maxlength="40" value="${values.phone ?? ''}"></label>
+      ${phoneField(ADMIN_CTX, { value: values.phone ?? '', cc: values.phone_cc ?? '', defaultCc: 'IT', label: 'Telefono' })}
       <label class="field"><span class="label">Azienda <em>(se agenzia/DMC)</em></span><input name="company" maxlength="160" value="${values.company ?? ''}"></label>
       <label class="field"><span class="label">Dal</span><input type="date" name="dateFrom" value="${values.dateFrom ?? ''}"></label>
       <label class="field"><span class="label">Al</span><input type="date" name="dateTo" value="${values.dateTo ?? ''}"></label>

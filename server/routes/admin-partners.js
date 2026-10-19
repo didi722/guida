@@ -3,6 +3,8 @@ import express from 'express';
 import { activeOptionCount } from '../bookings.js';
 import { sendPartnerApproved } from '../emails.js';
 import { send } from '../http.js';
+import { makeT } from '../i18n.js';
+import { billingProblem, readBilling } from '../billing.js';
 import { MAX_HOURS, MAX_TIERS, validateTiers } from '../policy.js';
 import { accountPrices } from '../pricing.js';
 import { listMembers, removeMember } from '../team.js';
@@ -18,6 +20,7 @@ const FLASH = {
   options: 'Opzioni aggiornate.',
   vat: 'Partita IVA controllata: l’esito è qui sotto.',
   teamRemoved: 'Accesso tolto: quel collaboratore non può più entrare.',
+  billing: 'Dati di fatturazione salvati.',
 };
 const ERR = {
   price: 'Un prezzo non è valido: scrivi un importo in euro, per esempio 24,50 (lascia vuoto per usare la tariffa standard).',
@@ -28,6 +31,7 @@ const ERR = {
   count: `Al massimo ${MAX_TIERS} scaglioni.`,
   copy: 'Scegli il partner da cui copiare.',
   options: 'Durata e numero di opzioni: scrivi numeri interi (durata da 1 a 90 giorni, opzioni da 0 a 100) oppure lascia vuoto.',
+  ...Object.fromEntries(['country', 'address', 'zip', 'city', 'province', 'taxCode', 'pec', 'sdi'].map((k) => [`billing-${k}`, `Dati di fatturazione non salvati: ${makeT('it')(`err.${k}`)}`])),
 };
 
 export function adminPartnersRouter(app) {
@@ -73,6 +77,19 @@ export function adminPartnersRouter(app) {
     if (!a) return next();
     removeMember(db, a.id, Number(req.params.uid));
     res.redirect(303, `${here(a.id, 'ok', 'teamRemoved')}#team`);
+  });
+
+  // dati di fatturazione (gli stessi che il partner vede nella sua area): si salvano solo se sono completi e validi
+  r.post('/partners/:id/billing', form, (req, res, next) => {
+    const a = get(req.params.id);
+    if (!a) return next();
+    const v = readBilling(req.body);
+    if (v.country !== 'IT') Object.assign(v, { tax_code: '', province: '', sdi_code: '' });
+    const problem = billingProblem(v);
+    if (problem) return res.redirect(303, `${here(a.id, 'err', `billing-${problem}`)}#fatturazione`);
+    db.prepare('UPDATE accounts SET country = ?, tax_code = ?, address = ?, zip = ?, city = ?, province = ?, sdi_code = ?, pec = ? WHERE id = ?')
+      .run(v.country, v.tax_code || null, v.address, v.zip, v.city, v.province || null, v.sdi_code || null, v.pec || null, a.id);
+    res.redirect(303, `${here(a.id, 'ok', 'billing')}#fatturazione`);
   });
 
   // controlla la partita IVA adesso (formato e VIES)

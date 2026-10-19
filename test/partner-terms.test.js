@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cancellationState, confirmPaid, createBooking, freeCancelHours } from '../server/bookings.js';
 import { createDrafts, invoiceQueue } from '../server/invoices.js';
-import { MAX_TIERS, accountTiers, parseTiers, policyFor, refundPercentAt, splitAmounts, validateTiers } from '../server/policy.js';
+import { MAX_TIERS, accountTiers, mergeTiers, parseTiers, policyFor, refundPercentAt, splitAmounts, validateTiers } from '../server/policy.js';
 import { isSimplePolicy, tierSentences } from '../server/policyText.js';
 import { makeT } from '../server/i18n.js';
 import { accountPrices, unitPriceFor } from '../server/pricing.js';
@@ -26,6 +26,23 @@ test('listino dedicato: il prezzo del partner vince; senza, tariffa B2B meno lo 
   assert.deepEqual(accountPrices({ prices_json: '{rotto' }), {}, 'JSON rovinato: nessun prezzo dedicato, nessun errore');
   assert.equal(unitPriceFor(tour, 'b2b', { prices_json: JSON.stringify({ shared: 0 }) }), 0, 'anche gratuito è un prezzo valido');
   assert.equal(unitPriceFor(tour, 'b2b', null), 2800);
+});
+
+test('scaglioni con la stessa percentuale di fila: ne resta uno solo, quello con la scadenza più vicina al servizio', () => {
+  const rows = [{ hours: 336, refund: 100 }, { hours: 168, refund: 50 }, { hours: 72, refund: 50 }];
+  assert.deepEqual(mergeTiers(rows), [{ hours: 336, refund: 100 }, { hours: 72, refund: 50 }]);
+  assert.deepEqual(mergeTiers([{ hours: 72, refund: 100 }, { hours: 168, refund: 100 }]), [{ hours: 72, refund: 100 }], 'anche i totali: conta l’ultimo');
+  assert.deepEqual(mergeTiers([{ hours: 168, refund: 100 }, { hours: 72, refund: 50 }, { hours: 24, refund: 20 }]).length, 3, 'percentuali diverse: nessuna riga tolta');
+  assert.deepEqual(mergeTiers([]), []);
+  // lo stesso vale per quanto è salvato (anche in prenotazioni vecchie) e per quanto si scrive nel pannello
+  assert.deepEqual(parseTiers(JSON.stringify(rows)), [{ hours: 336, refund: 100 }, { hours: 72, refund: 50 }]);
+  assert.deepEqual(validateTiers(rows).tiers, [{ hours: 336, refund: 100 }, { hours: 72, refund: 50 }]);
+  // a parole: due frasi «Rimborso del 50%» sarebbero la stessa cosa detta due volte
+  const sentences = tierSentences(makeT('it'), 'it', parseTiers(JSON.stringify(rows)), START);
+  assert.equal(sentences.filter((s) => /50%/.test(s)).length, 1);
+  assert.equal(sentences.length, 3, 'rimborso totale, 50%, e «Dopo: nessun rimborso»');
+  // e il rimborso vero è lo stesso di prima
+  for (const h of [400, 336, 200, 168, 100, 72, 71, 10]) assert.equal(refundPercentAt(parseTiers(JSON.stringify(rows)), START, START - h * HOUR), refundPercentAt(rows, START, START - h * HOUR), `${h} ore prima`);
 });
 
 test('scaglioni: validazione, ordine, percentuale di rimborso nel tempo', () => {

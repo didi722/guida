@@ -18,6 +18,9 @@ const ICON = {
 export const icon = (name) => raw(ICON[name] ?? '');
 
 /** Percorso dell'altra lingua per lo stesso contenuto. */
+/** Le bandiere dei moduli sono disegni di Twemoji (CC BY 4.0): la licenza chiede di citarli. */
+const flagsCredit = (t) => html`<span class="footer-credit">${t('footer.flags')} <a href="https://twemoji.twitter.com" rel="noopener">Twemoji</a> · <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a></span>`;
+
 function swapLang(path, from, to) {
   return path.replace(new RegExp(`^/${from}(?=/|$)`), `/${to}`);
 }
@@ -146,6 +149,7 @@ ${partner
       ${cfg.site.phone ? html`<li><a href="tel:${cfg.site.phone.replace(/\s+/g, '')}">${icon('phone')} ${cfg.site.phone}</a></li>` : ''}
     </ul>
     <span class="footer-links"><a href="${u('/privacy')}">${t('footer.privacy')}</a> · <a href="${u('/terms')}">${t('footer.terms')}</a></span>
+    ${flagsCredit(t)}
   </div>
 </footer>`
   : html`<footer class="site-footer">
@@ -184,10 +188,12 @@ ${partner
   <div class="wrap footer-bottom">
     <span>&copy; ${new Date().getFullYear()} ${cfg.site.legalName}</span>
     <span class="footer-links"><a href="${u('/privacy')}">${t('footer.privacy')}</a> · <a href="${u('/terms')}">${t('footer.terms')}</a> · <a href="${u('/cookies')}">${t('footer.cookies')}</a></span>
+    ${flagsCredit(t)}
   </div>
 </footer>`}
 <script src="/js/main.js?v=${app.assetVersion}" defer></script>
 <script src="/js/datepicker.js?v=${app.assetVersion}" defer></script>
+<script src="/js/combo.js?v=${app.assetVersion}" defer></script>
 <script src="/js/keep-scroll.js?v=${app.assetVersion}" ${partner ? raw('data-links') : ''} defer></script>
 ${scripts}
 </body>

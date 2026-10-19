@@ -19,6 +19,7 @@ import { invoicePayRouter } from './routes/invoicePay.js';
 import { packagesRouter } from './routes/packages.js';
 import { teamRouter } from './routes/team.js';
 import { quotesRouter } from './routes/quotes.js';
+import { billingRouter } from './routes/billing.js';
 import { partnerRouter } from './routes/partner.js';
 import { publicRouter } from './routes/public.js';
 import { featuresRouter } from './routes/features.js';
@@ -58,6 +59,8 @@ export function createApp(overrides = {}) {
   const day = 24 * 3600 * 1000;
   // Font Josefin Sans serviti dal pacchetto npm (nessun file binario nel repository, nessuna richiesta a Google)
   server.use('/fonts', express.static(path.join(ROOT, 'node_modules', '@fontsource', 'josefin-sans', 'files'), { maxAge: '365d', immutable: true }));
+  // bandiere dei paesi (emoji) disegnate da un piccolo font (77 kB, Twemoji, CC BY 4.0): Windows non le mostra, ci sarebbero solo due lettere
+  server.get('/fonts/TwemojiCountryFlags.woff2', (req, res) => res.type('font/woff2').set('Cache-Control', 'public, max-age=31536000, immutable').sendFile(path.join(ROOT, 'node_modules', 'country-flag-emoji-polyfill', 'dist', 'TwemojiCountryFlags.woff2')));
   server.use(express.static(path.join(ROOT, 'public'), { maxAge: cfg.isProd ? 7 * day : 0 }));
 
   server.use(sameOrigin);
@@ -93,6 +96,7 @@ export function createApp(overrides = {}) {
   const packages = packagesRouter(app);
   const team = teamRouter(app);
   const quotes = quotesRouter(app);
+  const billing = billingRouter(app);
   const changes = changesRouter(app);
   const availability = availabilityRouter(app);
   const agencyDocs = agencyDocsRouter(app);
@@ -100,7 +104,7 @@ export function createApp(overrides = {}) {
   const statement = statementRouter(app);
   const invoicePay = invoicePayRouter(app);
   const features = featuresRouter(app);
-  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, team, quotes, changes, availability, agencyDocs, agencyFeed, statement, invoicePay, features);
+  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, team, quotes, billing, changes, availability, agencyDocs, agencyFeed, statement, invoicePay, features);
 
   // 404 (nella lingua dell'URL se possibile)
   server.use((req, res) => {

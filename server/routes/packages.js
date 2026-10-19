@@ -8,6 +8,7 @@ import { LANGS, normLang } from '../langs.js';
 import { PackageError, cartAdd, cartClear, cartRemove, cartSummary, getPackageByRef, packageBookings, MAX_PACKAGE_LINES } from '../packages.js';
 import { bookedBy } from '../team.js';
 import { cleanText, isEmail, safeEqual } from '../util.js';
+import { optionalPhone } from '../countries.js';
 import { packageCartPage, packagePage } from '../views/packages.js';
 import { needPartner, safeNext } from './guards.js';
 
@@ -63,19 +64,21 @@ export function packagesRouter(app) {
     const { t } = ctx;
     const b = req.body;
     if (!app.limits.booking(ip(req))) return tooMany(res);
-    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200).toLowerCase(), phone: cleanText(b.phone, 40), lang: LANGS.includes(String(b.lang)) ? String(b.lang) : req.lang, clientRef: cleanText(b.clientRef, 120), notes: cleanText(b.notes, 1000), paymentMethod: String(b.paymentMethod ?? '') };
+    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200).toLowerCase(), phone: cleanText(b.phone, 40), phone_cc: String(b.phone_cc ?? '').toUpperCase().slice(0, 2), lang: LANGS.includes(String(b.lang)) ? String(b.lang) : req.lang, clientRef: cleanText(b.clientRef, 120), notes: cleanText(b.notes, 1000), paymentMethod: String(b.paymentMethod ?? '') };
     const summary = cartSummary(app, req.acct, Date.now(), uid(req));
     if (!summary.lines.length) return res.redirect(303, `/${req.lang}/b2b/package`);
     const rerender = (error, status = 400) => send(res, packageCartPage(ctx, { acct: req.acct, summary: cartSummary(app, req.acct, Date.now(), uid(req)), values, error }), status);
     if (!b.consent) return rerender(t('err.consent'));
     if (values.name.length < 2 || !isEmail(values.email)) return rerender(t('err.fields'));
+    const phone = optionalPhone(b);
+    if (phone.error) return rerender(t('err.phone'));
     if (!summary.allOk) return rerender(t('pkg.err.stale'), 409);
     const wantsOption = b.action === 'option';
     const methods = paymentOptions(app, summary.lines[0].p.tour, 'b2b', req.acct);
     const method = methods.includes(values.paymentMethod) ? values.paymentMethod : methods[0];
     if (!wantsOption && !method) return rerender(t('err.payment'));
     try {
-      const { redirect } = await app.packages.book(req.acct, summary.lines.map((l) => l.p), { ...values, option: wantsOption, paymentMethod: wantsOption ? undefined : method, bookedBy: bookedBy(req.actor) }, req.lang);
+      const { redirect } = await app.packages.book(req.acct, summary.lines.map((l) => l.p), { ...values, phone: phone.value, option: wantsOption, paymentMethod: wantsOption ? undefined : method, bookedBy: bookedBy(req.actor) }, req.lang);
       cartClear(db, req.acct.id, uid(req));
       res.redirect(303, redirect);
     } catch (e) {

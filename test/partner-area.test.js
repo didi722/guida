@@ -335,11 +335,11 @@ test('scheda della pratica: solo la propria; si cambia il nominativo (la guida l
     assert.equal(ok.status, 303);
     assert.equal(loc(ok), `/it/b2b/bookings/${mia.ref}?flash=edited#edit`);
     const row = s.app.db.prepare('SELECT name, client_ref, phone, notes FROM bookings WHERE id = ?').get(mia.id);
-    assert.deepEqual({ ...row }, { name: 'Famiglia Conti', client_ref: 'Pratica 12', phone: '+39 333 111', notes: 'Una carrozzina' });
+    assert.deepEqual({ ...row }, { name: 'Famiglia Conti', client_ref: 'Pratica 12', phone: '+39 333111', notes: 'Una carrozzina' }, 'il telefono si salva con il prefisso e senza spazi nel numero');
     assert.equal(sent().length, 1);
     assert.equal(sent()[0].to, 'guida@example.com');
     assert.match(sent()[0].text, /Nominativo: Giulia Bianchi → Famiglia Conti/);
-    assert.match(sent()[0].text, /Telefono: — → \+39 333 111/);
+    assert.match(sent()[0].text, /Telefono: — → \+39 333111/);
     assert.match(sent()[0].text, /Note: — → Una carrozzina/);
     assert.match(nb(await (await f(`/it/b2b/bookings/${mia.ref}?flash=edited`)).text()), /Modifiche salvate/);
     assert.match(nb(await (await f('/it/b2b/bookings')).text()), /Pratica 12<\/a><small class="muted">Famiglia Conti/);

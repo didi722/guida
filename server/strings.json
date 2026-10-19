@@ -125,6 +125,12 @@
   "Cookies",
   "Cookieについて"
  ],
+ "footer.flags": [
+  "Bandiere:",
+  "Flags:",
+  "Banderas:",
+  "国旗："
+ ],
  "site.title": [
   "Guida turistica a Venezia",
   "Tour guide in Venice",
@@ -1151,6 +1157,24 @@
   "recomendado",
   "推奨"
  ],
+ "f.country": [
+  "Paese",
+  "Country",
+  "País",
+  "国"
+ ],
+ "f.phonePrefix": [
+  "Prefisso",
+  "Prefix",
+  "Prefijo",
+  "国番号"
+ ],
+ "f.phoneEx": [
+  "333 123 4567",
+  "202 555 0123",
+  "612 345 678",
+  "90 1234 5678"
+ ],
  "f.optional": [
   "facoltativo",
   "optional",
@@ -1354,6 +1378,54 @@
   "Italian companies need an SDI code (7 characters) or a PEC address.",
   "Las empresas italianas necesitan el código SDI (7 caracteres) o una PEC.",
   "イタリアの法人の場合は、SDIコード（7文字）またはPEC（認証済みメールアドレス）が必要です。"
+ ],
+ "err.phone": [
+  "Scrivi il telefono con il prefisso del paese (per esempio +39 333 1234567): serve per poterti chiamare.",
+  "Please enter the phone number with the country prefix (for example +39 333 1234567): we need it to be able to call you.",
+  "Escribe el teléfono con el prefijo del país (por ejemplo +39 333 1234567): lo necesitamos para poder llamarte.",
+  "電話番号は国番号を付けて入力してください（例：+39 333 1234567）。ご連絡に必要です。"
+ ],
+ "err.country": [
+  "Scegli il paese dell’azienda.",
+  "Please choose the company’s country.",
+  "Elige el país de la empresa.",
+  "会社の国を選択してください。"
+ ],
+ "err.address": [
+  "Scrivi l’indirizzo dell’azienda, con via e numero civico.",
+  "Please enter the company address, with street and number.",
+  "Escribe la dirección de la empresa, con calle y número.",
+  "会社の住所（番地まで）を入力してください。"
+ ],
+ "err.zip": [
+  "Controlla il CAP: per l’Italia sono 5 cifre.",
+  "Please check the postcode: Italian ones have 5 digits.",
+  "Revisa el código postal: en Italia son 5 cifras.",
+  "郵便番号をご確認ください（イタリアは5桁です）。"
+ ],
+ "err.city": [
+  "Scrivi la città.",
+  "Please enter the city.",
+  "Escribe la ciudad.",
+  "市区町村を入力してください。"
+ ],
+ "err.province": [
+  "Scrivi la sigla della provincia, due lettere (per esempio VE).",
+  "Please enter the two-letter province code (for example VE).",
+  "Escribe la sigla de la provincia, dos letras (por ejemplo VE).",
+  "県（州）の略称を2文字で入力してください（例：VE）。"
+ ],
+ "err.taxCode": [
+  "Il codice fiscale non è valido: per le aziende sono 11 cifre (come la partita IVA) oppure 16 caratteri.",
+  "The tax code is not valid: for companies it has 11 digits (like the VAT number) or 16 characters.",
+  "El código fiscal no es válido: en las empresas son 11 cifras (como el número de IVA) o 16 caracteres.",
+  "コディチェ・フィスカーレ（税務コード）が正しくありません。法人は11桁（P.IVAと同じ）または16文字です。"
+ ],
+ "err.pec": [
+  "L’indirizzo PEC non sembra valido.",
+  "The PEC address does not look valid.",
+  "La dirección PEC no parece válida.",
+  "PECのアドレスが正しくないようです。"
  ],
  "err.vat": [
   "La partita IVA non sembra corretta: controlla le cifre (per l’Italia sono 11, con cifra di controllo).",
@@ -1985,6 +2057,12 @@
   "Empresa",
   "会社"
  ],
+ "b2b.reg.billingNote": [
+  "I dati qui sotto servono a preparare le tue fatture già compilate: controlla che siano esatti.",
+  "The details below are used to prepare your invoices already filled in: please make sure they are correct.",
+  "Los datos siguientes sirven para preparar tus facturas ya rellenadas: comprueba que sean exactos.",
+  "以下の情報は、請求書をあらかじめ記入した状態で作成するために使います。内容に誤りがないかご確認ください。"
+ ],
  "b2b.reg.companyName": [
   "Ragione sociale",
   "Company name",
@@ -1996,6 +2074,18 @@
   "VAT number",
   "P. IVA / VAT",
   "VAT番号（P.IVA）"
+ ],
+ "b2b.reg.taxCode": [
+  "Codice fiscale",
+  "Tax code",
+  "Código fiscal",
+  "コディチェ・フィスカーレ（税務コード）"
+ ],
+ "b2b.reg.taxCodeHint": [
+  "(Italia: obbligatorio; se è uguale alla P.IVA, riscrivila)",
+  "(Italy: required; if it is the same as the VAT number, write it again)",
+  "(Italia: obligatorio; si es igual al IVA, vuelve a escribirlo)",
+  "（イタリア：必須。P.IVAと同じ場合は同じ番号を入力）"
  ],
  "b2b.reg.country": [
   "Paese",
@@ -2033,11 +2123,47 @@
   "PEC (correo electrónico certificado)",
   "PEC"
  ],
+ "b2b.reg.pecHint": [
+  "(in alternativa al codice SDI)",
+  "(or instead of the SDI code)",
+  "(o en lugar del código SDI)",
+  "（SDIコードの代わりに）"
+ ],
  "b2b.reg.address": [
   "Indirizzo",
   "Address",
   "Dirección",
   "住所"
+ ],
+ "b2b.reg.street": [
+  "Indirizzo (via e numero civico)",
+  "Address (street and number)",
+  "Dirección (calle y número)",
+  "住所（番地まで）"
+ ],
+ "b2b.reg.zip": [
+  "CAP",
+  "Postcode",
+  "C. postal",
+  "郵便番号"
+ ],
+ "b2b.reg.city": [
+  "Città",
+  "City",
+  "Ciudad",
+  "市区町村"
+ ],
+ "b2b.reg.province": [
+  "Provincia",
+  "Province",
+  "Provincia",
+  "県・州"
+ ],
+ "b2b.reg.provinceHint": [
+  "es. VE",
+  "e.g. VE",
+  "p. ej. VE",
+  "例：VE"
  ],
  "b2b.reg.contact": [
   "Referente",
@@ -2170,6 +2296,102 @@
   "Team",
   "Equipo",
   "チーム"
+ ],
+ "billing.nav": [
+  "Dati di fatturazione",
+  "Billing details",
+  "Datos de facturación",
+  "請求先情報"
+ ],
+ "billing.title": [
+  "Dati di fatturazione",
+  "Billing details",
+  "Datos de facturación",
+  "請求先情報"
+ ],
+ "billing.lead": [
+  "Sono i dati con cui prepariamo le tue fatture: se sono esatti, la fattura arriva già compilata. Controllali e correggi ciò che è cambiato.",
+  "These are the details we use to prepare your invoices: if they are correct, the invoice arrives already filled in. Please check them and correct anything that has changed.",
+  "Son los datos con los que preparamos tus facturas: si son correctos, la factura llega ya rellenada. Revísalos y corrige lo que haya cambiado.",
+  "請求書を作成する際に使う情報です。内容が正しければ、記入済みの請求書をお送りします。内容をご確認のうえ、変更があれば修正してください。"
+ ],
+ "billing.fixed": [
+  "La ragione sociale e la partita IVA non si cambiano da qui: se sono cambiate, scrivici.",
+  "The company name and VAT number cannot be changed here: if they have changed, please write to us.",
+  "La razón social y el número de IVA no se cambian desde aquí: si han cambiado, escríbenos.",
+  "会社名とVAT番号はここでは変更できません。変更があった場合はご連絡ください。"
+ ],
+ "billing.save": [
+  "Salva i dati",
+  "Save details",
+  "Guardar los datos",
+  "保存する"
+ ],
+ "billing.saved": [
+  "Dati salvati.",
+  "Details saved.",
+  "Datos guardados.",
+  "保存しました。"
+ ],
+ "billing.missing": [
+  "Mancano dei dati di fatturazione ({list}): completali, così le fatture arrivano già compilate.",
+  "Some billing details are missing ({list}): please complete them so your invoices arrive already filled in.",
+  "Faltan datos de facturación ({list}): complétalos para que las facturas lleguen ya rellenadas.",
+  "請求先情報が不足しています（{list}）。入力しておくと、記入済みの請求書をお送りできます。"
+ ],
+ "billing.complete": [
+  "Completa i dati",
+  "Complete the details",
+  "Completar los datos",
+  "情報を入力する"
+ ],
+ "billing.gap.country": [
+  "paese",
+  "country",
+  "país",
+  "国"
+ ],
+ "billing.gap.address": [
+  "indirizzo",
+  "address",
+  "dirección",
+  "住所"
+ ],
+ "billing.gap.zip": [
+  "CAP",
+  "postcode",
+  "código postal",
+  "郵便番号"
+ ],
+ "billing.gap.city": [
+  "città",
+  "city",
+  "ciudad",
+  "市区町村"
+ ],
+ "billing.gap.province": [
+  "provincia",
+  "province",
+  "provincia",
+  "県・州"
+ ],
+ "billing.gap.taxCode": [
+  "codice fiscale",
+  "tax code",
+  "código fiscal",
+  "税務コード"
+ ],
+ "billing.gap.sdi": [
+  "codice SDI o PEC",
+  "SDI code or PEC",
+  "código SDI o PEC",
+  "SDIコードまたはPEC"
+ ],
+ "billing.gap.pec": [
+  "PEC",
+  "PEC",
+  "PEC",
+  "PEC"
  ],
  "team.title": [
   "Il tuo team",
@@ -5837,6 +6059,12 @@
   "El nombre es obligatorio.",
   "お名前は必須です。"
  ],
+ "booking.flash.edit-phone": [
+  "Il telefono va scritto con il prefisso del paese (per esempio +39 333 1234567): non ho salvato le modifiche.",
+  "The phone number needs the country prefix (for example +39 333 1234567): your changes were not saved.",
+  "El teléfono debe llevar el prefijo del país (por ejemplo +39 333 1234567): no se han guardado los cambios.",
+  "電話番号には国番号が必要です（例：+39 333 1234567）。変更は保存されていません。"
+ ],
  "booking.flash.edit-locked": [
   "Il servizio è già iniziato o la prenotazione è chiusa: non si può più modificare.",
   "The service has already started or the booking is closed: it can no longer be changed.",
@@ -6078,10 +6306,10 @@
   "ツアーの言語"
  ],
  "f.tourLangHint": [
-  "La lingua in cui si svolge il tour. La conferma ti arriva nella lingua scelta qui sotto.",
-  "The language the tour is held in. Your confirmation arrives in the language chosen below.",
-  "El idioma en el que se realiza el tour. La confirmación te llega en el idioma elegido abajo.",
-  "ツアーが行われる言語です。確認メールは下で選んだ言語で届きます。"
+  "La lingua in cui si svolge il tour. La conferma ti arriva nella lingua indicata in «Lingua della conferma».",
+  "The language the tour is held in. Your confirmation arrives in the language set under “Confirmation language”.",
+  "El idioma en el que se realiza el tour. La confirmación te llega en el idioma indicado en «Idioma de la confirmación».",
+  "ツアーが行われる言語です。確認メールは「確認メールの言語」で選んだ言語で届きます。"
  ],
  "checkout.langLocked": [
   "Questa partenza è già prenotata in {lang}: per non mescolare nello stesso gruppo persone che parlano lingue diverse, si può prenotare solo in {lang}.",
@@ -6496,6 +6724,12 @@
   "If you book directly, cancellation is free only until {grace}; after that there is no refund.",
   "Si reservas directamente, la cancelación es gratuita solo hasta el {grace}; después no hay reembolso.",
   "直接予約の場合、無料キャンセルは{grace}までです。それ以降は返金できません。"
+ ],
+ "firm.textMore": [
+  "Se prenoti direttamente, la cancellazione è gratuita solo fino a {grace}; poi il rimborso scende come indicato nelle condizioni di annullo.",
+  "If you book directly, cancellation is free only until {grace}; after that the refund drops as shown in the cancellation terms.",
+  "Si reservas directamente, la cancelación es gratuita solo hasta el {grace}; después el reembolso baja como se indica en las condiciones de cancelación.",
+  "直接予約の場合、無料キャンセルは{grace}までです。その後の返金は、キャンセル条件に記載のとおり段階的に下がります。"
  ],
  "firm.advice": [
   "Se il tuo cliente non ha ancora deciso, opziona la data: non paghi, non ti impegni e la tieni fino alla scadenza.",
@@ -8842,5 +9076,23 @@
   "Do not want it any more? You can switch it off on the “Statement of account” page of your account area.",
   "¿No quieres seguir recibiéndolo? Puedes desactivarlo en la página «Estado de cuenta» de tu área privada.",
   "今後不要な場合は、アカウントエリアの「取引明細書」ページで停止できます。"
+ ],
+ "combo.search": [
+  "Cerca un paese…",
+  "Search for a country…",
+  "Busca un país…",
+  "国名で検索…"
+ ],
+ "combo.none": [
+  "Nessun paese trovato",
+  "No country found",
+  "Ningún país encontrado",
+  "該当する国がありません"
+ ],
+ "combo.choose": [
+  "Scegli il paese",
+  "Choose a country",
+  "Elige el país",
+  "国を選択"
  ]
 }

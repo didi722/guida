@@ -11,7 +11,7 @@ import { createPayments } from '../server/payments.js';
 import { normalizeRates, openTo } from '../server/rates.js';
 import { addDays, localToInstant, nowRome } from '../server/time.js';
 import { nextDepartures } from '../server/availability.js';
-import { addAccount, base as bookingBase, isPdf, loadContentWithFixedServices } from './helpers.js';
+import { BILLING_IT, addAccount, base as bookingBase, isPdf, loadContentWithFixedServices } from './helpers.js';
 import { hashPassword } from '../server/auth.js';
 import { validateInvoiceXml } from './xsd.js';
 import { confirmPaid, createBooking } from '../server/bookings.js';
@@ -380,10 +380,10 @@ test('B2B: registrazione, approvazione admin, tariffa partner, prenotazione a fa
     const date = day(30);
 
     assert.equal((await partner('/it/b2b/account')).status, 302, 'serve il login');
-    const reg = await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
+    const reg = await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', ...BILLING_IT, contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
     assert.equal(reg.status, 200);
     assert.equal((await partner('/it/b2b/register', form({ company: 'X', vat: '1', country: 'IT', contact_name: 'G', phone: '1', email: 'dmc@example.com', password: 'corta', consent: '1' }))).status, 400);
-    assert.equal((await partner('/it/b2b/register', form({ company: 'X', vat: 'IT12345678903', country: 'IT', contact_name: 'G', phone: '1', email: 'nuovo@example.com', password: 'password-lunga-1', consent: '1' }))).status, 400, 'IT senza SDI/PEC');
+    assert.equal((await partner('/it/b2b/register', form({ company: 'X', vat: 'IT12345678903', country: 'IT', ...BILLING_IT, contact_name: 'G', phone: '+39 041 000', email: 'nuovo@example.com', password: 'password-lunga-1', consent: '1' }))).status, 400, 'IT senza SDI/PEC');
     assert.ok(s.app.mail.sent.some((m) => m.to === 'guida@example.com' && /partner/i.test(m.subject)));
 
     // finché è "pending" paga la tariffa pubblica e non può usare la fattura
@@ -939,7 +939,7 @@ test('programmi: il partner B2B ha il modulo precompilato e il programma resta c
     const partner = s.jar();
     const admin = s.jar();
     await admin('/admin/login', form({ password: 'segreto-admin' }));
-    await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
+    await partner('/it/b2b/register', form({ company: 'Venice DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', ...BILLING_IT, contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' }));
     const id = s.app.db.prepare('SELECT id FROM accounts').get().id;
     await admin(`/admin/partners/${id}`, form({ status: 'approved', discount_percent: '0', allow_invoice: '1' }));
     await partner('/it/b2b/login', form({ email: 'dmc@example.com', password: 'password-lunga-1' }));
@@ -984,15 +984,22 @@ test('fatture nel pannello: dati fiscali mancanti, coda, bozza, emissione, XML v
     const year = nowRome().date.slice(0, 4);
 
     // una prenotazione di un privato pagata con carta e una di un partner a fattura
-    const mine = createBooking(s.app, bookingBase({ channel: 'b2c', tourSlug: 'san-marco-rialto', date: day(20), time: '09:30', pax: 3, name: 'Matteo Moretti', email: 'matteo@example.com', paymentMethod: 'card', consent: '1' }), Date.now());
+    const mine = createBooking(s.app, bookingBase({ channel: 'b2c', tourSlug: 'san-marco-rialto', date: day(20), time: '09:30', pax: 3, name: 'Matteo Moretti', email: 'matteo@example.com', paymentMethod: 'card', consent: '1', billing: { text: 'Fattura a Matteo Moretti' } }), Date.now());
     confirmPaid(s.app, mine.id, 'pi_http', Date.now());
     const acct = s.app.db.prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, country, address, contact_name, status, allow_invoice, created_at) VALUES('dmc@example.com','x','Venice DMC S.r.l.','00743110157','ABCDEFG','IT','Fondamenta Nuove 10','Anna','approved',1,?)`).run(new Date().toISOString());
     const b2b = createBooking(s.app, { tourSlug: 'servizio-mezza-giornata-agenzie', date: day(21), time: '09:00', pax: 5, channel: 'b2b', account: s.app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(acct.lastInsertRowid)), name: 'Anna', email: 'dmc@example.com', lang: 'it', paymentMethod: 'invoice', clientRef: 'PRATICA 42' }, Date.now());
 
     s.app.db.prepare('UPDATE bookings SET date = ? WHERE id = ?').run(day(-2), b2b.id); // il servizio al partner è stato svolto
+    // un altro privato, servizio svolto, che non ha chiesto la fattura: non è da fatturare
+    const plain = createBooking(s.app, bookingBase({ channel: 'b2c', tourSlug: 'san-marco-rialto', date: day(22), time: '14:30', pax: 2, name: 'Luca Neri', email: 'luca@example.com', paymentMethod: 'onsite', consent: '1' }), Date.now());
+    s.app.db.prepare('UPDATE bookings SET date = ? WHERE id = ?').run(day(-3), plain.id);
     // elenco: coda con le due voci, nessun problema fiscale
     const queue = await (await admin('/admin/invoices')).text();
     assert.match(queue, /Da fatturare \(2\)/);
+    assert.match(queue, /Privati senza richiesta di fattura \(1\)/, 'il privato senza richiesta sta nel riquadro a parte');
+    assert.match(queue, new RegExp(`value="booking:${plain.id}"`));
+    assert.match(queue, /Ha chiesto la fattura/, 'chi l’ha chiesta lo si vede');
+    assert.ok(queue.indexOf('Privati senza richiesta di fattura (1)') > queue.indexOf(`value="booking:${mine.id}"`), 'il riquadro viene dopo l’elenco normale');
     assert.match(queue, /Venice DMC S\.r\.l\./);
     assert.match(queue, new RegExp(`value="booking:${mine.id}"`));
     assert.match(queue, /Carta · incassato/);

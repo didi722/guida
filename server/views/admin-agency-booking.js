@@ -2,6 +2,7 @@ import { html, raw } from '../html.js';
 import { fmtDate } from '../time.js';
 import { formatMoney } from '../util.js';
 import { adminLayout } from './admin.js';
+import { ADMIN_CTX, phoneField } from './fields.js';
 
 const eur = (c) => formatMoney(c, 'it');
 
@@ -26,7 +27,7 @@ export function agencyBookingPage(ctx, { agencies, tours, values: v = {}, error 
       <label class="field"><span class="label">Nome agenzia</span><input name="company" maxlength="160" value="${v.company ?? ''}"></label>
       <label class="field"><span class="label">Referente</span><input name="contact_name" maxlength="120" value="${v.contact_name ?? ''}"></label>
       <label class="field"><span class="label">Email</span><input type="email" name="email" maxlength="200" value="${v.email ?? ''}"></label>
-      <label class="field"><span class="label">Telefono <em>(facoltativo)</em></span><input name="phone" maxlength="40" value="${v.phone ?? ''}"></label>
+      ${phoneField(ADMIN_CTX, { value: v.phone ?? '', cc: v.phone_cc ?? '', defaultCc: 'IT', label: html`Telefono <em>(facoltativo)</em>` })}
       <label class="field"><span class="label">Partita IVA <em>(facoltativo)</em></span><input name="vat" maxlength="40" value="${v.vat ?? ''}"></label>
       <label class="field"><span class="label">Sconto sulle tariffe % <em>(facoltativo)</em></span><input name="discount" inputmode="decimal" value="${v.discount ?? ''}"></label>
     </div>

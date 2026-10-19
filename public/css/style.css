@@ -393,7 +393,10 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 .empty { text-align: center; }
 .checkout-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 32px; align-items: start; }
 .form h2 { font-size: 1.2rem; margin: 1.4rem 0 0.8rem; } .form h2:first-of-type { margin-top: 0; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(15rem, calc(50% - 8px)), 1fr)); gap: 0 16px; } /* due colonne, ma una sola se ognuna scenderebbe sotto i 15rem: i campi non si schiacciano */
+.form-grid > .span-2 { grid-column: 1 / -1; }
+.form-grid.form-grid-3 { grid-template-columns: 6rem minmax(0, 1fr) 6rem; } .form-grid.form-grid-3.is-two { grid-template-columns: 6rem minmax(0, 1fr); }
+@media (max-width: 520px) { .form-grid.form-grid-3, .form-grid.form-grid-3.is-two { grid-template-columns: 6rem minmax(0, 1fr); } } /* sul telefono la provincia va sotto il CAP */
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; margin: 10px 0; cursor: pointer; } .check input { margin-top: 5px; flex: none; }
 .consent { margin: 18px 0 14px; }
 .invoice-opt { margin: 4px 0 8px; } .invoice-opt summary { cursor: pointer; color: var(--accent-text); font-weight: 700; padding: 6px 0; }
@@ -990,6 +993,36 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .dp-link { background: none; border: 0; font: inherit; font-size: 0.9rem; font-weight: 700; color: var(--accent-text); cursor: pointer; padding: 6px 8px; border-radius: 8px; }
 .dp-link:hover:not(:disabled) { background: var(--gold-soft); } .dp-link:disabled { opacity: 0.4; cursor: not-allowed; }
 .dp-close { display: none; margin-left: auto; } .dp-pop.is-sheet .dp-close { display: inline-block; }
+
+/* ── paese e telefono: elenco con ricerca e bandiere (public/js/combo.js) ── */
+/* le bandiere sono emoji disegnate da un piccolo font (Windows non le mostra): vale solo per quei caratteri */
+@font-face { font-family: 'Twemoji Country Flags'; font-display: swap; src: url('/fonts/TwemojiCountryFlags.woff2') format('woff2'); unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F; }
+.flag { font-family: 'Twemoji Country Flags', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; line-height: 1; font-size: 1.2em; flex: none; }
+.combo-select { font-family: 'Twemoji Country Flags', 'Josefin Sans', system-ui, sans-serif; }
+.combo { position: relative; display: block; }
+.combo-native { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
+.combo-btn { display: flex; align-items: center; gap: 8px; width: 100%; font: inherit; font-size: 1rem; color: var(--text); background: var(--field); border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 14px; cursor: pointer; text-align: left; transition: border-color 0.2s, box-shadow 0.2s; }
+.combo-btn:hover { border-color: var(--bronze); }
+.combo-btn:focus-visible, .combo.is-open .combo-btn { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(214, 187, 81, 0.3); }
+.combo-btn.is-empty .combo-text { color: var(--muted); }
+.combo-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combo-caret { flex: none; width: 8px; height: 8px; border: solid var(--accent-text); border-width: 0 2px 2px 0; transform: translateY(-2px) rotate(45deg); margin-left: 2px; }
+.combo.is-open .combo-caret { transform: translateY(2px) rotate(225deg); }
+.combo-panel { position: absolute; z-index: 1500; top: calc(100% + 6px); left: 0; width: max(100%, 300px); max-width: calc(100vw - 24px); background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg); padding: 10px; }
+.combo-panel.is-right { left: auto; right: 0; }
+.combo-search { margin-bottom: 8px; }
+.combo-list { list-style: none; margin: 0; padding: 0; max-height: 270px; overflow-y: auto; overscroll-behavior: contain; }
+.combo-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+.combo-item[hidden] { display: none; }
+.combo-item.is-active { background: var(--gold-soft); }
+.combo-item[aria-selected='true'] { font-weight: 700; }
+.combo-name { flex: 1; min-width: 0; }
+.combo-dial { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.combo-none { margin: 8px 6px; color: var(--muted); }
+.phone-row { display: grid; grid-template-columns: minmax(6.5rem, 8rem) minmax(0, 1fr); gap: 8px; align-items: start; }
+.phone-row > select.combo-select:not(.combo-native) { width: 100%; }
+.footer-credit { font-size: 0.8rem; opacity: 0.7; } .footer-credit a { text-decoration: underline; }
+
 
 /* Invita un amico (pagina della prenotazione) */
 .invite-box { margin: 0 0 16px; border-color: var(--gold); }

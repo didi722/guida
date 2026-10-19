@@ -1,5 +1,6 @@
 // «Da fare»: tutto ciò che per la guida scade, aspetta una decisione o va controllato, in una pagina sola (e il suo conteggio per il menu).
 // Ogni voce ha un tono: err e warn sono cose da fare (contano nel numero del menu), info è ciò che sta per succedere.
+import { billingGaps } from './billing.js';
 import { pendingExtensions } from './changes.js';
 import { overdueInvoices } from './invoicePayments.js';
 import { addDays, fmtDate, fmtInstant, nowRome } from './time.js';
@@ -36,6 +37,8 @@ export function todoList(app, nowMs = Date.now()) {
   if (partners) decide.push({ tone: 'warn', text: `${plural(partners, 'partner da approvare', 'partner da approvare')}`, meta: badVat ? `${badVat} con la partita IVA da controllare` : 'si sono registrati e aspettano il via libera', href: '/admin/partners?f=pending' });
   const programs = db.prepare(`SELECT COUNT(*) AS n FROM programs WHERE status = 'new'`).get().n;
   if (programs) decide.push({ tone: 'warn', text: `${plural(programs, 'richiesta di programma da preparare', 'richieste di programma da preparare')}`, href: '/admin/programs' });
+  const noBilling = db.prepare(`SELECT * FROM accounts WHERE status = 'approved'`).all().filter((a) => billingGaps(a).length);
+  if (noBilling.length) decide.push({ tone: 'info', text: `${plural(noBilling.length, 'partner con i dati di fatturazione incompleti', 'partner con i dati di fatturazione incompleti')}`, meta: `${noBilling.slice(0, 3).map((a) => a.company).join(', ')}${noBilling.length > 3 ? '…' : ''}: completali dalla scheda o chiedi al partner di farlo (area agenzie › Dati di fatturazione), altrimenti la fattura va riempita a mano`, href: `/admin/partners/${noBilling[0].id}#fatturazione` });
   section('decide', 'Da decidere', decide);
 
   // ── soldi e fatture ──

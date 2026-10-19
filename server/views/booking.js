@@ -11,6 +11,7 @@ import { inviteLink } from '../invites.js';
 import { firmTiers } from '../optionPolicy.js';
 import { DEFAULT_MEETING, hasThemes, meetingOf, themeText } from '../choices.js';
 import { icon, page } from './layout.js';
+import { phoneField } from './fields.js';
 import { walletOptions } from '../wallet.js';
 import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia, whoOf } from './components.js';
 import { quoteLines } from './hourly.js';
@@ -137,7 +138,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
     <div class="form-grid">
       <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? who.name : '')}"></label>
       <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? who.email : '')}"></label>
-      <label class="field"><span class="label">${t('f.phone')} <em>${isB2b ? t('f.phoneB2b') : t('f.optional')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', isB2b ? (acct.phone ?? '') : '')}"></label>
+      ${phoneField(ctx, { value: v('phone', isB2b ? (acct.phone ?? '') : ''), cc: v('phone_cc'), defaultCc: isB2b ? acct.country : '', label: html`${t('f.phone')} <em>${isB2b ? t('f.phoneB2b') : t('f.optional')}</em>` })}
       ${tourLangField}
       ${tour.meetingChoice ? html`<label class="field wide"><span class="label">${t('f.pickup')} <em>${t('f.optional')}</em></span><input name="pickup" maxlength="200" value="${v('pickup')}" placeholder="${t('f.pickupHint')}" autocomplete="off"><small class="muted">${isB2b ? t('f.pickupNoteB2b') : t('f.pickupNote', { place: DEFAULT_MEETING.text[lang] })}</small></label>` : ''}
       <label class="field"><span class="label">${t('f.lang')}</span><select name="lang">${langOptions(v('lang', lang))}</select></label>
@@ -185,7 +186,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, slot, values = {}, er
     <label class="check consent"><input type="checkbox" name="consent" value="1" required> <span>${t('f.consent')} <a href="${u('/terms')}" target="_blank">${t('footer.terms')}</a> · <a href="${u('/privacy')}" target="_blank">${t('footer.privacy')}</a></span></label>
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
     ${firm.applied
-      ? html`<div class="notice notice-info firm-note" role="note"><strong>${t('firm.title')}</strong> ${t(firm.refundPercent > 0 ? 'firm.text' : 'firm.text0', { grace: fmtInstant(firm.graceUntilMs, lang), percent: firm.refundPercent, normal: fmtInstant(firm.normalUntilMs, lang) })}${option?.ok ? html` <strong>${t('firm.advice')}</strong>` : ''}</div>`
+      ? html`<div class="notice notice-info firm-note" role="note"><strong>${t('firm.title')}</strong> ${t(firm.more ? 'firm.textMore' : firm.refundPercent > 0 ? 'firm.text' : 'firm.text0', { grace: fmtInstant(firm.graceUntilMs, lang), percent: firm.refundPercent, normal: fmtInstant(firm.normalUntilMs, lang) })}${option?.ok ? html` <strong>${t('firm.advice')}</strong>` : ''}</div>`
       : ''}
     ${option?.ok && firm.applied ? optionBox : ''}
     <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" ${method || nothingToPay ? '' : raw('disabled')}>${nothingToPay ? t('pay.none.cta') : method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
@@ -378,7 +379,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
     <div class="form-grid">
       <label class="field"><span class="label">${t('partner.edit.name')}</span><input name="name" required maxlength="120" value="${b.name}"></label>
       <label class="field"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${b.client_ref ?? ''}"></label>
-      <label class="field"><span class="label">${t('f.phone')}</span><input type="tel" name="phone" maxlength="40" value="${b.phone ?? ''}"></label>
+      ${phoneField(ctx, { value: b.phone ?? '', defaultCc: ctx.acct?.country })}
     </div>
     ${tour.meetingChoice ? html`<label class="field"><span class="label">${t('f.pickup')}</span><input name="pickup" maxlength="200" value="${b.pickup ?? ''}" placeholder="${t('f.pickupHint')}" autocomplete="off"></label>` : ''}
     <label class="field"><span class="label">${t('f.notes')}</span><textarea name="notes" rows="3" maxlength="1000">${b.notes ?? ''}</textarea></label>

@@ -8,6 +8,8 @@ import { formatMoney } from '../util.js';
 import { vatLabel } from '../vat.js';
 import { adminLayout, statusLabel } from './admin.js';
 import { memberState } from './team.js';
+import { BILLING_LABEL, billingGaps } from '../billing.js';
+import { billingFields } from './fields.js';
 
 const ST = { pending: 'Da approvare', approved: 'Approvato', rejected: 'Rifiutato', suspended: 'Sospeso' };
 const chip = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', option: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
@@ -80,6 +82,8 @@ export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOpt
   const sampleDate = addDays(nowRome().date, 30);
   const sample = tierSentences(makeT('it'), 'it', tiers, localToInstant(sampleDate, '10:00'));
   const copyOptions = others.map((o) => html`<option value="${o.id}">${o.company}</option>`);
+  const gaps = billingGaps(a);
+  const billingCtx = { app, lang: 'it', t: makeT('it'), u: (p) => `/it${p}` }; // il modulo dei dati è lo stesso dell'area agenzie, qui in italiano
 
   const body = html`
 <p><a href="/admin/partners">← Tutti i partner</a></p>
@@ -88,8 +92,7 @@ export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOpt
     <dl class="summary-list">
       <div><dt>P.IVA / VAT</dt><dd>${a.vat ?? ''} ${a.country ? '(' + a.country + ')' : ''}</dd></div>
       <div><dt>Verifica P.IVA</dt><dd>${vatResult(app.vat.summary(a), a.company)}${a.vat ? html` <form method="post" action="/admin/partners/${a.id}/vat" class="inline-form"><button class="btn btn-sm btn-outline" type="submit">Verifica ora</button></form>` : ''}</dd></div>
-      <div><dt>SDI / PEC</dt><dd>${a.sdi_code ?? '—'} / ${a.pec ?? '—'}</dd></div>
-      ${a.address ? html`<div><dt>Indirizzo</dt><dd>${a.address}</dd></div>` : ''}
+      <div><dt>Fatturazione</dt><dd>${gaps.length ? html`<span class="chip chip-warn">mancano: ${gaps.map((k) => BILLING_LABEL[k]).join(', ')}</span><br>` : ''}${a.address ? html`${a.address}, ${a.zip ?? ''} ${a.city ?? ''}${a.province ? ` (${a.province})` : ''}<br>` : ''}${a.tax_code ? html`C.F. ${a.tax_code}<br>` : ''}SDI ${a.sdi_code ?? '—'} · PEC ${a.pec ?? '—'}<br><a href="#fatturazione">Modifica i dati di fatturazione</a></dd></div>
       <div><dt>Referente</dt><dd>${a.contact_name} · <a href="mailto:${a.email}">${a.email}</a>${a.phone ? html` · <a href="tel:${a.phone}">${a.phone}</a>` : ''}</dd></div>
       ${a.website ? html`<div><dt>Sito</dt><dd><a href="${a.website}" rel="noopener nofollow" target="_blank">${a.website}</a></dd></div>` : ''}
       ${a.message ? html`<div><dt>Messaggio</dt><dd>${a.message}</dd></div>` : ''}
@@ -105,6 +108,13 @@ export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOpt
     <button class="btn btn-gold" type="submit">Salva${a.status === 'pending' ? ' (e approva se imposti "Approvato")' : ''}</button>
   </form>
 </div>
+
+<h2 class="h-sub spaced" id="fatturazione">Dati di fatturazione</h2>
+<form class="card pad form" method="post" action="/admin/partners/${a.id}/billing">
+  <p class="muted">Sono i dati con cui si prepara la fattura a questa azienda (la ragione sociale e la partita IVA sono quelle sopra). Il partner li vede e li può correggere anche dalla sua area (Dati di fatturazione).${gaps.length ? ` Ora mancano: <strong>${gaps.map((k) => BILLING_LABEL[k]).join(', ')}</strong>.` : ''}</p>
+  ${billingFields(billingCtx, a)}
+  <button class="btn btn-gold" type="submit">Salva i dati di fatturazione</button>
+</form>
 
 <h2 class="h-sub spaced" id="team">Team ${team.length ? html`<span class="chip">${team.length}</span>` : ''}</h2>
 <div class="card pad">
@@ -175,5 +185,5 @@ ${others.length
 ${bookings.length
   ? html`<div class="card table-wrap"><table class="table"><tbody>${bookings.map((b) => html`<tr><td><a href="/admin/bookings/${b.id}">${fmtDate(b.date, 'it', 'short')} ${b.start_time}</a></td><td>${content.tour(b.tour_slug)?.i18n.it.title}</td><td class="num">${b.participants}</td><td><span class="chip ${chip(b.status)}">${statusLabel(b)}</span></td><td class="num">${formatMoney(b.total_cents, 'it', b.currency)}</td></tr>`)}</tbody></table></div>`
   : html`<p class="muted">Ancora nessuna prenotazione.</p>`}`;
-  return adminLayout(ctx, { title: a.company, active: '/admin/partners', body, flash, error, scripts: `<script src="/js/admin-partner.js?v=${app.assetVersion}" defer></script>` });
+  return adminLayout(ctx, { title: a.company, active: '/admin/partners', body, flash, error, scripts: `<script src="/js/admin-partner.js?v=${app.assetVersion}" defer></script><script src="/js/b2b-register.js?v=${app.assetVersion}" defer></script>` });
 }

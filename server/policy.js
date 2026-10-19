@@ -4,6 +4,15 @@ const HOUR = 3600_000;
 export const MAX_TIERS = 3;
 export const MAX_HOURS = 2000;
 
+/**
+ * Toglie gli scaglioni che non aggiungono nulla: se quello più vicino al servizio rimborsa la stessa percentuale, quello più lontano
+ * è già compreso (due righe «50%» di fila significano solo «50% fino all'ultima»). Dal più lontano al più vicino.
+ */
+export function mergeTiers(tiers) {
+  const sorted = [...tiers].sort((a, b) => b.hours - a.hours);
+  return sorted.filter((t, i) => sorted[i + 1]?.refund !== t.refund);
+}
+
 /** Scaglioni validi, dal più lontano al più vicino: [{ hours, refund }] con refund da 1 a 100. */
 export function parseTiers(json) {
   if (!json) return null;
@@ -12,9 +21,8 @@ export function parseTiers(json) {
     if (!Array.isArray(rows)) return null;
     const tiers = rows
       .map((r) => ({ hours: Number(r?.hours), refund: Number(r?.refund) }))
-      .filter((r) => Number.isFinite(r.hours) && r.hours >= 0 && Number.isFinite(r.refund) && r.refund > 0 && r.refund <= 100)
-      .sort((a, b) => b.hours - a.hours);
-    return tiers.length ? tiers : null;
+      .filter((r) => Number.isFinite(r.hours) && r.hours >= 0 && Number.isFinite(r.refund) && r.refund > 0 && r.refund <= 100);
+    return tiers.length ? mergeTiers(tiers) : null;
   } catch {
     return null;
   }
@@ -42,7 +50,7 @@ export function validateTiers(rows) {
     if (tiers[i].hours === tiers[i - 1].hours) return { tiers: null, error: 'duplicate' };
     if (tiers[i].refund > tiers[i - 1].refund) return { tiers: null, error: 'order' };
   }
-  return { tiers: tiers.length ? tiers : null, error: null };
+  return { tiers: tiers.length ? mergeTiers(tiers) : null, error: null };
 }
 
 export const singleTier = (hours) => [{ hours: Math.max(0, Number(hours) || 0), refund: 100 }];

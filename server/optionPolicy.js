@@ -2,7 +2,7 @@
 // Qui solo le regole, senza database né rete: quanto dura un'opzione in base a quanto manca al servizio (tabella modificabile dal
 // pannello, Sito › Impostazioni › Opzioni per le agenzie) e alle condizioni dedicate a ogni partner.
 import { periodOn } from './periods.js';
-import { freeHoursOf } from './policy.js';
+import { freeHoursOf, mergeTiers } from './policy.js';
 import { nowRome } from './time.js';
 
 const DAY = 86_400_000;
@@ -80,7 +80,9 @@ export function reminderAt({ createdMs, expiresMs, reminderHours }) {
  * dimenticarsi di annullare, liberando la data solo all'ultimo. Se il servizio è fra più di `firmFromDays` giorni, la cancellazione
  * gratuita vale solo per `firmGraceHours` ore dalla prenotazione; poi si rimborsa `firmRefundPercent`% fino al normale termine
  * gratuito (e dopo valgono, come sempre, gli scaglioni successivi). Vale anche quando un'opzione si conferma: da quel momento.
- * @returns {{ tiers: Array, applied: boolean, graceUntilMs?: number, refundPercent?: number, normalUntilMs?: number }}
+ * Gli scaglioni che ne risultano sono già ripuliti (due «50%» di fila diventano uno solo, fino all'ultima scadenza):
+ * `refundPercent` e `normalUntilMs` sono quelli del primo scaglione dopo la cancellazione gratuita, `more` dice se ne seguono altri.
+ * @returns {{ tiers: Array, applied: boolean, graceUntilMs?: number, refundPercent?: number, normalUntilMs?: number, more?: boolean }}
  */
 export function firmTiers({ options, tiers, startMs, nowMs }) {
   const none = { tiers, applied: false };
@@ -93,6 +95,7 @@ export function firmTiers({ options, tiers, startMs, nowMs }) {
   if (graceH <= freeH) return none;
   const rest = tiers.filter((t) => t.refund < 100).sort((a, b) => b.hours - a.hours);
   const partial = Math.min(99, Math.max(Number(options.firmRefundPercent) || 0, rest[0]?.refund ?? 0));
-  const out = [{ hours: graceH, refund: 100 }, ...(partial > 0 ? [{ hours: freeH, refund: partial }] : []), ...rest];
-  return { tiers: out, applied: true, graceUntilMs: startMs - graceH * HOUR, refundPercent: partial, normalUntilMs: startMs - freeH * HOUR };
+  const out = mergeTiers([{ hours: graceH, refund: 100 }, ...(partial > 0 ? [{ hours: freeH, refund: partial }] : []), ...rest]);
+  const next = out[1];
+  return { tiers: out, applied: true, graceUntilMs: startMs - graceH * HOUR, refundPercent: next?.refund ?? 0, normalUntilMs: next ? startMs - next.hours * HOUR : startMs - freeH * HOUR, more: out.length > 2 };
 }

@@ -61,20 +61,26 @@ const countryOf = (raw) => {
   return /^[A-Z]{2}$/.test(c) ? c : '';
 };
 
+/**
+ * L'intestatario di una fattura a un partner, già compilato con i dati dati alla registrazione (o corretti dopo). Se mancano, vale l'ultimo
+ * intestatario salvato all'emissione di una fattura precedente (partner registrati prima che si chiedessero tutti i dati).
+ */
 function buyerFromAccount(a) {
   const saved = a.billing_json ? JSON.parse(a.billing_json) : {};
+  const pick = (own, old) => String(own ?? '').trim() || String(old ?? '').trim();
+  const country = countryOf(pick(a.country, saved.country));
   return {
     kind: 'company',
     name: a.company,
-    country: countryOf(saved.country ?? a.country),
-    vat: vatWithoutPrefix(saved.vat ?? a.vat, countryOf(saved.country ?? a.country)),
-    taxCode: saved.taxCode ?? '',
-    address: saved.address ?? a.address ?? '',
-    zip: saved.zip ?? '',
-    city: saved.city ?? '',
-    province: saved.province ?? '',
-    sdiCode: String(saved.sdiCode ?? a.sdi_code ?? '').toUpperCase(),
-    pec: saved.pec ?? a.pec ?? '',
+    country,
+    vat: vatWithoutPrefix(pick(a.vat, saved.vat), country),
+    taxCode: pick(a.tax_code, saved.taxCode).toUpperCase(),
+    address: pick(a.address, saved.address),
+    zip: pick(a.zip, saved.zip),
+    city: pick(a.city, saved.city),
+    province: pick(a.province, saved.province).toUpperCase(),
+    sdiCode: pick(a.sdi_code, saved.sdiCode).toUpperCase(),
+    pec: pick(a.pec, saved.pec),
     email: a.email,
     lang: normLang(a.lang),
   };
@@ -113,6 +119,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
         date: cancelDate,
         served: true,
         channel: b.channel,
+        invoiceRequested: !!acct || !!b.billing_json,
         accountId: acct?.id ?? null,
         buyerKey: acct ? `account:${acct.id}` : `email:${b.email}`,
         customer: acct ? acct.company : b.name,
@@ -142,6 +149,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
       date: b.date,
       served,
       channel: b.channel,
+      invoiceRequested: !!acct || !!b.billing_json,
       accountId: acct?.id ?? null,
       buyerKey: acct ? `account:${acct.id}` : `email:${b.email}`,
       customer: acct ? acct.company : b.name,
@@ -166,6 +174,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
       date,
       served: true,
       channel: 'b2c',
+      invoiceRequested: !!g.billing_json,
       accountId: null,
       buyerKey: `email:${g.buyer_email ?? g.ref}`,
       customer: g.buyer_name ?? g.buyer_email ?? g.ref,
@@ -199,6 +208,7 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
       date: last,
       served: last <= today,
       channel: p.channel,
+      invoiceRequested: true, // un programma su misura si fattura sempre
       accountId: acct?.id ?? null,
       buyerKey: acct ? `account:${acct.id}` : `email:${p.email}`,
       customer: acct ? acct.company : (p.company || p.name),
@@ -230,8 +240,13 @@ function isBillable(db, type, id) {
 
 const isReserved = (db, type, id) => !!db.prepare('SELECT 1 FROM invoice_lines WHERE source_type = ? AND source_id = ? AND released = 0').get(type, id);
 
-/** Voci ancora da fatturare: prenotazioni confermate (pagate o già svolte), penali di annullo, buoni venduti, programmi conclusi. */
-export function invoiceQueue(app, nowMs = Date.now()) {
+/**
+ * Voci ancora da fatturare: prenotazioni confermate (pagate o già svolte), penali di annullo, buoni venduti, programmi conclusi.
+ * Dei clienti privati compaiono solo quelli che hanno chiesto la fattura al momento di prenotare (e non si può conoscere il codice fiscale
+ * di tutti): gli altri stanno nell'elenco a parte (`optional: true`), per quando uno la chiede dopo.
+ * Le agenzie e i programmi sono sempre da fatturare.
+ */
+export function invoiceQueue(app, nowMs = Date.now(), { optional = false } = {}) {
   const { db, cfg } = app;
   const today = nowRome(nowMs).date;
   const start = settingsOf(cfg).startDate;
@@ -239,7 +254,9 @@ export function invoiceQueue(app, nowMs = Date.now()) {
   const push = (type, id) => {
     if (isReserved(db, type, id)) return;
     const item = describeSource(app, type, id, nowMs);
-    if (item && item.amountCents > 0 && (!start || (item.date ?? '') >= start)) items.push({ ...item, overdue: item.dueBy < today });
+    if (!item || item.amountCents <= 0 || (start && (item.date ?? '') < start)) return;
+    if (item.invoiceRequested === optional) return; // richiesta → elenco normale; non richiesta → elenco a parte
+    items.push({ ...item, overdue: !optional && item.dueBy < today });
   };
   for (const { id } of db.prepare(`SELECT id FROM bookings WHERE (status = 'confirmed' AND (payment_status = 'paid' OR date <= ?)) OR (status = 'cancelled' AND retained_cents > 0) ORDER BY date, start_time`).all(today)) push('booking', id);
   if (settingsOf(cfg).giftInvoiceAt === 'sale') for (const { id } of db.prepare(`SELECT id FROM gift_cards WHERE status = 'active' ORDER BY id`).all()) push('gift', id);
@@ -597,6 +614,10 @@ export function issueInvoice(app, id, nowMs = Date.now()) {
     if (inv.account_id) {
       const { kind, name, firstName, lastName, email, lang, ...saved } = buyer;
       db.prepare('UPDATE accounts SET billing_json = ? WHERE id = ?').run(JSON.stringify(saved), inv.account_id);
+      // ciò che hai corretto nella bozza vale anche per le prossime fatture (e per la scheda del partner)
+      const keep = (v) => (String(v ?? '').trim() ? String(v).trim() : null);
+      db.prepare('UPDATE accounts SET address = COALESCE(?, address), zip = COALESCE(?, zip), city = COALESCE(?, city), province = COALESCE(?, province), tax_code = COALESCE(?, tax_code), sdi_code = COALESCE(?, sdi_code), pec = COALESCE(?, pec) WHERE id = ?')
+        .run(keep(buyer.address), keep(buyer.zip), keep(buyer.city), keep(buyer.province), keep(buyer.taxCode), keep(buyer.sdiCode), keep(buyer.pec), inv.account_id);
     }
     // nota di credito: se storna per intero la fattura, le sue voci tornano fatturabili
     if (inv.doc_type === 'TD04' && related) refreshCredited(db, related.id);

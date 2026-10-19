@@ -287,7 +287,15 @@ test('prenotazione ferma per una data lontana: cancellazione gratuita breve, poi
   assert.deepEqual(firmTiers({ options: { ...FIRM, firmRefundPercent: 0 }, tiers, startMs: startAt(60), nowMs: NOW }).tiers.map((t) => t.refund), [100]);
   // con scaglioni successivi, il rimborso non risale mai
   const multi = firmTiers({ options: { ...FIRM, firmRefundPercent: 20 }, tiers: [{ hours: 72, refund: 100 }, { hours: 24, refund: 50 }], startMs: startAt(60), nowMs: NOW });
-  assert.deepEqual(multi.tiers.map((t) => t.refund), [100, 50, 50]);
+  assert.deepEqual(multi.tiers.map((t) => [t.hours, t.refund]), [[(60 * DAY - 48 * HOUR) / HOUR, 100], [24, 50]], 'due scaglioni al 50% di fila diventano uno solo, fino all’ultima scadenza');
+  assert.equal(multi.refundPercent, 50);
+  assert.equal(multi.normalUntilMs, startAt(60) - 24 * HOUR, 'il testo dice «50% fino a» la scadenza vera, non quella intermedia');
+  assert.equal(multi.more, false);
+  // percentuali diverse: tutti gli scaglioni restano, e la pagina rimanda alle condizioni di annullo
+  const stepped = firmTiers({ options: { ...FIRM, firmRefundPercent: 70 }, tiers: [{ hours: 72, refund: 100 }, { hours: 24, refund: 50 }], startMs: startAt(60), nowMs: NOW });
+  assert.deepEqual(stepped.tiers.map((t) => t.refund), [100, 70, 50]);
+  assert.equal(stepped.more, true);
+  assert.equal(firmTiers({ options: FIRM, tiers, startMs: startAt(60), nowMs: NOW }).more, false);
   // vicino, spento o senza periodo gratuito: nessuna modifica
   assert.equal(firmTiers({ options: FIRM, tiers, startMs: startAt(20), nowMs: NOW }).applied, false, 'sotto i 21 giorni');
   assert.equal(firmTiers({ options: { ...FIRM, firmEnabled: false }, tiers, startMs: startAt(60), nowMs: NOW }).applied, false);

@@ -323,7 +323,7 @@ test('prenotazione di un’agenzia registrata dall’admin: agenda, area dell’
     assert.equal(app.db.prepare('SELECT COUNT(*) n FROM bookings').get().n, n0, 'nessuna prenotazione creata');
 
     // nuova agenzia: account approvato con password provvisoria che funziona
-    const fresh = await admin('/admin/agenda/agency', post({ agency: 'new', company: 'Nuova Viaggi Srl', contact_name: 'Marta Neri', email: 'marta@nuova.example', phone: '333 1', discount: '10', tour: 'guida-a-ore-agenzie', date, time: '15:00', pax: '2', hours: '2', price: '200' }));
+    const fresh = await admin('/admin/agenda/agency', post({ agency: 'new', company: 'Nuova Viaggi Srl', contact_name: 'Marta Neri', email: 'marta@nuova.example', phone: '+39 333 1234567', discount: '10', tour: 'guida-a-ore-agenzie', date, time: '15:00', pax: '2', hours: '2', price: '200' }));
     assert.equal(fresh.status, 200);
     const html = await fresh.text().then(nb);
     const temp = /Password provvisoria[^<]*<code>([^<]+)<\/code>/.exec(html)?.[1];

@@ -21,6 +21,8 @@ import { tx } from '../db.js';
 import { applePass, googleSaveUrl, walletOptions } from '../wallet.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { forgotPage, inviteStatePage, loginPage, registerPage, resetPage } from '../views/b2b.js';
+import { readSignup } from '../signup.js';
+import { optionalPhone } from '../countries.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { hourlyPage } from '../views/hourly.js';
 import { extraHourOptions, hourOptions, minHours, openTo } from '../rates.js';
@@ -233,7 +235,7 @@ export function publicRouter(app) {
     const p = readSlotParams(b, channel);
     if (!p) return send(res, slotGonePage(ctx, { tour: content.tour(String(b.tour ?? '')), date: null, pax: 2 }), 400);
     if (!b.apply) await app.calendars.ensureFresh(); // riallinea il calendario personale prima di prenotare
-    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), lang: normLang(b.lang), tourLang: p.tour.languages.includes(String(b.tourLang)) ? String(b.tourLang) : '', theme: String(b.theme ?? ''), pickup: cleanText(b.pickup, 200), themeNote: cleanText(b.themeNote, 500), notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
+    const values = { name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), phone_cc: String(b.phone_cc ?? '').toUpperCase().slice(0, 2), lang: normLang(b.lang), tourLang: p.tour.languages.includes(String(b.tourLang)) ? String(b.tourLang) : '', theme: String(b.theme ?? ''), pickup: cleanText(b.pickup, 200), themeNote: cleanText(b.themeNote, 500), notes: cleanText(b.notes, 1000), clientRef: cleanText(b.clientRef, 120), paymentMethod: b.paymentMethod, invoice: b.invoice ? '1' : '', billing: cleanText(b.billing, 500), promo: channel === 'b2b' ? '' : cleanText(b.promo, 40), gift: channel === 'b2b' ? '' : cleanText(b.gift, 120) };
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     const rerender = (error, status = 400) => {
       const slot = openSlot(p, channel);
@@ -241,10 +243,12 @@ export function publicRouter(app) {
     };
     if (b.apply) return rerender('', 200); // "Applica": mostra il nuovo totale senza prenotare
     if (!b.consent) return rerender(t('err.consent'));
+    const phone = optionalPhone(b);
+    if (phone.error) return rerender(t('err.phone'));
     const wantsOption = b.action === 'option' && channel === 'b2b'; // «Opziona»: la data resta trattenuta senza pagare
     try {
       const billing = channel === 'b2b' ? { company: req.acct.company, vat: req.acct.vat, sdi: req.acct.sdi_code, pec: req.acct.pec, address: req.acct.address } : values.invoice ? { text: values.billing } : null;
-      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, bookedBy: channel === 'b2b' ? bookedBy(req.actor) : null, ...values, promoCode: values.promo, giftCodes: values.gift, billing, option: wantsOption }, req.lang);
+      const { redirect } = await services.book({ tourSlug: p.tour.slug, date: p.date, time: p.time, pax: p.pax, hours: p.hours, earpieces: p.earpieces, channel, account: channel === 'b2b' ? req.acct : null, bookedBy: channel === 'b2b' ? bookedBy(req.actor) : null, ...values, phone: phone.value, promoCode: values.promo, giftCodes: values.gift, billing, option: wantsOption }, req.lang);
       res.redirect(303, redirect);
     } catch (e) {
       if (!(e instanceof BookingError)) throw e;
@@ -427,27 +431,16 @@ export function publicRouter(app) {
     const b = req.body;
     if (b.website2) return send(res, registerPage(ctx, { done: true }));
     if (!app.limits.register(ip(req))) return tooMany(res);
-    const v = {
-      company: cleanText(b.company, 160), vat: cleanText(b.vat, 40), country: cleanText(b.country, 8) || 'IT', website: cleanText(b.website, 200), sdi_code: cleanText(b.sdi_code, 10).toUpperCase(), pec: cleanText(b.pec, 200),
-      address: cleanText(b.address, 250), contact_name: cleanText(b.contact_name, 120), phone: cleanText(b.phone, 40), email: cleanText(b.email, 200).toLowerCase(), message: cleanText(b.message, 1000),
-    };
-    const fail = (error) => send(res, registerPage(ctx, { error, values: v }), 400);
-    if (!v.company || !v.vat || !v.contact_name || !v.phone) return fail(t('err.fields'));
-    if (!isEmail(v.email)) return fail(t('err.email'));
-    if (String(b.password ?? '').length < 10) return fail(t('err.password'));
-    const vat = app.vat.parse(v.vat, v.country);
-    if (vat.country === 'IT' && app.vat.checkFormat(vat).ok === false) return fail(t('err.vat')); // una partita IVA italiana con la cifra di controllo sbagliata non passa dalla fattura elettronica
-    if (vat.eu && vat.id) v.vat = vat.id; // dentro l'UE si conserva la forma normale (IT01234567897); fuori, come l'ha scritta l'agenzia
-    if (v.country === 'IT' && !/^[A-Z0-9]{7}$/.test(v.sdi_code) && !isEmail(v.pec)) return fail(t('err.sdi'));
-    if (v.website && !/^https?:\/\/\S+$/i.test(v.website)) return fail(t('err.fields'));
-    if (!b.consent) return fail(t('err.consent'));
+    const sign = readSignup(app, b, t);
+    const { v } = sign;
+    if (sign.error) return send(res, registerPage(ctx, { error: sign.error, values: v }), 400);
     const hashed = await hashPassword(String(b.password));
-    if (emailInUse(db, v.email)) return fail(t('err.exists')); // (il controllo e l'inserimento stanno di seguito, senza attese in mezzo)
+    if (emailInUse(db, v.email)) return send(res, registerPage(ctx, { error: t('err.exists'), values: v }), 400); // (il controllo e l'inserimento stanno di seguito, senza attese in mezzo)
     const info = db
-      .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, contact_name, phone, website, message, lang, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(v.email, hashed, v.company, v.vat, v.sdi_code || null, v.pec || null, v.country, v.address || null, v.contact_name, v.phone, v.website || null, v.message || null, req.lang, new Date().toISOString());
+      .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, zip, city, province, tax_code, contact_name, phone, website, message, lang, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(v.email, hashed, v.company, sign.vatId, v.sdi_code || null, v.pec || null, v.country, v.address, v.zip, v.city, v.province || null, v.tax_code || null, v.contact_name, sign.phone, v.website || null, v.message || null, req.lang, new Date().toISOString());
     const acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(info.lastInsertRowid));
-    await sendPartnerRegistered(app, acct, { vat: formalSummary(vat) });
+    await sendPartnerRegistered(app, acct, { vat: formalSummary(sign.vat) });
     loginPartner(res, cfg, acct.id);
     send(res, registerPage(ctx, { done: true }));
   });
@@ -468,19 +461,10 @@ export function publicRouter(app) {
     if (!app.limits.register(ip(req))) return tooMany(res);
     const { state, invite } = inviteByToken(db, req.params.token);
     if (state !== 'open') return inviteGone(res, ctx, state);
-    const v = {
-      company: cleanText(b.company, 160), vat: cleanText(b.vat, 40), country: cleanText(b.country, 8) || 'IT', website: cleanText(b.website, 200), sdi_code: cleanText(b.sdi_code, 10).toUpperCase(), pec: cleanText(b.pec, 200),
-      address: cleanText(b.address, 250), contact_name: cleanText(b.contact_name, 120), phone: cleanText(b.phone, 40), email: invite.email, message: cleanText(b.message, 1000),
-    };
+    const sign = readSignup(app, b, t, { email: invite.email });
+    const { v } = sign;
     const fail = (error) => send(res, registerPage(ctx, { error, values: v, invite: { token: req.params.token, email: invite.email } }), 400);
-    if (!v.company || !v.vat || !v.contact_name || !v.phone) return fail(t('err.fields'));
-    if (String(b.password ?? '').length < 10) return fail(t('err.password'));
-    const vat = app.vat.parse(v.vat, v.country);
-    if (vat.country === 'IT' && app.vat.checkFormat(vat).ok === false) return fail(t('err.vat'));
-    if (vat.eu && vat.id) v.vat = vat.id; // dentro l'UE si conserva la forma normale (IT01234567897); fuori, come l'ha scritta l'agenzia
-    if (v.country === 'IT' && !/^[A-Z0-9]{7}$/.test(v.sdi_code) && !isEmail(v.pec)) return fail(t('err.sdi'));
-    if (v.website && !/^https?:\/\/\S+$/i.test(v.website)) return fail(t('err.fields'));
-    if (!b.consent) return fail(t('err.consent'));
+    if (sign.error) return fail(sign.error);
     const hash = await hashPassword(String(b.password));
     const now = new Date().toISOString();
     let acct;
@@ -488,8 +472,8 @@ export function publicRouter(app) {
       acct = tx(db, () => {
         if (emailInUse(db, v.email)) throw new Error('UNIQUE: indirizzo già in uso'); // di un account, o di un collaboratore invitato nel frattempo
         const info = db
-          .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, contact_name, phone, website, message, lang, status, created_at, approved_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,'approved',?,?)`)
-          .run(v.email, hash, v.company, v.vat, v.sdi_code || null, v.pec || null, v.country, v.address || null, v.contact_name, v.phone, v.website || null, v.message || null, normLang(invite.lang), now, now);
+          .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, zip, city, province, tax_code, contact_name, phone, website, message, lang, status, created_at, approved_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'approved',?,?)`)
+          .run(v.email, hash, v.company, sign.vatId, v.sdi_code || null, v.pec || null, v.country, v.address, v.zip, v.city, v.province || null, v.tax_code || null, v.contact_name, sign.phone, v.website || null, v.message || null, normLang(invite.lang), now, now);
         const id = Number(info.lastInsertRowid);
         if (!markUsed(db, invite.id, id)) throw new Error('invite-used'); // due richieste insieme: vince la prima, l'altra annulla anche l'account
         return db.prepare('SELECT * FROM accounts WHERE id = ?').get(id);
@@ -500,7 +484,7 @@ export function publicRouter(app) {
       throw err;
     }
     await sendPartnerApproved(app, acct);
-    await sendPartnerRegistered(app, acct, { vat: formalSummary(vat), invited: true });
+    await sendPartnerRegistered(app, acct, { vat: formalSummary(sign.vat), invited: true });
     loginPartner(res, cfg, acct.id);
     res.redirect(303, `/${normLang(acct.lang)}/b2b/account`);
   });

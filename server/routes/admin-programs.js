@@ -5,6 +5,7 @@ import { toMin } from '../time.js';
 import { cleanText, parseEuros } from '../util.js';
 import { invoiceForSource } from '../invoices.js';
 import { send, sendPdf } from '../http.js';
+import { optionalPhone } from '../countries.js';
 import { renderProposalPdf } from '../pdf.js';
 import { programDetailPage, programsAdminPage } from '../views/admin-programs.js';
 
@@ -25,6 +26,7 @@ const ERR = {
   mailfail: 'La proposta è salvata e segnata come inviata, ma l’email non è partita (controlla le impostazioni SMTP). Scrivi tu al cliente con il link della pagina qui sotto.',
   refund: 'Il rimborso dell’acconto non è riuscito: fallo a mano dalla dashboard di Stripe (è scritto anche nelle note).',
   create: 'Compila nome, email e numero di persone; controlla le date.',
+  phone: 'Il telefono va scritto con il prefisso del paese (per esempio +39 333 1234567).',
 };
 
 const arr = (v) => [].concat(v ?? []).map(String);
@@ -80,9 +82,11 @@ export function adminProgramsRouter(app) {
 
   r.post('/programs', form, (req, res) => {
     const b = req.body;
+    const phone = optionalPhone(b);
+    if (phone.error) return res.redirect(303, '/admin/programs?err=phone');
     try {
       const p = createProgramRequest(app, {
-        name: b.name, email: b.email, phone: b.phone, company: b.company, dateFrom: b.dateFrom, dateTo: b.dateTo, participants: b.participants,
+        name: b.name, email: b.email, phone: phone.value, company: b.company, dateFrom: b.dateFrom, dateTo: b.dateTo, participants: b.participants,
         channel: b.channel === 'b2b' ? 'b2b' : 'b2c', lang: b.lang, message: b.message, flexibleDates: !b.dateFrom,
       });
       go(res, p.id, 'ok', 'created');

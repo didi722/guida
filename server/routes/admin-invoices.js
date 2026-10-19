@@ -64,10 +64,11 @@ export function adminInvoicesRouter(app) {
     const years = [...new Set([thisYear, ...db.prepare('SELECT DISTINCT year FROM invoices WHERE year IS NOT NULL ORDER BY year DESC').all().map((x) => x.year)])].sort((a, b) => b - a);
     const year = years.includes(Number(req.query.year)) ? Number(req.query.year) : years[0];
     const queue = app.invoices.queue();
+    const optional = tab === 'queue' ? app.invoices.optionalQueue() : [];
     const drafts = db.prepare(`SELECT i.*, (SELECT COUNT(*) FROM invoice_lines l WHERE l.invoice_id = i.id) AS lines FROM invoices i WHERE i.status = 'draft' ORDER BY i.id DESC`).all();
     const issued = tab === 'issued' ? db.prepare(`SELECT * FROM invoices WHERE status != 'draft' AND year = ? ORDER BY seq DESC`).all(year) : [];
     send(res, invoicesPage(ctxOf(req), {
-      tab, queue: tab === 'queue' ? queue : [], drafts: tab === 'drafts' ? drafts : [], issued, year, years, counts: { queue: queue.length, drafts: drafts.length },
+      tab, queue: tab === 'queue' ? queue : [], optional, drafts: tab === 'drafts' ? drafts : [], issued, year, years, counts: { queue: queue.length, drafts: drafts.length },
       problems: app.invoices.problems(), settings: settingsOf(app.cfg), pec: app.invoices.pecConfigured, flash: flash(req), error,
     }), status);
   }

@@ -9,7 +9,7 @@ import { createApp } from '../server/app.js';
 import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { makeT } from '../server/i18n.js';
-import { addAccount } from './helpers.js';
+import { BILLING_IT, addAccount } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
 const tmp = path.join(ROOT, 'data', 'test-onboarding-' + crypto.randomBytes(3).toString('hex'));
@@ -62,7 +62,7 @@ async function start({ limited = false } = {}) {
   return { app, cfg, vies, admin, jar, anon: jar(), row, accounts, close: () => { app.close(); http.close(); fs.rmSync(cfg.dataDir, { recursive: true, force: true }); } };
 }
 
-const REG = { company: 'Venice DMC', vat: 'it 123.456.789-03', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' };
+const REG = { company: 'Venice DMC', vat: 'it 123.456.789-03', country: 'IT', sdi_code: 'ABCDEFG', ...BILLING_IT, contact_name: 'Giulia', phone: '+39 041 000', email: 'dmc@example.com', password: 'password-lunga-1', consent: '1' };
 
 test('registrazione: la partita IVA si scrive come capita, si salva in forma normale e la guida riceve l’esito del controllo', async () => {
   const s = await start();
@@ -91,7 +91,7 @@ test('registrazione: la partita IVA si scrive come capita, si salva in forma nor
 
     // fuori dall'Italia il formato non blocca: lo vede la guida nell'email e nella scheda
     vies.calls.length = 0;
-    const foreign = { ...REG, sdi_code: '', country: 'DE' };
+    const foreign = { ...REG, sdi_code: '', country: 'DE', zip: '10115', city: 'Berlin', address: 'Unter den Linden 1' };
     assert.equal((await anon('/en/b2b/register', form({ ...foreign, vat: 'DE 123 456 789', email: 'de@example.com' }))).status, 200);
     assert.equal((await anon('/en/b2b/register', form({ ...foreign, vat: 'DE12345', email: 'odd@example.com' }))).status, 200, 'una P.IVA tedesca con la forma sbagliata passa');
     assert.equal((await anon('/en/b2b/register', form({ ...foreign, country: 'CH', vat: 'CHE-123.456.789 MWST', email: 'ch@example.com' }))).status, 200);
@@ -249,7 +249,7 @@ test('invito: la guida scrive l’email, l’agenzia riceve il collegamento pers
     assert.match(page, /Create my account/);
 
     // registrazione: l'account nasce approvato, l'email è quella dell'invito, si entra subito
-    const post = (over = {}) => anon(at, form({ company: 'Lagoon DMC', vat: 'IT 123 456 789 03', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Anna', phone: '+39 041 111', email: 'altra@example.com', password: 'password-lunga-1', consent: '1', ...over }));
+    const post = (over = {}) => anon(at, form({ company: 'Lagoon DMC', vat: 'IT 123 456 789 03', country: 'IT', sdi_code: 'ABCDEFG', ...BILLING_IT, contact_name: 'Anna', phone: '+39 041 111', email: 'altra@example.com', password: 'password-lunga-1', consent: '1', ...over }));
     const done = await post();
     assert.equal(done.status, 303);
     assert.equal(loc(done), '/en/b2b/account');
@@ -305,7 +305,7 @@ test('invito: sbagliato, scaduto, annullato, rinviato, già registrata e dati da
     };
     const at = (url) => new URL(url).pathname;
     const invites = () => app.db.prepare('SELECT * FROM partner_invites ORDER BY id').all();
-    const REGI = { company: 'Agenzia A', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Anna', phone: '+39 041 111', password: 'password-lunga-1', consent: '1' };
+    const REGI = { company: 'Agenzia A', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', ...BILLING_IT, contact_name: 'Anna', phone: '+39 041 111', password: 'password-lunga-1', consent: '1' };
 
     // email non valida; collegamenti che non esistono
     let r = await invite({ email: 'non-un-indirizzo', company: 'Prova' });
@@ -348,7 +348,14 @@ test('invito: sbagliato, scaduto, annullato, rinviato, già registrata e dati da
     assert.ok((await bad({ password: 'corta' })).includes(makeT('es')('err.password')));
     assert.ok((await bad({ consent: '' })).includes(makeT('es')('err.consent')));
     assert.ok((await bad({ sdi_code: '', pec: '' })).includes(makeT('es')('err.sdi')));
-    assert.ok((await bad({ phone: '' })).includes(makeT('es')('err.fields')));
+    assert.ok((await bad({ phone: '' })).includes(makeT('es')('err.phone')), 'senza telefono');
+    assert.ok((await bad({ phone: '333 1234567' })).includes(makeT('es')('err.phone')), 'un numero senza prefisso: non si saprebbe da dove chiamare');
+    assert.ok((await bad({ address: '' })).includes(makeT('es')('err.address')));
+    assert.ok((await bad({ zip: '3012' })).includes(makeT('es')('err.zip')));
+    assert.ok((await bad({ city: '' })).includes(makeT('es')('err.city')));
+    assert.ok((await bad({ province: 'V' })).includes(makeT('es')('err.province')));
+    assert.ok((await bad({ tax_code: '' })).includes(makeT('es')('err.taxCode')));
+    assert.ok((await bad({ tax_code: '12345678901' })).includes(makeT('es')('err.taxCode')), 'cifra di controllo sbagliata');
     await bad({ website2: 'bot' }); // il campo trappola dei robot
     assert.equal(s.accounts(), 1, 'nessun account creato (c’è solo B)');
     assert.equal((await anon(at(second))).status, 200, 'e l’invito è ancora aperto');
@@ -411,7 +418,7 @@ test('invito: due richieste insieme creano un solo account', async () => {
     const made = await text(await admin('/admin/partners/invites', form({ email: 'race@x.example', lang: 'en' })));
     const url = made.match(/value="(http:\/\/localhost\/en\/b2b\/invite\/[A-Za-z0-9_-]+)"/)[1];
     const at = new URL(url).pathname;
-    const body = (password) => form({ company: 'Race DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', contact_name: 'Rita', phone: '+39 041 111', password, consent: '1' });
+    const body = (password) => form({ company: 'Race DMC', vat: 'IT12345678903', country: 'IT', sdi_code: 'ABCDEFG', ...BILLING_IT, contact_name: 'Rita', phone: '+39 041 111', password, consent: '1' });
     const [one, two] = await Promise.all([jar()(at, body('password-lunga-1')), jar()(at, body('password-lunga-2'))]);
     assert.deepEqual([one.status, two.status].sort(), [303, 410]);
     assert.equal(s.accounts(), 1);

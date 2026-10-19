@@ -10,6 +10,7 @@ import { send } from '../http.js';
 import { emailInUse } from '../team.js';
 import { isDate, isTime, nowRome } from '../time.js';
 import { cleanText, isEmail, parseEuros } from '../util.js';
+import { optionalPhone } from '../countries.js';
 
 const ERRORS = {
   tour: 'Scegli un servizio per le agenzie.',
@@ -20,6 +21,7 @@ const ERRORS = {
   newAgency: 'Per una nuova agenzia servono nome, referente e un’email valida.',
   exists: 'Esiste già un’agenzia con questa email: sceglila dall’elenco.',
   hours: 'Per questo servizio indica quante ore (da 4 a 8 per il tour leader, in mezze ore).',
+  phone: 'Il telefono va scritto con il prefisso del paese (per esempio +39 333 1234567), oppure lasciato vuoto.',
 };
 
 export function adminAgencyBookingRouter(app) {
@@ -53,12 +55,14 @@ export function adminAgencyBookingRouter(app) {
       const contact = cleanText(b.contact_name, 120);
       const email = cleanText(b.email, 200).toLowerCase();
       if (!company || !contact || !isEmail(email)) return fail('newAgency');
+      const phone = optionalPhone(b);
+      if (phone.error) return fail('phone');
       if (emailInUse(db, email)) return fail('exists');
       tempPassword = crypto.randomBytes(9).toString('base64url');
       const discount = Math.min(100, Math.max(0, Number(String(b.discount ?? '0').replace(',', '.')) || 0));
       const info = db
         .prepare("INSERT INTO accounts(email, password_hash, company, vat, country, contact_name, phone, lang, status, discount_percent, allow_invoice, created_at, approved_at) VALUES(?,?,?,?,?,?,?,?, 'approved', ?, 1, ?, ?)")
-        .run(email, await hashPassword(tempPassword), company, cleanText(b.vat, 40) || null, 'IT', contact, cleanText(b.phone, 40) || null, 'it', discount, new Date().toISOString(), new Date().toISOString());
+        .run(email, await hashPassword(tempPassword), company, cleanText(b.vat, 40) || null, 'IT', contact, phone.value || null, 'it', discount, new Date().toISOString(), new Date().toISOString());
       account = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(info.lastInsertRowid));
     } else {
       account = db.prepare("SELECT * FROM accounts WHERE id = ? AND status = 'approved'").get(Number(b.agency));

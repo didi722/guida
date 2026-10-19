@@ -9,6 +9,7 @@ import { fmtDate, fmtInstant } from '../time.js';
 import { formatMoney } from '../util.js';
 import { documentsBox } from './agencyDocs.js';
 import { page } from './layout.js';
+import { phoneField } from './fields.js';
 import { bookingStatusText } from './b2b.js';
 import { extensionBox } from './changes.js';
 import { breadcrumbs, fmtDuration, homeCrumb, hoursLabel, langOptions, timeLeft, whoOf } from './components.js';
@@ -67,7 +68,7 @@ export function packageCartPage(ctx, { acct, summary, values = {}, error = '', f
         <div class="form-grid">
           <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', who.name)}"></label>
           <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', who.email)}"></label>
-          <label class="field"><span class="label">${t('f.phone')} <em>${t('f.phoneB2b')}</em></span><input type="tel" name="phone" maxlength="40" autocomplete="tel" value="${v('phone', acct.phone ?? '')}"></label>
+          ${phoneField(ctx, { value: v('phone', acct.phone ?? ''), cc: v('phone_cc'), defaultCc: acct.country, label: html`${t('f.phone')} <em>${t('f.phoneB2b')}</em>` })}
           <label class="field"><span class="label">${t('f.lang')}</span><select name="lang">${langOptions(v('lang', lang))}</select></label>
         </div>
         <label class="field"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${v('clientRef')}" placeholder="${t('f.clientRefHint')}"></label>

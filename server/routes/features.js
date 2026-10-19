@@ -2,6 +2,7 @@
 import express from 'express';
 import { GiftError, getGiftByRef } from '../gifts.js';
 import { cleanText, safeEqual } from '../util.js';
+import { optionalPhone } from '../countries.js';
 import { send, sendPdf, tooMany } from '../http.js';
 import { renderGiftCardPdf, renderProposalPdf } from '../pdf.js';
 import { giftPage, giftStatusPage } from '../views/gift.js';
@@ -89,7 +90,7 @@ export function featuresRouter(app) {
     if (b.website) return res.status(400).end();
     const isB2b = req.acct?.status === 'approved';
     const values = {
-      name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), company: cleanText(b.company, 160), clientRef: cleanText(b.clientRef, 120),
+      name: cleanText(b.name, 120), email: cleanText(b.email, 200), phone: cleanText(b.phone, 40), phone_cc: String(b.phone_cc ?? '').toUpperCase().slice(0, 2), company: cleanText(b.company, 160), clientRef: cleanText(b.clientRef, 120),
       dateFrom: cleanText(b.dateFrom, 10), dateTo: cleanText(b.dateTo, 10), flexibleDates: b.flexibleDates ? '1' : '', participants: cleanText(b.participants, 3),
       groupType: cleanText(b.groupType, 20), interests: [].concat(b.interests ?? []).map((x) => cleanText(x, 20)), accommodation: cleanText(b.accommodation, 200), mobility: cleanText(b.mobility, 300),
       budget: cleanText(b.budget, 20), languages: cleanText(b.languages, 120), message: cleanText(b.message, 3000),
@@ -97,6 +98,8 @@ export function featuresRouter(app) {
     const fail = (error) => send(res, programsPage(ctx, { values, error }), 400);
     const problem = (e) => (e.code === 'dates' ? t('pg.err.dates') : t('pg.err.fields'));
     if (!b.consent) return fail(t('err.consent'));
+    const phone = optionalPhone(b);
+    if (phone.error) return fail(t('err.phone'));
     try {
       validateProgramInput(values); // gli errori di compilazione non contano nel limite di richieste
     } catch (e) {
@@ -105,7 +108,7 @@ export function featuresRouter(app) {
     }
     if (!app.limits.contact(ip(req))) return tooMany(res);
     try {
-      const p = await app.programs.submit({ ...values, lang: req.lang, channel: isB2b ? 'b2b' : 'b2c', account: isB2b ? req.acct : null, flexibleDates: !!values.flexibleDates });
+      const p = await app.programs.submit({ ...values, phone: phone.value, lang: req.lang, channel: isB2b ? 'b2b' : 'b2c', account: isB2b ? req.acct : null, flexibleDates: !!values.flexibleDates });
       res.redirect(303, `/${req.lang}/programs/${p.ref}?t=${p.token}&flash=received`);
     } catch (e) {
       if (!(e instanceof ProgramError)) throw e;

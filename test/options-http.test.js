@@ -382,3 +382,36 @@ test('«Incassi dal» nelle impostazioni: si salva una data vera, si toglie lasc
     s.close();
   }
 });
+
+test('data lontana: con scaglioni a due livelli (100% poi 50%) la pagina elenca un solo «50%», fino alla scadenza vera, e la frase non dice «nessun rimborso» troppo presto', async () => {
+  const s = await start();
+  try {
+    const { partner, agency } = s;
+    Object.assign(s.cfg.options, { firmEnabled: true, firmFromDays: 21, firmGraceHours: 24, firmRefundPercent: 50 });
+    s.app.db.prepare('UPDATE accounts SET cancel_policy_json = ? WHERE id = ?').run(JSON.stringify([{ hours: 168, refund: 100 }, { hours: 72, refund: 50 }]), agency.id);
+    const url = `/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${day(60)}&time=10:00&pax=4`;
+    const page = nb(await (await partner(url)).text());
+    assert.match(page, /Data lontana\./, 'la regola è accesa');
+    const box = page.match(/<div class="policy-box[^"]*"><strong>[^<]*<\/strong><ul class="plain tier-list">(.*?)<\/ul>/s)[1];
+    const rows = [...box.matchAll(/<li>(.*?)<\/li>/gs)].map((m) => m[1]);
+    assert.equal(rows.length, 3, 'rimborso totale, 50%, nessun rimborso: ' + rows.join(' | '));
+    assert.equal(rows.filter((x) => /50%/.test(x)).length, 1);
+    assert.match(rows[0], /^Rimborso totale/);
+    assert.match(rows[2], /^Dopo: nessun rimborso/);
+    const note = page.match(/class="notice notice-info firm-note"[^>]*>(.*?)<\/div>/s)[1];
+    assert.match(note, /poi si rimborsa il 50%/);
+    assert.match(note, /e dopo non c’è più rimborso/, 'dopo l’ultimo 50% davvero non si rimborsa più');
+    // la data nella frase è la stessa dell’ultima riga del 50%, cioè 3 giorni prima del tour
+    const until = rows[1].match(/fino al (.*?)\.$/)[1];
+    assert.ok(note.includes(until), `«${until}» nella frase: ${note}`);
+
+    // con percentuali diverse nessuna riga sparisce e la frase rimanda alle condizioni
+    s.app.db.prepare('UPDATE accounts SET cancel_policy_json = ? WHERE id = ?').run(JSON.stringify([{ hours: 168, refund: 100 }, { hours: 72, refund: 20 }]), agency.id);
+    s.cfg.options.firmRefundPercent = 70;
+    const stepped = nb(await (await partner(url)).text());
+    assert.match(stepped, /il rimborso scende come indicato nelle condizioni di annullo/);
+    assert.equal([...stepped.match(/<ul class="plain tier-list">(.*?)<\/ul>/s)[1].matchAll(/<li>/g)].length, 4);
+  } finally {
+    s.close();
+  }
+});

@@ -55,6 +55,7 @@ export function adminLayout(ctx, { title, active, body, flash = '', error = '', 
 </main>
 <script src="/js/main.js?v=${app.assetVersion}" defer></script>
 <script src="/js/datepicker.js?v=${app.assetVersion}" defer></script>
+<script src="/js/combo.js?v=${app.assetVersion}" defer></script>
 <script src="/js/keep-scroll.js?v=${app.assetVersion}" data-links defer></script>
 ${raw(scripts)}
 </body></html>`;

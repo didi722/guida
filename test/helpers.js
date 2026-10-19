@@ -14,6 +14,9 @@ import { newGiftCode, newRef } from '../server/util.js';
 process.env.GUIDA_QUIET = '1';
 process.env.FIRM_BOOKING_RULE ??= 'false'; // i test partono senza la regola «data lontana» (c'è un test apposta che la accende)
 
+/** I dati di fatturazione che la registrazione di un'azienda italiana chiede (tutti obbligatori); il codice fiscale è quello di un'azienda: come la partita IVA 12345678903. */
+export const BILLING_IT = { tax_code: '12345678903', address: 'Fondamenta Nuove 10', zip: '30121', city: 'Venezia', province: 've' };
+
 export const tour = (over = {}) => ({
   slug: 'shared',
   active: true,
@@ -64,6 +67,14 @@ export function addAccount(db, over = {}) {
     password_hash: 'x',
     company: 'Test DMC',
     contact_name: 'Anna',
+    // una agenzia come quelle che si registrano oggi: con tutti i dati di fatturazione (i test dei dati mancanti li tolgono)
+    country: 'IT',
+    address: BILLING_IT.address,
+    zip: BILLING_IT.zip,
+    city: BILLING_IT.city,
+    province: 'VE',
+    tax_code: BILLING_IT.tax_code,
+    sdi_code: 'ABCDEFG',
     status: 'approved',
     discount_percent: 0,
     allow_invoice: 1,

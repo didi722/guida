@@ -10,11 +10,12 @@ import { formatMoney } from '../util.js';
 import { SERVICES, openTo } from '../rates.js';
 import { payState } from '../invoicePayments.js';
 import { page } from './layout.js';
+import { billingFields, phoneField } from './fields.js';
+import { billingGaps } from '../billing.js';
+import { gapWords } from './billing.js';
 import { stateText } from './invoicePay.js';
 import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, timeLeft, whoOf } from './components.js';
 import { ratesBlock, ratesNotes, rateCard, supplementsBox } from './hourly.js';
-
-const COUNTRIES = ['IT', 'DE', 'FR', 'ES', 'GB', 'US', 'NL', 'AT', 'CH', 'BE', 'PT', 'PL', 'CZ', 'SE', 'DK', 'NO', 'IE', 'JP', 'CN', 'KR', 'AU', 'CA', 'BR', 'IN', 'AE', 'OTHER'];
 
 export function loginPage(ctx, { error = '', email = '', next = '' } = {}) {
   const { t, lang, u } = ctx;
@@ -82,19 +83,14 @@ export function registerPage(ctx, { error = '', values = {}, done = false, invit
   <form method="post" action="${invite ? u(`/b2b/invite/${invite.token}`) : u('/b2b/register')}" class="card pad form">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
     <h2>${t('b2b.reg.company')}</h2>
-    <div class="form-grid">
-      <label class="field"><span class="label">${t('b2b.reg.companyName')}</span><input name="company" required maxlength="160" autocomplete="organization" value="${v('company')}"></label>
-      <label class="field"><span class="label">${t('b2b.reg.vat')}</span><input name="vat" required maxlength="40" value="${v('vat')}"></label>
-      <label class="field"><span class="label">${t('b2b.reg.country')}</span><select name="country">${COUNTRIES.map((c) => html`<option value="${c}" ${v('country', 'IT') === c ? raw('selected') : ''}>${c === 'OTHER' ? t('b2b.reg.other') : c}</option>`)}</select></label>
-      <label class="field"><span class="label">${t('b2b.reg.website')} <em>${t('f.optional')}</em></span><input type="url" name="website" maxlength="200" placeholder="https://" value="${v('website')}"></label>
-      <label class="field"><span class="label">${t('b2b.reg.sdi')} <em>${t('b2b.reg.sdiHint')}</em></span><input name="sdi_code" maxlength="10" value="${v('sdi_code')}"></label>
-      <label class="field"><span class="label">${t('b2b.reg.pec')} <em>${t('f.optional')}</em></span><input type="email" name="pec" maxlength="200" value="${v('pec')}"></label>
-    </div>
-    <label class="field"><span class="label">${t('b2b.reg.address')} <em>${t('f.optional')}</em></span><input name="address" maxlength="250" autocomplete="street-address" value="${v('address')}"></label>
+    <p class="muted small form-note">${t('b2b.reg.billingNote')}</p>
+    ${billingFields(ctx, values, { lead: html`<label class="field"><span class="label">${t('b2b.reg.companyName')}</span><input name="company" required maxlength="160" autocomplete="organization" value="${v('company')}"></label>
+      <label class="field"><span class="label">${t('b2b.reg.vat')}</span><input name="vat" required maxlength="40" value="${v('vat')}"></label>` })}
+    <div class="form-grid"><label class="field span-2"><span class="label">${t('b2b.reg.website')} <em>${t('f.optional')}</em></span><input type="url" name="website" maxlength="200" placeholder="https://" value="${v('website')}"></label></div>
     <h2>${t('b2b.reg.contact')}</h2>
     <div class="form-grid">
       <label class="field"><span class="label">${t('f.name')}</span><input name="contact_name" required maxlength="120" autocomplete="name" value="${v('contact_name')}"></label>
-      <label class="field"><span class="label">${t('f.phone')}</span><input type="tel" name="phone" required maxlength="40" autocomplete="tel" value="${v('phone')}"></label>
+      ${phoneField(ctx, { value: v('phone'), cc: v('phone_cc'), defaultCc: v('country', 'IT'), required: true })}
       ${invite
         ? html`<label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" readonly maxlength="200" autocomplete="username" value="${invite.email}"><small class="muted">${t('pinv.emailNote')}</small></label>`
         : html`<label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="username" value="${v('email')}"></label>`}
@@ -106,7 +102,7 @@ export function registerPage(ctx, { error = '', values = {}, done = false, invit
     <button class="btn btn-gold btn-block btn-lg" type="submit">${invite ? t('pinv.submit') : t('b2b.reg.submit')}</button>
   </form>
 </div></section>`;
-  return page(ctx, { title: invite ? t('pinv.title') : t('b2b.requestAccess'), path: invite ? `/${lang}/b2b/invite/${invite.token}` : `/${lang}/b2b/register`, body, noindex: true, activeNav: 'b2b' });
+  return page(ctx, { title: invite ? t('pinv.title') : t('b2b.requestAccess'), path: invite ? `/${lang}/b2b/invite/${invite.token}` : `/${lang}/b2b/register`, body, noindex: true, activeNav: 'b2b', scripts: done ? '' : html`<script src="/js/b2b-register.js?v=${app.assetVersion}" defer></script>` });
 }
 
 /** Il collegamento di un invito che non si può usare: non c'è (o è annullato), è scaduto oppure ha già creato un account. */
@@ -264,11 +260,12 @@ export function accountPage(ctx, { acct, flash = '' }) {
 <section class="page-head partner-head"><div class="wrap">
   <div class="account-head">
     <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${whoOf(ctx).name} · ${whoOf(ctx).email}</p></div>
-    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a><a class="btn btn-outline" href="${u('/b2b/quotes')}">${t('quotes.nav')}</a>${whoOf(ctx).owner ? html`<a class="btn btn-outline" href="${u('/b2b/team')}">${t('team.nav')}</a>` : ''}</div>
+    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a><a class="btn btn-outline" href="${u('/b2b/quotes')}">${t('quotes.nav')}</a>${whoOf(ctx).owner ? html`<a class="btn btn-outline" href="${u('/b2b/team')}">${t('team.nav')}</a><a class="btn btn-outline" href="${u('/b2b/billing')}">${t('billing.nav')}</a>` : ''}</div>
   </div>
 </div></section>
 <section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">
   ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
+  ${whoOf(ctx).owner && billingGaps(acct).length ? html`<div class="notice notice-info" role="note">${t('billing.missing', { list: gapWords(t, acct) })} <a href="${u('/b2b/billing')}">${t('billing.complete')} →</a></div>` : ''}
   ${tariffario(ctx, acct)}
   <details class="terms-strip card spaced"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>
     ${termsFacts(ctx, acct)}

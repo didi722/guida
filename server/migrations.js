@@ -668,6 +668,22 @@ CREATE TABLE quotes (
 CREATE INDEX idx_quotes_account ON quotes(account_id, id);
 `;
 
+const V32_BILLING = `
+-- Dati di fatturazione dell'azienda partner, tutti già in fase di registrazione (prima c'erano solo partita IVA, SDI/PEC, paese e indirizzo):
+-- così la fattura si prepara già compilata. Chi aveva già ricevuto una fattura ha i dati nel riepilogo salvato (billing_json): si copiano qui.
+ALTER TABLE accounts ADD COLUMN zip TEXT;
+ALTER TABLE accounts ADD COLUMN city TEXT;
+ALTER TABLE accounts ADD COLUMN province TEXT;
+ALTER TABLE accounts ADD COLUMN tax_code TEXT;
+UPDATE accounts SET
+  address  = COALESCE(NULLIF(address, ''), json_extract(billing_json, '$.address')),
+  zip      = json_extract(billing_json, '$.zip'),
+  city     = json_extract(billing_json, '$.city'),
+  province = json_extract(billing_json, '$.province'),
+  tax_code = json_extract(billing_json, '$.taxCode')
+WHERE billing_json IS NOT NULL AND json_valid(billing_json);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -727,6 +743,8 @@ export const MIGRATIONS = [
   V29_PARTNER_ONBOARDING,
   V30_TEAM,
   V31_QUOTES,
+  // v32 — dati di fatturazione completi dei partner
+  V32_BILLING,
 ];
 
 export function migrate(db) {

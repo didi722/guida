@@ -67,34 +67,45 @@ const problemsBox = (problems, intro) =>
     ? html`<div class="notice notice-err" role="alert"><strong>${intro}</strong><ul class="plain problems">${problems.map((p) => html`<li>${p}</li>`)}</ul><p><a href="/admin/settings#invoice">Completa i dati fiscali →</a></p></div>`
     : '';
 
-export function invoicesPage(ctx, { tab, queue, drafts, issued, year, years, counts, problems, settings, pec, flash, error }) {
-  let body;
-  if (tab === 'queue') {
-    const groups = new Map();
-    for (const item of queue) {
-      const g = groups.get(item.buyerKey) ?? { key: item.buyerKey, title: item.customer, channel: item.channel, type: item.type, items: [] };
-      g.items.push(item);
-      groups.set(item.buyerKey, g);
-    }
-    const earliest = (g) => g.items.reduce((m, i) => (i.dueBy < m ? i.dueBy : m), '9999-12-31');
-    const list = [...groups.values()].sort((a, b) => earliest(a).localeCompare(earliest(b)));
-    body = html`
-${problemsBox(problems, 'Prima di emettere completa i dati fiscali (vedi la scheda Impostazioni):')}
-<p class="muted">Servizi pagati o già svolti, buoni regalo venduti e programmi conclusi che non sono ancora in una fattura. La data «entro il» è il termine consigliato di <strong>12 giorni</strong> dall’incasso o dal servizio. Scegli le voci e prepara la fattura: potrai rivedere ogni dato prima di emetterla.</p>
-${queue.length
-  ? html`<form method="post" action="/admin/invoices/draft" class="queue-form">
-  <div class="card table-wrap"><table class="table queue-table"><thead><tr><th></th><th>Voce</th><th class="num">Importo</th><th>Entro il</th></tr></thead><tbody>
-  ${list.map((g) => html`<tr class="group-row"><th colspan="4"><label class="check"><input type="checkbox" data-select-group="${g.key}"> <strong>${g.title}</strong> <span class="muted">· ${g.items.length} ${g.items.length === 1 ? 'voce' : 'voci'} · ${eur(g.items.reduce((a, i) => a + i.amountCents, 0))}${g.channel === 'b2b' ? ' · partner B2B' : ''}</span></label></th></tr>
+/** Le voci raggruppate per cliente (con la scadenza più vicina in cima). */
+function queueGroups(queue) {
+  const groups = new Map();
+  for (const item of queue) {
+    const g = groups.get(item.buyerKey) ?? { key: item.buyerKey, title: item.customer, channel: item.channel, type: item.type, items: [] };
+    g.items.push(item);
+    groups.set(item.buyerKey, g);
+  }
+  const earliest = (g) => g.items.reduce((m, i) => (i.dueBy < m ? i.dueBy : m), '9999-12-31');
+  return [...groups.values()].sort((a, b) => earliest(a).localeCompare(earliest(b)));
+}
+
+const queueTable = (queue) => html`<div class="card table-wrap"><table class="table queue-table"><thead><tr><th></th><th>Voce</th><th class="num">Importo</th><th>Entro il</th></tr></thead><tbody>
+  ${queueGroups(queue).map((g) => html`<tr class="group-row"><th colspan="4"><label class="check"><input type="checkbox" data-select-group="${g.key}"> <strong>${g.title}</strong> <span class="muted">· ${g.items.length} ${g.items.length === 1 ? 'voce' : 'voci'} · ${eur(g.items.reduce((a, i) => a + i.amountCents, 0))}${g.channel === 'b2b' ? ' · partner B2B' : ''}</span></label></th></tr>
     ${g.items.map((i) => html`<tr class="${i.overdue ? 'row-overdue' : ''}">
       <td><input type="checkbox" name="src" value="${i.key}" data-group="${g.key}" data-cents="${i.amountCents}" aria-label="Seleziona ${i.ref}"></td>
-      <td><a href="${SOURCE_LINK[i.type](i.id)}">${i.label}</a><br><small class="muted">${i.ref}${i.package ? ` · pacchetto ${i.package}` : ''}${i.hint ? ` · il cliente ha scritto: «${i.hint}»` : ''}</small><br>${i.payments.filter((p) => p.method).map((p) => html`<span class="chip ${p.paid ? 'chip-ok' : 'chip-warn'}">${PAY_LABEL[p.method]} · ${p.paid ? 'incassato' : 'da incassare'}</span> `)}${i.payments.some((p) => !p.method) ? html`<span class="chip">Buono regalo</span>` : ''}</td>
+      <td><a href="${SOURCE_LINK[i.type](i.id)}">${i.label}</a><br><small class="muted">${i.ref}${i.package ? ` · pacchetto ${i.package}` : ''}${i.hint ? ` · il cliente ha scritto: «${i.hint}»` : ''}</small><br>${i.channel === 'b2c' && i.invoiceRequested ? html`<span class="chip chip-accent">Ha chiesto la fattura</span> ` : ''}${i.payments.filter((p) => p.method).map((p) => html`<span class="chip ${p.paid ? 'chip-ok' : 'chip-warn'}">${PAY_LABEL[p.method]} · ${p.paid ? 'incassato' : 'da incassare'}</span> `)}${i.payments.some((p) => !p.method) ? html`<span class="chip">Buono regalo</span>` : ''}</td>
       <td class="num">${eur(i.amountCents)}</td>
       <td class="${i.overdue ? 'field-error' : ''}">${fmtDate(i.dueBy, 'it', 'short')}${i.overdue ? html`<br><small>scaduto</small>` : ''}</td>
     </tr>`)}`)}
-  </tbody></table></div>
+  </tbody></table></div>`;
+
+export function invoicesPage(ctx, { tab, queue, optional = [], drafts, issued, year, years, counts, problems, settings, pec, flash, error }) {
+  let body;
+  if (tab === 'queue') {
+    body = html`
+${problemsBox(problems, 'Prima di emettere completa i dati fiscali (vedi la scheda Impostazioni):')}
+<p class="muted">Servizi pagati o già svolti delle agenzie, dei privati che hanno chiesto la fattura, buoni regalo e programmi conclusi che non sono ancora in una fattura. La data «entro il» è il termine consigliato di <strong>12 giorni</strong> dall’incasso o dal servizio. Scegli le voci e prepara la fattura: potrai rivedere ogni dato prima di emetterla. I privati che non l’hanno chiesta non compaiono qui: li trovi in fondo, nel riquadro «Privati senza richiesta di fattura».</p>
+${queue.length || optional.length
+  ? html`<form method="post" action="/admin/invoices/draft" class="queue-form">
+  ${queue.length ? queueTable(queue) : html`<p class="muted">Niente da fatturare: tutte le voci da fatturare sono già in una fattura.</p>`}
+  ${optional.length
+    ? html`<details class="optional-queue"><summary>Privati senza richiesta di fattura (${optional.length})</summary>
+      <p class="muted">Al momento di prenotare non hanno chiesto la fattura, quindi non serve emetterla. Se uno te la chiede dopo, spunta la sua voce qui sotto e prepara la fattura come le altre.</p>
+      ${queueTable(optional)}</details>`
+    : ''}
   <p class="btn-row"><button class="btn btn-gold" type="submit">Prepara la fattura con le voci scelte</button> <span class="muted" data-selected-total></span></p>
 </form>`
-  : html`<p class="muted">Niente da fatturare: tutte le voci pagate o svolte sono già in una fattura.</p>`}
+  : html`<p class="muted">Niente da fatturare: tutte le voci da fatturare sono già in una fattura.</p>`}
 <form method="post" action="/admin/invoices/manual" class="inline-form"><button class="btn btn-outline" type="submit">Nuova fattura a mano</button><span class="muted">per un servizio reso di persona o non registrato sul sito</span></form>`;
   } else if (tab === 'drafts') {
     body = html`${drafts.length

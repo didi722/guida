@@ -24,6 +24,7 @@ export function createInvoiceServices(app) {
       return app.pec.live;
     },
     queue: (nowMs) => invoiceQueue(app, nowMs),
+    optionalQueue: (nowMs) => invoiceQueue(app, nowMs, { optional: true }),
     detail: (id) => invoiceDetail(app, id),
     createDrafts: (keys, nowMs) => createDrafts(app, keys, nowMs),
     createManual: (nowMs) => createManualDraft(app, nowMs),

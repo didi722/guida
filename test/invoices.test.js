@@ -25,8 +25,9 @@ function fill(app, id, buyer = person(), extra = {}) {
   const lines = d.lines.map((l) => ({ key: l.source_type ? `${l.source_type}:${l.source_id}` : undefined, description: l.description, amountCents: l.amount_cents }));
   return saveDraft(app, id, { buyer, lines, issueDate: d.inv.issue_date, options: { bolloCharged: d.options.bolloCharged, contributionPercent: d.options.contributionPercent, withholdingPercent: d.options.withholdingPercent, notes: d.options.notes, dueDate: d.options.dueDate }, ...extra }, NOW);
 }
+const ASKED = { text: 'Fattura intestata a Matteo Moretti' }; // il privato ha spuntato «Voglio la fattura» al momento di prenotare
 const paidCard = (app, over = {}) => {
-  const b = createBooking(app, base({ paymentMethod: 'card', ...over }), NOW);
+  const b = createBooking(app, base({ paymentMethod: 'card', billing: ASKED, ...over }), NOW);
   confirmPaid(app, b.id, 'pi_test', NOW);
   return app.db.prepare('SELECT * FROM bookings WHERE id = ?').get(b.id);
 };
@@ -44,17 +45,26 @@ test('coda: prenotazioni pagate o già svolte, buoni venduti, programmi conclusi
   const app = appFor();
   const paid = paidCard(app, { date: '2027-02-10', time: '09:30' }); // pagata online, servizio futuro
   const onsiteFuture = createBooking(app, base({ date: '2027-02-11', time: '09:30' }), NOW); // da pagare sul posto, futura
-  const onsitePast = createBooking(app, base({ date: '2027-01-12', time: '09:30', email: 'b@example.com' }), NOW);
+  const onsitePast = createBooking(app, base({ date: '2027-01-12', time: '09:30', email: 'b@example.com', billing: ASKED }), NOW);
+  const noInvoice = createBooking(app, base({ date: '2027-01-12', time: '14:30', email: 'turista@example.com' }), NOW); // privato che non ha chiesto la fattura
   const cancelled = createBooking(app, base({ date: '2027-01-13', time: '09:30', email: 'c@example.com' }), NOW);
   app.db.prepare(`UPDATE bookings SET status = 'cancelled' WHERE id = ?`).run(cancelled.id);
   createBooking(app, base({ date: '2027-01-13', time: '14:30', paymentMethod: 'card', email: 'held@example.com' }), NOW); // in attesa di pagamento
-  const gift = addGift(app.db, { initial_cents: 5000, source: 'web', buyer_name: 'Anna Verdi', buyer_email: 'anna@example.com' });
+  const gift = addGift(app.db, { initial_cents: 5000, source: 'web', buyer_name: 'Anna Verdi', buyer_email: 'anna@example.com', billing_json: JSON.stringify(ASKED) });
+  const giftNoInvoice = addGift(app.db, { initial_cents: 2000, source: 'web', buyer_name: 'Luca Neri', buyer_email: 'luca@example.com' });
   const draftGift = addGift(app.db, { initial_cents: 3000, status: 'pending' });
 
   const q = invoiceQueue(app, LATER);
   assert.deepEqual(keys(q).sort(), [`booking:${paid.id}`, `booking:${onsitePast.id}`, `gift:${gift.id}`].sort());
   assert.ok(!keys(q).includes(`gift:${draftGift.id}`), 'un buono non ancora pagato non si fattura');
   assert.ok(!keys(q).includes(`booking:${onsiteFuture.id}`));
+  assert.ok(!keys(q).includes(`booking:${noInvoice.id}`) && !keys(q).includes(`gift:${giftNoInvoice.id}`), 'un privato che non ha chiesto la fattura non è da fatturare: non si può conoscere il suo codice fiscale');
+  // …ma sta nell'elenco a parte, per quando uno la chiede dopo, e si può fatturare lo stesso
+  const optional = invoiceQueue(app, LATER, { optional: true });
+  assert.deepEqual(keys(optional).sort(), [`booking:${noInvoice.id}`, `gift:${giftNoInvoice.id}`].sort());
+  assert.ok(optional.every((x) => x.invoiceRequested === false && x.overdue === false));
+  assert.equal(createDrafts(app, [`booking:${noInvoice.id}`], LATER).length, 1);
+  assert.deepEqual(keys(invoiceQueue(app, LATER, { optional: true })), [`gift:${giftNoInvoice.id}`], 'in bozza esce dall’elenco');
 
   const item = q.find((x) => x.key === `booking:${paid.id}`);
   assert.equal(item.amountCents, 7000);
@@ -71,13 +81,13 @@ test('coda: prenotazioni pagate o già svolte, buoni venduti, programmi conclusi
 test('coda: la parte pagata con buono regalo non si fattura di nuovo (buono monouso), oppure sì (buono multiuso)', () => {
   const sale = appFor();
   const g = addGift(sale.db, { initial_cents: 5000 });
-  const b = createBooking(sale, base({ date: '2027-01-12', time: '09:30', pax: 3, giftCodes: g.code, paymentMethod: 'onsite' }), NOW); // 105 € − 50 € buono
+  const b = createBooking(sale, base({ date: '2027-01-12', time: '09:30', pax: 3, giftCodes: g.code, paymentMethod: 'onsite', billing: ASKED }), NOW); // 105 € − 50 € buono
   const item = invoiceQueue(sale, LATER).find((x) => x.key === `booking:${b.id}`);
   assert.equal(item.amountCents, 5500);
 
   const redeem = appFor({ giftInvoiceAt: 'redemption' });
   const g2 = addGift(redeem.db, { initial_cents: 5000 });
-  const b2 = createBooking(redeem, base({ date: '2027-01-12', time: '09:30', pax: 3, giftCodes: g2.code, paymentMethod: 'onsite' }), NOW);
+  const b2 = createBooking(redeem, base({ date: '2027-01-12', time: '09:30', pax: 3, giftCodes: g2.code, paymentMethod: 'onsite', billing: ASKED }), NOW);
   const q = invoiceQueue(redeem, LATER);
   const full = q.find((x) => x.key === `booking:${b2.id}`);
   assert.equal(full.amountCents, 10500, 'multiuso: la fattura è per l’intero importo');
@@ -86,7 +96,7 @@ test('coda: la parte pagata con buono regalo non si fattura di nuovo (buono mono
 
   const fully = appFor();
   const g3 = addGift(fully.db, { initial_cents: 20000 });
-  createBooking(fully, base({ date: '2027-01-12', time: '09:30', pax: 3, giftCodes: g3.code }), NOW);
+  createBooking(fully, base({ date: '2027-01-12', time: '09:30', pax: 3, giftCodes: g3.code, billing: ASKED }), NOW);
   assert.ok(!invoiceQueue(fully, LATER).some((x) => x.type === 'booking'), 'pagata tutta col buono: nulla da fatturare');
 });
 
@@ -151,7 +161,7 @@ test('numerazione: progressiva senza buchi per anno, in ordine di data; niente d
 
 test('partner B2B: più prenotazioni nella stessa fattura, bonifico a 30 giorni, bollo addebitato, intestatario dall’account', async () => {
   const app = appFor();
-  const acct = addAccount(app.db, { company: 'Venice DMC S.r.l.', vat: 'IT00743110157', country: 'IT', sdi_code: 'abcdefg', address: 'Fondamenta Nuove 10' });
+  const acct = addAccount(app.db, { company: 'Venice DMC S.r.l.', vat: 'IT00743110157', country: 'IT', sdi_code: 'abcdefg', address: 'Fondamenta Nuove 10', zip: null, city: null, province: null, tax_code: null }); // registrata prima che si chiedessero tutti i dati: mancano CAP, città e provincia
   const mk = (date, time, ref) => createBooking(app, base({ channel: 'b2b', account: acct, paymentMethod: 'invoice', tourSlug: 'private', date, time, pax: 5, clientRef: ref, name: 'Anna' }), NOW);
   const b1 = mk('2027-01-12', '16:00', 'PRATICA 42');
   const b2 = mk('2027-01-13', '16:00', 'PRATICA 43');
@@ -179,9 +189,10 @@ test('partner B2B: più prenotazioni nella stessa fattura, bonifico a 30 giorni,
   assert.match(inv.xml, /<CodiceDestinatario>ABCDEFG<\/CodiceDestinatario>/);
   assert.match(inv.xml, /<DataScadenzaPagamento>2027-02-19<\/DataScadenzaPagamento>/);
   assert.match(inv.xml, /<ImportoTotaleDocumento>242\.00<\/ImportoTotaleDocumento>/);
-  // i dati strutturati restano sull'account per la fattura successiva
+  // i dati strutturati restano sull'account per la fattura successiva (e finiscono nella sua scheda)
   const saved = JSON.parse(app.db.prepare('SELECT billing_json FROM accounts WHERE id = ?').get(acct.id).billing_json);
   assert.deepEqual([saved.zip, saved.city, saved.province], ['30121', 'Venezia', 'VE']);
+  assert.deepEqual({ ...app.db.prepare('SELECT zip, city, province FROM accounts WHERE id = ?').get(acct.id) }, { zip: '30121', city: 'Venezia', province: 'VE' });
   const b4 = createBooking(app, base({ channel: 'b2b', account: acct, paymentMethod: 'invoice', tourSlug: 'private', date: '2027-01-15', time: '16:00', pax: 5 }), NOW);
   const [next] = createDrafts(app, [`booking:${b4.id}`], LATER);
   assert.equal(invoiceDetail(app, next.id).buyer.city, 'Venezia');
