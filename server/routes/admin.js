@@ -15,6 +15,7 @@ import { adminAgencyBookingRouter } from './admin-agency-booking.js';
 import { adminDiscountsRouter } from './admin-discounts.js';
 import { adminProgramsRouter } from './admin-programs.js';
 import { adminMailRouter } from './admin-mail.js';
+import { adminBankRouter } from './admin-bank.js';
 import { adminBookingEditRouter } from './admin-booking-edit.js';
 import { adminPartnersRouter } from './admin-partners.js';
 import { adminStatementRouter } from './admin-statement.js';
@@ -141,6 +142,7 @@ export function adminRouter(app) {
   r.use(adminAgencyBookingRouter(app));
   r.use(adminBookingEditRouter(app));
   r.use(adminProgramsRouter(app));
+  r.use(adminBankRouter(app));
   r.use(adminInvoicesRouter(app));
   r.use(adminWaitlistRouter(app));
   r.use(adminTodayRouter(app));

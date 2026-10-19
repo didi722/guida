@@ -115,13 +115,13 @@ export function createInvoiceServices(app) {
     },
 
     /** La guida segna l'incasso (di solito un bonifico arrivato): `date` è il giorno in cui è arrivato. L'agenzia riceve la ricevuta. */
-    async markPaid(id, { date = null, method = 'bank' } = {}, nowMs = Date.now()) {
+    async markPaid(id, { date = null, method = 'bank', notify = true } = {}, nowMs = Date.now()) {
       const inv = need(id);
       if (inv.doc_type !== 'TD01' || !inv.number || inv.credited) throw new InvoiceError('state', 'si incassa solo una fattura emessa e non stornata');
       const paidAt = isDate(date) ? new Date(localToInstant(date, '12:00')).toISOString() : null;
       const cents = openPartsCents(need(id));
       const res = markInvoicePaid(app, id, { method: ['bank', 'other'].includes(method) ? method : 'bank', paidAt }, nowMs);
-      if (!res.already) {
+      if (!res.already && notify) {
         const to = invoiceEmail(db, res.invoice);
         if (to.email) await sendInvoicePaid(app, res.invoice, { to: to.email, lang: to.lang, amountCents: cents });
       }

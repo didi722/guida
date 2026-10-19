@@ -57,9 +57,9 @@ const buyerName = (b) => (b.kind === 'person' ? `${b.firstName ?? ''} ${b.lastNa
 const SOURCE_LINK = { booking: (id) => `/admin/bookings/${id}`, gift: (id) => `/admin/discounts/gifts/${id}`, program: (id) => `/admin/programs/${id}` };
 const PAY_LABEL = { MP08: 'Carta', MP05: 'Bonifico', MP01: 'Contanti' };
 
-function tabs(active, counts) {
-  const items = [['queue', `Da fatturare${counts.queue ? ` (${counts.queue})` : ''}`], ['drafts', `Bozze${counts.drafts ? ` (${counts.drafts})` : ''}`], ['issued', 'Emesse'], ['settings', 'Impostazioni']];
-  return html`<div class="tabs">${items.map(([k, l]) => html`<a href="/admin/invoices?tab=${k}" ${active === k ? raw('aria-current="page"') : ''}>${l}</a>`)}</div>`;
+export function tabs(active, counts) {
+  const items = [['queue', `Da fatturare${counts.queue ? ` (${counts.queue})` : ''}`], ['drafts', `Bozze${counts.drafts ? ` (${counts.drafts})` : ''}`], ['issued', 'Emesse'], ['bank', 'Incassi dalla banca'], ['settings', 'Impostazioni']];
+  return html`<div class="tabs">${items.map(([k, l]) => html`<a href="${k === 'bank' ? '/admin/invoices/bank' : `/admin/invoices?tab=${k}`}" ${active === k ? raw('aria-current="page"') : ''}>${l}</a>`)}</div>`;
 }
 
 const problemsBox = (problems, intro) =>
