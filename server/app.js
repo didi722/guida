@@ -57,10 +57,10 @@ export function createApp(overrides = {}) {
   server.use(securityHeaders(app));
 
   const day = 24 * 3600 * 1000;
-  // Font Josefin Sans serviti dal pacchetto npm (nessun file binario nel repository, nessuna richiesta a Google)
+  // Font Josefin Sans serviti dal pacchetto npm (nessuna richiesta a Google)
   server.use('/fonts', express.static(path.join(ROOT, 'node_modules', '@fontsource', 'josefin-sans', 'files'), { maxAge: '365d', immutable: true }));
-  // bandiere dei paesi (emoji) disegnate da un piccolo font (77 kB, Twemoji, CC BY 4.0): Windows non le mostra, ci sarebbero solo due lettere
-  server.get('/fonts/TwemojiCountryFlags.woff2', (req, res) => res.type('font/woff2').set('Cache-Control', 'public, max-age=31536000, immutable').sendFile(path.join(ROOT, 'node_modules', 'country-flag-emoji-polyfill', 'dist', 'TwemojiCountryFlags.woff2')));
+  // le bandiere dei paesi (font Twemoji, 77 kB, CC BY 4.0) stanno in public/fonts: Windows non mostra le bandiere emoji (solo due lettere) e il file
+  // non deve dipendere da un `npm install` fatto dopo un aggiornamento
   server.use(express.static(path.join(ROOT, 'public'), { maxAge: cfg.isProd ? 7 * day : 0 }));
 
   server.use(sameOrigin);
