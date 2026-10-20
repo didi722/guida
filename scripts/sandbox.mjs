@@ -220,6 +220,18 @@ async function seed() {
 
 const giftCode = fresh ? await seed() : null;
 
+// Una sandbox creata prima del giro dell'area agenzie non ha l'agenzia «al primo accesso»: la si aggiunge, senza toccare il resto.
+if (!fresh && !app.db.prepare("SELECT 1 FROM accounts WHERE email = 'elena@serenissima-travel.example'").get()) {
+  const iso = new Date().toISOString();
+  app.db
+    .prepare(
+      `INSERT INTO accounts(email, password_hash, company, vat, tax_code, sdi_code, address, zip, city, province, country, contact_name, phone, lang, status, approved_at, allow_invoice, discount_percent, created_at)
+       VALUES('elena@serenissima-travel.example', ?, 'Serenissima Travel', '02222222222', '02222222222', 'SER0001', 'Campo Santa Margherita 3000', '30123', 'Venezia', 'VE', 'IT', 'Elena Rossi', '+39 041 000004', 'it', 'approved', ?, 1, 0, ?)`,
+    )
+    .run(await hashPassword('prova-prova-1'), iso, iso);
+  console.log('Aggiunta alla sandbox esistente l’agenzia «Serenissima Travel» (al primo accesso).');
+}
+
 const http = server.listen(Number(PORT), () => {
   console.log(`
 ═══════════════ SITO DI PROVA ═══════════════

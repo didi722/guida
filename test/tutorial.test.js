@@ -58,8 +58,10 @@ test('chi lo deve vedere: titolare e collaboratori ognuno per sé, solo gli acco
 
 test('testi completi: ogni passo e ogni domanda c’è in italiano, inglese, spagnolo e giapponese', () => {
   const keys = [
-    'tut.title', 'tut.step', 'tut.next', 'tut.prev', 'tut.skip', 'tut.done', 'tut.dots', 'tut.banner', 'tut.banner.start', 'tut.banner.skip', 'tut.replay',
+    'tut.title', 'tut.intro', 'tut.start', 'tut.skip', 'tut.banner', 'tut.banner.start', 'tut.banner.skip', 'tut.replay',
     'partner.nav.help', 'help.title', 'help.lead', 'help.steps', 'help.faq',
+    'tour.exit', 'tour.skipStop', 'tour.hint', 'tour.finish', 'tour.resume', 'tour.resumeBtn',
+    ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `tour.s${n}`), 'tour.s3m', 'tut.next', 'tut.step',
     ...TUTORIAL_STEPS.flatMap((n) => [`tut.${n}.title`, `tut.${n}.text`]),
     ...FAQ_GROUPS.flatMap(([group, ids]) => [group, ...ids.flatMap((n) => [`faq.${n}.q`, `faq.${n}.a`])]),
   ];
@@ -117,14 +119,23 @@ test('primo accesso: la prima pagina porta il giro (finestra che si apre da sola
     const { app, owner } = s;
     const f = await s.login('owner', owner.email);
     const home = await text(await f('/it/b2b/account'));
-    assert.match(home, /<dialog class="tutorial" id="tutorial"[^>]*data-done-url="\/it\/b2b\/tutorial\/done"[^>]* data-auto data-mark>/);
-    assert.equal((home.match(/data-tut-step/g) ?? []).length, 5, 'cinque passi');
+    assert.match(home, /<dialog class="tutorial" id="tutorial"[^>]* data-auto data-mark>/);
     assert.match(home, /Benvenuti, Serenissima Travel/);
     assert.match(home, /Un giro veloce dell’area agenzie/);
-    assert.match(home, /Passo 1 di 5/);
-    assert.match(home, /Passo 5 di 5/);
-    assert.match(home, /<button class="btn btn-gold" type="button" autofocus data-tut-next data-next="Avanti" data-finish="Ho capito, iniziamo">/);
+    assert.equal((home.match(/class="tut-list"/g) ?? []).length, 1);
+    assert.equal((home.match(/<li><span class="tut-icon">/g) ?? []).length, 4, 'i passi 2–5 in elenco');
+    assert.match(home, /<button class="btn btn-gold" type="button" autofocus data-tut-go>Inizia il giro<\/button>/);
     assert.match(home, /data-tut-banner/, 'il riquadro per chi non ha JavaScript');
+    assert.match(home, /data-tour-start data-tour-mark>/, 'il riquadro fa partire il giro');
+    // il giro interattivo: testi nella lingua della pagina e indirizzi nell'area, in un elemento nascosto (niente script in linea)
+    const cfg = JSON.parse(home.match(/id="tour-config" hidden data-config="([^"]*)"/)[1].replaceAll('&quot;', '"').replaceAll('&amp;', '&'));
+    assert.equal(cfg.total, 5);
+    assert.equal(cfg.done, '/it/b2b/tutorial/done');
+    assert.deepEqual(cfg.urls, { home: '/it/b2b/account', book: '/it/book', invoices: '/it/b2b/invoices' });
+    assert.equal(Object.keys(cfg.t.stops).length, 10);
+    assert.match(cfg.t.stops.s1, /Nuova prenotazione/);
+    assert.match(home, /src="\/js\/tour\.js\?v=[^"]*" defer/);
+    assert.match(home, /data-tour="new"/, 'il punto del primo passo');
     assert.match(home, /<form method="post" action="\/it\/b2b\/tutorial\/done">/);
     assert.match(home, /src="\/js\/tutorial\.js\?v=/);
     assert.match(home, /href="\/it\/b2b\/help">Guida e FAQ<\/a>/, 'il pulsante della guida sulla prima pagina');
@@ -142,6 +153,7 @@ test('primo accesso: la prima pagina porta il giro (finestra che si apre da sola
     assert.doesNotMatch(again, /<dialog class="tutorial"/);
     assert.doesNotMatch(again, /data-tut-banner/);
     assert.doesNotMatch(again, /src="\/js\/tutorial\.js/);
+    assert.match(again, /id="tour-config"/, 'il giro si può sempre rivedere');
     assert.match(again, /Serenissima Travel/, 'la pagina è quella di sempre');
 
     // invio normale: torna alla prima pagina (o a un indirizzo interno), mai fuori dal sito
@@ -196,9 +208,9 @@ test('Guida e FAQ: i passi per intero, le domande per gruppo, il pulsante per ri
     const help = await text(await f('/it/b2b/help'));
     assert.match(help, /<h1>Guida e domande frequenti<\/h1>/);
     assert.match(help, /Scrivi a info@example\.com/);
-    assert.match(help, /<button class="btn btn-outline btn-lg" type="button" data-open-tutorial>Rivedi il giro dell’area<\/button>/);
-    assert.match(help, /<dialog class="tutorial" id="tutorial"[^>]*data-done-url="\/it\/b2b\/tutorial\/done"[^>]* data-mark>/);
-    assert.doesNotMatch(help, /<dialog[^>]* data-auto/);
+    assert.match(help, /<button class="btn btn-outline btn-lg" type="button" data-tour-start data-tour-mark>Rivedi il giro dell’area<\/button>/, 'prima di averlo visto, finirlo lo segna');
+    assert.doesNotMatch(help, /<dialog/, 'il giro parte direttamente dal pulsante');
+    assert.match(help, /id="tour-config"/);
     assert.equal((help.match(/class="help-steps"/g) ?? []).length, 1);
     assert.equal((help.match(/<details class="faq">/g) ?? []).length, 14, 'quattordici domande');
     for (const g of ['Prenotare', 'Opzioni, date libere e pacchetti', 'Modifiche e annullo', 'Pagamenti e fatture', 'Il tuo account']) assert.ok(help.includes(`>${g}<`), g);
@@ -209,8 +221,8 @@ test('Guida e FAQ: i passi per intero, le domande per gruppo, il pulsante per ri
     // dopo averlo visto, la finestra resta per rivederlo ma non segna più nulla
     markTutorialDone(app.db, owner, null);
     const seen = await text(await f('/it/b2b/help'));
-    assert.match(seen, /<dialog class="tutorial" id="tutorial"[^>]*data-done-url="\/it\/b2b\/tutorial\/done"[^>]*>/);
-    assert.doesNotMatch(seen, /<dialog[^>]* data-(auto|mark)/);
+    assert.match(seen, /<button class="btn btn-outline btn-lg" type="button" data-tour-start >Rivedi il giro dell’area<\/button>/);
+    assert.doesNotMatch(seen, /data-tour-mark/, 'rivederlo non segna più nulla');
     // in inglese, spagnolo e giapponese
     const en = await text(await f('/en/b2b/help'));
     assert.match(en, /<h1>Help and frequently asked questions<\/h1>/);
@@ -228,7 +240,7 @@ test('Guida e FAQ: i passi per intero, le domande per gruppo, il pulsante per ri
     app.db.prepare('UPDATE accounts SET tutorial_done_at = NULL').run();
     const enHome = await text(await f('/en/b2b/account'));
     assert.match(enHome, /A quick tour of the agency area/);
-    assert.match(enHome, /data-finish="Got it, let’s start"/);
+    assert.match(enHome, /data-tut-go>Start the tour<\/button>/);
     assert.match(enHome, /First time here\? A one-minute tour to find your way around\./);
   } finally {
     s.close();

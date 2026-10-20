@@ -1184,15 +1184,13 @@ dialog.tutorial::backdrop { background: rgba(24, 18, 8, 0.58); backdrop-filter: 
 .tut-skip:hover { color: var(--ink); }
 .tut-icon { display: inline-grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 18px; background: var(--gold-soft); color: var(--accent-text); }
 .tut-icon svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.tut-count { margin: 12px 0 0; font-size: 0.85rem; color: var(--muted); }
-.tut-step h2 { margin: 4px 0 8px; font-size: 1.55rem; line-height: 1.2; }
-.tut-step p:last-child { margin: 0; line-height: 1.55; }
-.tut-body { min-height: 15.5rem; }
-.tut-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
-.tut-dots { display: flex; gap: 8px; list-style: none; padding: 0; margin: 0; }
-.tut-dots li { width: 8px; height: 8px; border-radius: 8px; background: var(--line); transition: width 0.2s, background 0.2s; }
-.tut-dots li.is-on { width: 22px; background: var(--bronze); }
-.tut-nav { display: flex; gap: 8px; align-items: center; }
+.tut-foot { display: flex; justify-content: flex-end; }
+.tut-welcome { margin: 6px 0 0; font-size: 1.55rem; line-height: 1.2; }
+.tut-card > p { margin: 0; line-height: 1.55; }
+.tut-list { list-style: none; padding: 0; margin: 4px 0 8px; display: grid; gap: 8px; }
+.tut-list li { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+.tut-list .tut-icon { width: 40px; height: 40px; border-radius: 12px; }
+.tut-list .tut-icon svg { width: 24px; height: 24px; }
 .tut-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 18px; }
 .tut-banner[hidden] { display: none; }
 .tut-banner-actions { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -1208,6 +1206,19 @@ details.faq[open] summary { color: var(--accent-text); }
 details.faq p { margin: 0; padding: 0 18px 16px; line-height: 1.6; }
 @media (max-width: 560px) {
   .tut-card { padding: 16px 18px 18px; }
-  .tut-body { min-height: 19rem; }
   .help-steps li { flex-direction: column; gap: 10px; }
 }
+
+/* Il giro interattivo: un riquadro che indica il punto da cliccare */
+.tour-spot { position: fixed; z-index: 9000; border-radius: 12px; pointer-events: none; box-shadow: 0 0 0 9999px rgba(24, 18, 8, 0.6), 0 0 0 3px var(--gold); transition: top 0.2s, left 0.2s, width 0.2s, height 0.2s; }
+.tour-spot.is-soft { box-shadow: 0 0 0 3px var(--gold), 0 0 0 9px rgba(214, 187, 81, 0.28); }
+.tour-spot[hidden] { display: none; }
+.tour-tip { position: fixed; z-index: 9001; width: min(370px, calc(100vw - 16px)); box-sizing: border-box; padding: 14px 16px 12px; border-radius: 16px; background: var(--card); color: var(--ink); box-shadow: var(--shadow-lg); border: 1px solid var(--line); }
+.tour-tip.is-sheet { left: 8px; right: 8px; bottom: 8px; top: auto; width: auto; }
+.tour-tip.is-resume { left: auto; right: 12px; bottom: 12px; top: auto; width: min(330px, calc(100vw - 24px)); }
+.tour-count { margin: 0 0 6px; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.tour-text { margin: 0 0 10px; line-height: 1.5; }
+.tour-hint { margin: -4px 0 10px; font-weight: 700; font-size: 0.9rem; color: var(--accent-text); }
+.tour-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.tour-exit, .tour-skip-stop { background: none; border: 0; padding: 6px 0; font: inherit; font-size: 0.88rem; color: var(--muted); text-decoration: underline; cursor: pointer; }
+.tour-exit:hover, .tour-skip-stop:hover { color: var(--ink); }

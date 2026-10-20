@@ -1025,29 +1025,11 @@
   "Siguiente",
   "次へ"
  ],
- "tut.prev": [
-  "Indietro",
-  "Back",
-  "Atrás",
-  "戻る"
- ],
  "tut.skip": [
   "Salta",
   "Skip",
   "Omitir",
   "スキップ"
- ],
- "tut.done": [
-  "Ho capito, iniziamo",
-  "Got it, let’s start",
-  "Entendido, empecemos",
-  "わかりました。始めます"
- ],
- "tut.dots": [
-  "Passi del giro",
-  "Tour steps",
-  "Pasos del recorrido",
-  "ツアーのステップ"
  ],
  "tut.banner": [
   "Prima volta qui? Un giro di un minuto per orientarti.",
@@ -1072,6 +1054,114 @@
   "Watch the tour again",
   "Ver el recorrido otra vez",
   "もう一度ツアーを見る"
+ ],
+ "tut.intro": [
+  "Ti accompagno in cinque passi sul sito vero: clicchi dove ti indico e vedi come si fa. Non prenoti nulla davvero.",
+  "I will walk you through five steps on the real site: click where I point and see how it is done. You will not book anything for real.",
+  "Te acompaño en cinco pasos por el sitio real: haces clic donde te indico y ves cómo se hace. No reservas nada de verdad.",
+  "実際のサイトで5つのステップをご案内します。指示された場所をクリックして操作を体験できます。実際に予約されることはありません。"
+ ],
+ "tut.start": [
+  "Inizia il giro",
+  "Start the tour",
+  "Empezar el recorrido",
+  "ツアーを始める"
+ ],
+ "tour.exit": [
+  "Esci dal giro",
+  "Leave the tour",
+  "Salir del recorrido",
+  "ツアーを終了"
+ ],
+ "tour.skipStop": [
+  "Salta questo passaggio",
+  "Skip this part",
+  "Saltar este paso",
+  "この操作を飛ばす"
+ ],
+ "tour.hint": [
+  "Clicca sul punto evidenziato.",
+  "Click the highlighted spot.",
+  "Haz clic en el punto resaltado.",
+  "ハイライトされた場所をクリックしてください。"
+ ],
+ "tour.finish": [
+  "Fine del giro",
+  "End of the tour",
+  "Fin del recorrido",
+  "ツアー終了"
+ ],
+ "tour.resume": [
+  "Giro in corso: passo {n} di {total}",
+  "Tour in progress: step {n} of {total}",
+  "Recorrido en curso: paso {n} de {total}",
+  "ツアー進行中：{total}ステップ中{n}"
+ ],
+ "tour.resumeBtn": [
+  "Riprendi",
+  "Resume",
+  "Reanudar",
+  "再開"
+ ],
+ "tour.s1": [
+  "Premi «Nuova prenotazione» per cominciare: da qui si prenota per i tuoi clienti, con la tua tariffa agenzia.",
+  "Press “New booking” to begin: this is where you book for your clients, at your agency rate.",
+  "Pulsa «Nueva reserva» para empezar: desde aquí reservas para tus clientes, con tu tarifa de agencia.",
+  "「新規予約」を押して始めましょう。ここからお客様の予約を、代理店料金で行えます。"
+ ],
+ "tour.s2": [
+  "Scegli un giorno e per quante persone, poi premi «Cerca»: vedrai gli orari liberi dei servizi. (Qui c’è anche la scheda «Date libere».)",
+  "Pick a day and the number of guests, then press “Search”: you will see the free times of the services. (The “Free dates” tab is here too.)",
+  "Elige un día y cuántas personas, y pulsa «Buscar»: verás los horarios libres de los servicios. (Aquí también está la pestaña «Fechas libres».)",
+  "日付と人数を選んで「検索」を押すと、サービスごとの空き時間が表示されます。（ここに「空き日」タブもあります。）"
+ ],
+ "tour.s3": [
+  "Ecco gli orari liberi. Scegli un orario: ti porta al riepilogo, ancora senza prenotare.",
+  "Here are the free times. Pick one: it takes you to the summary, still without booking.",
+  "Estos son los horarios libres. Elige uno: te lleva al resumen, todavía sin reservar.",
+  "空いている時間です。ひとつ選ぶと、まだ予約せずに確認画面へ進みます。"
+ ],
+ "tour.s3m": [
+  "Per quel giorno non ci sono orari liberi: scegli un altro giorno e cerca di nuovo.",
+  "There are no free times that day: pick another day and search again.",
+  "Ese día no hay horarios libres: elige otro día y busca de nuevo.",
+  "その日は空き時間がありません。別の日を選んでもう一度検索してください。"
+ ],
+ "tour.s4": [
+  "Qui dici chi viene: adulti, bambini (4–12 anni, 50%) e infanti (0–3 anni, gratis). Prova a cambiare i numeri: il prezzo a destra si aggiorna da solo.",
+  "Here you say who is coming: adults, children (ages 4–12, 50%) and infants (ages 0–3, free). Try changing the numbers: the price on the right updates by itself.",
+  "Aquí indicas quién viene: adultos, niños (4–12 años, 50%) y bebés (0–3 años, gratis). Prueba a cambiar los números: el precio de la derecha se actualiza solo.",
+  "ここでご参加の内訳（大人、子ども4〜12歳は50%、乳幼児0〜3歳は無料）を入力します。数字を変えてみてください。右側の料金が自動で更新されます。"
+ ],
+ "tour.s5": [
+  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata, mentre il tuo cliente decide. Dalla Panoramica, «Date libere» ti mostra i giorni liberi e ti avvisa se una data occupata si libera. Non premerlo adesso.",
+  "“Hold without paying” keeps the date for you until the deadline shown, while your client decides. From the Overview, “Free dates” shows the free days and tells you if a taken date frees up. Do not press it now.",
+  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado mientras tu cliente decide. Desde el Resumen, «Fechas libres» te muestra los días libres y te avisa si se libera una fecha ocupada. No lo pulses ahora.",
+  "「支払いなしで仮押さえする」は、お客様が決めるまで表示された期限まで日程を確保します。概要の「空き日」では空いている日を確認でき、埋まっている日が空くと通知されます。今は押さないでください。"
+ ],
+ "tour.s6": [
+  "«Aggiungi al pacchetto» serve quando il cliente vuole più servizi: una sola opzione, un solo pagamento, una sola fattura. Dal pacchetto prepari anche un preventivo con il tuo ricarico.",
+  "“Add to package” is for clients who want several services: one hold, one payment, one invoice. From the package you can also prepare a quote with your markup.",
+  "«Añadir al paquete» sirve cuando el cliente quiere varios servicios: una sola opción, un solo pago, una sola factura. Desde el paquete también preparas un presupuesto con tu recargo.",
+  "「パッケージに追加」は、お客様が複数のサービスを希望するときに使います。仮押さえ・お支払い・請求書がまとめて1回になります。パッケージから、上乗せ額を加えた見積書も作成できます。"
+ ],
+ "tour.s7": [
+  "Le condizioni di annullo sono queste e restano quelle di quando prenoti. Finché l’annullo è gratuito puoi cambiare persone, data od ore da «Prenotazioni».",
+  "These are the cancellation terms, and they stay as they were when you booked. While cancellation is free you can change guests, date or hours from “Bookings”.",
+  "Estas son las condiciones de cancelación y se mantienen las de cuando reservas. Mientras la cancelación sea gratuita puedes cambiar personas, fecha u horas desde «Reservas».",
+  "こちらがキャンセル条件で、予約時の内容がそのまま適用されます。キャンセルが無料の間は「予約一覧」から人数・日付・時間を変更できます。"
+ ],
+ "tour.s8": [
+  "Per finire, apri «Fatture»: è lì che trovi fatture, IBAN, causale ed estratto conto.",
+  "To finish, open “Invoices”: that is where you find invoices, IBAN, payment reference and statement.",
+  "Para terminar, abre «Facturas»: allí encuentras facturas, IBAN, concepto y estado de cuenta.",
+  "最後に「請求書」を開いてください。請求書、IBAN、支払い参照番号、取引明細書はここにあります。"
+ ],
+ "tour.s9": [
+  "Questa è la pagina delle fatture e dell’estratto conto. Il giro è finito e non hai prenotato nulla. Per rivederlo, o per le domande frequenti, usa «Guida e FAQ».",
+  "This is the page for invoices and the statement. The tour is over and you have not booked anything. To watch it again, or for the FAQ, use “Help & FAQ”.",
+  "Esta es la página de facturas y del estado de cuenta. El recorrido ha terminado y no has reservado nada. Para verlo otra vez, o para las preguntas frecuentes, usa «Ayuda y FAQ».",
+  "こちらが請求書と取引明細書のページです。ツアーは終了で、予約は何も入っていません。もう一度見たいときやよくある質問は「ヘルプ・FAQ」をご利用ください。"
  ],
  "tut.1.title": [
   "Benvenuti, {company}",

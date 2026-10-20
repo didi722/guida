@@ -2,6 +2,7 @@ import { esc, html, jsonLd, raw } from '../html.js';
 import { LANGS, LANG_META } from '../langs.js';
 import { cartCount } from '../packages.js';
 import { mediaUrl } from './components.js';
+import { tourBlock } from './tour.js';
 
 const ICON = {
   sun: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
@@ -196,6 +197,7 @@ ${partner
 <script src="/js/combo.js?v=${app.assetVersion}" defer></script>
 <script src="/js/party.js?v=${app.assetVersion}" defer></script>
 <script src="/js/keep-scroll.js?v=${app.assetVersion}" ${partner ? raw('data-links') : ''} defer></script>
+${partner ? tourBlock(ctx) : ''}
 ${scripts}
 </body>
 </html>`;

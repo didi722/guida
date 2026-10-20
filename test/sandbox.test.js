@@ -64,3 +64,39 @@ test('sandbox: dati d’esempio creati senza errori, sito di prova, partner con 
   assert.match(firstHome, /Benvenuti, Serenissima Travel/);
   assert.match(await (await fetch(`${base}/it/b2b/help`, { headers: { cookie: pcookie } })).text(), /Domande frequenti/, 'Guida e FAQ anche per chi l’ha già visto');
 });
+
+test('sandbox esistente creata prima del giro: l’agenzia «al primo accesso» viene aggiunta al riavvio, senza toccare il resto', async (t) => {
+  const dir = path.join(ROOT, 'data', 'test-sandbox-' + crypto.randomBytes(3).toString('hex'));
+  const run = async (port) => {
+    const child = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', 'scripts/sandbox.mjs'], { cwd: ROOT, env: { ...process.env, SANDBOX_DIR: dir, SANDBOX_PORT: String(port), GUIDA_QUIET: '1' } });
+    let out = '';
+    child.stdout.on('data', (d) => (out += d));
+    child.stderr.on('data', (d) => (out += d));
+    for (let i = 0; i < 100 && !out.includes('Ctrl+C per fermare'); i++) await wait(200);
+    assert.ok(out.includes('Ctrl+C per fermare'), `la sandbox non è partita:\n${out}`);
+    return { child, out };
+  };
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const stop = (child) => new Promise((r) => { child.once('exit', r); child.kill(); });
+
+  const first = await run(3300 + Math.floor(Math.random() * 600));
+  await stop(first.child);
+  const { DatabaseSync } = await import('node:sqlite');
+  const db = new DatabaseSync(path.join(dir, 'guida.sqlite'));
+  db.prepare("DELETE FROM accounts WHERE email = 'elena@serenissima-travel.example'").run(); // come una sandbox di prima
+  const others = db.prepare('SELECT COUNT(*) AS n FROM accounts').get().n;
+  db.close();
+
+  const port = 3300 + Math.floor(Math.random() * 600);
+  const second = await run(port);
+  t.after(() => second.child.kill());
+  assert.ok(second.out.includes('Aggiunta alla sandbox esistente'), second.out);
+  const base = `http://localhost:${port}`;
+  const login = await fetch(`${base}/it/b2b/login`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: base }, body: new URLSearchParams({ email: 'elena@serenissima-travel.example', password: 'prova-prova-1' }).toString() });
+  assert.equal(login.status, 303, 'ora entra');
+  const cookie = login.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+  assert.match(await (await fetch(`${base}/it/b2b/account`, { headers: { cookie } })).text(), /<dialog class="tutorial" id="tutorial"[^>]* data-auto data-mark>/);
+  const check = new DatabaseSync(path.join(dir, 'guida.sqlite'), { readOnly: true });
+  assert.equal(check.prepare('SELECT COUNT(*) AS n FROM accounts').get().n, others + 1, 'le altre agenzie restano com’erano');
+  check.close();
+});
