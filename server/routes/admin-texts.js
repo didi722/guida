@@ -6,7 +6,7 @@ import { LANGS } from '../langs.js';
 import { send } from '../http.js';
 import { labelOf, sectionOf, textsPage } from '../views/admin-texts.js';
 
-const placeholders = (s) => [...String(s).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
+const placeholders = (s) => [...new Set([...String(s).matchAll(/\{(\w+)\}/g)].map((m) => m[1]))].sort();
 const PAGE_SIZE_LIMIT = 80;
 
 export function adminTextsRouter(app) {
@@ -47,7 +47,10 @@ export function adminTextsRouter(app) {
         const v = req.body[`t__${key}__${l}`];
         if (v === undefined) return;
         const text = String(v).replace(/\r\n/g, '\n').trim();
-        if (text && placeholders(text) !== placeholders(defaultText(key)[i])) problems.push(`${key} (${l}): mantieni le parti tra graffe ${placeholders(defaultText(key)[i]) ? '{' + placeholders(defaultText(key)[i]).split(',').join('}, {') + '}' : '(questo testo non ne ha)'}`);
+        // i segnaposto del testo originale si possono togliere (il valore semplicemente non compare), ma non se ne possono inventare
+        const allowed = placeholders(defaultText(key)[i]);
+        const unknown = placeholders(text).filter((p) => !allowed.includes(p));
+        if (text && unknown.length) problems.push(`${key} (${l}): le parti tra graffe {${unknown.join('}, {')}} non esistono in questo testo${allowed.length ? ` (puoi usare solo {${allowed.join('}, {')}})` : ' (questo testo non ne ha)'}`);
         values[l] = text.slice(0, 3000);
       });
       changes.push([key, values]);

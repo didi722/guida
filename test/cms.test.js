@@ -542,13 +542,14 @@ test('testi dell’interfaccia dal pannello: modifica per lingua, segnaposto pro
     assert.match(await (await anon('/en/')).text(), />Book</, 'l’inglese non cambia');
     assert.equal(s.app.content.textOverrides().length, 1, 'solo ciò che è diverso dall’originale si salva');
     assert.match(await (await admin('/admin/texts?section=nav')).text(), /modificato/);
-    // i segnaposto vanno mantenuti
-    const ph = { section: 'tour', keys: 'tour.upTo', 't__tour.upTo__it': 'fino a tante persone', 't__tour.upTo__en': 'up to {n} guests', 't__tour.upTo__es': 'hasta {n} personas' };
+    // i segnaposto non si inventano (ma si possono togliere)
+    const ph = { section: 'tour', keys: 'tour.upTo', 't__tour.upTo__it': 'fino a {persone} ospiti', 't__tour.upTo__en': 'up to {n} guests', 't__tour.upTo__es': 'hasta {n} personas' };
     const bad = await admin('/admin/texts', form(ph));
     assert.equal(bad.status, 400);
-    assert.match(await bad.text(), /mantieni le parti tra graffe/);
+    assert.match(await bad.text(), /non esistono in questo testo/);
     assert.equal(s.app.content.textOverrides().length, 1, 'niente salvato a metà');
-    assert.equal((await admin('/admin/texts', form({ ...ph, 't__tour.upTo__it': 'fino a {n} ospiti' }))).status, 303);
+    assert.equal((await admin('/admin/texts', form({ ...ph, 't__tour.upTo__it': 'fino a tante persone' }))).status, 303, 'si può togliere {n}');
+    assert.match(await (await anon('/it/tours')).text(), /fino a tante persone/);
     assert.equal(s.app.content.textOverrides().length, 2);
     // ripristino: svuotare il testo toglie la modifica
     await admin('/admin/texts', form({ ...base, 't__nav.book__it': '' }));
