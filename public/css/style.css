@@ -456,7 +456,7 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 .promo-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px 14px; align-items: end; margin-top: 6px; } .promo-grid .field { margin: 0; } .promo-grid .btn { height: var(--control-h); margin-bottom: 0; }
 .field-error { color: var(--err); font-weight: 700; margin: 6px 0 0; font-size: 0.93rem; } .field-ok { color: var(--ok); font-weight: 700; margin: 6px 0 0; font-size: 0.93rem; }
 .row-discount dd { color: var(--ok); }
-.pay-options { display: grid; gap: 10px; }
+.pay-options { display: grid; gap: 10px; margin-bottom: 1.3rem; } .btn + :is(p.small, p.muted) { margin-top: 0.9rem; }
 .pay-option { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; background: var(--field); transition: border-color 0.2s, background-color 0.2s; }
 .pay-option input { margin-top: 5px; }
 .pay-option span { display: flex; flex-direction: column; } .pay-option small { color: var(--muted); font-size: 0.88rem; line-height: 1.35; }
