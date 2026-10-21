@@ -299,7 +299,7 @@ a.card:hover .arrow { transform: translateX(5px); }
 .breadcrumbs { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
 .breadcrumbs a { color: var(--muted); }
 .page-head { padding: calc(var(--header-h) + 26px) 0 8px; }
-.page-head h1 { margin-bottom: 0.25em; }
+.page-head h1 { margin-bottom: 0.35em; }
 
 /* ───────── Pagina tour ───────── */
 .tour-hero { padding-top: var(--header-h); }
@@ -991,7 +991,7 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 /* ───────── Tariffario in cima all'area agenzie ───────── */
 .tariff-section { padding-bottom: 0; }
 .tariff-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px 20px; flex-wrap: wrap; margin-bottom: 12px; }
-.tariff-head h2 { margin: 0 0 0.1em; font-size: 1.7rem; } .tariff-head p { margin: 0; }
+.tariff-head h2 { margin: 0 0 0.25em; font-size: 1.7rem; } .tariff-head p { margin: 0; }
 .tariff-section .rate-card { padding: 18px 20px; } .tariff-section .rate-card h3 { font-size: 1.15rem; }
 
 /* ───────── Selettore di date (public/js/datepicker.js) ───────── */
@@ -1078,6 +1078,15 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .tour-main .h-sub { margin-top: 2.4rem; margin-bottom: 0.9rem; } .tour-main .prose + .h-sub { margin-top: 2.2rem; }
 .card :is(ul, ol, table) + :is(p.small, p.muted) { margin-top: 0.9rem; }
 .card + :is(p.small, p.muted, p.center) { margin-top: 1.1rem; }
+/* pulsanti che si toccavano e note attaccate a ciò che le precede */
+.form > .btn:not(.btn-block), .card.pad > form > .btn:not(.btn-block) { margin: 0 10px 10px 0; }
+.option-actions > * + * { margin-top: 12px; }
+form + :is(p.small, p.muted), .policy-box + p, .facts-list + p.small, .row-line + p.small { margin-top: 0.9rem; }
+.form-note { margin-top: 0.8rem; }
+.rates-form > .card + .card { margin-top: 18px; }
+.md-panes + p { margin-top: 10px; }
+[data-preset] { margin-bottom: 6px; }
+input[data-agency-search] { margin-bottom: 8px; }
 .tour-main { min-width: 0; } .tour-main .facts, .tour-main .prose { overflow-wrap: anywhere; }
 
 /* Pacchetto di più servizi (area agenzie) */
@@ -1200,7 +1209,7 @@ dialog.tutorial::backdrop { background: rgba(24, 18, 8, 0.58); backdrop-filter: 
 .tut-banner-actions form { margin: 0; }
 .help-steps { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 14px; counter-reset: step; }
 .help-steps li { display: flex; gap: 16px; align-items: flex-start; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
-.help-steps h3 { margin: 2px 0 6px; font-size: 1.1rem; }
+.help-steps h3 { margin: 2px 0 8px; font-size: 1.1rem; }
 .help-steps p { margin: 0; line-height: 1.55; }
 .faq-group { margin: 26px 0 10px; font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 details.faq { border: 1px solid var(--line); border-radius: 14px; background: var(--card); margin: 0 0 8px; }
