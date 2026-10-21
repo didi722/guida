@@ -712,6 +712,14 @@ ALTER TABLE accounts ADD COLUMN tutorial_done_at TEXT;
 ALTER TABLE account_users ADD COLUMN tutorial_done_at TEXT;
 `;
 
+const V37_REFERRAL = `
+-- «Segnala un'agenzia collega»: ogni agenzia ha un codice nel collegamento al modulo di richiesta; chi si registra da quel collegamento
+-- ricorda chi l'ha segnalata (solo per informazione: l'approvazione resta manuale).
+ALTER TABLE accounts ADD COLUMN ref_code TEXT;
+ALTER TABLE accounts ADD COLUMN referred_by INTEGER REFERENCES accounts(id);
+CREATE UNIQUE INDEX idx_accounts_ref_code ON accounts(ref_code) WHERE ref_code IS NOT NULL;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -781,6 +789,8 @@ export const MIGRATIONS = [
   V35_PARTY,
   // v36 — giro dell'area agenzie al primo accesso
   V36_TUTORIAL,
+  // v37 — segnalazione tra agenzie
+  V37_REFERRAL,
 ];
 
 export function migrate(db) {

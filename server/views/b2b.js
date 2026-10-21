@@ -72,7 +72,7 @@ export function resetPage(ctx, { token = '', invalid = false, error = '' } = {})
   return page(ctx, { title: t('b2b.reset.title'), path: `/${lang}/b2b/reset`, body, noindex: true, activeNav: 'b2b' });
 }
 
-export function registerPage(ctx, { error = '', values = {}, done = false, invite = null } = {}) {
+export function registerPage(ctx, { error = '', values = {}, done = false, invite = null, referrer = null } = {}) {
   const { t, lang, u, app } = ctx;
   const v = (k, d = '') => values[k] ?? d;
   const title = invite ? t('pinv.title') : t('b2b.reg.title');
@@ -84,6 +84,7 @@ export function registerPage(ctx, { error = '', values = {}, done = false, invit
 <section class="section tight"><div class="wrap narrow">
   <form method="post" action="${invite ? u(`/b2b/invite/${invite.token}`) : u('/b2b/register')}" class="card pad form">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
+    ${referrer && !invite ? html`<div class="notice notice-info" role="note">${t('ref.notice', { company: referrer.company })}</div><input type="hidden" name="ref" value="${referrer.code}">` : ''}
     <h2>${t('b2b.reg.company')}</h2>
     <p class="muted small form-note">${t('b2b.reg.billingNote')}</p>
     ${billingFields(ctx, values, { lead: html`<label class="field"><span class="label">${t('b2b.reg.companyName')}</span><input name="company" required maxlength="160" autocomplete="organization" value="${v('company')}"></label>
@@ -256,11 +257,32 @@ function tariffario(ctx, acct) {
   ${ratesNotes(ctx, { channel: 'b2b' })}`;
 }
 
+/** «Segnala un'agenzia collega»: il messaggio già scritto con il collegamento al modulo di richiesta (WhatsApp, email, copia, menu di condivisione). */
+function shareCard(ctx, { url, count }) {
+  const { t, app } = ctx;
+  const site = app.cfg.site.name;
+  const text = t('ref.msg', { site });
+  const wa = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
+  const mail = `mailto:?subject=${encodeURIComponent(t('ref.mailSubject', { site }))}&body=${encodeURIComponent(`${text}\n\n${url}`)}`;
+  return html`<section class="card pad share-card spaced" id="segnala" data-share data-url="${url}" data-text="${text}" data-title="${t('ref.mailSubject', { site })}" data-copied="${t('ref.copied')}">
+  <h2 class="h-sub">${t('ref.title')}</h2>
+  <p class="muted">${t('ref.lead', { site })}</p>
+  <p class="share-msg">${text} <a href="${url}" rel="noopener">${url}</a></p>
+  <div class="btn-row">
+    <a class="btn btn-gold" href="${wa}" target="_blank" rel="noopener">${t('ref.whatsapp')}</a>
+    <a class="btn btn-outline" href="${mail}">${t('ref.email')}</a>
+    <button class="btn btn-outline" type="button" data-share-copy>${t('ref.copy')}</button>
+    <button class="btn btn-outline" type="button" data-share-native hidden>${t('ref.native')}</button>
+  </div>
+  ${count ? html`<p class="small muted">${t('ref.count', { n: count })}</p>` : ''}
+</section>`;
+}
+
 /**
  * La prima pagina dell'area agenzie: tariffe e condizioni dell'agenzia, con i pulsanti per prenotare e per andare alle prenotazioni.
  * Per un account non ancora approvato mostra la pagina di stato.
  */
-export function accountPage(ctx, { acct, flash = '', tutorial = false }) {
+export function accountPage(ctx, { acct, flash = '', tutorial = false, share = null }) {
   if (acct.status !== 'approved') return pendingPage(ctx, acct);
   const { t, u } = ctx;
   const canQuote = hasHourlyProducts(ctx, 'b2b'); // senza servizi a ore prenotabili il calcolatore non avrebbe nulla da mostrare
@@ -280,8 +302,9 @@ export function accountPage(ctx, { acct, flash = '', tutorial = false }) {
     ${termsFacts(ctx, acct)}
     <p class="small"><a href="${u('/b2b/rates')}">${t('partner.terms.all')} →</a></p>
   </details>
+  ${share ? shareCard(ctx, share) : ''}
 </div></section>`;
-  return page(ctx, { title: t('partner.nav.home'), path: `/${ctx.lang}/b2b/account`, body: tutorial ? html`${body}${tutorialDialog(ctx, { auto: true, mark: true })}` : body, noindex: true, activeNav: 'b2b-account', area: 'partner', scripts: tutorial ? raw(`<script src="/js/tutorial.js?v=${ctx.app.assetVersion}" defer></script>`) : '' });
+  return page(ctx, { title: t('partner.nav.home'), path: `/${ctx.lang}/b2b/account`, body: tutorial ? html`${body}${tutorialDialog(ctx, { auto: true, mark: true })}` : body, noindex: true, activeNav: 'b2b-account', area: 'partner', scripts: raw(`${share ? `<script src="/js/share.js?v=${ctx.app.assetVersion}" defer></script>` : ''}${tutorial ? `<script src="/js/tutorial.js?v=${ctx.app.assetVersion}" defer></script>` : ''}`) });
 }
 
 /**

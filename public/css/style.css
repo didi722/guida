@@ -1084,6 +1084,7 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .option-actions > * + * { margin-top: 12px; }
 form + :is(p.small, p.muted), .policy-box + p, .facts-list + p.small, .row-line + p.small { margin-top: 0.9rem; }
 .form-note { margin-top: 0.8rem; }
+.share-card h2 { margin-bottom: 0.4rem; } .share-msg { margin: 0 0 1.2rem; padding: 12px 16px; border-left: 4px solid var(--gold); background: var(--gold-soft); border-radius: 0 10px 10px 0; font-size: 0.95rem; overflow-wrap: anywhere; } .share-card .btn-row { margin-top: 0; }
 .rates-form > .card + .card { margin-top: 18px; }
 .md-panes + p { margin-top: 10px; }
 [data-preset] { margin-bottom: 6px; }

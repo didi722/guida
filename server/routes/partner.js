@@ -11,6 +11,7 @@ import { send, sendPdf } from '../http.js';
 import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerSummary } from '../partner.js';
 import { renderInvoicePdf } from '../pdf-invoice.js';
 import { renderVoucherPdf } from '../pdf.js';
+import { refCodeOf, referralUrl, referralsOf } from '../referral.js';
 import { teamSize } from '../team.js';
 import { markTutorialDone, tutorialDue } from '../tutorial.js';
 import { cleanText } from '../util.js';
@@ -46,7 +47,8 @@ export function partnerRouter(app) {
     if (!req.acct) return toLogin(req, res);
     const ctx = res.locals.ctx;
     if (req.acct.status === 'approved' && ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page', 'v', 'm', 'd'].some((k) => req.query[k] !== undefined)) return res.redirect(302, `/${req.lang}/b2b/bookings?${new URLSearchParams(req.query)}`);
-    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor) }));
+    const share = req.acct.status === 'approved' ? { url: referralUrl(app.cfg, req.lang, refCodeOf(db, req.acct)), count: referralsOf(db, req.acct.id).length } : null; // «Segnala un'agenzia collega»
+    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor), share }));
   });
 
   // «Guida e FAQ»: i passi del giro scritti per intero, il pulsante per rivederlo e le domande frequenti

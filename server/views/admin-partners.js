@@ -53,7 +53,7 @@ ${items.length
     ${items.map((a) => {
       const prices = Object.keys(accountPrices(a)).length;
       const vat = app.vat.summary(a);
-      return html`<tr><td><a href="/admin/partners/${a.id}"><strong>${a.company}</strong></a><br><small class="muted">${vatLabel(a)}</small> ${vatBadge(vat)}</td><td>${a.contact_name}<br><small class="muted">${a.email}</small></td>
+      return html`<tr><td><a href="/admin/partners/${a.id}"><strong>${a.company}</strong></a><br><small class="muted">${vatLabel(a)}</small> ${vatBadge(vat)}${a.referrer ? html`<br><small class="muted">segnalata da ${a.referrer}</small>` : ''}</td><td>${a.contact_name}<br><small class="muted">${a.email}</small></td>
       <td><span class="chip ${a.status === 'approved' ? 'chip-ok' : a.status === 'pending' ? 'chip-warn' : 'chip-err'}">${ST[a.status]}</span></td>
       <td><small>${a.discount_percent ? `sconto ${a.discount_percent}%` : 'tariffa B2B'}${prices ? ` · ${prices} prezz${prices === 1 ? 'o dedicato' : 'i dedicati'}` : ''}${a.cancel_policy_json || a.cancel_hours != null ? ' · annullo dedicato' : ''}</small></td><td class="num">${a.bookings}</td></tr>`;
     })}
@@ -62,7 +62,7 @@ ${items.length
   return adminLayout(ctx, { title: 'Partner B2B', active: '/admin/partners', body });
 }
 
-export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOptions = 0, flash = '', error = '' }) {
+export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOptions = 0, referrer = null, referred = [], flash = '', error = '' }) {
   const { app } = ctx;
   const { cfg, content } = app;
   const tours = content.tours.filter((x) => x.pricing !== 'hourly' && x.audience === 'b2b'); // il listino dedicato riguarda i tour B2B
@@ -89,6 +89,8 @@ export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOpt
       ${a.website ? html`<div><dt>Sito</dt><dd><a href="${a.website}" rel="noopener nofollow" target="_blank">${a.website}</a></dd></div>` : ''}
       ${a.message ? html`<div><dt>Messaggio</dt><dd>${a.message}</dd></div>` : ''}
       <div><dt>Registrato</dt><dd>${new Date(a.created_at).toLocaleDateString('it-IT')}</dd></div>
+      ${referrer ? html`<div><dt>Segnalata da</dt><dd><a href="/admin/partners/${referrer.id}">${referrer.company}</a></dd></div>` : ''}
+      ${referred.length ? html`<div><dt>Ha segnalato</dt><dd>${referred.map((x, i) => html`${i ? ', ' : ''}<a href="/admin/partners/${x.id}">${x.company}</a>${x.status === 'pending' ? ' (da approvare)' : ''}`)}</dd></div>` : ''}
     </dl>
     ${a.status === 'approved' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/partners/${a.id}/statement">Estratto conto</a></p>` : ''}</div>
   <form class="card pad form" method="post" action="/admin/partners/${a.id}">

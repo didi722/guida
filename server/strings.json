@@ -1127,6 +1127,72 @@
   "Ese día no hay horarios libres: elige otro día y busca de nuevo.",
   "その日は空き時間がありません。別の日を選んでもう一度検索してください。"
  ],
+ "ref.title": [
+  "Segnala un’agenzia collega",
+  "Refer a fellow agency",
+  "Recomienda una agencia colega",
+  "同業の代理店を紹介する"
+ ],
+ "ref.lead": [
+  "Conosci un’agenzia, una DMC o un tour operator che potrebbe lavorare con {site}? Mandale il collegamento al modulo di richiesta: nel modulo comparirà il tuo nome, così so chi l’ha consigliata. Ogni richiesta viene comunque verificata e approvata da me.",
+  "Do you know an agency, a DMC or a tour operator who could work with {site}? Send them the link to the request form: your name will appear in the form, so I know who recommended them. Every request is still checked and approved by me.",
+  "¿Conoces una agencia, una DMC o un operador turístico que podría trabajar con {site}? Envíale el enlace al formulario de solicitud: en el formulario aparecerá tu nombre, así sé quién la ha recomendado. Cada solicitud se revisa y aprueba igualmente por mi parte.",
+  "{site}と取引できそうな代理店、DMC、ツアーオペレーターをご存じですか？申請フォームのリンクを送ってください。フォームにはあなたのお名前が表示され、誰からのご紹介か分かります。申請は必ず私が確認・承認します。"
+ ],
+ "ref.msg": [
+  "Ciao! Lavoro con {site}, guida turistica abilitata a Venezia, per i miei gruppi. Se ti interessa, qui trovi il modulo per chiedere l’accesso partner:",
+  "Hi! I work with {site}, a licensed tour guide in Venice, for my groups. If you are interested, here is the form to request partner access:",
+  "¡Hola! Trabajo con {site}, guía turístico habilitado en Venecia, para mis grupos. Si te interesa, aquí tienes el formulario para solicitar el acceso de socio:",
+  "こんにちは！私はヴェネツィアの公認ガイド{site}さんにグループをお願いしています。ご興味があれば、パートナー申請フォームはこちらです："
+ ],
+ "ref.mailSubject": [
+  "Accesso partner con {site}",
+  "Partner access with {site}",
+  "Acceso de socio con {site}",
+  "{site}のパートナー申請"
+ ],
+ "ref.whatsapp": [
+  "WhatsApp",
+  "WhatsApp",
+  "WhatsApp",
+  "WhatsApp"
+ ],
+ "ref.email": [
+  "Email",
+  "Email",
+  "Correo",
+  "メール"
+ ],
+ "ref.copy": [
+  "Copia il collegamento",
+  "Copy the link",
+  "Copiar el enlace",
+  "リンクをコピー"
+ ],
+ "ref.copied": [
+  "Copiato",
+  "Copied",
+  "Copiado",
+  "コピーしました"
+ ],
+ "ref.native": [
+  "Condividi…",
+  "Share…",
+  "Compartir…",
+  "共有…"
+ ],
+ "ref.count": [
+  "Agenzie segnalate da te finora: {n}",
+  "Agencies you have referred so far: {n}",
+  "Agencias que has recomendado hasta ahora: {n}",
+  "これまでにあなたが紹介した代理店：{n}"
+ ],
+ "ref.notice": [
+  "Ti ha segnalato {company}. Compila il modulo per chiedere l’accesso partner: la richiesta viene verificata e approvata prima di attivare l’account.",
+  "{company} recommended you. Fill in the form to request partner access: the request is checked and approved before the account is activated.",
+  "{company} te ha recomendado. Rellena el formulario para solicitar el acceso de socio: la solicitud se revisa y se aprueba antes de activar la cuenta.",
+  "{company}からのご紹介です。パートナー申請フォームにご記入ください。申請は確認・承認の上でアカウントが有効になります。"
+ ],
  "tour.s4": [
   "Qui dici chi viene: adulti, bambini (4–12 anni, 50%) e infanti (0–3 anni, gratis). Prova a cambiare i numeri: il prezzo a destra si aggiorna da solo.",
   "Here you say who is coming: adults, children (ages 4–12, 50%) and infants (ages 0–3, free). Try changing the numbers: the price on the right updates by itself.",

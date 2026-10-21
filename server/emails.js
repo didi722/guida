@@ -551,7 +551,7 @@ const vatLine = (v) => {
  * Una nuova agenzia si è registrata: conferma di ricezione all'agenzia e avviso alla guida, con l'esito della verifica della partita IVA.
  * `invited`: arriva da un invito (l'account è già approvato): all'agenzia non si scrive «aspetta l'approvazione».
  */
-export async function sendPartnerRegistered(app, a, { vat = null, invited = false } = {}) {
+export async function sendPartnerRegistered(app, a, { vat = null, invited = false, referrer = null } = {}) {
   const tr = P[normLang(a.lang)];
   if (!invited) await app.mail.send({ to: a.email, subject: tr.receivedSubject, text: `${tr.receivedBody(a.contact_name)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
   const to = app.cfg.mail.notifyTo;
@@ -559,7 +559,7 @@ export async function sendPartnerRegistered(app, a, { vat = null, invited = fals
     await app.mail.send({
       to,
       subject: invited ? `Agenzia invitata registrata: ${a.company}` : `Nuova richiesta partner: ${a.company}`,
-      text: [`${a.company} (${vatLabel(a)})`, vatLine(vat), `${a.contact_name} <${a.email}>${a.phone ? ' · ' + a.phone : ''}`, a.website ?? '', a.message ? `Messaggio: ${a.message}` : '', '', invited ? `Si è registrata dal tuo invito: l'account è già approvato. ${app.cfg.baseUrl}/admin/partners/${a.id}` : `Approva o rifiuta: ${app.cfg.baseUrl}/admin/partners/${a.id}`].filter(Boolean).join('\n'),
+      text: [`${a.company} (${vatLabel(a)})`, vatLine(vat), `${a.contact_name} <${a.email}>${a.phone ? ' · ' + a.phone : ''}`, a.website ?? '', a.message ? `Messaggio: ${a.message}` : '', referrer ? `Segnalata da: ${referrer.company} <${referrer.email}>` : '', '', invited ? `Si è registrata dal tuo invito: l'account è già approvato. ${app.cfg.baseUrl}/admin/partners/${a.id}` : `Approva o rifiuta: ${app.cfg.baseUrl}/admin/partners/${a.id}`].filter(Boolean).join('\n'),
     });
 }
 

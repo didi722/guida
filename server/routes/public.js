@@ -29,6 +29,7 @@ import { extraHourOptions, hourOptions, minHours, openTo } from '../rates.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
 import { LANGS, LANG_META, normLang, pick } from '../langs.js';
 import { featuredQuotes, feedbackStats } from '../reviews.js';
+import { findReferrer } from '../referral.js';
 
 const clampInt = (v, min, max, d) => {
   const n = Number.parseInt(v, 10);
@@ -424,23 +425,25 @@ export function publicRouter(app) {
     logoutPartner(res, cfg);
     res.redirect(303, `/${req.lang}/`); // si esce dall'area riservata e si torna alla pagina di tutti
   });
-  r.get('/b2b/register', (req, res) => send(res, registerPage(res.locals.ctx)));
+  r.get('/b2b/register', (req, res) => send(res, registerPage(res.locals.ctx, { referrer: findReferrer(db, req.query.ref) })));
   r.post('/b2b/register', form, async (req, res) => {
     const ctx = res.locals.ctx;
     const { t } = ctx;
     const b = req.body;
     if (b.website2) return send(res, registerPage(ctx, { done: true }));
     if (!app.limits.register(ip(req))) return tooMany(res);
+    const referrer = findReferrer(db, b.ref); // chi ha segnalato (se il codice è valido); un codice sbagliato si ignora
     const sign = readSignup(app, b, t);
     const { v } = sign;
-    if (sign.error) return send(res, registerPage(ctx, { error: sign.error, values: v }), 400);
+    if (sign.error) return send(res, registerPage(ctx, { error: sign.error, values: v, referrer }), 400);
     const hashed = await hashPassword(String(b.password));
-    if (emailInUse(db, v.email)) return send(res, registerPage(ctx, { error: t('err.exists'), values: v }), 400); // (il controllo e l'inserimento stanno di seguito, senza attese in mezzo)
+    if (emailInUse(db, v.email)) return send(res, registerPage(ctx, { error: t('err.exists'), values: v, referrer }), 400); // (il controllo e l'inserimento stanno di seguito, senza attese in mezzo)
     const info = db
       .prepare(`INSERT INTO accounts(email, password_hash, company, vat, sdi_code, pec, country, address, zip, city, province, tax_code, contact_name, phone, website, message, lang, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(v.email, hashed, v.company, sign.vatId, v.sdi_code || null, v.pec || null, v.country, v.address, v.zip, v.city, v.province || null, v.tax_code || null, v.contact_name, sign.phone, v.website || null, v.message || null, req.lang, new Date().toISOString());
+    if (referrer) db.prepare('UPDATE accounts SET referred_by = ? WHERE id = ?').run(referrer.id, Number(info.lastInsertRowid));
     const acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(info.lastInsertRowid));
-    await sendPartnerRegistered(app, acct, { vat: formalSummary(sign.vat) });
+    await sendPartnerRegistered(app, acct, { vat: formalSummary(sign.vat), referrer });
     loginPartner(res, cfg, acct.id);
     send(res, registerPage(ctx, { done: true }));
   });

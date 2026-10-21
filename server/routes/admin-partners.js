@@ -10,6 +10,7 @@ import { accountPrices } from '../pricing.js';
 import { listMembers, removeMember } from '../team.js';
 import { cleanText, parseEuros } from '../util.js';
 import { partnerDetailPage, partnersPage } from '../views/admin-partners.js';
+import { referralsOf, referrerOf } from '../referral.js';
 
 const FLASH = {
   partner: 'Condizioni aggiornate.',
@@ -44,7 +45,7 @@ export function adminPartnersRouter(app) {
 
   r.get('/partners', (req, res) => {
     const f = ['all', 'pending', 'approved'].includes(req.query.f) ? req.query.f : 'all';
-    const items = db.prepare(`SELECT a.*, (SELECT COUNT(*) FROM bookings b WHERE b.account_id = a.id AND b.status = 'confirmed') AS bookings FROM accounts a ${f === 'all' ? '' : 'WHERE a.status = ?'} ORDER BY a.status = 'pending' DESC, a.created_at DESC`).all(...(f === 'all' ? [] : [f]));
+    const items = db.prepare(`SELECT a.*, (SELECT COUNT(*) FROM bookings b WHERE b.account_id = a.id AND b.status = 'confirmed') AS bookings, (SELECT r.company FROM accounts r WHERE r.id = a.referred_by) AS referrer FROM accounts a ${f === 'all' ? '' : 'WHERE a.status = ?'} ORDER BY a.status = 'pending' DESC, a.created_at DESC`).all(...(f === 'all' ? [] : [f]));
     send(res, partnersPage(ctxOf(req), { items, filter: f }));
   });
 
@@ -54,7 +55,7 @@ export function adminPartnersRouter(app) {
     const bookings = db.prepare('SELECT * FROM bookings WHERE account_id = ? ORDER BY date DESC LIMIT 100').all(a.id);
     const others = db.prepare('SELECT id, company FROM accounts WHERE id != ? ORDER BY company').all(a.id);
     const openOptions = activeOptionCount(db, a.id);
-    send(res, partnerDetailPage(ctxOf(req), a, { bookings, others, team: listMembers(db, a.id), openOptions, flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
+    send(res, partnerDetailPage(ctxOf(req), a, { bookings, others, team: listMembers(db, a.id), openOptions, referrer: referrerOf(db, a), referred: referralsOf(db, a.id), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
   });
 
   // stato, sconto, pagamento a fattura, note
