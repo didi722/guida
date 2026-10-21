@@ -351,7 +351,7 @@ Regole:
 
 **Dove si usano le foto**
 - **Copertina di un tour o di un articolo**: nella scheda del tour o dell'articolo, *Immagine di copertina*.
-- **Foto del sito**: in **Immagini › Immagini del sito** vedi i cinque posti fissi — **Home**, **Chi sono** (il tuo ritratto), **Pagina agenzie**, **Buono regalo**, **Anteprima social** (la foto che compare quando qualcuno condivide un link del sito; se la lasci vuota si usa quella della home). Per sceglierla: nella libreria, sulla foto che vuoi, scegli dove usarla dal menu e tocca **Usa qui**. **Togli la foto** riporta l'illustrazione.
+- **Foto del sito**: in **Immagini › Immagini del sito** vedi i posti fissi — **Home**, le due schede della home **Home · scheda «Guida privata»** e **Home · scheda «Tour di gruppo»** (se le lasci vuote usano la foto del tour in evidenza della categoria, o del primo), **Chi sono** (il tuo ritratto), **Pagina agenzie**, **Buono regalo**, **Anteprima social** (la foto che compare quando qualcuno condivide un link del sito; se la lasci vuota si usa quella della home). Per sceglierla: nella libreria, sulla foto che vuoi, scegli dove usarla dal menu e tocca **Usa qui**. **Togli la foto** riporta l'illustrazione.
 - **Dentro un articolo o una pagina**: pulsante **Foto** sopra il testo.
 
 **Eliminare.** Una foto **in uso** (copertina, foto del sito) non si può eliminare: toglila prima da dove la usi. Le altre hanno il pulsante **Elimina**.

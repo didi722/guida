@@ -403,6 +403,21 @@ test('immagini del sito: home, chi sono, agenzie, regalo e anteprima social si s
     await admin('/admin/media/slots', form({ slot: 'og', name: photoB }));
     assert.match(await (await anon('/it/')).text(), new RegExp(`og:image" content="http://localhost/media/${photoB}"`));
 
+    // le due schede della home («Guida privata», «Tour di gruppo»): senza foto scelta usano il tour in evidenza o il primo, con la foto scelta la loro
+    const cardOf = async (id) => (await (await anon('/it/')).text()).split(`id="${id}">`)[1].split('</article>')[0];
+    const before = { private: await cardOf('private'), group: await cardOf('group') };
+    assert.doesNotMatch(before.private + before.group, new RegExp(photoB), 'prima nessuna foto scelta per le schede');
+    assert.match(await (await admin('/admin/media')).text(), /Home · scheda «Guida privata»/);
+    assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'home-private', name: photoB }))), '/admin/media?ok=slot');
+    assert.match(await cardOf('private'), new RegExp(`<a class="card-media"[^>]*><img src="/media/${photoB}"`));
+    assert.equal(await cardOf('group'), before.group, 'l’altra scheda non cambia');
+    assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'home-group', name: photoA }))), '/admin/media?ok=slot');
+    assert.match(await cardOf('group'), new RegExp(`<a class="card-media"[^>]*><img src="/media/${photoA}"`));
+    await admin('/admin/media/slots', form({ slot: 'home-private', clear: '1' }));
+    await admin('/admin/media/slots', form({ slot: 'home-group', clear: '1' }));
+    assert.equal(await cardOf('private'), before.private, 'tolta la foto, torna quella del tour');
+    assert.equal(await cardOf('group'), before.group);
+
     // controlli
     assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'inesistente', name: photoA }))), '/admin/media?err=slot');
     assert.equal(loc(await admin('/admin/media/slots', form({ slot: 'home', name: 'ffffffffffffffffffffffff.jpg' }))), '/admin/media?err=missing');

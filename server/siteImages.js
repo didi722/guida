@@ -5,6 +5,8 @@ import { MEDIA_NAME, MediaError } from './media.js';
 
 export const IMAGE_SLOTS = [
   { key: 'home', label: 'Home', hint: 'La foto in cima alla pagina iniziale. Meglio orizzontale, con il soggetto al centro.' },
+  { key: 'home-private', label: 'Home · scheda «Guida privata»', hint: 'La foto della scheda «Guida privata» nella pagina iniziale. Se la lasci vuota si usa la foto del tour privato in evidenza (o del primo).' },
+  { key: 'home-group', label: 'Home · scheda «Tour di gruppo»', hint: 'La foto della scheda «Tour di gruppo» nella pagina iniziale. Se la lasci vuota si usa la foto del tour di gruppo in evidenza (o del primo).' },
   { key: 'about', label: 'Chi sono', hint: 'Il tuo ritratto, o una foto mentre accompagni un gruppo: chi prenota vuole vedere con chi starà due ore e mezza.' },
   { key: 'b2b', label: 'Pagina agenzie', hint: 'La foto in cima alla pagina per agenzie e tour operator.' },
   { key: 'gift', label: 'Buono regalo', hint: 'L’immagine accanto al modulo del buono regalo.' },

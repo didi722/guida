@@ -44,7 +44,8 @@ export function homePage(ctx, { quotes = [], reviewStats = null } = {}) {
   const shown = content.tours.filter((x) => openTo(rates, x, channel));
   const groupTours = shown.filter((x) => x.model === 'person');
   const privateTours = shown.filter((x) => x.model === 'group');
-  const cover = (list) => list.find((x) => x.featured) ?? list[0] ?? null; // la foto di ogni scheda: il tour «in evidenza», altrimenti il primo
+  const cover = (list) => list.find((x) => x.featured) ?? list[0] ?? null; // senza una foto scelta per la scheda (Sito › Immagini): quella del tour «in evidenza», altrimenti del primo
+  const cardMedia = (slot, tour) => { const photo = ctx.app.siteImages?.get(slot); return photo ? mediaImg(photo, '') : tourMedia(ctx, tour, ''); };
   const guideTour = privateTours.find((x) => x.pricing === 'hourly' && x.service === 'guide' && x.chooseHours) ?? privateTours.find((x) => x.pricing === 'hourly' && x.service === 'guide') ?? null;
   const discount = channel === 'b2b' ? Number(ctx.acct?.discount_percent) || 0 : 0;
   const privateCover = cover(privateTours);
@@ -74,7 +75,7 @@ ${privateCover || groupCover ? html`<section class="section tight choose">
     ${sectionHead(t('home.choose.title'), t('home.choose.lead'))}
     <div class="choice-grid">
       ${privateCover ? html`<article class="card choice-card reveal" id="private">
-        <a class="card-media" href="${u('/tours')}?kind=private" tabindex="-1" aria-hidden="true">${tourMedia(ctx, privateCover, '')}<span class="chip chip-float">${t('home.private.eyebrow')}</span></a>
+        <a class="card-media" href="${u('/tours')}?kind=private" tabindex="-1" aria-hidden="true">${cardMedia('home-private', privateCover)}<span class="chip chip-float">${t('home.private.eyebrow')}</span></a>
         <div class="choice-body">
           <h3>${t('home.private.title')}</h3>
           <p class="muted">${t('home.private.p')}</p>
@@ -82,7 +83,7 @@ ${privateCover || groupCover ? html`<section class="section tight choose">
         </div>
       </article>` : ''}
       ${groupCover ? html`<article class="card choice-card reveal" id="group">
-        <a class="card-media" href="${u('/tours')}?kind=group" tabindex="-1" aria-hidden="true">${tourMedia(ctx, groupCover, '')}<span class="chip chip-float">${t('home.group.eyebrow')}</span></a>
+        <a class="card-media" href="${u('/tours')}?kind=group" tabindex="-1" aria-hidden="true">${cardMedia('home-group', groupCover)}<span class="chip chip-float">${t('home.group.eyebrow')}</span></a>
         <div class="choice-body">
           <h3>${t('home.group.title')}</h3>
           <p class="muted">${t('home.group.p')}${fromGroup ? html` <strong>${t('home.group.from', { price: fromGroup.money })}</strong>` : ''}</p>
