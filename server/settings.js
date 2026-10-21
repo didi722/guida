@@ -175,6 +175,7 @@ export const SECTIONS = [
       { key: 'site.vatNumber', type: 'vat', label: 'Partita IVA', hint: 'compare nel piè di pagina e nelle fatture' },
       { key: 'site.guideLicense', type: 'text', max: 120, label: 'Abilitazione di guida turistica', hint: 'es. n. 1234, Città metropolitana di Venezia' },
       { key: 'site.address', type: 'text', max: 200, label: 'Indirizzo della sede', hint: 'piè di pagina e PDF' },
+      { key: 'site.hideFromSearch', type: 'bool', label: 'Nascondi il sito ai motori di ricerca', hint: 'Google e gli altri non lo indicizzano: utile finché tour, prezzi e foto sono di prova. Spegnilo il giorno del lancio.' },
     ],
   },
   {

@@ -76,9 +76,10 @@ export function createApp(overrides = {}) {
   // logo quadrato per i pass del wallet (Google lo scarica da qui): disegnato dal codice, nessun file binario nel repository
   server.get('/wallet/logo.png', (req, res) => res.type('png').set('Cache-Control', 'public, max-age=86400').send(brandIcon(192)));
   server.get('/robots.txt', (req, res) =>
-    res.type('text/plain').send(app.payments.demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/packages/\nDisallow: /*/invoices/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
+    res.type('text/plain').send(app.payments.demo || cfg.site.hideFromSearch ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /admin\nDisallow: /api/\nDisallow: /pay/\nDisallow: /*/booking/\nDisallow: /*/packages/\nDisallow: /*/invoices/\nDisallow: /*/book/checkout\nSitemap: ${cfg.baseUrl}/sitemap.xml\n`),
   );
   server.get('/sitemap.xml', (req, res) => {
+    if (cfg.site.hideFromSearch) return res.type('application/xml').send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>'); // sito nascosto ai motori di ricerca: nessuna pagina da indicizzare
     const all = ['/', '/tours', '/book', '/gift', '/programs', '/b2b', '/blog', '/about', '/contact', '/privacy', '/terms', '/cookies', ...content.tours.filter((x) => openTo(app.rates.get(), x, 'b2c')).map((x) => `/tours/${x.slug}`), '/hourly'].map((p) => ({ p, langs: LANGS }));
     // un articolo compare solo nelle lingue in cui è tradotto
     const posts = content.posts.map((post) => ({ p: `/blog/${post.slug}`, langs: LANGS.filter((l) => post.i18n[l]) }));

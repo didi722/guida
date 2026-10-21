@@ -894,6 +894,7 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 - [ ] **Testi**: rileggi *Chi sono*, gli articoli, le domande frequenti (Sito › Pagine, Blog, Testi).
 - [ ] **Pagine legali** riviste dal commercialista o da un consulente.
 - [ ] **Contatti**: email, telefono, WhatsApp, Instagram in **Impostazioni › Attività e contatti**.
+- [ ] **Google e i motori di ricerca**: finché tour, prezzi, foto e testi sono di prova, tieni **acceso** l'interruttore **Nascondi il sito ai motori di ricerca** (**Impostazioni › Attività e contatti**): il sito dice a Google di non indicizzarlo (e nell'Agenda compare un avviso azzurro che te lo ricorda). **Il giorno del lancio spegnilo** e poi, su **Google Search Console**, aggiungi `davidetomiovenice.it` (verifica con un record TXT sul DNS), invia la mappa `https://…/sitemap.xml` e controlla che le pagine compaiano. Se te ne dimentichi il sito resta invisibile su Google.
 - [ ] **Stripe**: prima in modalità test (carte di prova), poi **in modalità reale** con il webhook configurato; **SMTP** funzionante. Fai una prenotazione di prova e un rimborso (in reale, con un importo piccolo).
 - [ ] **Orari di lavoro**, giorni di chiusura e **calendario personale** collegato (Agenda › Disponibilità).
 - [ ] **Dominio e HTTPS**, `BASE_URL` corretto, disco persistente, **primo backup**.

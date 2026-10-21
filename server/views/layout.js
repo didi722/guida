@@ -49,7 +49,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   const cart = partner ? cartCount(app.db, ctx.acct.id, ctx.actor?.userId ?? null) : 0; // servizi nel pacchetto in preparazione: la voce compare solo se ce ne sono
   const { cfg } = app;
   const demo = app.payments.demo; // istanza di prova (pagamenti simulati): non si indicizza e lo si dice a chiare lettere
-  noindex = noindex || demo;
+  noindex = noindex || demo || !!cfg.site.hideFromSearch;
   const others = LANGS.filter((l) => l !== lang);
   const canonical = `${cfg.baseUrl}${path}`;
   // anteprima quando si condivide il link: la copertina della pagina, altrimenti l'immagine «Anteprima social» (o la foto della home)

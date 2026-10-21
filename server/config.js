@@ -68,6 +68,7 @@ export function createConfig(overrides = {}) {
       vatNumber: e.VAT_NUMBER || '',
       guideLicense: e.GUIDE_LICENSE || '',
       address: e.LEGAL_ADDRESS || '',
+      hideFromSearch: bool(e.HIDE_FROM_SEARCH, false), // finché il sito ha contenuti di prova: nessun motore di ricerca lo indicizza (si spegne dal pannello al lancio)
     },
 
     languages: LANGS,

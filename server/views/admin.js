@@ -148,10 +148,11 @@ function agendaCalendar(ctx, cal, today) {
   ${selectedItems.length ? html`<div class="card">${selectedItems.map((b) => agendaRow(ctx, b))}</div>` : html`<p class="muted">Nessun servizio in questo giorno.</p>`}</section>`;
 }
 
-export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, invoicesOverdue = 0, waiting = 0, feedUrl, flash, problems, preOpening = null }) {
+export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, invoicesOverdue = 0, waiting = 0, feedUrl, flash, problems, preOpening = null, hiddenFromSearch = false }) {
   const selectedDay = calendar?.selected ?? today;
   const body = html`
 ${calendarWarning(problems)}
+${hiddenFromSearch ? html`<div class="notice notice-info" role="note"><strong>Sito nascosto ai motori di ricerca:</strong> Google non lo indicizza. Quando tour, prezzi e foto sono quelli veri, spegni l’interruttore in <a href="/admin/settings?s=business#business">Impostazioni › Attività e contatti</a> e invia la mappa del sito a Google.</div>` : ''}
 ${preOpening ? html`<div class="notice notice-info" role="note"><strong>Pre-apertura:</strong> fino al ${fmtDate(preOpening, 'it', 'date')} il sito accetta prenotazioni (solo per date da quel giorno in poi) senza incassare online: i privati pagano il giorno del servizio, le agenzie a fattura. <a href="/admin/settings?s=rules#rules">Cambia la data</a></div>` : ''}
 ${options.requests ? html`<div class="notice notice-info" role="note"><strong>${options.requests} ${options.requests === 1 ? 'richiesta di proroga' : 'richieste di proroga'} da decidere.</strong> <a href="/admin/bookings?f=options">Apri le opzioni</a></div>` : ''}
 ${waiting ? html`<div class="notice notice-info" role="note"><strong>${waiting === 1 ? '1 agenzia aspetta' : `${waiting} agenzie aspettano`} una data libera.</strong> <a href="/admin/waitlist">Apri la lista d’attesa</a></div>` : ''}

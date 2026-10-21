@@ -147,6 +147,7 @@ export function securityHeaders(app) {
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self)',
       ...(cfg.baseUrl.startsWith('https://') ? { 'Strict-Transport-Security': 'max-age=31536000' } : {}),
     });
+    if (cfg.site.hideFromSearch) res.set('X-Robots-Tag', 'noindex, nofollow'); // vale anche per PDF e immagini (si legge a ogni richiesta: l'interruttore è nel pannello)
     next();
   };
 }
