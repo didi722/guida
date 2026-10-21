@@ -800,6 +800,9 @@ body.admin { --header-h: 64px; }
 .choose .section-head { margin-bottom: 26px; }
 .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: stretch; }
 .choice-card { display: flex; flex-direction: column; overflow: hidden; }
+.choice-card { transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s, border-color 0.3s; }
+.choice-card:hover, .js .choice-card.reveal.visible:hover, .js a.card.reveal.visible:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--bronze); } /* come le schede dei tour; la seconda regola batte quella dell'apparizione (.reveal.visible) */
+.js .choice-card.reveal.visible { transition: opacity 0.7s, transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s, border-color 0.3s; }
 .choice-card > .card-media { display: block; }
 .choice-body { display: flex; flex-direction: column; gap: 6px; padding: 22px 24px 24px; flex: 1; }
 .choice-body h3 { margin: 0; font-size: 1.5rem; }
