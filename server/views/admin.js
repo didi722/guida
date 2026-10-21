@@ -133,7 +133,7 @@ function agendaCalendar(ctx, cal, today) {
   const title = (b) => (b.kind === 'program' ? b.title : b.kind === 'block' ? b.title || b.note || 'Impegno' : ctx.app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug);
   return html`
 <div class="acal-head"><a class="btn btn-sm btn-outline" href="${href(prev)}" aria-label="Mese precedente">←</a><strong class="acal-title">${fmtMonth(month, 'it')}</strong><a class="btn btn-sm btn-outline" href="${href(next)}" aria-label="Mese successivo">→</a>
-  ${month !== today.slice(0, 7) || selected !== today ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7), today)}">Oggi</a>` : ''}</div>
+  ${month !== today.slice(0, 7) || selected !== today ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7), today)}">Oggi</a>` : html`<span class="btn btn-sm btn-outline is-ghost" aria-hidden="true">Oggi</span>`}</div>
 <div class="acal" role="grid" aria-label="Agenda di ${fmtMonth(month, 'it')}">
   ${['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((d) => html`<span class="acal-dow">${d}</span>`)}
   ${cells.map((c) => html`<a class="acal-cell ${c.inMonth ? '' : 'is-other'} ${c.date === today ? 'is-today' : ''} ${c.date === selected ? 'is-selected' : ''} ${c.closed ? 'is-closed' : ''} ${c.items.length ? 'has-items' : ''}" href="${href(month, c.date)}#giorno" aria-label="${fmtDate(c.date, 'it', 'weekday')}${c.closed ? ', chiuso' : ''}: ${c.items.length ? `${c.items.length} ${c.items.length === 1 ? 'servizio' : 'servizi'}` : 'libero'}">

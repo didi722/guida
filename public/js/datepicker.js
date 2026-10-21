@@ -123,9 +123,11 @@
       foot.append(todayBtn, clearBtn, closeBtn);
       pop.append(head, body, foot);
 
+      let lockH = 0;
       function render(focus) {
         const [y, m] = parse(cursor);
         body.replaceChildren();
+        body.style.minHeight = lockH ? `${lockH}px` : ''; // le frecce restano ferme: mesi e anni occupano quanto un mese di sei settimane
         if (view === 'months') {
           title.textContent = String(y);
           title.setAttribute('aria-label', String(y));
@@ -166,7 +168,9 @@
             b.dataset.date = s;
             grid.appendChild(b);
           }
+          while (grid.children.length < 7 + 42) grid.appendChild(el('span', 'dp-blank')); // sempre sei righe, come i mesi più lunghi: il calendario non cambia altezza
           body.appendChild(grid);
+          if (!lockH) lockH = body.offsetHeight;
         }
         todayBtn.hidden = !inRange(today); // «Oggi» c'è solo se oggi si può scegliere
         clearBtn.hidden = native.required || !selected;

@@ -53,7 +53,7 @@ function grid(ctx, v) {
   ${prev ? html`<a class="btn btn-sm btn-outline" href="${href(prev)}" aria-label="${t('partner.cal.prev')}">←</a>` : html`<span class="btn btn-sm btn-outline is-off" aria-hidden="true">←</span>`}
   <strong class="acal-title">${fmtMonth(month, lang)}</strong>
   ${next ? html`<a class="btn btn-sm btn-outline" href="${href(next)}" aria-label="${t('partner.cal.next')}">→</a>` : html`<span class="btn btn-sm btn-outline is-off" aria-hidden="true">→</span>`}
-  ${month !== today.slice(0, 7) ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7))}">${t('partner.cal.today')}</a>` : ''}
+  ${month !== today.slice(0, 7) ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7))}">${t('partner.cal.today')}</a>` : html`<span class="btn btn-sm btn-outline is-ghost" aria-hidden="true">${t('partner.cal.today')}</span>`}
 </div>
 <div class="acal avail-grid" role="grid" aria-label="${t('avail.grid', { month: fmtMonth(month, lang) })}">
   ${dows.map((d) => html`<span class="acal-dow">${d}</span>`)}

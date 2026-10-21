@@ -201,7 +201,7 @@ function agencyCalendar(ctx, cal) {
   const label = (b) => b.client_ref || title(b);
   return html`
 <div class="acal-head"><a class="btn btn-sm btn-outline" href="${href(prev)}" aria-label="${t('partner.cal.prev')}">←</a><strong class="acal-title">${fmtMonth(month, lang)}</strong><a class="btn btn-sm btn-outline" href="${href(next)}" aria-label="${t('partner.cal.next')}">→</a>
-  ${month !== today.slice(0, 7) || selected !== today ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7), today)}">${t('partner.cal.today')}</a>` : ''}</div>
+  ${month !== today.slice(0, 7) || selected !== today ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7), today)}">${t('partner.cal.today')}</a>` : html`<span class="btn btn-sm btn-outline is-ghost" aria-hidden="true">${t('partner.cal.today')}</span>`}</div>
 <div class="acal" role="grid" aria-label="${t('partner.cal.grid', { month: fmtMonth(month, lang) })}">
   ${dows.map((d) => html`<span class="acal-dow">${d}</span>`)}
   ${cells.map((c) => html`<a class="acal-cell ${c.inMonth ? '' : 'is-other'} ${c.date === today ? 'is-today' : ''} ${c.date === selected ? 'is-selected' : ''} ${c.items.length ? 'has-items' : ''}" href="${href(month, c.date)}#giorno" aria-label="${fmtDate(c.date, lang, 'weekday')}${c.items.length ? `: ${c.items.length}` : ''}">

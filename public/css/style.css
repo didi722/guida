@@ -723,6 +723,7 @@ body.admin { --header-h: 64px; }
 /* Agenda a calendario (pannello) */
 .kpis { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 .agenda-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; } .agenda-head .h-sub { margin: 0; } .agenda-head .tabs { margin: 0; }
+.is-ghost { visibility: hidden; pointer-events: none; } /* «Oggi» riserva il suo posto anche quando non serve: le frecce del mese non si spostano */
 .acal-head { display: flex; align-items: center; gap: 10px; margin: 8px 0 12px; } .acal-title { font-size: 1.2rem; text-transform: capitalize; min-width: 11ch; text-align: center; }
 .acal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .acal-dow { text-align: center; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 4px 0; }
@@ -744,7 +745,7 @@ body.admin { --header-h: 64px; }
 @media (max-width: 640px) {
   .acal { gap: 3px; } .acal-cell { min-height: 56px; padding: 4px; align-items: center; } .acal-evs, .acal-closed { display: none; }
   .acal-count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50px; background: var(--gold); color: var(--ink); font-size: 0.75rem; font-weight: 700; }
-  .acal-title { min-width: 0; flex: 1; }
+  .acal-title { min-width: 0; flex: 1; white-space: nowrap; font-size: 1.1rem; }
 }
 
 /* Sito › Tour: ordine a trascinamento */
@@ -1014,7 +1015,7 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .dp-nav:hover:not(:disabled) { border-color: var(--bronze); background: var(--gold-soft); } .dp-nav:disabled { opacity: 0.3; cursor: not-allowed; }
 .dp-title { border: 0; background: none; font: inherit; font-weight: 700; font-size: 1.05rem; color: var(--text); cursor: pointer; padding: 8px; border-radius: 10px; text-align: center; }
 .dp-title:hover { background: var(--gold-soft); }
-.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; } .dp-blank { aspect-ratio: 1; }
 .dp-dow { text-align: center; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 4px 0; }
 .dp-day { aspect-ratio: 1; border: 1.5px solid transparent; background: transparent; border-radius: 10px; font: inherit; font-size: 0.98rem; color: var(--text); cursor: pointer; padding: 0; }
 .dp-day:hover:not(:disabled) { background: var(--gold-soft); border-color: rgba(214, 187, 81, 0.6); }
