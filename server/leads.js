@@ -173,7 +173,7 @@ export function cleanLead(input, { lenient = false } = {}) {
   };
   const company = cleanText(input.company, 160).replace(/\s+/g, ' ');
   if (!company) throw new LeadError('company');
-  const email = cleanText(input.email, 254).toLowerCase();
+  const email = cleanEmail(input.email);
   const websiteRaw = cleanText(input.website, 300);
   const website = websiteRaw ? normalizeWebsite(websiteRaw) || drop('website') : '';
   const countryRaw = cleanText(input.country, 80);
@@ -202,6 +202,20 @@ export function cleanLead(input, { lenient = false } = {}) {
   };
 }
 
+/**
+ * Un indirizzo email com'è scritto da chi lo copia da un sito, da un PDF o da una firma: toglie i caratteri invisibili (spazio senza interruzione,
+ * larghezza zero, segni di direzione), «mailto:», le parentesi angolari e la punteggiatura in fondo, e lo scrive in minuscolo.
+ */
+export function cleanEmail(s, max = 254) {
+  const t = cleanText(
+    String(s ?? '')
+      .replace(/[​-‏‪-‮⁠﻿­]/g, '')
+      .replace(/[  -  　]/g, ' '),
+    max,
+  );
+  return t.replace(/^mailto:/i, '').replace(/^<(.*)>$/, '$1').replace(/[.,;:]+$/, '').trim().toLowerCase();
+}
+
 /** Un referente scritto in un modulo o in una riga di CSV. Serve almeno un nome o un'email. @returns {{ value: object, warnings: string[] }} */
 export function cleanContact(input, { lenient = false, country = '' } = {}) {
   const warnings = [];
@@ -210,7 +224,7 @@ export function cleanContact(input, { lenient = false, country = '' } = {}) {
     warnings.push(`contact-${code}`);
     return '';
   };
-  const emailRaw = cleanText(input.email, 254).toLowerCase();
+  const emailRaw = cleanEmail(input.email);
   const email = emailRaw ? (isEmail(emailRaw) ? emailRaw : drop('email')) : '';
   const name = cleanText(input.name, 120).replace(/\s+/g, ' ') || email;
   if (!name) throw new LeadError('name');

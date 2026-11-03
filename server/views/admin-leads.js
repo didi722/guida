@@ -163,7 +163,7 @@ function leadFields(v = {}, { withContact = false } = {}) {
     ${countryField(ADMIN_CTX, { name: 'country', value: country, required: false, label: 'Paese' })}
     <label class="field"><span class="label">Città</span><input name="city" maxlength="80" value="${v.city ?? ''}" autocomplete="off"></label>
     <label class="field"><span class="label">Sito web</span><input name="website" maxlength="300" value="${v.website ?? ''}" placeholder="www.agenzia.it" inputmode="url" autocomplete="off"></label>
-    <label class="field"><span class="label">Email dell’agenzia <em>(info@…)</em></span><input type="email" name="email" maxlength="254" value="${v.email ?? ''}" autocomplete="off"></label>
+    <label class="field"><span class="label">Email dell’agenzia <em>(info@…)</em></span><input type="text" inputmode="email" name="email" maxlength="254" value="${v.email ?? ''}" autocomplete="off"></label>
     ${phoneField(ADMIN_CTX, { name: 'phone', value: v.phone ?? '', cc: v.phone_cc ?? '', defaultCc: country || 'IT', label: 'Telefono dell’agenzia', autocomplete: 'off' })}
   </div>
   ${withContact
@@ -171,7 +171,7 @@ function leadFields(v = {}, { withContact = false } = {}) {
   <div class="form-grid">
     <label class="field"><span class="label">Nome e cognome</span><input name="contact_name" maxlength="120" value="${v.contact_name ?? ''}" autocomplete="off"></label>
     <label class="field"><span class="label">Ruolo</span><input name="contact_role" maxlength="80" value="${v.contact_role ?? ''}" placeholder="es. Responsabile booking" autocomplete="off"></label>
-    <label class="field"><span class="label">Email del referente</span><input type="email" name="contact_email" maxlength="254" value="${v.contact_email ?? ''}" autocomplete="off"></label>
+    <label class="field"><span class="label">Email del referente</span><input type="text" inputmode="email" name="contact_email" maxlength="254" value="${v.contact_email ?? ''}" autocomplete="off"></label>
     ${phoneField(ADMIN_CTX, { name: 'contact_phone', value: v.contact_phone ?? '', cc: v.contact_phone_cc ?? '', defaultCc: country || 'IT', label: 'Telefono del referente', autocomplete: 'off' })}
   </div>`
     : ''}
@@ -317,7 +317,7 @@ function contactFields(c = {}, country = 'IT') {
   return html`<div class="form-grid">
     <label class="field"><span class="label">Nome e cognome</span><input name="name" required maxlength="120" value="${c.name ?? ''}" autocomplete="off"></label>
     <label class="field"><span class="label">Ruolo</span><input name="role" maxlength="80" value="${c.role ?? ''}" placeholder="es. Responsabile booking" autocomplete="off"></label>
-    <label class="field"><span class="label">Email</span><input type="email" name="email" maxlength="254" value="${c.email ?? ''}" autocomplete="off"></label>
+    <label class="field"><span class="label">Email</span><input type="text" inputmode="email" name="email" maxlength="254" value="${c.email ?? ''}" autocomplete="off"></label>
     ${phoneField(ADMIN_CTX, { name: 'phone', value: c.phone ?? '', defaultCc: country || 'IT', label: 'Telefono', autocomplete: 'off' })}
     <label class="field"><span class="label">Lingua delle email</span><select name="lang"><option value="">Come l’agenzia</option>${Object.entries(LANG_META).map(([k, m]) => html`<option value="${k}" ${sel(c.lang === k)}>${m.name}</option>`)}</select></label>
     <label class="field"><span class="label">Note</span><input name="notes" maxlength="600" value="${c.notes ?? ''}" placeholder="es. parla solo inglese, c’è il lunedì"></label>

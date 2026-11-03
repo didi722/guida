@@ -361,3 +361,13 @@ test('profili B2B: un contatto si aggancia all’account con la stessa email (o 
   assert.equal(L.addRegistered(db, NOW), 0, 'una volta sola');
   assert.equal(L.accountStats(db, acct.id).bookings, 0);
 });
+
+test('indirizzi email copiati da un sito o da un PDF: caratteri invisibili, «mailto:» e punteggiatura finale non rendono l’indirizzo non valido', () => {
+  const dirty = ['management@bassanigroup.com', '​management@bassani­group.com​', ' mailto:Management@BassaniGroup.com. ', '<management@bassanigroup.com>', 'management@bassanigroup.com;'];
+  for (const raw of dirty) {
+    assert.equal(L.cleanEmail(raw), 'management@bassanigroup.com', JSON.stringify(raw));
+    assert.equal(L.cleanLead({ company: 'Bassani Group', email: raw }).value.email, 'management@bassanigroup.com');
+    assert.equal(L.cleanContact({ name: 'Ufficio', email: raw }).value.email, 'management@bassanigroup.com');
+  }
+  assert.throws(() => L.cleanLead({ company: 'X', email: 'non-una-email' }), (e) => e.code === 'email');
+});
