@@ -118,7 +118,9 @@ test('nuovo contatto: errori chiari nel modulo, avviso dei doppioni (si può ins
     assert.deepEqual([lead.kind, lead.website, lead.email, lead.phone, lead.priority, lead.source, lead.lang, lead.next_action_on, lead.contact_name, lead.contact_role, lead.contact_email, lead.contact_phone], ['operator', 'https://alfa.it', 'info@alfa.it', '+39 049123456', 1, 'Fiera BIT', 'it', addDays(today(), 2), 'Anna Rossi', 'Titolare', 'anna@alfa.it', '+39 3331234567']);
     const detail = await text(await s.admin(loc(ok)));
     assert.match(detail, /Contatto aggiunto\./);
-    assert.match(detail, /<h2>Alfa Viaggi <span class="chip ">Da contattare<\/span> <span class="chip chip-err"[^>]*>Alta<\/span><\/h2>/);
+    assert.match(detail, /<h1>Alfa Viaggi<\/h1>/);
+    assert.match(detail, /<p class="lead-chips"><span class="chip ">Da contattare<\/span> <span class="chip chip-err"[^>]*>Alta<\/span><\/p>/);
+    assert.doesNotMatch(detail, /<h2>Alfa Viaggi/, 'il nome compare una volta sola come titolo');
     assert.match(detail, /<strong>Anna Rossi<\/strong> <span class="chip">Principale<\/span>/);
     assert.match(detail, /href="https:\/\/wa\.me\/393331234567"/, 'il collegamento a WhatsApp dal numero con il prefisso');
     assert.match(detail, /href="mailto:anna@alfa\.it"/);
@@ -154,7 +156,7 @@ test('elenco: schede per stato con i numeri, filtri e ricerca, azioni sui selezi
     assert.match(page, /<tr class="row-overdue">.*Beta/s, 'il richiamo scaduto è evidenziato');
     assert.match(page, /scaduto da 2 giorni/);
     assert.ok(page.indexOf('Beta') < page.indexOf('Alfa'), 'in cima chi ha il richiamo');
-    const names = async (qs) => [...(await text(await s.admin(`/admin/leads?${qs}`))).matchAll(/<td><a href="\/admin\/leads\/\d+">([^<]+)<\/a><br>/g)].map((m) => m[1]);
+    const names = async (qs) => [...(await text(await s.admin(`/admin/leads?${qs}`))).matchAll(/<div><a href="\/admin\/leads\/\d+">([^<]+)<\/a><br>/g)].map((m) => m[1]);
     assert.deepEqual(await names('status=talking'), ['Gamma']);
     assert.deepEqual(await names('q=padova'), ['Alfa']);
     assert.deepEqual(await names('country=jp'), ['Beta']);
@@ -172,7 +174,9 @@ test('elenco: schede per stato con i numeri, filtri e ricerca, azioni sui selezi
     const st = await s.admin('/admin/leads/bulk', formPairs([['ids', a.id], ['ids', b.id], ['action', 'set-status'], ['status', 'contacted'], ['return', '?status=new']]));
     assert.equal(loc(st), '/admin/leads?status=new&ok=bulkStatus&n=2');
     assert.deepEqual([L.getLead(s.app.db, a.id).status, L.getLead(s.app.db, b.id).status], ['contacted', 'contacted']);
-    await s.admin('/admin/leads/bulk', formPairs([['ids', a.id], ['action', 'set-priority'], ['priority', '3']]));
+    const prio = await s.admin('/admin/leads/bulk', formPairs([['ids', a.id], ['action', 'set-priority'], ['priority', '3']]));
+    assert.equal(loc(prio), '/admin/leads?ok=bulkPriority&n=1');
+    assert.match(await text(await s.admin(loc(prio))), /Priorità cambiata per 1 contatto\./);
     assert.equal(L.getLead(s.app.db, a.id).priority, 3);
     const evil = await s.admin('/admin/leads/bulk', formPairs([['ids', a.id], ['action', 'set-status'], ['status', 'lost'], ['return', 'https://evil.example/']]));
     assert.equal(loc(evil), '/admin/leads?ok=bulkStatus&n=1', 'il ritorno accetta solo una query locale');
@@ -460,7 +464,7 @@ test('presentazione a più agenzie: si rivede chi la riceve e in che lingua, poi
     assert.match(rows[1].body, /^Sakura Tours\nTaro Yamada 様/);
     // la coda
     const mailPage = await text(await s.admin(loc(queued)));
-    assert.match(mailPage, /2 presentazioni messe in coda, 1 saltate/);
+    assert.match(mailPage, /2 presentazioni messe in coda \(1 saltata\): partono da sole, poche al giorno\./);
     assert.match(mailPage, /<span class="kpi-l">In coda<\/span><strong class="kpi-n">2<\/strong>/);
     assert.match(mailPage, /Working together with Agenzia Italiana/);
     assert.match(mailPage, /Attivo/);

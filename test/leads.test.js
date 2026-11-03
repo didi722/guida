@@ -28,6 +28,11 @@ test('un contatto: dati ripuliti, sito sicuro, paese e lingua dedotti; il modulo
   assert.equal(L.cleanLead({ company: 'A', country: 'Spain' }).value.lang, 'es');
   assert.equal(L.cleanLead({ company: 'A', country: 'DE' }).value.lang, 'en', 'per gli altri paesi si scrive in inglese');
   assert.equal(L.cleanLead({ company: 'A', country: 'Italia', lang: 'es' }).value.lang, 'es', 'la lingua scelta vince');
+  // senza paese, la lingua si deduce dal dominio del sito o dell'email (la posta gratuita non dice nulla: inglese)
+  const lang = (over) => L.cleanLead({ company: 'A', ...over }).value.lang;
+  assert.deepEqual([lang({ email: 'info@agenzia.it' }), lang({ website: 'www.agencia.es' }), lang({ website: 'tours.co.jp' }), lang({ email: 'info@agency.com' }), lang({ email: 'anna@gmail.com' }), lang({})], ['it', 'es', 'ja', 'en', 'en', 'en']);
+  assert.equal(lang({ country: 'DE', email: 'info@agenzia.it' }), 'en', 'il paese vince sul dominio');
+  assert.equal(L.deduceLang({ website: 'https://www.libero.it' }), 'it');
 
   for (const [field, bad, expected] of [['email', 'x@', 'email'], ['website', 'javascript:alert(1)', 'website'], ['country', 'Narnia', 'country'], ['nextActionOn', '2027-13-45', 'date']]) {
     assert.equal(code(() => L.cleanLead({ company: 'A', [field]: bad })), expected, field);

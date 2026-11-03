@@ -69,8 +69,8 @@ export function todayPage(ctx, { today, counts, due, appointments, toClose, queu
   const soon = due.filter((l) => l.next_action_on > today);
   const week = appointments.filter((a) => a.date <= addDays(today, 7));
   const dueRow = (l) => html`<div class="due-row">
-    <div class="due-main"><strong><a href="/admin/leads/${l.id}">${l.company}</a></strong> ${statusChip(l.status)} ${priorityChip(l.priority)}
-      <small class="muted">${[l.contact_name, l.country && countryName(l.country, 'it'), l.next_action].filter(Boolean).join(' · ')}</small>
+    <div class="due-main"><span class="due-name"><strong><a href="/admin/leads/${l.id}">${l.company}</a></strong> ${statusChip(l.status)} ${priorityChip(l.priority)}</span>
+      <small class="muted">${[l.contact_name, l.country && countryName(l.country, 'it')].filter(Boolean).join(' · ')}</small>
       <small class="${l.next_action_on < today ? 'field-error' : 'muted'}">${l.next_action ?? 'Ricontattare'} · ${dueLabel(l.next_action_on, today)}${l.next_action_on !== today ? ` (${day(l.next_action_on)})` : ''}</small>
       <small>${reach({ email: l.contact_email ?? l.email, phone: l.contact_phone ?? l.phone })}</small></div>
     <div class="due-actions"><a class="btn btn-sm btn-gold" href="/admin/leads/${l.id}#registra">Registra</a>${l.email_ok && (l.contact_email || l.email) ? html`<a class="btn btn-sm btn-outline" href="/admin/leads/${l.id}/mail">Scrivi</a>` : ''}
@@ -93,7 +93,7 @@ ${toClose.length ? html`<div class="notice notice-info" role="note"><strong>${pl
 ${week.length ? html`<div class="card">${week.map((a) => apptRow(a, { today, back: 'today' }))}</div>` : html`<p class="muted">Nessun appuntamento nei prossimi 7 giorni. <a href="/admin/leads/appointment">Fissa una visita o una videochiamata</a>: compare anche nell’agenda.</p>`}</section>
 <section><h2 class="h-sub spaced">Da richiamare</h2>
 ${due.length ? html`${group('Scaduti', overdue, 'is-late')}${group('Oggi', dueToday)}${group('Nei prossimi giorni', soon)}` : html`<p class="muted">Nessun richiamo in programma. Quando registri una telefonata o un’email, scegli <em>«Ricontattare tra…»</em>: il contatto torna qui nel giorno giusto.</p>`}</section>
-${toContact.length ? html`<section><h2 class="h-sub spaced">Da contattare per primi</h2><div class="card">${toContact.map((l) => html`<div class="due-row"><div class="due-main"><strong><a href="/admin/leads/${l.id}">${l.company}</a></strong> ${priorityChip(l.priority)}<small class="muted">${[l.contact_name, l.city, l.country && countryName(l.country, 'it'), l.source && `fonte: ${l.source}`].filter(Boolean).join(' · ')}</small><small>${reach({ email: l.contact_email ?? l.email, phone: l.contact_phone ?? l.phone })}</small></div>
+${toContact.length ? html`<section><h2 class="h-sub spaced">Da contattare per primi</h2><div class="card">${toContact.map((l) => html`<div class="due-row"><div class="due-main"><span class="due-name"><strong><a href="/admin/leads/${l.id}">${l.company}</a></strong> ${priorityChip(l.priority)}</span><small class="muted">${[l.contact_name, l.city, l.country && countryName(l.country, 'it'), l.source && `fonte: ${l.source}`].filter(Boolean).join(' · ')}</small><small>${reach({ email: l.contact_email ?? l.email, phone: l.contact_phone ?? l.phone })}</small></div>
     <div class="due-actions">${l.contact_email || l.email ? html`<a class="btn btn-sm btn-gold" href="/admin/leads/${l.id}/mail">Scrivi la presentazione</a>` : html`<a class="btn btn-sm btn-outline" href="/admin/leads/${l.id}">Aggiungi un indirizzo</a>`}<a class="btn btn-sm btn-outline" href="/admin/leads/${l.id}#registra">Registra</a></div></div>`)}</div>
   <p class="small muted"><a href="/admin/leads?status=new">Vedi tutti i ${counts.by.new} da contattare</a></p></section>` : ''}`}`;
   return adminLayout(ctx, { title: 'Commerciale', active: '/admin/leads/today', body, flash });
@@ -115,19 +115,20 @@ export function leadsPage(ctx, { rows, total, filters, counts, countries, source
   const body = html`
 <div class="tabs-bar"><nav class="tabs" aria-label="Stato">${tabs.map(([k, l, n]) => html`<a class="tab" href="/admin/leads${qs(f, { status: k, page: '' })}" ${(f.status ?? '') === k ? raw('aria-current="page"') : ''}>${l} <span class="tab-n">${n}</span></a>`)}</nav>
   <span class="tabs-export"><a class="btn btn-sm btn-gold" href="/admin/leads/new">Aggiungi</a> <a class="btn btn-sm btn-outline" href="/admin/leads/import">Importa</a> <a class="btn btn-sm btn-outline" href="/admin/leads/export.csv">Esporta CSV</a></span></div>
-<form class="card pad lead-filters" method="get" action="/admin/leads">
+<form class="card lead-filters" method="get" action="/admin/leads">
   ${f.status ? html`<input type="hidden" name="status" value="${f.status}">` : ''}
-  <div class="form-grid">
-    <label class="field span-2"><span class="label">Cerca</span><input type="search" name="q" value="${f.q ?? ''}" placeholder="Agenzia, referente, città, email, telefono, note…"></label>
-    <label class="field"><span class="label">Tipo</span><select name="kind"><option value="">Tutti</option>${Object.entries(KIND_LABEL).map(([k, l]) => html`<option value="${k}" ${f.kind === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
-    <label class="field"><span class="label">Paese</span><select name="country"><option value="">Tutti</option>${countries.map((c) => html`<option value="${c.country}" ${f.country === c.country ? raw('selected') : ''}>${countryName(c.country, 'it')} (${c.n})</option>`)}</select></label>
-    <label class="field"><span class="label">Priorità</span><select name="priority"><option value="">Tutte</option>${Object.entries(PRIORITY_LABEL).map(([k, l]) => html`<option value="${k}" ${String(f.priority) === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
-    <label class="field"><span class="label">Richiamo</span><select name="due"><option value="">Qualsiasi</option>${[['overdue', 'Scaduto'], ['today', 'Oggi o scaduto'], ['week', 'Entro 7 giorni'], ['none', 'Nessun richiamo']].map(([k, l]) => html`<option value="${k}" ${f.due === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
-    <label class="field"><span class="label">Fonte</span><select name="source"><option value="">Tutte</option>${sources.map((s) => html`<option value="${s.source}" ${f.source === s.source ? raw('selected') : ''}>${s.source} (${s.n})</option>`)}</select></label>
-    <label class="field"><span class="label">Email</span><select name="email"><option value="">Qualsiasi</option><option value="none" ${f.email === 'none' ? raw('selected') : ''}>Senza indirizzo</option><option value="blocked" ${f.email === 'blocked' ? raw('selected') : ''}>Non vogliono email</option></select></label>
-    <label class="field"><span class="label">Ordina per</span><select name="sort">${Object.entries(SORT_LABEL).map(([k, l]) => html`<option value="${k}" ${(f.sort ?? 'next') === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
-  </div>
-  <div class="btn-row"><button class="btn btn-gold" type="submit">Filtra</button><a class="btn btn-outline" href="/admin/leads">Azzera</a></div>
+  <div class="lead-search"><label class="field"><span class="label">Cerca</span><input type="search" name="q" value="${f.q ?? ''}" placeholder="Agenzia, referente, città, email, telefono, note…"></label><button class="btn btn-gold" type="submit">Cerca</button></div>
+  <details class="lead-more" ${[f.kind, f.country, f.priority, f.due, f.source, f.email, f.sort].some(Boolean) ? raw('open') : ''}><summary>Filtri e ordine</summary>
+    <div class="form-grid">
+      <label class="field"><span class="label">Tipo</span><select name="kind"><option value="">Tutti</option>${Object.entries(KIND_LABEL).map(([k, l]) => html`<option value="${k}" ${f.kind === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
+      <label class="field"><span class="label">Paese</span><select name="country"><option value="">Tutti</option>${countries.map((c) => html`<option value="${c.country}" ${f.country === c.country ? raw('selected') : ''}>${countryName(c.country, 'it')} (${c.n})</option>`)}</select></label>
+      <label class="field"><span class="label">Priorità</span><select name="priority"><option value="">Tutte</option>${Object.entries(PRIORITY_LABEL).map(([k, l]) => html`<option value="${k}" ${String(f.priority) === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
+      <label class="field"><span class="label">Richiamo</span><select name="due"><option value="">Qualsiasi</option>${[['overdue', 'Scaduto'], ['today', 'Oggi o scaduto'], ['week', 'Entro 7 giorni'], ['none', 'Nessun richiamo']].map(([k, l]) => html`<option value="${k}" ${f.due === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
+      <label class="field"><span class="label">Fonte</span><select name="source"><option value="">Tutte</option>${sources.map((s) => html`<option value="${s.source}" ${f.source === s.source ? raw('selected') : ''}>${s.source} (${s.n})</option>`)}</select></label>
+      <label class="field"><span class="label">Email</span><select name="email"><option value="">Qualsiasi</option><option value="none" ${f.email === 'none' ? raw('selected') : ''}>Senza indirizzo</option><option value="blocked" ${f.email === 'blocked' ? raw('selected') : ''}>Non vogliono email</option></select></label>
+      <label class="field"><span class="label">Ordina per</span><select name="sort">${Object.entries(SORT_LABEL).map(([k, l]) => html`<option value="${k}" ${(f.sort ?? 'next') === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
+    </div>
+    <div class="btn-row"><button class="btn btn-sm btn-gold" type="submit">Applica</button><a class="btn btn-sm btn-outline" href="/admin/leads">Azzera tutto</a></div></details>
 </form>
 ${rows.length
   ? html`<form id="${bulkId}" method="post" action="/admin/leads/bulk"><input type="hidden" name="return" value="${qs(f, { page: page > 1 ? page : '' })}">
@@ -136,10 +137,9 @@ ${rows.length
       <select name="status" aria-label="Cambia stato"><option value="">Cambia stato…</option>${STATUSES.map((s) => html`<option value="${s}">${STATUS_LABEL[s]}</option>`)}</select><button class="btn btn-sm btn-outline" type="submit" name="action" value="set-status">Applica</button>
       <select name="priority" aria-label="Cambia priorità"><option value="">Priorità…</option>${Object.entries(PRIORITY_LABEL).map(([k, l]) => html`<option value="${k}">${l}</option>`)}</select><button class="btn btn-sm btn-outline" type="submit" name="action" value="set-priority">Applica</button>
       <button class="btn btn-sm btn-link-danger" type="submit" name="action" value="delete" data-confirm-click="Cancellare i contatti selezionati, con i loro referenti e il registro? Non si può tornare indietro.">Cancella</button></div></div>
-  <div class="card table-wrap"><table class="table lead-table"><thead><tr><th aria-label="Seleziona"></th><th>Agenzia</th><th>Referente</th><th>Stato</th><th>Prossima azione</th><th>Ultimo contatto</th></tr></thead><tbody>
+  <div class="card table-wrap"><table class="table lead-table"><thead><tr><th>Agenzia</th><th>Referente</th><th>Stato</th><th>Prossima azione</th><th>Ultimo contatto</th></tr></thead><tbody>
   ${rows.map((l) => html`<tr class="${l.next_action_on && l.next_action_on < today && l.status !== 'lost' ? 'row-overdue' : ''}">
-    <td class="lead-check"><input type="checkbox" name="ids" value="${l.id}" aria-label="Seleziona ${l.company}"></td>
-    <td><a href="/admin/leads/${l.id}">${l.company}</a><br><small class="muted">${[KIND_LABEL[l.kind], l.city, l.country && countryName(l.country, 'it'), l.source].filter(Boolean).join(' · ')}</small></td>
+    <td><div class="lead-first"><input type="checkbox" name="ids" value="${l.id}" aria-label="Seleziona ${l.company}"><div><a href="/admin/leads/${l.id}">${l.company}</a><br><small class="muted">${[KIND_LABEL[l.kind], l.city, l.country && countryName(l.country, 'it'), l.source].filter(Boolean).join(' · ')}</small></div></div></td>
     <td>${l.contact_name ?? html`<span class="muted">—</span>`}<br><small>${reach({ email: l.contact_email ?? l.email, phone: l.contact_phone ?? l.phone })}</small></td>
     <td>${statusChip(l.status)} ${priorityChip(l.priority)}${l.account_status === 'approved' ? html` <span class="chip chip-ok" title="Ha un profilo B2B approvato">B2B</span>` : l.account_status === 'pending' ? html` <span class="chip chip-warn" title="Ha chiesto l’accesso B2B">B2B da approvare</span>` : ''}${l.email_ok ? '' : html` <span class="chip chip-err" title="Ha chiesto di non ricevere email">No email</span>`}</td>
     <td>${l.next_action_on ? html`<strong class="${l.next_action_on < today ? 'field-error' : ''}">${day(l.next_action_on)}</strong><br><small class="muted">${l.next_action ?? ''} · ${dueLabel(l.next_action_on, today)}</small>` : html`<span class="muted">—</span>`}${l.next_appointment ? html`<br><small>📅 ${day(l.next_appointment)}</small>` : ''}</td>
@@ -215,7 +215,7 @@ export function leadPage(ctx, { lead: l, contacts, timeline, appointments, email
   const edit = values ?? l;
   const body = html`
 <p class="back-link"><a href="/admin/leads">← Tutti i contatti</a></p>
-<div class="lead-head"><div><h2>${l.company} ${statusChip(l.status)} ${priorityChip(l.priority)}</h2>
+<div class="lead-head"><div><p class="lead-chips">${statusChip(l.status)} ${priorityChip(l.priority)}${l.account_id ? html` <a class="chip chip-ok" href="/admin/partners/${l.account_id}">Profilo B2B</a>` : ''}</p>
   <p class="lead-sub muted">${[KIND_LABEL[l.kind], l.city, l.country && countryName(l.country, 'it'), l.source && `fonte: ${l.source}`].filter(Boolean).join(' · ')}</p></div>
   <div class="btn-row">${canMail ? html`<a class="btn btn-gold" href="/admin/leads/${l.id}/mail">Scrivi un’email</a>` : ''}<a class="btn btn-outline" href="/admin/leads/appointment?lead=${l.id}">Fissa un appuntamento</a></div></div>
 ${l.email_ok ? '' : html`<div class="notice notice-err" role="alert"><strong>Non scrivere a questo contatto.</strong> Ha chiesto di non ricevere email${l.optout_at ? ` (il ${day(l.optout_at.slice(0, 10))})` : ''}: nessuna email parte, né subito né dalla coda.
@@ -231,7 +231,7 @@ ${fresh ? html`<div class="notice ${fresh.sent ? 'notice-ok' : 'notice-err'}" ro
     <section class="card pad lead-card" id="prossima"><h2>Prossima azione</h2>
       <form class="form" method="post" action="/admin/leads/${l.id}/next">
         <div class="form-grid"><label class="field"><span class="label">Quando</span><input type="date" name="on" value="${l.next_action_on ?? ''}"></label>
-          <label class="field"><span class="label">Cosa fare</span><input name="text" maxlength="160" value="${l.next_action ?? ''}" placeholder="es. Richiamare Anna per il listino"></label></div>
+          <label class="field span-2"><span class="label">Cosa fare</span><input name="text" maxlength="160" value="${l.next_action ?? ''}" placeholder="es. Richiamare Anna per il listino"></label></div>
         <div class="btn-row"><button class="btn btn-gold btn-sm" type="submit">Salva</button></div></form>
       <div class="btn-row lead-quick">${[[3, '+3 giorni'], [7, '+1 settimana'], [14, '+2 settimane'], [30, '+1 mese']].map(([d, t]) => snoozeBtn(l.id, d, t, ''))}${l.next_action_on ? doneBtn(l.id, '') : ''}</div>
       ${l.next_action_on ? html`<p class="small ${l.next_action_on < today ? 'field-error' : 'muted'}">${l.next_action ?? 'Ricontattare'}: ${dueLabel(l.next_action_on, today)} (${day(l.next_action_on)})</p>` : html`<p class="small muted">Nessun richiamo fissato.</p>`}</section>

@@ -676,7 +676,7 @@ export function syncAccounts(db, nowMs = Date.now()) {
     ...db.prepare('SELECT c.lead_id, a.id AS account_id FROM lead_contacts c JOIN accounts a ON a.email = c.email JOIN leads l ON l.id = c.lead_id WHERE l.account_id IS NULL').all(),
     ...db.prepare('SELECT c.lead_id, u.account_id FROM lead_contacts c JOIN account_users u ON u.email = c.email JOIN leads l ON l.id = c.lead_id WHERE l.account_id IS NULL').all(),
   ];
-  const follow = db.prepare("SELECT 1 FROM leads l JOIN accounts a ON a.id = l.account_id WHERE l.status != 'client' AND a.status IN ('approved', 'pending') LIMIT 1").get();
+  const follow = db.prepare("SELECT 1 FROM leads l JOIN accounts a ON a.id = l.account_id WHERE (a.status = 'approved' AND l.status != 'client') OR (a.status = 'pending' AND l.status IN ('new', 'contacted')) LIMIT 1").get();
   if (!pairs.length && !follow) return 0; // (si chiama ogni minuto: se non c'è nulla da allineare non si apre nemmeno una scrittura)
   return tx(db, () => {
     const touched = new Set(); // (un contatto che si aggancia e cambia stato conta una volta)

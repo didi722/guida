@@ -35,6 +35,7 @@ const FLASH = {
   cancelled: 'Email annullata.',
   deleted: 'Contatto cancellato.',
   bulkStatus: (q) => `Stato cambiato per ${q.n} ${Number(q.n) === 1 ? 'contatto' : 'contatti'}.`,
+  bulkPriority: (q) => `Priorità cambiata per ${q.n} ${Number(q.n) === 1 ? 'contatto' : 'contatti'}.`,
   bulkDeleted: (q) => `${q.n} ${Number(q.n) === 1 ? 'contatto cancellato' : 'contatti cancellati'}.`,
   registered: (q) => `${q.n} ${Number(q.n) === 1 ? 'agenzia portata' : 'agenzie portate'} tra i contatti.`,
 };
@@ -68,7 +69,7 @@ export function adminLeadsRouter(app) {
   const r = express.Router();
   const { db } = app;
   const form = express.urlencoded({ extended: false, limit: '60kb' });
-  const big = express.urlencoded({ extended: false, limit: '700kb' });
+  const big = express.urlencoded({ extended: false, limit: '2mb' }); // l'elenco incollato torna nel modulo dell'anteprima: codificato occupa più dell'originale
   const ctxOf = (req) => ({ app, req });
   const flash = (req) => {
     const f = FLASH[String(req.query.ok ?? '')];
@@ -194,7 +195,7 @@ export function adminLeadsRouter(app) {
     }
     if (action === 'set-priority' && PRIORITY_LABEL[req.body.priority]) {
       for (const id of ids) n += db.prepare('UPDATE leads SET priority = ? WHERE id = ?').run(Number(req.body.priority), id).changes;
-      return res.redirect(303, `/admin/leads${ret}${ret ? '&' : '?'}ok=bulkStatus&n=${n}`);
+      return res.redirect(303, `/admin/leads${ret}${ret ? '&' : '?'}ok=bulkPriority&n=${n}`);
     }
     if (action === 'delete') {
       for (const id of ids) if (deleteLead(db, id)) n++;

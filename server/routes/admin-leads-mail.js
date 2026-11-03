@@ -11,7 +11,7 @@ import { composePage, mailPage, templatesPage } from '../views/admin-leads-mail.
 const FLASH = {
   sent: 'Email inviata. La trovi nel registro del contatto.',
   queued: 'Email in coda: parte da sola nel primo momento utile.',
-  queuedMany: (q) => `${q.n} ${Number(q.n) === 1 ? 'presentazione messa' : 'presentazioni messe'} in coda${Number(q.skip) ? `, ${q.skip} saltate` : ''}: partono da sole, poche al giorno.`,
+  queuedMany: (q) => `${Number(q.n) === 1 ? '1 presentazione messa in coda' : `${q.n} presentazioni messe in coda`}${Number(q.skip) ? ` (${q.skip} ${Number(q.skip) === 1 ? 'saltata' : 'saltate'})` : ''}: ${Number(q.n) === 1 ? 'parte da sola' : 'partono da sole'}, poche al giorno.`,
   preview: 'Anteprima inviata al tuo indirizzo.',
   cancelled: 'Email annullata.',
   paused: 'Invio automatico in pausa: le email restano in coda.',

@@ -3,11 +3,13 @@ import { html, raw } from '../html.js';
 import { LANGS, LANG_META } from '../langs.js';
 import { IMPORT_COLUMNS, IMPORT_WARNING, MAX_IMPORT_ROWS } from '../leads.js';
 import { SEND_LABEL, TEMPLATE_HINT, TEMPLATE_KEYS, TEMPLATE_LABEL, VARIABLES } from '../leadMail.js';
+import { fmtDate } from '../time.js';
 import { adminLayout } from './admin.js';
 import { statusChip } from './admin-leads.js';
 
 const when = (iso) => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 const sel = (cond) => (cond ? raw('selected') : '');
+const day = (d) => fmtDate(d, 'it', 'short');
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const langSelect = (name, value, { auto = false } = {}) => html`<select name="${name}">${auto ? html`<option value="">Come l’agenzia</option>` : ''}${LANGS.map((l) => html`<option value="${l}" ${sel(value === l)}>${LANG_META[l].name}</option>`)}</select>`;
 const FOOT_NOTE = 'In fondo a ogni email il sito aggiunge da solo chi scrive e il link per non ricevere altre email: non si può togliere.';
@@ -31,7 +33,7 @@ export function composePage(ctx, { lead, recipients, pick, template, lang, compo
 </form>
 <form class="card pad form" method="post" action="/admin/leads/${lead.id}/mail">
   <input type="hidden" name="contactId" value="${r.contactId ?? ''}"><input type="hidden" name="to" value="${r.email}"><input type="hidden" name="template" value="${template}"><input type="hidden" name="lang" value="${lang}">
-  <p><span class="label">Destinatario</span><br><strong>${r.email}</strong>${r.name ? ` · ${r.name}` : ''}</p>
+  <p class="lead-dest"><span class="label">Destinatario</span><strong>${r.email}</strong>${r.name ? ` · ${r.name}` : ''}</p>
   <label class="field"><span class="label">Oggetto</span><input name="subject" required maxlength="200" value="${compose.subject}"></label>
   <label class="field"><span class="label">Testo <em>(puoi cambiarlo prima di inviare)</em></span><textarea name="body" required rows="20" maxlength="8000" class="lead-body">${compose.body}</textarea></label>
   <p class="small muted">${FOOT_NOTE}</p>
@@ -63,7 +65,7 @@ export function bulkReviewPage(ctx, { items, settings, ret = '', error = '' }) {
   <div class="card table-wrap"><table class="table"><thead><tr><th aria-label="Includi"></th><th>Agenzia</th><th>Scrivo a</th><th>Lingua</th></tr></thead><tbody>
   ${items.map((i) => html`<tr class="${i.problem ? 'is-skip' : ''}">
     <td class="lead-check">${i.problem ? '' : html`<input type="checkbox" name="ids" value="${i.lead.id}" checked aria-label="Includi ${i.lead.company}">`}</td>
-    <td><a href="/admin/leads/${i.lead.id}">${i.lead.company}</a><br>${statusChip(i.lead.status)}</td>
+    <td><a href="/admin/leads/${i.lead.id}">${i.lead.company}</a><br>${statusChip(i.lead.status)}${i.lead.last_contact_on ? html` <small class="muted">ultimo contatto il ${day(i.lead.last_contact_on)}</small>` : ''}</td>
     <td>${i.problem ? html`<span class="field-error">${i.problem}</span>` : html`${i.to}${i.name ? html`<br><small class="muted">${i.name}</small>` : ''}`}</td>
     <td>${i.problem ? '' : html`<select name="lang_${i.lead.id}" aria-label="Lingua per ${i.lead.company}">${LANGS.map((l) => html`<option value="${l}" ${sel(i.lang === l)}>${LANG_META[l].name}</option>`)}</select>`}</td></tr>`)}
   </tbody></table></div>
@@ -85,7 +87,7 @@ export function mailPage(ctx, { queue, history, settings, sentToday, flash = '',
   <div class="kpi ${settings.paused ? 'kpi-warn' : ''}"><span class="kpi-l">Invio automatico</span><strong class="kpi-n">${settings.paused ? 'In pausa' : 'Attivo'}</strong>
     <form method="post" action="/admin/leads/mail/${settings.paused ? 'resume' : 'pause'}"><button class="btn btn-sm btn-outline" type="submit">${settings.paused ? 'Riprendi' : 'Metti in pausa'}</button></form></div>
 </div>
-<section class="card pad"><h2>In coda</h2>
+<section class="card pad lead-card"><h2>In coda</h2>
 ${queue.length
   ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Parte</th><th>Agenzia</th><th>Oggetto</th><th>Tipo</th><th aria-label="Azioni"></th></tr></thead><tbody>
   ${queue.map((e) => html`<tr><td>${when(e.send_after)}</td><td><a href="/admin/leads/${e.lead_id}">${e.company}</a><br><small class="muted">${e.to_email}</small></td><td>${e.subject}</td>
@@ -93,7 +95,7 @@ ${queue.length
     <td class="actions"><form method="post" action="/admin/leads/mail/${e.id}/cancel"><button class="btn btn-sm btn-outline" type="submit">Annulla</button></form></td></tr>`)}</tbody></table></div>
   <p class="small muted">Partono da sole dal lunedì al venerdì, dalle ${settings.fromHour} alle ${settings.toHour} (ora di Venezia), una alla volta con una pausa di ${settings.minGapMin} minuti, fino a ${settings.dailyCap} al giorno. Prima di ogni invio il sito ricontrolla: se l’agenzia non vuole email, ha risposto o è diventata cliente, quella email salta.</p>`
   : html`<p class="muted">Nessuna email in coda. Dalla scheda di un contatto, o selezionando più agenzie nell’<a href="/admin/leads">elenco</a>, puoi metterne in coda.</p>`}</section>
-<section class="card pad"><h2>Come e quando partono</h2>
+<section class="card pad lead-card"><h2>Come e quando partono</h2>
 <form class="form" method="post" action="/admin/leads/mail/settings">
   <div class="form-grid">
     <label class="field"><span class="label">${SEND_LABEL.dailyCap}</span><input type="number" name="dailyCap" min="1" max="100" required value="${settings.dailyCap}"></label>
@@ -106,7 +108,7 @@ ${queue.length
   <label class="field"><span class="label">Firma <em>(vuota = nome, abilitazione e recapiti dalle <a href="/admin/settings?s=business#business">Impostazioni</a>)</em></span><textarea name="signature" rows="4" maxlength="600">${settings.signature}</textarea></label>
   <p class="small muted">Un tetto basso protegge la reputazione della tua posta: le email di presentazione partono dallo stesso indirizzo delle conferme di prenotazione. Se le agenzie le segnalano come spam, anche le conferme possono finire nella posta indesiderata.</p>
   <div class="btn-row"><button class="btn btn-gold" type="submit">Salva</button></div></form></section>
-<section class="card pad"><h2>Ultime email</h2>
+<section class="card pad lead-card"><h2>Ultime email</h2>
 ${history.length
   ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Stato</th><th>Agenzia</th><th>Oggetto</th><th>Quando</th></tr></thead><tbody>
   ${history.map((e) => {
@@ -138,8 +140,8 @@ export function templatesPage(ctx, { templates, key, lang, sample, flash = '', e
     <button class="btn btn-outline" type="submit" name="action" value="test">Mandami una prova</button>
     ${t.custom ? html`<button class="btn btn-link-danger" type="submit" name="action" value="reset" data-confirm-click="Tornare al testo di partenza? Le tue modifiche a questo modello vanno perse.">Torna al testo di partenza</button>` : ''}</div>
 </form>
-<section class="card pad"><h2>Com’è con i dati di un’agenzia di esempio</h2>
-  <p><span class="label">Oggetto</span><br><strong>${sample.subject}</strong></p>
+<section class="card pad lead-card"><h2>Com’è con i dati di un’agenzia di esempio</h2>
+  <p class="lead-dest"><span class="label">Oggetto</span><strong>${sample.subject}</strong></p>
   <pre class="lead-preview">${sample.body}</pre></section>`;
   return adminLayout(ctx, { title: 'Modelli delle email', active: '/admin/leads/templates', body, flash, error, scripts: `<script src="/js/admin-leads.js?v=${ctx.app.assetVersion}" defer></script>` });
 }
