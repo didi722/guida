@@ -9748,5 +9748,47 @@
   "Choose a country",
   "Elige el país",
   "国を選択"
+ ],
+ "lead.unsub.title": [
+  "Non ricevere più email",
+  "Stop receiving emails",
+  "Dejar de recibir correos",
+  "メールの配信停止"
+ ],
+ "lead.unsub.text": [
+  "Vuoi che {site} non ti scriva più per presentarti i suoi servizi alle agenzie?",
+  "Do you want {site} to stop writing to you to present its services to agencies?",
+  "¿Quieres que {site} deje de escribirte para presentar sus servicios a las agencias?",
+  "{site}からの、旅行会社様向けサービスのご案内メールを今後停止しますか？"
+ ],
+ "lead.unsub.btn": [
+  "Sì, non scrivetemi più",
+  "Yes, please don’t write to me again",
+  "Sí, no me escribáis más",
+  "はい、今後メールを送らないでください"
+ ],
+ "lead.unsub.doneTitle": [
+  "Fatto",
+  "Done",
+  "Hecho",
+  "完了しました"
+ ],
+ "lead.unsub.doneText": [
+  "Non riceverai più email di presentazione da {site}. Ci dispiace averti disturbato.",
+  "You will not receive any more presentation emails from {site}. Sorry to have bothered you.",
+  "No recibirás más correos de presentación de {site}. Sentimos las molestias.",
+  "今後、{site}からのご案内メールはお送りしません。ご迷惑をおかけして申し訳ありません。"
+ ],
+ "lead.unsub.badTitle": [
+  "Collegamento non valido",
+  "Invalid link",
+  "Enlace no válido",
+  "無効なリンクです"
+ ],
+ "lead.unsub.badText": [
+  "Questo collegamento non è valido. Per non ricevere più email rispondi a una delle nostre email, oppure scrivici.",
+  "This link is not valid. To stop receiving emails, reply to one of our emails or write to us.",
+  "Este enlace no es válido. Para dejar de recibir correos, responde a uno de nuestros correos o escríbenos.",
+  "このリンクは無効です。今後のメールが不要な場合は、届いたメールにご返信いただくか、ご連絡ください。"
  ]
 }

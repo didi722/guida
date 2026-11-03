@@ -703,31 +703,44 @@ export function syncAccounts(db, nowMs = Date.now()) {
   });
 }
 
+/** Quante agenzie registrate sul sito non sono ancora tra i contatti (né agganciate per email). */
+export const unlinkedAccounts = (db) => Number(db.prepare('SELECT COUNT(*) AS n FROM accounts a WHERE NOT EXISTS (SELECT 1 FROM leads l WHERE l.account_id = a.id)').get().n);
+
 /**
- * Mette tra i contatti le agenzie già registrate sul sito che non ci sono ancora (con il profilo agganciato): «Cliente» se sono approvate,
- * «In dialogo» se aspettano l'approvazione, «Non interessata» se rifiutate o sospese.
- * @returns {number} quante ne ha aggiunte
+ * Il contatto commerciale di un'agenzia già registrata sul sito (lo crea se non c'è): «Cliente» se è approvata, «In dialogo» se aspetta l'approvazione,
+ * «Non interessata» se rifiutata o sospesa. Il profilo B2B è agganciato.
+ * @returns {{ lead: object, created: boolean } | null} null se l'agenzia non esiste
  */
+export function leadFromAccount(db, accountId, nowMs = Date.now()) {
+  const a = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(accountId));
+  if (!a) return null;
+  const existing = leadOfAccount(db, a.id);
+  if (existing) return { lead: existing, created: false };
+  return tx(db, () => {
+    syncAccounts(db, nowMs); // se c'è già un contatto con la stessa email, lo si aggancia invece di farne un altro
+    const linked = leadOfAccount(db, a.id);
+    if (linked) return { lead: linked, created: false };
+    const country = a.country && isCountry(a.country) ? a.country.toUpperCase() : '';
+    const lead = insertLead(
+      db,
+      {
+        company: a.company, kind: 'agency', status: a.status === 'approved' ? 'client' : a.status === 'pending' ? 'talking' : 'lost', priority: 2, source: 'Registrata sul sito',
+        website: normalizeWebsite(a.website), email: '', phone: '', country, city: a.city ?? '', lang: normLang(a.lang), notes: a.message ? `Messaggio alla richiesta: ${a.message}` : '', nextAction: '', nextActionOn: '',
+      },
+      { contact: { name: a.contact_name, role: '', email: a.email, phone: a.phone ?? '', lang: '', notes: '' }, nowMs },
+    );
+    db.prepare('UPDATE leads SET account_id = ? WHERE id = ?').run(a.id, lead.id);
+    logActivity(db, lead.id, { kind: 'profile', title: 'Agenzia già registrata sul sito', body: `Profilo B2B: ${{ approved: 'approvato', pending: 'da approvare' }[a.status] ?? a.status}.`, at: a.created_at, nowMs });
+    return { lead: getLead(db, lead.id), created: true };
+  });
+}
+
+/** Mette tra i contatti tutte le agenzie già registrate sul sito che non ci sono ancora. @returns {number} quante ne ha aggiunte */
 export function addRegistered(db, nowMs = Date.now()) {
   syncAccounts(db, nowMs); // prima si agganciano quelle che hanno già un contatto con la stessa email
-  return tx(db, () => {
-    let n = 0;
-    for (const a of db.prepare('SELECT a.* FROM accounts a WHERE NOT EXISTS (SELECT 1 FROM leads l WHERE l.account_id = a.id) ORDER BY a.id').all()) {
-      const country = a.country && isCountry(a.country) ? a.country.toUpperCase() : '';
-      const lead = insertLead(
-        db,
-        {
-          company: a.company, kind: 'agency', status: a.status === 'approved' ? 'client' : a.status === 'pending' ? 'talking' : 'lost', priority: 2, source: 'Registrata sul sito',
-          website: normalizeWebsite(a.website), email: '', phone: '', country, city: a.city ?? '', lang: normLang(a.lang), notes: a.message ? `Messaggio alla richiesta: ${a.message}` : '', nextAction: '', nextActionOn: '',
-        },
-        { contact: { name: a.contact_name, role: '', email: a.email, phone: a.phone ?? '', lang: '', notes: '' }, nowMs },
-      );
-      db.prepare('UPDATE leads SET account_id = ? WHERE id = ?').run(a.id, lead.id);
-      logActivity(db, lead.id, { kind: 'profile', title: 'Agenzia già registrata sul sito', body: `Profilo B2B: ${a.status === 'approved' ? 'approvato' : a.status === 'pending' ? 'da approvare' : a.status}.`, at: a.created_at, nowMs });
-      n++;
-    }
-    return n;
-  });
+  let n = 0;
+  for (const a of db.prepare('SELECT a.id FROM accounts a WHERE NOT EXISTS (SELECT 1 FROM leads l WHERE l.account_id = a.id) ORDER BY a.id').all()) if (leadFromAccount(db, a.id, nowMs)?.created) n++;
+  return n;
 }
 
 // ───────────── importazione ed esportazione ─────────────

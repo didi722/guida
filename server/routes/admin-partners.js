@@ -11,6 +11,7 @@ import { listMembers, removeMember } from '../team.js';
 import { cleanText, parseEuros } from '../util.js';
 import { partnerDetailPage, partnersPage } from '../views/admin-partners.js';
 import { referralsOf, referrerOf } from '../referral.js';
+import { leadFromAccount, leadOfAccount } from '../leads.js';
 
 const FLASH = {
   partner: 'Condizioni aggiornate.',
@@ -55,7 +56,15 @@ export function adminPartnersRouter(app) {
     const bookings = db.prepare('SELECT * FROM bookings WHERE account_id = ? ORDER BY date DESC LIMIT 100').all(a.id);
     const others = db.prepare('SELECT id, company FROM accounts WHERE id != ? ORDER BY company').all(a.id);
     const openOptions = activeOptionCount(db, a.id);
-    send(res, partnerDetailPage(ctxOf(req), a, { bookings, others, team: listMembers(db, a.id), openOptions, referrer: referrerOf(db, a), referred: referralsOf(db, a.id), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
+    send(res, partnerDetailPage(ctxOf(req), a, { bookings, others, team: listMembers(db, a.id), openOptions, referrer: referrerOf(db, a), referred: referralsOf(db, a.id), lead: leadOfAccount(db, a.id), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '' }));
+  });
+
+  // porta l'agenzia tra i contatti commerciali (se non c'è già) e apre la sua scheda lì
+  r.post('/partners/:id/lead', form, (req, res, next) => {
+    const a = get(req.params.id);
+    if (!a) return next();
+    const out = leadFromAccount(db, a.id);
+    res.redirect(303, `/admin/leads/${out.lead.id}`);
   });
 
   // stato, sconto, pagamento a fattura, note

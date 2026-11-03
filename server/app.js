@@ -16,6 +16,7 @@ import { statementRouter } from './routes/statement.js';
 import { availabilityRouter } from './routes/availability.js';
 import { changesRouter } from './routes/changes.js';
 import { invoicePayRouter } from './routes/invoicePay.js';
+import { leadsPublicRouter } from './routes/leads.js';
 import { packagesRouter } from './routes/packages.js';
 import { teamRouter } from './routes/team.js';
 import { quotesRouter } from './routes/quotes.js';
@@ -104,8 +105,9 @@ export function createApp(overrides = {}) {
   const agencyFeed = agencyFeedRouter(app);
   const statement = statementRouter(app);
   const invoicePay = invoicePayRouter(app);
+  const leadsPublic = leadsPublicRouter(app);
   const features = featuresRouter(app);
-  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, team, quotes, billing, changes, availability, agencyDocs, agencyFeed, statement, invoicePay, features);
+  for (const lang of LANGS) server.use(`/${lang}`, langMiddleware(app, lang), pub, partner, packages, team, quotes, billing, changes, availability, agencyDocs, agencyFeed, statement, invoicePay, leadsPublic, features);
 
   // 404 (nella lingua dell'URL se possibile)
   server.use((req, res) => {

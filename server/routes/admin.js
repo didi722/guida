@@ -19,6 +19,8 @@ import { adminMailRouter } from './admin-mail.js';
 import { adminBankRouter } from './admin-bank.js';
 import { adminBookingEditRouter } from './admin-booking-edit.js';
 import { adminInvitesRouter } from './admin-invites.js';
+import { adminLeadsRouter } from './admin-leads.js';
+import { adminLeadsMailRouter } from './admin-leads-mail.js';
 import { adminPartnersRouter } from './admin-partners.js';
 import { adminStatementRouter } from './admin-statement.js';
 import { adminStatsRouter } from './admin-stats.js';
@@ -45,6 +47,7 @@ import { getPackage, packageBookings } from '../packages.js';
 import { changeHistory, pendingExtension, pendingExtensions } from '../changes.js';
 import { overdueInvoices } from '../invoicePayments.js';
 import { LANGS } from '../langs.js';
+import { APPT_LABEL, appointmentsBetween, leadCounts } from '../leads.js';
 import { adminLoginPage, availabilityPage, bookingDetailPage, bookingsPage, dashboardPage } from '../views/admin.js';
 
 const ERR = {
@@ -118,7 +121,23 @@ export function adminRouter(app) {
         url: `${cfg.baseUrl}/admin/bookings/${b.id}`,
       });
     });
-    res.type('text/calendar; charset=utf-8').set('Cache-Control', 'no-cache').send(calendar(`${cfg.site.name} — prenotazioni`, events));
+    // visite, videochiamate e telefonate con le agenzie (solo quelle da fare)
+    const appointments = db
+      .prepare("SELECT p.*, l.company, c.name AS contact_name, c.phone AS contact_phone, l.phone AS lead_phone FROM lead_appointments p JOIN leads l ON l.id = p.lead_id LEFT JOIN lead_contacts c ON c.id = p.contact_id WHERE p.status = 'planned' AND p.date >= ? ORDER BY p.date, p.start_time")
+      .all(since)
+      .map((a) =>
+        eventLines({
+          uid: `appuntamento-${a.id}@${new URL(cfg.baseUrl).hostname}`,
+          date: a.date,
+          start: a.start_time,
+          end: a.end_time,
+          summary: `${APPT_LABEL[a.kind]} · ${a.company}`,
+          description: [a.contact_name, a.contact_phone ?? a.lead_phone, a.notes].filter(Boolean).join('\n'),
+          location: a.place ?? '',
+          url: `${cfg.baseUrl}/admin/leads/${a.lead_id}`,
+        }),
+      );
+    res.type('text/calendar; charset=utf-8').set('Cache-Control', 'no-cache').send(calendar(`${cfg.site.name} — prenotazioni`, [...events, ...appointments]));
   });
 
   // ───── accesso ─────
@@ -158,6 +177,8 @@ export function adminRouter(app) {
   r.use(adminTodayRouter(app));
   r.use(adminMailRouter(app));
   r.use(adminInvitesRouter(app));
+  r.use(adminLeadsMailRouter(app)); // (prima del resto: /leads/mail e /leads/templates non sono la scheda di un contatto)
+  r.use(adminLeadsRouter(app));
   r.use(adminPartnersRouter(app));
   r.use(adminStatementRouter(app));
   r.use(adminStatsRouter(app));
@@ -198,7 +219,9 @@ export function adminRouter(app) {
       .map((d) => ({ ...d, kind: 'program', conflicts: dayConflicts(app, d, { ignoreProgramId: d.pid }) }));
     // impegni fuori dal sito (tour privati presi per email o di persona, altre agenzie): tolgono le ore dalle disponibilità
     const blockRows = db.prepare('SELECT * FROM blocks WHERE date BETWEEN ? AND ? ORDER BY date, start_time').all(from, to).map((x) => ({ ...x, blockKind: x.kind, kind: 'block' }));
-    const itemsOn = (date) => [...rows.filter((b) => b.date === date).map((b) => ({ ...b, kind: 'booking' })), ...programRows.filter((x) => x.date === date), ...blockRows.filter((x) => x.date === date)].sort((a, b) => toMin(a.start_time) - toMin(b.start_time));
+    // appuntamenti commerciali (visite, videochiamate…): quelli fissati e quelli già fatti
+    const salesRows = appointmentsBetween(db, from, to).map((a) => ({ ...a, apptKind: a.kind, kind: 'sales' }));
+    const itemsOn = (date) => [...rows.filter((b) => b.date === date).map((b) => ({ ...b, kind: 'booking' })), ...programRows.filter((x) => x.date === date), ...blockRows.filter((x) => x.date === date), ...salesRows.filter((x) => x.date === date)].sort((a, b) => toMin(a.start_time) - toMin(b.start_time));
     return { itemsOn };
   };
 
@@ -231,7 +254,7 @@ export function adminRouter(app) {
       const selected = wanted && cells.some((c) => c.date === wanted) ? wanted : cells.some((c) => c.date === today) ? today : dates[0];
       const [y, m] = month.split('-').map(Number);
       const shift = (n) => `${new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7)}`;
-      calendar = { month, prev: shift(-1), next: shift(1), cells, selected, selectedItems: cells.find((c) => c.date === selected).items, todayCount: agendaItems(today, today).itemsOn(today).filter((x) => x.kind !== 'block').length };
+      calendar = { month, prev: shift(-1), next: shift(1), cells, selected, selectedItems: cells.find((c) => c.date === selected).items, todayCount: agendaItems(today, today).itemsOn(today).filter((x) => x.kind !== 'block' && x.kind !== 'sales').length };
     }
     const programs = db.prepare(`SELECT COALESCE(SUM(status = 'new'), 0) AS todo, COALESCE(SUM(status IN ('quoted', 'accepted')), 0) AS waiting FROM programs`).get();
     const pendingPartners = db.prepare(`SELECT COUNT(*) n FROM accounts WHERE status = 'pending'`).get().n;
@@ -239,7 +262,7 @@ export function adminRouter(app) {
     const held = db.prepare(`SELECT COUNT(*) n FROM bookings WHERE status = 'held' AND hold_expires_at > ?`).get(nowIso).n;
     const options = db.prepare(`SELECT COUNT(DISTINCT COALESCE('g' || group_id, 'b' || id)) n, MIN(option_expires_at) next FROM bookings WHERE status = 'option' AND option_expires_at > ?`).get(nowIso); // un pacchetto è una sola opzione
     const invoicesDue = app.invoices.queue().filter((i) => i.overdue).length;
-    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, invoicesOverdue: overdueInvoices(db).length, waiting: waitingCount(db, today), today, view, days, calendar, pendingPartners, held, options: { ...options, requests: pendingExtensions(db).length }, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, hiddenFromSearch: !!cfg.site.hideFromSearch, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
+    send(res, dashboardPage(ctxOf(req), { problems: app.calendars.problems(), invoicesDue, invoicesOverdue: overdueInvoices(db).length, waiting: waitingCount(db, today), leadsDue: leadCounts(db, today).due, today, view, days, calendar, pendingPartners, held, options: { ...options, requests: pendingExtensions(db).length }, programs, preOpening: isPreOpening(cfg) ? paymentsFrom(cfg) : null, hiddenFromSearch: !!cfg.site.hideFromSearch, feedUrl: `${cfg.baseUrl}/admin/calendar.ics?k=${feedToken}`, flash: flash(req) }));
   });
 
   // ───── impegni privati in agenda: un tour preso fuori dal sito (email, di persona…) toglie quelle ore dalle disponibilità ─────

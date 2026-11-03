@@ -61,6 +61,7 @@ const COUNTS = [
   ['programs', 'SELECT COUNT(*) AS n FROM programs'],
   ['invoices', 'SELECT COUNT(*) AS n FROM invoices WHERE number IS NOT NULL'],
   ['feedback', 'SELECT COUNT(*) AS n FROM feedback'],
+  ['leads', 'SELECT COUNT(*) AS n FROM leads'],
 ];
 /** Cose che esistono adesso e che «Tutto» farebbe sparire se la copia non le contiene (chiave naturale di ciascuna). */
 const LOSS_KEYS = [
@@ -71,6 +72,7 @@ const LOSS_KEYS = [
   ['invoices', 'SELECT number AS k FROM invoices WHERE number IS NOT NULL'],
   ['feedback', 'SELECT booking_id AS k FROM feedback'],
   ['promos', 'SELECT LOWER(code) AS k FROM promo_codes'],
+  ['leads', "SELECT LOWER(company) || '|' || COALESCE(LOWER(email), '') AS k FROM leads"],
 ];
 
 const q = (name) => `"${String(name).replace(/"/g, '""')}"`;

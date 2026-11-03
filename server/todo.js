@@ -3,6 +3,7 @@
 import { billingGaps } from './billing.js';
 import { pendingExtensions } from './changes.js';
 import { overdueInvoices } from './invoicePayments.js';
+import { APPT_LABEL, leadCounts, plannedAppointments } from './leads.js';
 import { addDays, fmtDate, fmtInstant, nowRome } from './time.js';
 import { waitingCount } from './waitlist.js';
 
@@ -40,6 +41,16 @@ export function todoList(app, nowMs = Date.now()) {
   const noBilling = db.prepare(`SELECT * FROM accounts WHERE status = 'approved'`).all().filter((a) => billingGaps(a).length);
   if (noBilling.length) decide.push({ tone: 'info', text: `${plural(noBilling.length, 'partner con i dati di fatturazione incompleti', 'partner con i dati di fatturazione incompleti')}`, meta: `${noBilling.slice(0, 3).map((a) => a.company).join(', ')}${noBilling.length > 3 ? '…' : ''}: completali dalla scheda o chiedi al partner di farlo (area agenzie › Dati di fatturazione), altrimenti la fattura va riempita a mano`, href: `/admin/partners/${noBilling[0].id}#fatturazione` });
   section('decide', 'Da decidere', decide);
+
+  // ── commerciale ──
+  const sales = [];
+  const leads = leadCounts(db, today);
+  if (leads.due) sales.push({ tone: 'warn', text: `${plural(leads.due, 'agenzia da richiamare', 'agenzie da richiamare')}`, meta: leads.overdue ? `${leads.overdue} con il richiamo scaduto` : 'il richiamo è per oggi', href: '/admin/leads/today' });
+  const toClose = plannedAppointments(db, { before: today });
+  if (toClose.length) sales.push({ tone: 'warn', text: `${plural(toClose.length, 'appuntamento commerciale passato da chiudere', 'appuntamenti commerciali passati da chiudere')}`, meta: `${toClose.slice(0, 3).map((a) => a.company).join(', ')}${toClose.length > 3 ? '…' : ''}: com’è andata? Scrivilo e fissa il seguito`, href: '/admin/leads/today#appuntamenti' });
+  const failedMail = db.prepare("SELECT COUNT(*) AS n FROM lead_emails WHERE status = 'failed' AND created_at > ?").get(new Date(nowMs - 7 * 24 * HOUR).toISOString()).n;
+  if (failedMail) sales.push({ tone: 'warn', text: `${plural(failedMail, 'email commerciale non partita', 'email commerciali non partite')}`, meta: 'controlla la posta in uscita (Aiuto › Email) e riprova', href: '/admin/leads/mail' });
+  section('sales', 'Commerciale', sales);
 
   // ── soldi e fatture ──
   const money = [];
@@ -87,6 +98,7 @@ export function todoList(app, nowMs = Date.now()) {
     const lines = b.group_id ? options.filter((x) => x.group_id === b.group_id).length : 1;
     soon.push({ tone: 'info', text: `Opzione in scadenza: ${b.company ?? b.name} · ${lines > 1 ? `${lines} servizi` : `${title(b.tour_slug)}, ${fmtDate(b.date, 'it', 'short')}`}`, meta: `scade il ${fmtInstant(Date.parse(b.option_expires_at), 'it')}; se non conferma, la data si libera da sola`, href: `/admin/bookings/${b.id}` });
   }
+  for (const a of plannedAppointments(db, { from: today, to: tomorrow })) soon.push({ tone: 'info', text: `${a.date === today ? 'Oggi' : 'Domani'}: ${APPT_LABEL[a.kind].toLowerCase()} con ${a.company}`, meta: `${a.start_time === '00:00' && a.end_time === '23:59' ? 'tutto il giorno' : `alle ${a.start_time}`}${a.place ? ` · ${a.place}` : ''}`, href: `/admin/leads/${a.lead_id}` });
   const waiting = waitingCount(db, today);
   if (waiting) soon.push({ tone: 'info', text: `${waiting === 1 ? '1 agenzia aspetta' : `${waiting} agenzie aspettano`} una data libera`, href: '/admin/waitlist' });
   section('soon', 'In arrivo', soon);

@@ -305,7 +305,8 @@ test('esportazione CSV: tutte le colonne, separatore «;», nessuna formula eseg
   t.after(cleanup);
   mk(db, { company: '=HYPERLINK("http://x")', country: 'IT', phone: '+39 041 123456', notes: 'a;b\nc', contact: { name: 'Anna', email: 'anna@x.it' } });
   const csv = L.leadsCsv(db);
-  assert.ok(csv.startsWith('﻿Azienda;Tipo;Stato'));
+  assert.equal(csv.charCodeAt(0), 0xfeff, 'il BOM fa aprire gli accenti giusti a Excel');
+  assert.ok(csv.slice(1).startsWith('Azienda;Tipo;Stato'));
   const [head, row] = csv.trim().split('\r\n');
   assert.equal(head.split(';').length, 21);
   assert.ok(row.startsWith(`"'=HYPERLINK(""http://x"")";`), 'la formula è neutralizzata');

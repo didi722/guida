@@ -117,6 +117,18 @@ export function inviteStatePage(ctx, { state }) {
   return page(ctx, { title: t(`pinv.${key}.title`), path: `/${lang}/b2b/register`, body, noindex: true, activeNav: 'b2b' });
 }
 
+/** «Non ricevere più email»: la conferma (state `ask`), l'esito (`done`) o il collegamento non valido (`bad`). Nella lingua dell'email ricevuta. */
+export function unsubscribePage(ctx, { state, token = '' }) {
+  const { t, lang, u } = ctx;
+  const site = ctx.app.cfg.site.name;
+  const key = { ask: 'title', done: 'doneTitle', bad: 'badTitle' }[state];
+  const text = { ask: 'text', done: 'doneText', bad: 'badText' }[state];
+  const body = html`<section class="page-head"><div class="wrap narrow center"><div class="status ${state === 'done' ? 'status-ok' : state === 'bad' ? 'status-warn' : 'status-wait'}"><span class="status-dot"></span><div><h1>${t(`lead.unsub.${key}`)}</h1><p class="lead">${t(`lead.unsub.${text}`, { site })}</p></div></div>
+    ${state === 'ask' ? html`<form method="post" action="${u(`/b2b/unsubscribe/${token}`)}" class="btn-row center"><button class="btn btn-gold" type="submit">${t('lead.unsub.btn')}</button></form>` : ''}
+    <p class="btn-row center"><a class="btn btn-outline" href="${u('/')}">${t('nav.home')}</a></p></div></section>`;
+  return page(ctx, { title: t(`lead.unsub.${key}`), path: `/${lang}/b2b`, body, noindex: true, activeNav: 'b2b' });
+}
+
 // ───────────────────────── Area riservata dell'agenzia ─────────────────────────
 /** Messaggi che le azioni dell'elenco (rilascia, conferma) possono lasciare al ritorno sulla dashboard. */
 const FLASH = ['option-confirmed', 'option-released', 'option-expired', 'option-error', 'cancelled', 'cancel-error', 'feed'];

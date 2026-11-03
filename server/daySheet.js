@@ -3,6 +3,7 @@
 import { bookingDue } from './bookings.js';
 import { meetingOf, themeText } from './choices.js';
 import { LANG_META } from './langs.js';
+import { APPT_LABEL } from './leads.js';
 import { partyOfBooking, peopleText } from './party.js';
 import { parseServiceRecord, serviceNote } from './rates.js';
 import { fmtInstant } from './time.js';
@@ -60,7 +61,13 @@ export function daySheet(app, date, nowMs = Date.now()) {
     .prepare(`SELECT d.start_time, d.end_time, d.title, p.id AS pid, p.ref, p.name, p.company, p.participants, p.proposal_title FROM program_days d JOIN programs p ON p.id = d.program_id WHERE d.date = ? AND p.status IN ('accepted', 'confirmed') ORDER BY d.start_time`)
     .all(date)
     .map((x) => ({ start: x.start_time, end: x.end_time, title: x.title || x.proposal_title || 'Programma', ref: x.ref, id: x.pid, people: x.participants, who: x.company || x.name }));
-  const blocks = db.prepare(`SELECT start_time, end_time, title, details FROM blocks WHERE date = ? AND kind = 'private' ORDER BY start_time`).all(date).map((x) => ({ start: x.start_time, end: x.end_time, title: x.title ?? 'Impegno', details: x.details ?? '' }));
+  const privateBlocks = db.prepare(`SELECT start_time, end_time, title, details FROM blocks WHERE date = ? AND kind = 'private' ORDER BY start_time`).all(date).map((x) => ({ start: x.start_time, end: x.end_time, title: x.title ?? 'Impegno', details: x.details ?? '' }));
+  // visite, videochiamate e telefonate fissate con le agenzie: occupano la giornata come ogni altro impegno fuori dal sito
+  const sales = db
+    .prepare("SELECT p.kind, p.start_time, p.end_time, p.place, p.notes, l.company, c.name AS contact, COALESCE(c.phone, l.phone) AS phone FROM lead_appointments p JOIN leads l ON l.id = p.lead_id LEFT JOIN lead_contacts c ON c.id = p.contact_id WHERE p.date = ? AND p.status = 'planned' ORDER BY p.start_time")
+    .all(date)
+    .map((x) => ({ start: x.start_time, end: x.end_time, title: `Commerciale · ${APPT_LABEL[x.kind]}: ${x.company}`, details: [x.contact, x.phone, x.place, x.notes].filter(Boolean).join(' · ') }));
+  const blocks = [...privateBlocks, ...sales].sort((a, b) => a.start.localeCompare(b.start));
   const confirmed = services.filter((s) => s.confirmed);
   return {
     date,
