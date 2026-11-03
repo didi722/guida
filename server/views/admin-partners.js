@@ -62,7 +62,7 @@ ${items.length
   return adminLayout(ctx, { title: 'Partner B2B', active: '/admin/partners', body });
 }
 
-export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOptions = 0, referrer = null, referred = [], flash = '', error = '' }) {
+export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOptions = 0, referrer = null, referred = [], lead = null, flash = '', error = '' }) {
   const { app } = ctx;
   const { cfg, content } = app;
   const tours = content.tours.filter((x) => x.pricing !== 'hourly' && x.audience === 'b2b'); // il listino dedicato riguarda i tour B2B
@@ -92,7 +92,8 @@ export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOpt
       ${referrer ? html`<div><dt>Segnalata da</dt><dd><a href="/admin/partners/${referrer.id}">${referrer.company}</a></dd></div>` : ''}
       ${referred.length ? html`<div><dt>Ha segnalato</dt><dd>${referred.map((x, i) => html`${i ? ', ' : ''}<a href="/admin/partners/${x.id}">${x.company}</a>${x.status === 'pending' ? ' (da approvare)' : ''}`)}</dd></div>` : ''}
     </dl>
-    ${a.status === 'approved' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/partners/${a.id}/statement">Estratto conto</a></p>` : ''}</div>
+    <p class="btn-row">${a.status === 'approved' ? html`<a class="btn btn-outline btn-sm" href="/admin/partners/${a.id}/statement">Estratto conto</a>` : ''}
+      ${lead ? html`<a class="btn btn-outline btn-sm" href="/admin/leads/${lead.id}">Contatto commerciale</a>` : html`<form method="post" action="/admin/partners/${a.id}/lead"><button class="btn btn-outline btn-sm" type="submit">Aggiungi ai contatti commerciali</button></form>`}</p></div>
   <form class="card pad form" method="post" action="/admin/partners/${a.id}">
     <h2>Stato e pagamento</h2>
     <label class="field"><span class="label">Stato</span><select name="status">${[['pending', 'Da approvare'], ['approved', 'Approvato'], ['rejected', 'Rifiutato'], ['suspended', 'Sospeso']].map(([v, l]) => html`<option value="${v}" ${a.status === v ? raw('selected') : ''}>${l}</option>`)}</select></label>

@@ -28,7 +28,8 @@ Le indicazioni di percorso si leggono così: **Sito › Tour B2C** vuol dire «t
 18. [Online, aggiornamenti e cosa non si cambia dal pannello](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)
 19. [Quando qualcosa non va](#19-quando-qualcosa-non-va)
 20. [Da fare prima del lancio e a gennaio](#20-da-fare-prima-del-lancio-e-a-gennaio)
-21. [Appendice: formattare un testo](#21-appendice-formattare-un-testo)
+21. [Commerciale: cercare agenzie e tour operator](#21-commerciale-cercare-agenzie-e-tour-operator)
+22. [Appendice: formattare un testo](#22-appendice-formattare-un-testo)
 
 ---
 
@@ -98,6 +99,14 @@ Il pannello contiene i dati dei clienti e le fatture: oltre alla password puoi c
 | Cambiare **telefono, WhatsApp, Partita IVA**, indirizzo | **Sito › Impostazioni › Attività e contatti** |
 | Cambiare **ore di cancellazione, preavviso**, pausa fra i servizi | **Sito › Impostazioni › Regole di prenotazione** |
 | Inserire i **dati per fatturare** | **Sito › Impostazioni › Fatturazione elettronica** |
+| **Cercare nuove agenzie** e tenere traccia di chi ho contattato, con chi ho parlato e quando richiamare | **Commerciale › Contatti** ([come funziona](#21-commerciale-cercare-agenzie-e-tour-operator)) |
+| Sapere **chi richiamare oggi** e che appuntamenti ho con le agenzie | **Commerciale › Oggi** |
+| **Importare un elenco** di agenzie da un foglio di calcolo | **Commerciale › Contatti › Importa** ([come funziona](#aggiungere-contatti)) |
+| Mandare **l'email di presentazione** a un'agenzia, o a molte insieme, con il **sollecito automatico** | **Commerciale › Contatti** › tocca il contatto › **Scrivi un'email**; per più agenzie, selezionale e **Scrivi la presentazione ai selezionati** ([come funziona](#le-email-di-presentazione)) |
+| Cambiare i **testi delle email** commerciali (o le lingue) | **Commerciale › Modelli** |
+| Vedere cosa è **in coda**, **mettere in pausa** l'invio o cambiare il **tetto giornaliero** | **Commerciale › Email** |
+| Fissare una **visita in azienda** o una **videochiamata** con un'agenzia (e farla comparire in agenda) | **Commerciale › Oggi › Fissa un appuntamento**, oppure dalla scheda del contatto, oppure dall'**Agenda** ([come funziona](#appuntamenti-e-agenda)) |
+| **Invitare** un'agenzia sul sito, o **creare subito il suo profilo** B2B | **Commerciale › Contatti** › tocca il contatto › **Profilo B2B sul sito** ([come funziona](#dal-contatto-allarea-b2b)) |
 | **Approvare** un'agenzia, dare **sconti, prezzi e cancellazione** dedicati | **Clienti › Partner** › tocca l'agenzia |
 | **Invitare un'agenzia** che conosci con un collegamento personale (account già approvato) | **Clienti › Partner › Inviti** ([come funziona](#invitare-unagenzia)) |
 | Capire cosa succede quando il cliente di un'agenzia **accetta un preventivo online** | Ti arriva un'email; l'agenzia deve poi prenotare ([come funziona](#preventivi-online-delle-agenzie)) |
@@ -139,11 +148,12 @@ Il pannello contiene i dati dei clienti e le fatture: oltre alla password puoi c
 1. **Da fare** (in **Agenda › Da fare**, il numero accanto al nome conta le cose urgenti): una pagina sola con tutto ciò che aspetta te, per sezione e con il collegamento alla pagina giusta. *Da decidere*: richieste di proroga, partner da approvare, programmi da preparare. *Soldi e fatture*: rimborsi non riusciti, fatture scadute e non incassate, voci da fatturare oltre i 12 giorni, fatture emesse da trasmettere a SdI, fatture scartate, servizi svolti con pagamento sul posto ancora da incassare, bozze. *Da controllare*: calendari collegati che non si aggiornano. *In arrivo* (non contano nel numero): i servizi di oggi e di domani (con cosa incassare sul posto), le opzioni che scadono entro 48 ore, le agenzie in lista d'attesa. Se non c'è nulla, la pagina dice *Tutto a posto*.
 2. **Scheda del giorno** (**Agenda › Scheda del giorno**; senza una data apre *domani*): per ogni servizio, in ordine d'orario, tutto ciò che serve per farlo: persone e lingua, **punto d'incontro** (con la mappa), tema scelto, **contatti** del cliente o — per le agenzie — dell'agenzia e del suo referente, note del cliente, **le tue note**, come ha pagato e **quanto incassare sul posto**; più le giornate dei programmi di più giorni e gli impegni fuori dal sito, e in alto il riepilogo (servizi, persone, da incassare). In cima ci sono *giorno prima/dopo*, *Oggi*, *Domani*, **Stampa**, **PDF** (da tenere sul telefono) e **Invia a me**. La **sera prima** (alle 18, regolabile in **Sito › Impostazioni › Regole di prenotazione › Ora della scheda del giorno dopo**) la scheda di domani **arriva da sola per email** all'indirizzo delle notifiche, con il PDF in allegato; non parte se domani non c'è nessun servizio, e si spegne con *Scheda del giorno dopo, per te*.
 3. **Agenda** (la prima schermata): in alto vedi quanti servizi hai oggi, i programmi da preparare, i partner da approvare, le **opzioni** aperte e i pagamenti in corso. Sotto c'è l'agenda: si apre come **Calendario** del mese (tocca un giorno per vederlo qui sotto; le opzioni delle agenzie sono tratteggiate) e con **Elenco, 14 giorni** passi all'elenco dei prossimi 14 giorni con tutte le prenotazioni e le giornate dei programmi; il pannello ricorda la tua scelta. Se c'è un avviso rosso (calendario che non si sincronizza, voci da fatturare oltre i 12 giorni) toccalo: ti porta dove risolvere.
-4. **Partner da approvare**: se c'è un numero, apri **Clienti › Partner** e rispondi (vedi [sezione 14](#14-partner-agenzie-dmc-tour-operator)). Il partner è avvisato per email.
-5. **Programmi da preparare**: richieste di più giorni in attesa di una tua proposta ([sezione 12](#12-prenotazioni-annulli-e-programmi-di-più-giorni)).
-6. **Fatture** (una o due volte a settimana): le prenotazioni svolte o pagate finiscono in *Da fatturare*; il termine consigliato per emettere è **12 giorni** ([sezione 13](#13-fatture)).
-7. I clienti privati **e le agenzie** ricevono da soli un **promemoria la sera prima del tour** (alle 18:00, con orario, punto d'incontro, mappa e come contattarti): non devi fare nulla. Alle **agenzie** arriva anche, una sola volta, il promemoria **«tra poco la cancellazione non è più gratuita»** (24 ore prima della fine del periodo gratuito, solo se la prenotazione esisteva già a quel momento) e, per le opzioni, quello di **scadenza dell'opzione**; e si spegne o si sposta in **Sito › Impostazioni › Regole di prenotazione**.
-8. Ogni nuova prenotazione, annullo o richiesta ti arriva **per email** all'indirizzo delle notifiche (si cambia in **Sito › Impostazioni › Attività e contatti**). Se le email non arrivano, guarda **Aiuto › Email**: lì il sito elenca quelle che ha tentato di inviare. Fra le altre ti arrivano: *Nuova richiesta partner* (con l'esito della Partita IVA) o *Agenzia invitata registrata* (qualcuno ha usato un tuo [invito](#invitare-unagenzia)), *Preventivo accettato* (il cliente di un'agenzia ha detto sì: [nessuna data è trattenuta](#preventivi-online-delle-agenzie), l'agenzia sta per prenotare), l'avviso di una **copia automatica non riuscita** e gli avvisi di sicurezza dei due passaggi (attivati o disattivati, codice di emergenza usato, accesso bloccato dopo troppi codici sbagliati).
+4. **Commerciale › Oggi** (il numero accanto a *Oggi* conta le agenzie da richiamare, scadute o per oggi; lo trovi anche in **Agenda › Da fare**): chi richiamare, gli appuntamenti con le agenzie, le email in coda. Ogni volta che senti un'agenzia, **registralo** con la data del prossimo richiamo ([sezione 21](#21-commerciale-cercare-agenzie-e-tour-operator)).
+5. **Partner da approvare**: se c'è un numero, apri **Clienti › Partner** e rispondi (vedi [sezione 14](#14-partner-agenzie-dmc-tour-operator)). Il partner è avvisato per email.
+6. **Programmi da preparare**: richieste di più giorni in attesa di una tua proposta ([sezione 12](#12-prenotazioni-annulli-e-programmi-di-più-giorni)).
+7. **Fatture** (una o due volte a settimana): le prenotazioni svolte o pagate finiscono in *Da fatturare*; il termine consigliato per emettere è **12 giorni** ([sezione 13](#13-fatture)).
+8. I clienti privati **e le agenzie** ricevono da soli un **promemoria la sera prima del tour** (alle 18:00, con orario, punto d'incontro, mappa e come contattarti): non devi fare nulla. Alle **agenzie** arriva anche, una sola volta, il promemoria **«tra poco la cancellazione non è più gratuita»** (24 ore prima della fine del periodo gratuito, solo se la prenotazione esisteva già a quel momento) e, per le opzioni, quello di **scadenza dell'opzione**; e si spegne o si sposta in **Sito › Impostazioni › Regole di prenotazione**.
+9. Ogni nuova prenotazione, annullo o richiesta ti arriva **per email** all'indirizzo delle notifiche (si cambia in **Sito › Impostazioni › Attività e contatti**). Se le email non arrivano, guarda **Aiuto › Email**: lì il sito elenca quelle che ha tentato di inviare. Fra le altre ti arrivano: *Nuova richiesta partner* (con l'esito della Partita IVA) o *Agenzia invitata registrata* (qualcuno ha usato un tuo [invito](#invitare-unagenzia)), *Preventivo accettato* (il cliente di un'agenzia ha detto sì: [nessuna data è trattenuta](#preventivi-online-delle-agenzie), l'agenzia sta per prenotare), l'avviso di una **copia automatica non riuscita** e gli avvisi di sicurezza dei due passaggi (attivati o disattivati, codice di emergenza usato, accesso bloccato dopo troppi codici sbagliati).
 
 **Calendario sul telefono.** In fondo all'Agenda trovi un indirizzo privato da aggiungere come *calendario in abbonamento* a Google Calendar, Apple Calendar o Outlook: vedrai le prenotazioni confermate accanto ai tuoi impegni. Non condividerlo con nessuno.
 
@@ -182,7 +192,7 @@ Ogni elenco mostra il prezzo (o il rimando alle tariffe a ore) e lo stato (*visi
 4. **Immagine di copertina**: scegli una foto già caricata o caricane una ([sezione 10](#10-immagini)). Senza foto il sito usa un'illustrazione.
 5. **Testi** (una scheda per lingua: Italiano, English, Español, 日本語)
    - **Titolo**, **Sottotitolo**, **Riassunto** (una o due frasi: compare negli elenchi e su Google), **Punto d'incontro**, **Link alla mappa** (indirizzo Google Maps).
-   - **Descrizione**: testo lungo; puoi formattarlo con i pulsanti *Grassetto, Corsivo, Titolo, Elenco, Link, Foto* ([appendice](#21-appendice-formattare-un-testo)) e controllare il risultato con **Anteprima**.
+   - **Descrizione**: testo lungo; puoi formattarlo con i pulsanti *Grassetto, Corsivo, Titolo, Elenco, Link, Foto* ([appendice](#22-appendice-formattare-un-testo)) e controllare il risultato con **Anteprima**.
    - **Punti salienti**, **Incluso**, **Non incluso**: **uno per riga**. **Note utili**: testo libero.
    - **Domande frequenti** (facoltative): compaiono sulla pagina del tour come domande a tendina. Scrivi **una domanda per blocco**: la prima riga è la domanda, le righe sotto sono la risposta (puoi usare il grassetto e i link), e **lascia una riga vuota** tra una domanda e la successiva. Esempio:
 
@@ -314,7 +324,7 @@ In ogni modulo che chiede le persone (la scheda del tour, il pagamento, la modif
 2. In alto: **Indirizzo web (slug)** (vuoto = lo ricava dal titolo), **Data di pubblicazione** (è quella che il sito mostra), **Pubblicato** (se lo togli diventa una **bozza**, invisibile sul sito) e, se vuoi, i **Tour collegati**, che compaiono in fondo all'articolo.
 3. **Immagine di copertina**: una foto della libreria (o una nuova) oppure un'illustrazione. Compare nell'elenco, in cima all'articolo e come anteprima quando il link viene condiviso.
 4. Per ogni lingua che vuoi offrire: **Titolo**, **Riassunto** (una o due frasi: elenco articoli e Google), **Etichette** (separate da virgola) e **Testo**.
-5. Nel testo usa i pulsanti **Grassetto, Corsivo, Titolo, Elenco, Link, Foto** e **Anteprima** per vedere il risultato ([appendice](#21-appendice-formattare-un-testo)).
+5. Nel testo usa i pulsanti **Grassetto, Corsivo, Titolo, Elenco, Link, Foto** e **Anteprima** per vedere il risultato ([appendice](#22-appendice-formattare-un-testo)).
 6. **Crea l'articolo**.
 
 **Lingue.** Un articolo compare **solo nelle lingue in cui hai scritto il titolo**: se scrivi solo l'italiano, in inglese e spagnolo non si vede (e non è nemmeno nelle mappe del sito per quelle lingue).
@@ -785,6 +795,7 @@ Qualche accortezza:
 | `BASE_URL` | indirizzo pubblico del sito (`https://…`), usato nei link delle email |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | pagamenti con carta |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `MAIL_FROM` | spedizione delle email |
+| `SALES_SMTP_HOST`, `SALES_SMTP_PORT`, `SALES_SMTP_USER`, `SALES_SMTP_PASS`, `SALES_SMTP_SECURE` | facoltative: la posta della tua casella `info@…` per le email del Commerciale ([sezione 21](#21-commerciale-cercare-agenzie-e-tour-operator)) |
 | `PEC_SMTP_*`, `SDI_PEC_ADDRESS` | invio delle fatture a SdI dalla tua PEC |
 | `DATA_DIR`, `PORT`, `NODE_ENV`, `TRUST_PROXY` | dove stanno i dati e come gira il server |
 | `BACKUP_DIR`, `BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION`, `BACKUP_S3_ACCESS_KEY`, `BACKUP_S3_SECRET_KEY`, `BACKUP_S3_PREFIX`, `BACKUP_S3_PATH_STYLE` | dove mettere la copia giornaliera fuori dal server ([sezione 17](#copia-giornaliera-fuori-dal-server)); `BACKUP_AUTO`, `BACKUP_HOUR`, `BACKUP_KEEP_DAYS`, `BACKUP_KEEP_MONTHS` sono i valori di partenza di orario e rotazione (si cambiano dal pannello) |
@@ -803,6 +814,8 @@ Le variabili che corrispondono ai campi di **Sito › Impostazioni** (contatti, 
 - **per ricevere**: quasi tutti i registrar offrono l'**inoltro gratuito** (`tours@davidetomio.it` → il tuo indirizzo Posteo), così i clienti scrivono a un indirizzo professionale e leggi tutto in Posteo;
 - **per inviare** le email del sito (conferme, voucher, fatture) con il tuo dominio come mittente serve un servizio di posta che lo permetta: una casella del dominio presso il tuo hosting/registrar, oppure un servizio di invio email (per esempio Brevo, Resend o Mailgun, con piani gratuiti per volumi piccoli). Inserisci i dati SMTP nelle variabili `SMTP_*` e il mittente in `MAIL_FROM=Davide Tomio <tours@davidetomio.it>`, e attiva **SPF e DKIM** del dominio (il servizio ti dice come) altrimenti le email finiscono nello spam.
 Con Posteo come mittente (`MAIL_FROM` con un indirizzo `@posteo.net`) il sito funziona, ma i clienti vedono un indirizzo che non è il tuo dominio.
+
+**Email commerciali da `info@`.** Le presentazioni del [Commerciale](#21-commerciale-cercare-agenzie-e-tour-operator) possono partire da un indirizzo diverso da quello delle conferme: lo scegli dal pannello, in **Commerciale › Email › Da quale indirizzo partono**. Se il servizio con cui parte la posta del sito ha **verificato il tuo dominio**, di solito accetta ogni indirizzo di quel dominio e basta scrivere lì `info@tuodominio.it`. Se invece `info@` è una casella con le sue credenziali SMTP e vuoi che le email partano proprio da lì, scrivile in `SALES_SMTP_*` sul server: le commerciali usano quella posta, le conferme restano come sono.
 
 **Traduzione automatica dei commenti** (facoltativa). Serve una chiave di **DeepL** (piano gratuito: 500.000 caratteri al mese, di solito più che sufficienti) o di **Google Traduttore**: imposta `TRANSLATE_PROVIDER=deepl` (oppure `google`) e `TRANSLATE_API_KEY=…`. Il sito traduce in background **solo i commenti che hai scelto di mostrare** e conserva le traduzioni; se il servizio non risponde riprova dopo un po' e nel frattempo mostra l'originale. I testi dei commenti pubblici vengono inviati al servizio di traduzione che scegli: citalo nella privacy.
 
@@ -906,6 +919,7 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 - [ ] **Incassi dalla banca** (Conti › Fatture › Incassi dalla banca): carica un **estratto conto vero** (il CSV della tua banca) con un paio di bonifici di prova e controlla che le colonne si riconoscano e che ti proponga le fatture giuste; se la tua banca usa un formato che non si legge, serve adattarlo.
 - [ ] **Estratto conto mensile e calendario delle agenzie**: apri l'estratto conto di un'agenzia di prova (area agenzia › Fatture › Estratto conto: PDF e CSV) e decidi se accendere l'email di inizio mese (**Impostazioni › Regole di prenotazione**); controlla che l'indirizzo del **calendario sul telefono** (in fondo a *Prenotazioni*) si aggiunga al tuo calendario.
 - [ ] **Inviti e Partita IVA** (Clienti › Partner): fai una prova con un tuo secondo indirizzo email. In **Inviti** invita quell'indirizzo, apri il collegamento da una finestra privata, registrati e controlla che l'account nasca **approvato** e che ti arrivi l'email con la riga **P.IVA**. Poi apri la scheda di un'agenzia con una Partita IVA **vera** e tocca **Verifica ora**: deve dire *Valida su VIES* (se dice sempre *Non verificata*, il server non raggiunge `ec.europa.eu`: [sezione 19](#19-quando-qualcosa-non-va)). Il collegamento con VIES è stato provato solo con risposte simulate: questa è la prova vera.
+- [ ] **Commerciale** (Commerciale › Modelli ed Email): rileggi i tre modelli nelle lingue che userai davvero e adattali al tuo modo di scrivere (**fai rileggere a un madrelingua** quelli in spagnolo e giapponese); con **Mandami una prova** guarda come arrivano. Poi scrivi una presentazione a un tuo secondo indirizzo, apri in fondo il link *non ricevere più email* (la pagina deve chiedere conferma e, confermando, il contatto diventa *non scrivere*). Scegli da quale indirizzo partono (di solito `info@`, in **Commerciale › Email › Da quale indirizzo partono**) e fai la **prova di invio**; controlla che quel mittente abbia **SPF e DKIM** e **fai confermare** al consulente il testo del piede e l'uso dei contatti commerciali ([sezione 21](#21-commerciale-cercare-agenzie-e-tour-operator)). Tieni basso il tetto giornaliero (di base 15).
 - [ ] **Segnalazione tra agenzie**: entra come agenzia di prova, apri la **Panoramica**, in fondo c'è **Segnala un'agenzia collega**: prova *Copia il collegamento*, apri il link in una finestra privata (deve dire *Ti ha segnalato…*), registrati con un secondo indirizzo e controlla che in **Clienti › Partner** compaia *segnalata da…* e che l'email a te abbia la riga *Segnalata da*.
 - [ ] **Team di un'agenzia** (area agenzia › Team): con un'agenzia di prova invita un tuo secondo indirizzo email, apri il collegamento, scegli la password ed entra: fai una prenotazione e controlla in **Agenda › Prenotazioni** la riga *Prenotata da*; poi **Rimuovi** il collaboratore e verifica che non possa più entrare.
 - [ ] **Preventivi online** (area agenzia › Preventivi): con un'agenzia di prova metti due servizi nel pacchetto, prepara un preventivo e mandalo a un tuo indirizzo; aprilo dall'email (il PDF deve aprirsi e **non deve mai comparire la tariffa dell'agenzia**), accettalo e controlla le email che arrivano a te e all'agenzia; poi *Rimetti i servizi nel pacchetto* e prenota.
@@ -924,7 +938,91 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 - [ ] Imposta la **PEC** sul server se vuoi inviare a SdI da qui; altrimenti caricherai l'XML su *Fatture e Corrispettivi*.
 - [ ] Se avevi usato *Incassi dal*: la data è passata (o il campo è vuoto), quindi controlla che nel pagamento compaia di nuovo **Paga ora online** e fai una prova con Stripe.
 
-## 21. Appendice: formattare un testo
+## 21. Commerciale: cercare agenzie e tour operator
+
+**Commerciale** è il tuo piccolo gestionale per trovare agenzie, tour operator e DMC e portarli a prenotare da te: chi sono, con chi hai parlato, quando richiamare, cosa hai scritto loro, le visite e le videochiamate fissate. Sta nel menu in alto, con quattro schede: **Oggi**, **Contatti**, **Email** e **Modelli**. È collegato all'**Agenda** (gli appuntamenti compaiono lì) e all'**area agenzie** (da un contatto puoi invitare l'agenzia sul sito o creare subito il suo profilo). Nella sandbox ([SIMULAZIONI](SIMULAZIONI.md)) trovi otto agenzie d'esempio per provare tutto senza rischi.
+
+### Il giro, in cinque passi
+1. **Aggiungi i contatti**: uno alla volta oppure incollando un elenco da un foglio di calcolo ([sotto](#aggiungere-contatti)).
+2. **Scrivi la presentazione**: a una sola agenzia, o a molte insieme (vanno in coda e partono da sole, poche al giorno), con il sollecito automatico se non rispondono ([sotto](#le-email-di-presentazione)).
+3. **Registra** ogni telefonata, risposta o incontro nella scheda del contatto, scegliendo **quando ricontattare**.
+4. **Ogni mattina apri Commerciale › Oggi**: ti dice chi richiamare, che appuntamenti hai e cosa è in coda.
+5. Quando un'agenzia è pronta, **invitala sul sito** o **crea il suo profilo** ([sotto](#dal-contatto-allarea-b2b)): da lì lavora nell'area agenzie come ogni altro partner.
+
+### Gli stati di un contatto
+| Stato | Quando |
+|---|---|
+| **Da contattare** | l'hai appena aggiunto |
+| **Contattata** | hai scritto (o chiamato senza risposta): il sito la porta qui da solo |
+| **In dialogo** | c'è stato uno scambio: telefonata fatta, risposta, incontro o videochiamata |
+| **Invitata sul sito** | le hai mandato l'invito all'area agenzie |
+| **Cliente** | ha un profilo B2B **approvato** (lo vede il sito: non devi farlo tu) |
+| **Non interessata** | l'hai segnato tu: non ha più richiami e le email di presentazione in coda si annullano |
+
+Lo stato **avanza da solo e non torna mai indietro** (tranne chi era *Non interessata* e poi ti risponde: torna *In dialogo*). Lo puoi cambiare a mano dalla scheda, o per più contatti insieme dall'elenco.
+
+### Aggiungere contatti
+**Commerciale › Contatti › Aggiungi**. Servono solo il **nome dell'agenzia**; il resto lo riempi quando lo sai: tipo (agenzia, tour operator, DMC, eventi…), paese e città, sito, email e telefono dell'agenzia, il **referente** (nome, ruolo, email, telefono), la **fonte** (dove l'hai trovata: *Fiera BIT*, *Google*, *passaparola*…), la **priorità** e la **lingua delle email**. La lingua si sceglie da sola dal paese e dal sito (un'agenzia `.it` riceve l'italiano, una `.jp` il giapponese; negli altri casi l'inglese): puoi cambiarla. Se c'è già un'agenzia con lo **stesso nome** (senza *S.r.l.* e maiuscole), lo **stesso sito** o lo **stesso indirizzo**, il sito te lo dice e non la raddoppia, a meno che tu scelga **crea comunque un contatto nuovo**.
+
+**Importare un elenco** (**Contatti › Importa**): incolla le righe copiate da Excel o Google Fogli (o da un CSV). La prima riga può avere le intestazioni *Azienda, Tipo, Paese, Città, Sito, Email, Telefono, Referente, Ruolo, Email referente, Telefono referente, Lingua, Fonte, Priorità, Stato, Note* (anche in inglese); senza intestazioni l'ordine è *azienda, referente, email, telefono, sito, paese, città*. Premi **Controlla prima di importare**: vedi riga per riga cosa entra, cosa è già presente (e non si tocca) e cosa non è valido (un'email o un sito scritti male si scartano e te lo dice). Poi **Importa**. Al massimo 1000 righe alla volta; la **fonte** che scrivi vale per le righe che non ne hanno una. **Esporta CSV** scarica tutto in un foglio di calcolo.
+
+**Dove cercare** (idee): gli elenchi dei soci delle associazioni di categoria; gli espositori delle fiere di settore, anche di quelle a cui non vai; le ricerche su Google e Maps per città o per mercato (*tour operator incoming Giappone*, *agenzie viaggi Padova*); LinkedIn; e le agenzie che già lavorano con te, che dall'area agenzie possono **segnalarti un'agenzia collega** ([sezione 14](#segnalazioni-tra-agenzie-passaparola)).
+
+### La scheda di un contatto
+Tocca un contatto nell'elenco. Dall'alto:
+- **Prossima azione**: cosa fare e quando (*Richiamare Anna per il listino, il 12*). Con **+3 giorni, +1 settimana, +2 settimane, +1 mese** la rimandi con un tocco; **Fatto** la toglie.
+- **Registra**: una telefonata, una chiamata senza risposta, una risposta ricevuta, un messaggio (WhatsApp, LinkedIn…), un incontro, una videochiamata o solo una nota. Finisce nel **Registro**, aggiorna *ultimo contatto* e lo stato, e puoi scegliere **quando ricontattare** (e per fare cosa). Un contatto vero **chiude da solo un richiamo già scaduto**; un richiamo fissato più avanti resta com'è.
+- **Dati** (**Modifica i dati**), **Referenti** (più persone per agenzia, con ruolo, email, telefono e lingua; uno è il **principale**; **Scrivi** apre l'email per quella persona), **Profilo B2B sul sito**, **Appuntamenti**, **Email** (quelle scritte da qui, in coda e inviate) e il **Registro** di tutto ciò che è successo.
+- In fondo: **Non scrivere più a questo contatto** e **Cancella il contatto**.
+
+### Oggi: il giro di ogni mattina
+**Commerciale › Oggi** riassume la giornata: i numeri in alto (*Da richiamare*, *Appuntamenti*, *Email in coda*, *Da contattare*), gli **appuntamenti** (anche quelli passati ancora da chiudere: *com'è andata?*), le agenzie **Da richiamare** (*Scaduti*, *Oggi*, *Nei prossimi giorni*, ciascuna con **Registra**, **Scrivi**, i pulsanti per rimandare e **Fatto**) e le agenzie **Da contattare per primi**, in ordine di priorità. Se hai già agenzie registrate sul sito che non sono tra i contatti, un avviso ti permette di **Aggiungile**.
+
+### Appuntamenti e agenda
+**Fissa un appuntamento** (da **Oggi**, dalla scheda del contatto o dall'**Agenda**): *Visita in azienda*, *Videochiamata*, *Telefonata* o *Altro incontro*, con giorno, ore (o *tutto il giorno*, per una trasferta), **dove** (un indirizzo o il collegamento della videochiamata) e note.
+- **Togli queste ore dalle disponibilità del sito**: se spuntato, i clienti non possono prenotare in quella fascia (come per un impegno esterno). È già spuntato per visite, videochiamate e altri incontri, non per una telefonata breve; lo scegli tu caso per caso. Se l'appuntamento si sovrappone a una prenotazione o a un altro impegno, il sito te lo dice.
+- Compare nell'**Agenda** (in blu, nel calendario e nell'elenco; non conta come *servizio* in *Oggi*), nella **Scheda del giorno** (come *Commerciale · Visita in azienda: …*, con referente, telefono e indirizzo) e nel **calendario sul telefono** (l'indirizzo in fondo all'Agenda). Oggi e domani compaiono anche in **Agenda › Da fare**.
+- Quando è passato: **Fatto** (scrivi com'è andata e, se vuoi, quando ricontattare: finisce nel registro e porta il contatto *In dialogo*) oppure **Annulla** (le ore tornano prenotabili). **Modifica** sposta giorno, orario o luogo. Un appuntamento passato non chiuso ti viene ricordato in **Da fare**.
+
+### Le email di presentazione
+**I modelli** (**Commerciale › Modelli**): tre testi, **Presentazione**, **Sollecito** e **Dopo un incontro**, ciascuno in **italiano, inglese, spagnolo e giapponese**. Sono un punto di partenza: modificali come vuoi e **Salva**; **Torna al testo di partenza** annulla le tue modifiche. Nei testi puoi usare dei **segnaposto** tra doppie graffe (`{{saluto}}`, `{{nome}}`, `{{referente}}`, `{{agenzia}}`, `{{guida}}`, `{{firma}}`, `{{link_agenzie}}`, `{{link_registrazione}}`; l'elenco è sulla pagina) che il sito riempie per ogni agenzia; uno scritto male viene **rifiutato** al salvataggio, così non parte mai un'email con un buco. **Mandami una prova** la spedisce a te. I testi in spagnolo e giapponese sono **bozze**: fai rileggere a un madrelingua. In fondo a ogni email il sito aggiunge **sempre**, e non si può togliere, chi scrive (nome, partita IVA e indirizzo dalle **Impostazioni**) e il **link per non ricevere più email**.
+
+**Da quale indirizzo partono.** Di base le presentazioni partono dallo stesso mittente delle conferme di prenotazione: funziona, ma le risposte (e le risposte automatiche di assenza) possono finire a un indirizzo che non leggi, e se le agenzie le segnalano come spam ne soffrono anche le conferme. Meglio un indirizzo tuo, per esempio `info@`: in **Commerciale › Email › Da quale indirizzo partono** scrivi l'**indirizzo mittente**, il **nome mostrato** (di base quello del sito), un eventuale **Rispondi a** (se vuoi che le risposte vadano altrove) e, se vuoi ritrovare nella tua posta ciò che hai mandato insieme alle risposte, una **Copia nascosta a** (il tuo indirizzo). Poi **Salva il mittente** e premi **Invia una prova da qui**: se il server di posta non accetta quel mittente il sito ti scrive il motivo (di solito il mittente non è consentito, oppure mancano SPF e DKIM). Dove sta il passaggio più facile:
+- se il servizio con cui parte la posta del sito ha **verificato il dominio**, basta l'indirizzo, senza altre credenziali;
+- se `info@` è una casella con **le sue credenziali SMTP** (il tuo hosting, Google Workspace…), mettile in `SALES_SMTP_HOST`, `SALES_SMTP_USER` e `SALES_SMTP_PASS` sul server ([sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)): le commerciali usano quella posta, con la sua reputazione, e le conferme restano separate;
+- se `info@` è solo un **inoltro** verso un'altra casella (per esempio Posteo), usalo comunque come mittente: le risposte arrivano nella casella a cui inoltra.
+**Aiuto › Email** mostra, per ogni messaggio, da che indirizzo è partito.
+
+**Scrivere a un contatto** (**Scrivi un'email** nella scheda, o **Scrivi** accanto a un referente): scegli **a chi** (un referente o l'indirizzo dell'agenzia: da qui non si scrive a nessun altro indirizzo), il **modello** e la **lingua**; il testo si prepara già con nome e agenzia e lo puoi cambiare. Poi:
+- **Invia ora**, **Mettila in coda** (parte da sola, vedi sotto) oppure **Programmala per il giorno…**;
+- **Sollecito**: spuntalo e l'email di richiamo parte da sola dopo il numero di giorni che scegli (di base 7), **solo se nel frattempo nulla è cambiato**; ne parte uno solo;
+- **Mandami un'anteprima** la spedisce a te senza toccare il contatto.
+Una volta inviata finisce nel **Registro**, il contatto passa a *Contattata* e il sito fissa il richiamo successivo.
+
+**La presentazione a più agenzie**: in **Contatti** seleziona le agenzie (c'è *Seleziona tutti quelli in questa pagina*; filtra prima per paese, fonte o priorità) e premi **Scrivi la presentazione ai selezionati**. Il sito ti mostra **chi la riceve e in che lingua** (puoi cambiarla riga per riga; chi non ha un indirizzo, non vuole email o ha già una presentazione in coda è escluso e dice perché). Con **Metti in coda** partono da sole.
+
+**La coda** (**Commerciale › Email**): le email in coda partono **dal lunedì al venerdì, dalle 9 alle 17** (ora di Venezia), **una alla volta con una pausa di 4 minuti** e **fino a 15 al giorno**; se la posta non risponde riprova dopo mezz'ora, al massimo tre volte. Dalla stessa pagina le **annulli** una per una, **metti in pausa** tutto l'invio (le email restano in coda) e, in **Come e quando partono**, cambi tetto, orari, pausa, giorni del sollecito e **firma**. **Prima di ogni invio il sito ricontrolla**: se nel frattempo l'agenzia non vuole più email, ha risposto o è diventata cliente, quell'email **salta** (la trovi nello storico con il motivo). Tieni il tetto basso: le presentazioni partono dallo stesso indirizzo delle conferme di prenotazione, e se le agenzie le segnalano come spam anche le conferme possono finire nella posta indesiderata.
+
+**Se rispondono.** Il sito **non legge la tua posta**: le risposte arrivano alla casella del mittente che hai scelto (o, se non ne hai scelto uno, all'indirizzo delle notifiche). Appena rispondono, apri il contatto e **registra** *Ha risposto*: lo stato passa a *In dialogo* e i solleciti automatici non partono più.
+
+**Non scrivere più.** Chi apre il link in fondo a un'email trova una pagina che **chiede conferma** (aprirlo da solo non basta: i programmi di posta che «controllano» i link non cancellano nessuno); confermando, il contatto diventa **non scrivere**: banda rossa nella scheda, nessuna email parte più, quelle in coda si annullano. Il divieto **vale per tutti i suoi indirizzi e resta anche se cancelli il contatto e lo importi di nuovo**. Se è un'agenzia a dirti a voce o per email di non scriverle più, usa **Non scrivere più a questo contatto**; se è lei a ricontattarti e vuole di nuovo le tue email, **Riabilita le email**.
+
+> **Da far confermare.** Scrivere a un'azienda per presentare i propri servizi, il testo del piede (chi sei, perché ricevono l'email, come opporsi) e la conservazione di nomi e indirizzi dei referenti sono questioni di **privacy e comunicazioni commerciali**: il sito ti dà gli strumenti (piede obbligatorio, collegamento per opporsi, elenco di chi non vuole più email, esportazione e cancellazione dei dati), ma **falli confermare dal consulente** prima di partire, insieme all'informativa privacy del sito.
+
+### Dal contatto all'area B2B
+Nella scheda, il riquadro **Profilo B2B sul sito** offre due strade (se l'agenzia ha già un profilo, vedi lo stato, le prenotazioni confermate e il collegamento alla sua scheda partner):
+- **Invia l'invito**: l'agenzia riceve un **collegamento personale** (vale 14 giorni e una volta sola) che apre la registrazione con l'indirizzo già fissato; registrandosi ha l'**account già approvato** ([Invitare un'agenzia](#invitare-unagenzia)). Il contatto passa a *Invitata sul sito* e, appena si registra, a *Cliente*. Un messaggio personale facoltativo compare nell'email.
+- **Crea il profilo adesso**: per chi ti ha detto di sì a voce. Il sito crea subito l'account **approvato** con i dati del contatto; **nessuno conosce la password**: l'agenzia la sceglie da un collegamento (vale **7 giorni**, una volta sola) che il sito le manda per email (lo puoi togliere e copiare tu il collegamento, che si vede **solo in quel momento**). I **dati di fatturazione** li completa lei dalla sua area; finché mancano compaiono in **Agenda › Da fare**. Da subito puoi anche registrarle una prenotazione con **Registra una prenotazione di un'agenzia** (Agenda).
+
+Il collegamento tra contatto e profilo si fa **da solo**: se un'agenzia si registra (dall'invito o da sola) con lo stesso indirizzo di un tuo contatto o di un suo referente, il contatto si aggancia al profilo e diventa *Cliente* (o *In dialogo*, se aspetta la tua approvazione). Nella scheda di un partner (**Clienti › Partner**) trovi **Contatto commerciale** per saltare alla scheda commerciale, oppure **Aggiungi ai contatti commerciali** se non c'è ancora; da **Oggi**, **Aggiungile** porta tra i contatti tutte le agenzie già registrate in un colpo solo.
+
+### Cosa il Commerciale non fa
+- **Non cerca le agenzie da solo** su internet e non legge la tua casella di posta: i contatti li aggiungi (o importi) tu, le risposte le registri tu.
+- **Non allega file** alle email: la presentazione rimanda alla pagina del sito per le agenzie (**Per agenzie**), che è la tua vetrina.
+- **Non scrive sul tuo calendario**: gli appuntamenti arrivano al telefono dal calendario in abbonamento, in sola lettura.
+- I contatti stanno nel database: sono nella **copia di sicurezza** ([sezione 17](#17-backup-e-ripristino)); *Ripristina da una copia › Tutto* li sostituisce con quelli della copia e il controllo che precede il ripristino li conta (*Contatti commerciali*).
+
+## 22. Appendice: formattare un testo
 
 I testi lunghi (descrizione dei tour, articoli, pagine) usano un formato semplice. Sopra il campo trovi i pulsanti: **Grassetto**, **Corsivo**, **Titolo**, **Elenco**, **Link**, **Foto**; **Anteprima** mostra il risultato. Se preferisci scrivere a mano:
 

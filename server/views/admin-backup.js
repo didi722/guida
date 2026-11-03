@@ -120,7 +120,7 @@ ${snapshots.length
 
 const GROUPS = [
   { title: 'Contenuti', note: 'li cambia anche «Solo i contenuti»', rows: [['tours', 'Tour'], ['posts', 'Articoli del blog'], ['pages', 'Pagine'], ['texts', 'Testi modificati'], ['media', 'Immagini']] },
-  { title: 'Prenotazioni e conti', note: 'li cambia solo «Tutto»', rows: [['bookings', 'Prenotazioni'], ['accounts', 'Partner'], ['gifts', 'Buoni regalo'], ['programs', 'Programmi'], ['invoices', 'Fatture emesse'], ['feedback', 'Feedback']] },
+  { title: 'Prenotazioni e conti', note: 'li cambia solo «Tutto»', rows: [['bookings', 'Prenotazioni'], ['accounts', 'Partner'], ['gifts', 'Buoni regalo'], ['programs', 'Programmi'], ['invoices', 'Fatture emesse'], ['feedback', 'Feedback'], ['leads', 'Contatti commerciali']] },
 ];
 const LOST = {
   bookings: ['prenotazione', 'prenotazioni'],
@@ -130,6 +130,7 @@ const LOST = {
   invoices: ['fattura emessa', 'fatture emesse'],
   feedback: ['feedback', 'feedback'],
   promos: ['codice sconto', 'codici sconto'],
+  leads: ['contatto commerciale', 'contatti commerciali'],
 };
 
 export function restorePreviewPage(ctx, { token, data, error = '' }) {

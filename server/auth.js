@@ -17,6 +17,12 @@ export async function verifyPassword(pw, stored) {
   return crypto.timingSafeEqual(hash, expected);
 }
 
+/**
+ * L'impronta della password di un account o di un collaboratore: i collegamenti «scegli la password» la portano con sé e smettono di valere
+ * appena la password cambia (quindi si usano una volta sola).
+ */
+export const passwordFingerprint = (row) => crypto.createHash('sha256').update(row.password_hash).digest('hex').slice(0, 24);
+
 export function parseCookies(header = '') {
   const out = {};
   for (const part of String(header).split(';')) {

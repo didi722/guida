@@ -2,6 +2,8 @@ import { html } from '../html.js';
 import { adminLayout } from './admin.js';
 
 const when = (ms) => new Date(ms).toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'short', timeStyle: 'medium' });
+/** Un mittente come «Nome <indirizzo>» (può essere già un testo, o un oggetto { name, address }). */
+const addr = (f) => (typeof f === 'string' ? f : `${f.name ? `${f.name} ` : ''}<${f.address}>`);
 const size = (a) => {
   const n = Buffer.isBuffer(a.content) ? a.content.length : String(a.content ?? '').length;
   return n > 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`;
@@ -22,6 +24,7 @@ ${live
   : html`<div class="notice notice-err" role="note"><strong>SMTP non configurato: le email non vengono spedite.</strong> Qui vedi quelle che il sito avrebbe inviato (dall'ultimo avvio, al massimo 200): conferme, richieste dei partner, approvazioni, buoni regalo, recensioni, fatture. Per spedirle davvero imposta <code>SMTP_HOST</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code> e <code>MAIL_FROM</code>.</div>`}
 ${messages.length
   ? html`<div class="mail-list">${messages.map((m) => html`<details class="card pad"><summary><strong>${m.subject}</strong><span class="muted small">a ${m.to} · ${when(m.at)}</span></summary>
+    ${m.from ? html`<p class="small muted">Da: ${addr(m.from)}${m.replyTo ? ` · Rispondi a: ${m.replyTo}` : ''}${m.bcc ? ` · Copia nascosta: ${m.bcc}` : ''}${m.via === 'sales' ? ' · posta commerciale' : ''}</p>` : ''}
     <pre class="mail-body">${linkify(m.text, base)}</pre>
     ${m.attachments?.length ? html`<p class="small">Allegati: ${m.attachments.map((a, i) => html`<a href="/admin/mail/${m.id}/attachment/${i}">${a.filename} (${size(a)})</a> `)}</p>` : ''}
   </details>`)}</div>`

@@ -7,6 +7,7 @@ import { createChangeServices } from './changeServices.js';
 import { createGiftServices } from './giftServices.js';
 import { createLimits } from './http.js';
 import { createInvoiceServices } from './invoiceServices.js';
+import { createLeadServices } from './leadServices.js';
 import path from 'node:path';
 import { createMailer } from './mail.js';
 import { createMedia } from './media.js';
@@ -66,5 +67,6 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.restore = createRestoreServices(app);
   app.autoBackup = createAutoBackup(app, { fetchImpl: fetchImpl ?? fetch }); // copia automatica fuori dal server (lavoro periodico)
   app.vat = createVat(app, { fetchImpl: fetchImpl ?? fetch }); // verifica della partita IVA delle agenzie (VIES, lavoro periodico)
+  app.leads = createLeadServices(app); // Commerciale: email di presentazione (coda con tetto giornaliero), inviti e profili B2B dai contatti
   return app;
 }

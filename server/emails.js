@@ -507,6 +507,8 @@ const P = {
     receivedBody: (n) => `Ciao ${n},\nho ricevuto la tua richiesta di accesso all'area partner. La esamino e ti rispondo di norma entro uno o due giorni lavorativi.\n`,
     approvedSubject: 'Il tuo account partner è attivo',
     approvedBody: (n, url) => `Ciao ${n},\nil tuo account partner è stato approvato: da ora puoi accedere, vedere le tariffe riservate e prenotare i servizi per i tuoi clienti.\n\nAccedi qui: ${url}\n`,
+    welcomeSubject: 'Ho creato il tuo account nell’area per le agenzie',
+    welcomeBody: (n, url, days) => `Ciao ${n},\nti ho creato l’account nell’area riservata alle agenzie: puoi già vedere le tariffe riservate e le date libere, e prenotare i servizi per i tuoi clienti. Per entrare scegli la tua password da questo collegamento (vale ${days} giorni e una sola volta):\n\n${url}\n`,
     resetSubject: 'Nuova password per l’area partner',
     resetBody: (n, url) => `Ciao ${n},\nhai chiesto di scegliere una nuova password per l'area partner. Usa questo collegamento (vale un'ora e una sola volta):\n\n${url}\n\nSe non sei stato tu, ignora questa email: la tua password non cambia.\n`,
     sign: 'A presto,',
@@ -516,6 +518,8 @@ const P = {
     receivedBody: (n) => `Hi ${n},\nI have received your request for partner access. I will review it and reply, usually within one or two business days.\n`,
     approvedSubject: 'Your partner account is active',
     approvedBody: (n, url) => `Hi ${n},\nyour partner account has been approved: you can now sign in, see your reserved rates and book services for your clients.\n\nSign in here: ${url}\n`,
+    welcomeSubject: 'I have created your account in the agency area',
+    welcomeBody: (n, url, days) => `Hi ${n},\nI have created your account in the reserved area for agencies: you can already see your reserved rates and free dates, and book services for your clients. To get in, choose your password with this link (valid for ${days} days, one time only):\n\n${url}\n`,
     resetSubject: 'New password for the partner area',
     resetBody: (n, url) => `Hi ${n},\nyou asked to choose a new password for the partner area. Use this link (valid for one hour, one time only):\n\n${url}\n\nIf it was not you, ignore this email: your password stays the same.\n`,
     sign: 'See you soon,',
@@ -525,6 +529,8 @@ const P = {
     receivedBody: (n) => `Hola ${n},\nhe recibido tu solicitud de acceso al área de partners. La reviso y te respondo, normalmente, en uno o dos días hábiles.\n`,
     approvedSubject: 'Tu cuenta de partner está activa',
     approvedBody: (n, url) => `Hola ${n},\ntu cuenta de partner ha sido aprobada: a partir de ahora puedes acceder, consultar las tarifas reservadas y reservar servicios para tus clientes.\n\nAccede aquí: ${url}\n`,
+    welcomeSubject: 'He creado tu cuenta en el área para agencias',
+    welcomeBody: (n, url, days) => `Hola ${n},\nte he creado la cuenta en el área reservada para agencias: ya puedes consultar las tarifas reservadas y las fechas libres, y reservar servicios para tus clientes. Para entrar, elige tu contraseña con este enlace (válido ${days} días y una sola vez):\n\n${url}\n`,
     resetSubject: 'Nueva contraseña para el área de partners',
     resetBody: (n, url) => `Hola ${n},\nhas pedido elegir una nueva contraseña para el área de partners. Usa este enlace (válido una hora y una sola vez):\n\n${url}\n\nSi no has sido tú, ignora este correo: tu contraseña no cambia.\n`,
     sign: 'Hasta pronto,',
@@ -534,6 +540,8 @@ const P = {
     receivedBody: (n) => `${n} 様\nパートナーエリアへのアクセス申請を受け付けました。内容を確認のうえ、通常1〜2営業日以内にご連絡いたします。\n`,
     approvedSubject: 'パートナーアカウントが有効になりました',
     approvedBody: (n, url) => `${n} 様\nパートナーアカウントが承認されました。今後は、ログインして専用料金をご確認いただき、お客様のためのサービスをご予約いただけます。\n\nログインはこちら：${url}\n`,
+    welcomeSubject: '旅行会社様向けエリアのアカウントを作成しました',
+    welcomeBody: (n, url, days) => `${n} 様\n旅行会社様向けの専用エリアにアカウントを作成しました。専用料金や空き日程をご確認いただき、お客様のためのサービスをご予約いただけます。次のリンクからパスワードを設定してください（${days}日間有効・1回のみ）:\n\n${url}\n`,
     resetSubject: 'パートナーエリアの新しいパスワード',
     resetBody: (n, url) => `${n} 様\nパートナーエリアの新しいパスワードの設定が依頼されました。次のリンクをご利用ください（1時間有効・1回のみ）:\n\n${url}\n\nお心当たりがない場合は、このメールを無視してください。パスワードは変更されません。\n`,
     sign: 'どうぞよろしくお願いいたします。',
@@ -719,6 +727,15 @@ export async function sendPartnerApproved(app, a) {
   const tr = P[lang];
   const url = `${app.cfg.baseUrl}/${lang}/b2b/login`;
   await app.mail.send({ to: a.email, subject: tr.approvedSubject, text: `${tr.approvedBody(a.contact_name, url)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
+}
+
+/**
+ * All'agenzia il cui profilo è stato creato dalla guida: il collegamento per scegliere la password (e, scelta, entrare).
+ * @returns {Promise<boolean>} false se l'email non è partita
+ */
+export async function sendPartnerWelcome(app, a, url, days) {
+  const tr = P[normLang(a.lang)];
+  return app.mail.send({ to: a.email, subject: tr.welcomeSubject, text: `${tr.welcomeBody(a.contact_name, url, days)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
 }
 
 export async function sendContactMessage(app, { name, email, message, lang }) {

@@ -89,6 +89,9 @@ export function createConfig(overrides = {}) {
       secure: bool(e.SMTP_SECURE, false),
       from: e.MAIL_FROM || `Davide Tomio <${e.CONTACT_EMAIL || 'info@example.com'}>`,
       notifyTo: e.NOTIFY_EMAIL || e.CONTACT_EMAIL || '',
+      // posta in uscita separata per le email commerciali (Commerciale), facoltativa: vuota = si usa la stessa delle altre email (SMTP_*).
+      // Serve se vuoi farle partire dalla tua casella (info@…) con le sue credenziali: le risposte arrivano lì e la reputazione resta separata da quella delle conferme.
+      sales: { host: e.SALES_SMTP_HOST || '', port: num(e.SALES_SMTP_PORT, 587), user: e.SALES_SMTP_USER || '', pass: e.SALES_SMTP_PASS || '', secure: bool(e.SALES_SMTP_SECURE, false) },
     },
 
     analytics: { umamiId: e.UMAMI_WEBSITE_ID || '', umamiSrc: e.UMAMI_SRC || 'https://cloud.umami.is/script.js' },

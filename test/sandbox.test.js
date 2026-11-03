@@ -41,6 +41,18 @@ test('sandbox: dati d’esempio creati senza errori, sito di prova, partner con 
   assert.match(await admin('/admin/partners?f=pending'), /Rialto Travel/);
   assert.match(await admin('/admin/mail'), /La tua proposta di programma/);
 
+  // Commerciale: contatti d'esempio con un richiamo scaduto, una videochiamata domani, una presentazione in giapponese in coda e due agenzie già sul sito
+  assert.ok(out.includes('Commerciale  http://localhost:'), 'il Commerciale è nel riepilogo');
+  const sales = await admin('/admin/leads/today');
+  assert.match(sales, /Venice Experience Tours/);
+  assert.match(sales, /scaduto da 1 giorno/);
+  assert.match(sales, /Videochiamata · Costa Sol Viajes/);
+  assert.match(await admin('/admin/leads?status=client'), /Lagoon DMC/, 'agganciata al suo profilo B2B');
+  assert.match(await admin('/admin/leads?status=invited'), /Adriatica Viaggi/);
+  assert.match(await admin('/admin/leads?status=lost'), /Nordic Heritage Travel/);
+  assert.match(await admin('/admin/leads/mail'), /ヴェネツィアの公認ガイドのご紹介（Sakura Journeys様）/);
+  assert.match(await admin('/admin/mail'), /Collaborazione|invitare|Ti invitiamo/i, 'l’invito a Adriatica Viaggi è tra le email');
+
   // il partner d'esempio entra con la password indicata e vede il suo listino: prezzo dedicato per Cannaregio, sconto del 15% sul resto
   const pl = await fetch(`${base}/it/b2b/login`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: base }, body: new URLSearchParams({ email: 'giulia@lagoon-dmc.example', password: 'prova-prova-1' }).toString() });
   assert.equal(pl.status, 303);
@@ -84,6 +96,7 @@ test('sandbox esistente creata prima del giro: l’agenzia «al primo accesso» 
   const { DatabaseSync } = await import('node:sqlite');
   const db = new DatabaseSync(path.join(dir, 'guida.sqlite'));
   db.prepare("DELETE FROM accounts WHERE email = 'elena@serenissima-travel.example'").run(); // come una sandbox di prima
+  db.exec('DELETE FROM lead_emails; DELETE FROM lead_activities; DELETE FROM lead_appointments; DELETE FROM lead_contacts; UPDATE partner_invites SET lead_id = NULL; DELETE FROM leads;'); // …senza il Commerciale
   const others = db.prepare('SELECT COUNT(*) AS n FROM accounts').get().n;
   db.close();
 
@@ -91,6 +104,7 @@ test('sandbox esistente creata prima del giro: l’agenzia «al primo accesso» 
   const second = await run(port);
   t.after(() => second.child.kill());
   assert.ok(second.out.includes('Aggiunta alla sandbox esistente'), second.out);
+  assert.match(second.out, /Aggiunti alla sandbox esistente \d+ contatti commerciali d’esempio/, 'anche i contatti commerciali');
   const base = `http://localhost:${port}`;
   const login = await fetch(`${base}/it/b2b/login`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: base }, body: new URLSearchParams({ email: 'elena@serenissima-travel.example', password: 'prova-prova-1' }).toString() });
   assert.equal(login.status, 303, 'ora entra');
@@ -98,5 +112,6 @@ test('sandbox esistente creata prima del giro: l’agenzia «al primo accesso» 
   assert.match(await (await fetch(`${base}/it/b2b/account`, { headers: { cookie } })).text(), /<dialog class="tutorial" id="tutorial"[^>]* data-auto data-mark>/);
   const check = new DatabaseSync(path.join(dir, 'guida.sqlite'), { readOnly: true });
   assert.equal(check.prepare('SELECT COUNT(*) AS n FROM accounts').get().n, others + 1, 'le altre agenzie restano com’erano');
+  assert.ok(check.prepare('SELECT COUNT(*) AS n FROM leads').get().n >= 8, 'i contatti d’esempio ci sono');
   check.close();
 });

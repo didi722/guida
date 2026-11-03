@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import express from 'express';
 import { loadAvailabilityContext, nextAvailableDates, nextDepartures, slotsForDay } from '../availability.js';
 import { BookingError, activeOptionCount, cancellationState, getBookingByRef, slotStillOpen } from '../bookings.js';
@@ -7,7 +6,7 @@ import { onlinePaymentsOpen } from '../opening.js';
 import { hourlyQuote, previewPricing } from '../pricing.js';
 import { getPackage } from '../packages.js';
 import { readSlot } from '../slotParams.js';
-import { hashPassword, signToken, verifyPassword, verifyToken } from '../auth.js';
+import { hashPassword, passwordFingerprint, signToken, verifyPassword, verifyToken } from '../auth.js';
 import { sendContactMessage, sendInviteEmail, sendPartnerApproved, sendPartnerPasswordReset, sendPartnerRegistered, icsFor } from '../emails.js';
 import { createInvite, inviteLink, inviteOffer } from '../invites.js';
 import { isDate, isTime, localToInstant, nowRome } from '../time.js';
@@ -377,7 +376,7 @@ export function publicRouter(app) {
     res.redirect(303, safeNext(req.body.next) || `/${req.lang}/b2b/account`);
   });
   // password dimenticata: un collegamento firmato per email (vale un'ora e smette di valere appena la password cambia)
-  const resetFingerprint = (row) => crypto.createHash('sha256').update(row.password_hash).digest('hex').slice(0, 24);
+  const resetFingerprint = passwordFingerprint;
   /** Chi sta cambiando la password: il titolare o un collaboratore (il collegamento porta `u`), purché la password sia ancora quella di quando è stato scritto. */
   const resetTarget = (token) => {
     const p = verifyToken(cfg.sessionSecret, token);

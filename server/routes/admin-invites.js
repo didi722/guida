@@ -2,7 +2,7 @@
 import express from 'express';
 import { sendPartnerInvite } from '../emails.js';
 import { send } from '../http.js';
-import { InviteError, cancelInvite, createInvite, getInvite, listInvites, markSent, renewInvite } from '../partnerInvites.js';
+import { InviteError, cancelInvite, createInvite, getInvite, inviteUrl, listInvites, markSent, renewInvite } from '../partnerInvites.js';
 import { invitesPage } from '../views/admin-invites.js';
 
 const FLASH = { cancelled: 'Invito annullato: il collegamento non vale più.', gone: 'Quell’invito non si può più rinviare (è già stato usato, annullato, o l’agenzia si è registrata da sola).' };
@@ -16,7 +16,7 @@ export function adminInvitesRouter(app) {
   const { db, cfg } = app;
   const form = express.urlencoded({ extended: false, limit: '8kb' });
   const ctxOf = (req) => ({ app, req });
-  const link = (invite, token) => `${cfg.baseUrl}/${invite.lang}/b2b/invite/${token}`;
+  const link = (invite, token) => inviteUrl(cfg, invite, token);
   const page = (req, res, o = {}, status = 200) => send(res, invitesPage(ctxOf(req), { invites: listInvites(db), flash: FLASH[String(req.query.ok ?? '')] ?? '', error: ERR[String(req.query.err ?? '')] ?? '', ...o }), status);
 
   /** Manda l'email e mostra il collegamento (l'unica volta che si vede). */

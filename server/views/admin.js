@@ -8,6 +8,7 @@ import { dayOfWeek, fmtDate, fmtMonth, monthDates, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
 import { LANG_META, langName, normLang } from '../langs.js';
 import { parseServiceRecord, serviceNote } from '../rates.js';
+import { APPT_LABEL, leadCounts } from '../leads.js';
 import { todoBadge } from '../todo.js';
 import { quoteLines } from './hourly.js';
 import { meetingOf, themeText } from '../choices.js';
@@ -15,6 +16,7 @@ import { meetingOf, themeText } from '../choices.js';
 // Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
 export const ADMIN_GROUPS = [
   { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/todo', 'Da fare'], ['/admin/day', 'Scheda del giorno'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità'], ['/admin/waitlist', 'Lista d’attesa']] },
+  { label: 'Commerciale', items: [['/admin/leads/today', 'Oggi'], ['/admin/leads', 'Contatti'], ['/admin/leads/mail', 'Email'], ['/admin/leads/templates', 'Modelli']] },
   { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
   { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
   { label: 'Sito', items: [['/admin/tours', 'Tour B2C'], ['/admin/tours-b2b', 'Tour B2B'], ['/admin/prices', 'Listino'], ['/admin/rates', 'Tariffe a ore'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/periods', 'Periodi'], ['/admin/settings', 'Impostazioni']] },
@@ -31,6 +33,16 @@ const chipFor = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', option: 'chip
 /** Stato in parole per le liste: un'opzione scaduta non è una prenotazione «scaduta» (non si è pagato nulla), è un'opzione terminata. */
 export const statusLabel = (b) => (b.status === 'expired' && b.option_expires_at ? 'Opzione terminata' : STATUS_IT[b.status]);
 const untilIt = (iso) => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+/** I richiami commerciali di oggi o scaduti, per il numero accanto a «Oggi» (non deve mai rompere una pagina). */
+function leadsDueBadge(app) {
+  try {
+    return leadCounts(app.db).due;
+  } catch (err) {
+    console.error('[commerciale] conteggio non riuscito:', err.message);
+    return 0;
+  }
+}
 
 export function adminLayout(ctx, { title, active, body, flash = '', error = '', scripts = '', styles = [] }) {
   const { app } = ctx;
@@ -50,7 +62,7 @@ export function adminLayout(ctx, { title, active, body, flash = '', error = '', 
 <main class="wrap admin-main">
   ${flash ? html`<div class="notice notice-ok" role="status">${flash}</div>` : ''}
   ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
-  ${group && group.items.length > 1 ? html`<nav class="tabs admin-subnav" aria-label="${group.label}">${group.items.map(([href, label]) => html`<a href="${href}" ${active === href ? raw('aria-current="page"') : ''}>${label}${href === '/admin/todo' && todoBadge(app) ? html` <span class="tab-n">${todoBadge(app)}</span>` : ''}</a>`)}</nav>` : ''}
+  ${group && group.items.length > 1 ? html`<nav class="tabs admin-subnav" aria-label="${group.label}">${group.items.map(([href, label]) => html`<a href="${href}" ${active === href ? raw('aria-current="page"') : ''}>${label}${href === '/admin/todo' && todoBadge(app) ? html` <span class="tab-n">${todoBadge(app)}</span>` : ''}${href === '/admin/leads/today' && leadsDueBadge(app) ? html` <span class="tab-n">${leadsDueBadge(app)}</span>` : ''}</a>`)}</nav>` : ''}
   <h1>${title}</h1>
   ${body}
 </main>
@@ -115,7 +127,15 @@ function blockRow(b) {
       ${b.series ? html`<form method="post" action="/admin/agenda/block/${b.id}/delete" class="inline-form" data-confirm="Togliere dall’agenda tutti i giorni di questo impegno?"><input type="hidden" name="all" value="1"><input type="hidden" name="d" value="${b.date}"><button class="btn btn-outline btn-sm" type="submit">Elimina tutti i giorni</button></form>` : ''}</span>
   </div>`;
 }
-const agendaRow = (ctx, b) => (b.kind === 'program' ? programRow(b) : b.kind === 'block' ? blockRow(b) : bookingRow(ctx, b));
+/** Un appuntamento commerciale (visita in azienda, videochiamata…): porta alla scheda del contatto. */
+function salesRow(a) {
+  return html`<a class="agenda-item agenda-sales" href="/admin/leads/${a.lead_id}">
+    <span class="agenda-time">${allDay(a) ? html`<strong>Tutto</strong><small>il giorno</small>` : html`<strong>${a.start_time}</strong><small>${a.end_time}</small>`}</span>
+    <span class="agenda-main"><strong>${APPT_LABEL[a.apptKind]} · ${a.company}</strong><small>Commerciale${a.contact_name ? ` · ${a.contact_name}` : ''}${a.place ? ` · ${a.place}` : ''}</small></span>
+    <span class="agenda-state"><span class="chip ${a.status === 'done' ? 'chip-done' : 'chip-accent'}">${a.status === 'done' ? 'Fatto' : 'Commerciale'}</span>${a.status === 'planned' ? html`<small>${a.blocks ? 'ore non prenotabili' : 'non toglie ore'}</small>` : ''}</span>
+  </a>`;
+}
+const agendaRow = (ctx, b) => (b.kind === 'program' ? programRow(b) : b.kind === 'block' ? blockRow(b) : b.kind === 'sales' ? salesRow(b) : bookingRow(ctx, b));
 
 function calendarWarning(problems) {
   return problems?.length
@@ -130,7 +150,7 @@ const EV_CLASS = { confirmed: 'ev-ok', held: 'ev-wait', option: 'ev-opt' };
 function agendaCalendar(ctx, cal, today) {
   const { month, prev, next, cells, selected, selectedItems } = cal;
   const href = (m, d = '') => `/admin?v=cal&m=${m}${d ? `&d=${d}` : ''}`;
-  const title = (b) => (b.kind === 'program' ? b.title : b.kind === 'block' ? b.title || b.note || 'Impegno' : ctx.app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug);
+  const title = (b) => (b.kind === 'program' ? b.title : b.kind === 'block' ? b.title || b.note || 'Impegno' : b.kind === 'sales' ? `${APPT_LABEL[b.apptKind]} ${b.company}` : ctx.app.content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug);
   return html`
 <div class="acal-head"><a class="btn btn-sm btn-outline" href="${href(prev)}" aria-label="Mese precedente">←</a><strong class="acal-title">${fmtMonth(month, 'it')}</strong><a class="btn btn-sm btn-outline" href="${href(next)}" aria-label="Mese successivo">→</a>
   ${month !== today.slice(0, 7) || selected !== today ? html`<a class="btn btn-sm btn-outline" href="${href(today.slice(0, 7), today)}">Oggi</a>` : html`<span class="btn btn-sm btn-outline is-ghost" aria-hidden="true">Oggi</span>`}</div>
@@ -138,17 +158,17 @@ function agendaCalendar(ctx, cal, today) {
   ${['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((d) => html`<span class="acal-dow">${d}</span>`)}
   ${cells.map((c) => html`<a class="acal-cell ${c.inMonth ? '' : 'is-other'} ${c.date === today ? 'is-today' : ''} ${c.date === selected ? 'is-selected' : ''} ${c.closed ? 'is-closed' : ''} ${c.items.length ? 'has-items' : ''}" href="${href(month, c.date)}#giorno" aria-label="${fmtDate(c.date, 'it', 'weekday')}${c.closed ? ', chiuso' : ''}: ${c.items.length ? `${c.items.length} ${c.items.length === 1 ? 'servizio' : 'servizi'}` : 'libero'}">
     <span class="acal-n">${Number(c.date.slice(8))}</span>
-    <span class="acal-evs">${c.items.slice(0, 3).map((b) => html`<span class="acal-ev ${b.kind === 'program' ? 'ev-prog' : b.kind === 'block' ? 'ev-priv' : EV_CLASS[b.status] ?? 'ev-ok'}" title="${allDay(b) ? '' : b.start_time + ' '}${title(b)}">${allDay(b) ? '' : b.start_time + ' '}${SHORT(title(b))}</span>`)}${c.items.length > 3 ? html`<span class="acal-more">+${c.items.length - 3}</span>` : ''}</span>
+    <span class="acal-evs">${c.items.slice(0, 3).map((b) => html`<span class="acal-ev ${b.kind === 'program' ? 'ev-prog' : b.kind === 'block' ? 'ev-priv' : b.kind === 'sales' ? 'ev-sales' : EV_CLASS[b.status] ?? 'ev-ok'}" title="${allDay(b) ? '' : b.start_time + ' '}${title(b)}">${allDay(b) ? '' : b.start_time + ' '}${SHORT(title(b))}</span>`)}${c.items.length > 3 ? html`<span class="acal-more">+${c.items.length - 3}</span>` : ''}</span>
     ${c.items.length ? html`<span class="acal-count" aria-hidden="true">${c.items.length}</span>` : ''}
     ${c.closed ? html`<span class="acal-closed">chiuso</span>` : ''}
   </a>`)}
 </div>
-<p class="small muted acal-legend"><span class="legend ev-ok"></span> confermata · <span class="legend ev-opt"></span> opzione (data trattenuta) · <span class="legend ev-wait"></span> in attesa di pagamento · <span class="legend ev-prog"></span> programma di più giorni · <span class="legend ev-priv"></span> impegno fuori dal sito · tocca un giorno per vederlo qui sotto.</p>
+<p class="small muted acal-legend"><span class="legend ev-ok"></span> confermata · <span class="legend ev-opt"></span> opzione (data trattenuta) · <span class="legend ev-wait"></span> in attesa di pagamento · <span class="legend ev-prog"></span> programma di più giorni · <span class="legend ev-priv"></span> impegno fuori dal sito · <span class="legend ev-sales"></span> appuntamento commerciale · tocca un giorno per vederlo qui sotto.</p>
 <section class="agenda-day" id="giorno"><h3>${fmtDate(selected, 'it')}${selected === today ? html` <span class="chip chip-accent">Oggi</span>` : ''}${cells.find((c) => c.date === selected)?.closed ? html` <span class="chip chip-warn">chiuso</span>` : ''}</h3>
   ${selectedItems.length ? html`<div class="card">${selectedItems.map((b) => agendaRow(ctx, b))}</div>` : html`<p class="muted">Nessun servizio in questo giorno.</p>`}</section>`;
 }
 
-export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, invoicesOverdue = 0, waiting = 0, feedUrl, flash, problems, preOpening = null, hiddenFromSearch = false }) {
+export function dashboardPage(ctx, { today, view = 'cal', days = [], calendar = null, pendingPartners, held, options = { n: 0, next: null, requests: 0 }, programs, invoicesDue = 0, invoicesOverdue = 0, waiting = 0, leadsDue = 0, feedUrl, flash, problems, preOpening = null, hiddenFromSearch = false }) {
   const selectedDay = calendar?.selected ?? today;
   const body = html`
 ${calendarWarning(problems)}
@@ -164,6 +184,7 @@ ${invoicesDue ? html`<div class="notice notice-err" role="alert"><strong>${invoi
   <div class="card pad kpi"><span class="muted">Partner da approvare</span><strong>${pendingPartners}</strong><a href="/admin/partners">Apri</a></div>
   <div class="card pad kpi"><span class="muted">Opzioni aperte</span><strong>${options.n}</strong><small>${options.next ? `la prima scade il ${untilIt(options.next)}` : 'date trattenute dalle agenzie'}</small>${options.n ? html`<a href="/admin/bookings?f=options">Apri</a>` : ''}</div>
   <div class="card pad kpi"><span class="muted">Pagamenti in corso</span><strong>${held}</strong><small>slot trattenuti</small></div>
+  <div class="card pad kpi"><span class="muted">Agenzie da richiamare</span><strong>${leadsDue}</strong><small>oggi e scaduti</small><a href="/admin/leads/today">Apri il Commerciale</a></div>
 </div>
 <div class="agenda-head spaced"><h2 class="h-sub">Agenda</h2>
   <nav class="tabs view-tabs" aria-label="Come vedere l’agenda"><a href="/admin?v=cal" ${view === 'cal' ? raw('aria-current="page"') : ''}>Calendario</a><a href="/admin?v=list" ${view === 'list' ? raw('aria-current="page"') : ''}>Elenco, 14 giorni</a></nav></div>
@@ -172,6 +193,8 @@ ${view === 'cal' && calendar
   : days.filter((d) => d.items.length).length
     ? days.filter((d) => d.items.length).map((d) => html`<section class="agenda-day"><h3>${fmtDate(d.date, 'it')}${d.date === today ? html` <span class="chip chip-accent">Oggi</span>` : ''}</h3><div class="card">${d.items.map((b) => agendaRow(ctx, b))}</div></section>`)
     : html`<p class="muted">Nessuna prenotazione nei prossimi 14 giorni.</p>`}
+<h2 class="h-sub spaced" id="commerciale">Una visita o una videochiamata con un’agenzia?</h2>
+<p class="card pad"><a class="btn btn-outline btn-sm" href="/admin/leads/appointment?date=${selectedDay}">Fissa un appuntamento commerciale</a> <span class="muted small">compare qui in agenda e, se vuoi, toglie quelle ore dalle disponibilità del sito. I contatti con le agenzie sono nel <a href="/admin/leads/today">Commerciale</a>.</span></p>
 <h2 class="h-sub spaced" id="privato">Un tour preso fuori dal sito?</h2>
 <p class="card pad"><strong>Lo ha preso un’agenzia?</strong> <a class="btn btn-outline btn-sm" href="/admin/agenda/agency?date=${selectedDay}">Registra una prenotazione di un’agenzia</a> <span class="muted small">con il prezzo concordato: compare nell’agenda e nell’area dell’agenzia, come se l’avesse fatta online.</span></p>
 <form class="card pad form" method="post" action="/admin/agenda/private">

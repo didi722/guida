@@ -69,6 +69,9 @@ export function markUsed(db, id, accountId, nowMs = Date.now()) {
   return db.prepare('UPDATE partner_invites SET used_at = ?, account_id = ? WHERE id = ? AND used_at IS NULL AND cancelled_at IS NULL AND expires_at > ?').run(when, accountId, id, when).changes === 1;
 }
 
+/** Il collegamento personale da mettere nell'email dell'invito (il token si vede solo alla creazione). */
+export const inviteUrl = (cfg, invite, token) => `${cfg.baseUrl}/${invite.lang}/b2b/invite/${token}`;
+
 export const markSent = (db, id, nowMs = Date.now()) => db.prepare('UPDATE partner_invites SET sent_at = ? WHERE id = ?').run(new Date(nowMs).toISOString(), id);
 
 export const getInvite = (db, id) => db.prepare('SELECT * FROM partner_invites WHERE id = ?').get(id) ?? null;

@@ -44,6 +44,8 @@ const { saveFeedback, setFeatured } = await import('../server/reviews.js');
 const { createAdminGift } = await import('../server/gifts.js');
 const { createProgramRequest, saveProposal } = await import('../server/programs.js');
 const { addDays, localToInstant, nowRome } = await import('../server/time.js');
+const Leads = await import('../server/leads.js');
+const LeadMail = await import('../server/leadMail.js');
 
 const { app, server } = createApp();
 
@@ -218,7 +220,49 @@ async function seed() {
   return giftCode;
 }
 
+
+/** Contatti commerciali d'esempio: stati diversi, un richiamo scaduto, un appuntamento domani, una presentazione in coda, due agenzie già registrate sul sito. */
+async function seedLeads() {
+  const { db } = app;
+  const now = Date.now();
+  const today = nowRome(now).date;
+  const d = (n) => addDays(today, n);
+  const at = (days, hour = 10) => new Date(localToInstant(d(days), `${String(hour).padStart(2, '0')}:00`)).toISOString();
+  const add = (fields, contact = null) => {
+    const { value } = Leads.cleanLead(fields);
+    return Leads.insertLead(db, value, { contact: contact ? Leads.cleanContact(contact, { country: value.country }).value : null, nowMs: now });
+  };
+  const log = (lead, kind, title, over = {}) => Leads.logActivity(db, lead.id, { kind, title, nowMs: now, ...over });
+
+  const venice = add({ company: 'Venice Experience Tours', kind: 'operator', country: 'IT', city: 'Milano', website: 'veniceexperience.example', email: 'info@veniceexperience.example', phone: '+39 02 000010', priority: 1, source: 'Ricerca su Google', notes: 'Tour operator con molti gruppi di americani: chiedono guide in inglese.' }, { name: 'Paola Ferri', role: 'Responsabile booking', email: 'paola@veniceexperience.example', phone: '+39 333 000010' });
+  log(venice, 'email_out', 'Collaborazione con Venice Experience Tours · guida abilitata a Venezia', { at: at(-6), body: 'Presentazione mandata a Paola.' });
+  log(venice, 'no_answer', 'Chiamata senza risposta', { at: at(-2, 11), body: 'Squilla a vuoto, riprovare al pomeriggio.' });
+  Leads.setNextAction(db, venice.id, { on: d(-1), text: 'Richiamare Paola per il listino' }, now);
+
+  const sakura = add({ company: 'Sakura Journeys', kind: 'operator', country: 'JP', city: 'Tokyo', website: 'sakura-journeys.example', email: 'info@sakura-journeys.example', priority: 1, source: 'JATA Tourism Expo' }, { name: 'Haruka Tanaka', role: '営業担当', email: 'haruka@sakura-journeys.example' });
+  const costa = add({ company: 'Costa Sol Viajes', kind: 'agency', country: 'ES', city: 'Málaga', website: 'costasolviajes.example', email: 'reservas@costasolviajes.example', priority: 2, source: 'Passaparola' }, { name: 'Carmen Ortega', role: 'Directora', email: 'carmen@costasolviajes.example', phone: '+34 600 000020' });
+  log(costa, 'call', 'Telefonata con Carmen', { at: at(-3, 12), body: 'Interessata a gruppi di 15–20 persone in primavera. Vuole il listino.' });
+  Leads.setNextAction(db, costa.id, { on: today, text: 'Mandarle il listino e fissare una videochiamata' }, now);
+  Leads.addAppointment(db, costa.id, { kind: 'video', date: d(1), start: '11:00', end: '11:45', place: 'https://meet.example/costasol', notes: 'Presentare i servizi per gruppi', contactId: Leads.mainContact(db, costa.id).id }, now);
+  add({ company: 'Alpen Reisen GmbH', kind: 'dmc', country: 'DE', city: 'München', website: 'alpenreisen.example', email: 'info@alpenreisen.example', priority: 3, source: 'Ricerca su Google' });
+  const nordic = add({ company: 'Nordic Heritage Travel', kind: 'agency', country: 'SE', city: 'Stockholm', email: 'hello@nordicheritage.example' }, { name: 'Erik Lund', email: 'erik@nordicheritage.example' });
+  log(nordic, 'reply', 'Ha risposto Erik', { at: at(-9), body: 'Hanno già una guida di fiducia a Venezia: ne riparliamo l’anno prossimo.' });
+  Leads.setStatus(db, nordic.id, 'lost', { nowMs: now, why: 'Hanno già una guida di fiducia.' });
+  Leads.setNextAction(db, nordic.id, { on: d(300), text: 'Riscrivere l’anno prossimo' }, now);
+  const adriatica = add({ company: 'Adriatica Viaggi', kind: 'agency', country: 'IT', city: 'Padova', website: 'adriaticaviaggi.example', email: 'info@adriaticaviaggi.example', source: 'Fiera BIT' }, { name: 'Sergio Manni', role: 'Titolare', email: 'sergio@adriaticaviaggi.example', phone: '+39 049 000030' });
+  await app.leads.invite(adriatica.id, { note: 'Come ci siamo detti in fiera.' }, now);
+  add({ company: 'Lagoon DMC', kind: 'dmc', country: 'IT', city: 'Venezia', email: 'giulia@lagoon-dmc.example', source: 'Cliente' }, { name: 'Giulia Bianchi', email: 'giulia@lagoon-dmc.example', phone: '+39 041 000001' });
+  add({ company: 'Rialto Travel', kind: 'operator', country: 'IT', city: 'Milano', email: 'marco@rialto-travel.example', source: 'Richiesta dal sito' }, { name: 'Marco Verdi', email: 'marco@rialto-travel.example', phone: '+39 041 000003' });
+  Leads.syncAccounts(db, now); // Lagoon DMC diventa «Cliente», Rialto Travel «In dialogo» (aspetta la tua approvazione)
+
+  // una presentazione già in coda, in giapponese, che parte domani
+  const c = LeadMail.composeEmail(app, { lead: Leads.getLead(db, sakura.id), contact: Leads.mainContact(db, sakura.id), template: 'presentation' });
+  LeadMail.queueEmail(db, { leadId: sakura.id, contactId: Leads.mainContact(db, sakura.id).id, to: c.to, template: 'presentation', lang: c.lang, subject: c.subject, body: c.body, sendAfter: localToInstant(d(1), '10:00'), followupDays: 7 }, now);
+  return Leads.leadCounts(db, today).total;
+}
+
 const giftCode = fresh ? await seed() : null;
+let sampleLeads = fresh ? await seedLeads() : 0;
 
 // Una sandbox creata prima del giro dell'area agenzie non ha l'agenzia «al primo accesso»: la si aggiunge, senza toccare il resto.
 if (!fresh && !app.db.prepare("SELECT 1 FROM accounts WHERE email = 'elena@serenissima-travel.example'").get()) {
@@ -232,6 +276,12 @@ if (!fresh && !app.db.prepare("SELECT 1 FROM accounts WHERE email = 'elena@seren
   console.log('Aggiunta alla sandbox esistente l’agenzia «Serenissima Travel» (al primo accesso).');
 }
 
+// Una sandbox creata prima del Commerciale non ha contatti: si aggiungono quelli d'esempio, senza toccare il resto.
+if (!fresh && !app.db.prepare('SELECT 1 FROM leads LIMIT 1').get()) {
+  sampleLeads = await seedLeads();
+  console.log(`Aggiunti alla sandbox esistente ${sampleLeads} contatti commerciali d’esempio.`);
+}
+
 const http = server.listen(Number(PORT), () => {
   console.log(`
 ═══════════════ SITO DI PROVA ═══════════════
@@ -243,6 +293,7 @@ Partner      giulia@lagoon-dmc.example  (approvato: sconto 15%, un prezzo dedica
              luca@bluesail.example      (approvato, condizioni standard, solo carta)
              elena@serenissima-travel.example  (approvata, appena iscritta: al primo accesso vede il giro dell'area, poi lo rivede da «Guida e FAQ»)
              password di tutti: prova-prova-1      (Rialto Travel è "da approvare")
+Commerciale  http://localhost:${PORT}/admin/leads/today   (${sampleLeads ? `${sampleLeads} agenzie d'esempio: un richiamo scaduto, uno per oggi, una videochiamata domani, una presentazione in coda` : 'i contatti li aggiungi tu'})
 Codici       sconto PROVA10${giftCode ? `   ·   buono regalo ${giftCode}` : ''}
 Dati         ${path.relative(ROOT, DIR) || DIR}/   (npm run sandbox -- --reset per ricominciare)
 Ctrl+C per fermare.
