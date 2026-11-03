@@ -729,3 +729,61 @@ test('ripristino: i contatti commerciali compaiono nel controllo prima di sostit
     s.close();
   }
 });
+
+test('Email › Da quale indirizzo partono: si vede da dove partono, si sceglie il mittente, la prova dice se il server lo accetta; il registro di Aiuto › Email mostra il mittente', async () => {
+  const s = await start({ mail: { from: 'Davide Tomio <tours@example.it>', notifyTo: 'guida@example.com' } });
+  try {
+    const page = await text(await s.admin('/admin/leads/mail'));
+    assert.match(page, /<h2>Da quale indirizzo partono<\/h2>/);
+    assert.match(page, /partono da <strong>Davide Tomio &lt;tours@example\.it&gt;<\/strong>; chi risponde scrive a <strong>guida@example\.com<\/strong>/);
+    assert.match(page, /Usano la stessa posta delle conferme di prenotazione/);
+    assert.match(page, /Partono dallo <strong>stesso mittente delle conferme<\/strong>/, 'consiglia un indirizzo proprio');
+    assert.match(page, /name="to" required maxlength="254" value="guida@example\.com"/, 'la prova va di base all’indirizzo delle notifiche');
+    assert.match(page, /SALES_SMTP_HOST/, 'e dice come usare la posta di info@');
+
+    // indirizzi sbagliati: errore chiaro, e il modulo conserva ciò che si era scritto
+    const bad = await s.admin('/admin/leads/mail/sender', form({ fromEmail: 'info@', fromName: 'Davide', replyTo: '', bcc: '' }));
+    assert.equal(bad.status, 400);
+    const badPage = await text(bad);
+    assert.match(badPage, /Indirizzo mittente: scrivi un indirizzo email valido/);
+    assert.match(badPage, /name="fromEmail" maxlength="254" value="info@"/);
+    assert.equal(M.sendSettings(s.app.db).fromEmail, '');
+    assert.equal((await s.admin('/admin/leads/mail/sender', form({ fromName: 'Solo nome' }))).status, 400);
+
+    // il mittente tuo
+    const ok = await s.admin('/admin/leads/mail/sender', form({ fromEmail: 'info@example.it', fromName: 'Davide Tomio', replyTo: '', bcc: 'copia@posteo.example' }));
+    assert.equal(loc(ok), '/admin/leads/mail?ok=sender#mittente');
+    const saved = await text(await s.admin('/admin/leads/mail?ok=sender'));
+    assert.match(saved, /Mittente salvato: da adesso le email commerciali partono da lì/);
+    assert.match(saved, /partono da <strong>Davide Tomio &lt;info@example\.it&gt;<\/strong>; chi risponde scrive allo stesso indirizzo; ne ricevi una copia nascosta a <strong>copia@posteo\.example<\/strong>/);
+    assert.doesNotMatch(saved, /Partono dallo <strong>stesso mittente delle conferme/);
+    assert.match(saved, /name="fromEmail" maxlength="254" value="info@example\.it"/);
+
+    // la prova
+    const test = await s.admin('/admin/leads/mail/sender-test', form({ to: 'guida@example.com' }));
+    assert.equal(loc(test), '/admin/leads/mail?ok=senderTest#mittente');
+    assert.match(await text(await s.admin(loc(test))), /Prova inviata: controlla che sia arrivata/);
+    const m = s.app.mail.sent.at(-1);
+    assert.deepEqual([m.to, m.subject, m.from], ['guida@example.com', 'Prova di invio dal Commerciale', { name: 'Davide Tomio', address: 'info@example.it' }]);
+    assert.equal((await s.admin('/admin/leads/mail/sender-test', form({ to: 'non-un-indirizzo' }))).status, 400);
+
+    // il server non accetta il mittente: si vede il motivo, non un generico «non è partita»
+    const realSend = s.app.mail.send;
+    s.app.mail.send = async () => { s.app.mail.lastError = '553 5.7.1 Sender address rejected: not owned by user'; return false; };
+    const fail = await s.admin('/admin/leads/mail/sender-test', form({ to: 'guida@example.com' }));
+    assert.equal(fail.status, 502);
+    assert.match(await text(fail), /La prova non è partita da Davide Tomio &lt;info@example\.it&gt;\. Il server di posta dice: 553 5\.7\.1 Sender address rejected/);
+    s.app.mail.send = realSend;
+
+    // una presentazione parte da lì (con la copia nascosta), e il registro delle email del sito lo mostra
+    const { id } = await addLead(s, { contact_name: 'Anna Rossi', contact_email: 'anna@lagoon.it' });
+    const sent = await s.admin(`/admin/leads/${id}/mail`, form({ to: 'anna@lagoon.it', contactId: String(L.mainContact(s.app.db, id).id), template: 'presentation', lang: 'it', subject: 'Ciao Anna', body: 'Testo', when: 'now', action: 'send' }));
+    assert.equal(loc(sent), `/admin/leads/${id}?ok=emailSent`);
+    const out = s.app.mail.sent.at(-1);
+    assert.deepEqual([out.to, out.from, out.bcc, out.replyTo], ['anna@lagoon.it', { name: 'Davide Tomio', address: 'info@example.it' }, 'copia@posteo.example', undefined]);
+    const log = await text(await s.admin('/admin/mail'));
+    assert.match(log, /Da: Davide Tomio &lt;info@example\.it&gt; · Copia nascosta: copia@posteo\.example/);
+  } finally {
+    s.close();
+  }
+});

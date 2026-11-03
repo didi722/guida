@@ -79,7 +79,7 @@ export function bulkReviewPage(ctx, { items, settings, ret = '', error = '' }) {
 // ───────────── coda e storico ─────────────
 const STATE = { queued: ['chip-warn', 'In coda'], sent: ['chip-ok', 'Inviata'], failed: ['chip-err', 'Non partita'], cancelled: ['chip-done', 'Annullata'], skipped: ['chip-done', 'Saltata'] };
 
-export function mailPage(ctx, { queue, history, settings, sentToday, flash = '', error = '' }) {
+export function mailPage(ctx, { queue, history, settings, sender, notifyTo = '', sentToday, flash = '', error = '' }) {
   const body = html`
 <div class="kpis">
   <div class="kpi"><span class="kpi-l">In coda</span><strong class="kpi-n">${queue.length}</strong><span class="kpi-s">${settings.paused ? 'invio in pausa' : queue.length ? 'partono da sole' : 'nessuna'}</span></div>
@@ -87,6 +87,27 @@ export function mailPage(ctx, { queue, history, settings, sentToday, flash = '',
   <div class="kpi ${settings.paused ? 'kpi-warn' : ''}"><span class="kpi-l">Invio automatico</span><strong class="kpi-n">${settings.paused ? 'In pausa' : 'Attivo'}</strong>
     <form method="post" action="/admin/leads/mail/${settings.paused ? 'resume' : 'pause'}"><button class="btn btn-sm btn-outline" type="submit">${settings.paused ? 'Riprendi' : 'Metti in pausa'}</button></form></div>
 </div>
+<section class="card pad lead-card" id="mittente"><h2>Da quale indirizzo partono</h2>
+  <p>Adesso le email commerciali partono da <strong>${sender.label}</strong>${sender.replyTo ? html`; chi risponde scrive a <strong>${sender.replyTo}</strong>` : html`; chi risponde scrive allo stesso indirizzo`}${sender.bcc ? html`; ne ricevi una copia nascosta a <strong>${sender.bcc}</strong>` : ''}. ${sender.transport === 'sales' ? 'Usano la loro posta (SALES_SMTP_*), separata dalle conferme.' : 'Usano la stessa posta delle conferme di prenotazione.'}</p>
+  ${sender.own ? '' : html`<div class="notice notice-info" role="note">Partono dallo <strong>stesso mittente delle conferme</strong>: le risposte arrivano a ${sender.replyTo ?? 'chi le legge per quell’indirizzo'} solo se chi scrive usa «Rispondi». Meglio un indirizzo che leggi tu, per esempio <strong>info@</strong> del tuo dominio.</div>`}
+  <form class="form" method="post" action="/admin/leads/mail/sender">
+    <div class="form-grid">
+      <label class="field"><span class="label">Indirizzo mittente <em>(es. info@tuodominio.it)</em></span><input type="email" name="fromEmail" maxlength="254" value="${settings.fromEmail ?? ''}" placeholder="vuoto = lo stesso delle conferme" autocomplete="off"></label>
+      <label class="field"><span class="label">Nome mostrato <em>(vuoto = il nome del sito)</em></span><input name="fromName" maxlength="80" value="${settings.fromName ?? ''}" autocomplete="off"></label>
+      <label class="field"><span class="label">Rispondi a <em>(facoltativo)</em></span><input type="email" name="replyTo" maxlength="254" value="${settings.replyTo ?? ''}" placeholder="vuoto = il mittente" autocomplete="off"></label>
+      <label class="field"><span class="label">Copia nascosta a <em>(facoltativo)</em></span><input type="email" name="bcc" maxlength="254" value="${settings.bcc ?? ''}" placeholder="es. la tua casella, per ritrovarle" autocomplete="off"></label>
+    </div>
+    <details class="lead-more"><summary>Come scegliere</summary>
+      <ul class="info-list">
+        <li>Se il servizio con cui parte la posta del sito ha <strong>verificato il tuo dominio</strong> (per esempio <code>tuodominio.it</code>), di solito accetta ogni indirizzo di quel dominio: scrivi qui <code>info@tuodominio.it</code> e basta.</li>
+        <li>Se <code>info@</code> è una casella con <strong>le sue credenziali SMTP</strong> (il tuo hosting, Google Workspace…) e vuoi che le email partano proprio da lì, mettile in <code>SALES_SMTP_HOST</code>, <code>SALES_SMTP_USER</code> e <code>SALES_SMTP_PASS</code> sul server: le commerciali useranno quella posta e le conferme restano separate (vedi la guida).</li>
+        <li>Se <code>info@</code> è solo un <strong>inoltro</strong> (per esempio verso Posteo), usalo comunque come mittente: le risposte arrivano nella tua casella.</li>
+        <li>L’indirizzo deve avere <strong>SPF e DKIM</strong> in regola presso chi spedisce, altrimenti le email finiscono nello spam. La <strong>copia nascosta</strong> ti fa trovare nella tua posta ciò che hai mandato, insieme alle risposte.</li>
+      </ul></details>
+    <div class="btn-row"><button class="btn btn-gold" type="submit">Salva il mittente</button></div></form>
+  <form class="form lead-b2b" method="post" action="/admin/leads/mail/sender-test"><h3>Prova di invio</h3>
+    <p class="small muted">Manda un messaggio di prova dal mittente scelto. Se non arriva, il server di posta non lo accetta e qui vedi il motivo (di solito: il mittente non è consentito, o SPF/DKIM mancano).</p>
+    <div class="lead-search"><label class="field"><span class="label">A</span><input type="email" name="to" required maxlength="254" value="${notifyTo}" autocomplete="off"></label><button class="btn btn-outline" type="submit">Invia una prova da qui</button></div></form></section>
 <section class="card pad lead-card"><h2>In coda</h2>
 ${queue.length
   ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Parte</th><th>Agenzia</th><th>Oggetto</th><th>Tipo</th><th aria-label="Azioni"></th></tr></thead><tbody>

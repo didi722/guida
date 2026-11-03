@@ -394,3 +394,106 @@ test('profilo B2B creato subito: account approvato, password che non conosce nes
   assert.deepEqual([quiet.sent, typeof quiet.url], [false, 'string']);
   assert.equal(app.mail.sent.filter((m) => m.to === 'd@x.it').length, 0);
 });
+
+// ───────────── da quale indirizzo partono ─────────────
+test('mittente: di base come le conferme (con le risposte all’indirizzo delle notifiche); scelto un indirizzo tuo, le risposte tornano lì; la posta commerciale separata ha la precedenza giusta', (t) => {
+  const app = makeApp({ site: { name: 'Davide Tomio' }, mail: { from: 'Davide Tomio <tours@example.it>', notifyTo: 'notifiche@posteo.example' } });
+  t.after(app.cleanup);
+  const { db } = app;
+  assert.deepEqual(M.senderOf(app), { from: 'Davide Tomio <tours@example.it>', replyTo: 'notifiche@posteo.example', bcc: undefined, transport: 'main', own: false, label: 'Davide Tomio <tours@example.it>' });
+
+  assert.deepEqual(M.saveSender(db, { fromEmail: ' INFO@Example.it ', fromName: 'Davide <Tomio>', replyTo: '', bcc: 'Copia@Posteo.example' }), { ok: true });
+  const own = M.senderOf(app);
+  assert.deepEqual(own.from, { name: 'Davide Tomio', address: 'info@example.it' }, 'il nome ripulito dai caratteri che romperebbero l’intestazione');
+  assert.deepEqual([own.replyTo, own.bcc, own.own, own.transport, own.label], [undefined, 'copia@posteo.example', true, 'main', 'Davide Tomio <info@example.it>'], 'senza «rispondi a» si risponde al mittente');
+  M.saveSender(db, { fromEmail: 'info@example.it', fromName: '', replyTo: 'ufficio@example.it', bcc: '' });
+  assert.deepEqual([M.senderOf(app).from.name, M.senderOf(app).replyTo, M.senderOf(app).bcc], ['Davide Tomio', 'ufficio@example.it', undefined], 'senza nome si usa quello del sito');
+
+  // tornare indietro: tutto vuoto = come le conferme
+  M.saveSender(db, { fromEmail: '', fromName: '', replyTo: '', bcc: '' });
+  assert.equal(M.senderOf(app).own, false);
+
+  // posta commerciale tutta sua: il mittente di base è la sua casella, quello scelto nel pannello vince
+  const sep = makeApp({ mail: { from: 'Davide <tours@example.it>', notifyTo: 'n@x.it', sales: { host: 'smtp.hosting.example', user: 'info@example.it', pass: 'x' } } });
+  t.after(sep.cleanup);
+  assert.deepEqual([M.senderOf(sep).from.address, M.senderOf(sep).transport, M.senderOf(sep).own, M.senderOf(sep).replyTo], ['info@example.it', 'sales', true, undefined]);
+  M.saveSender(sep.db, { fromEmail: 'vendite@example.it' });
+  assert.equal(M.senderOf(sep).from.address, 'vendite@example.it');
+  // un utente che non è un indirizzo (alcuni servizi usano una chiave): serve il pannello, altrimenti si ripiega sul mittente di tutti
+  const key = makeApp({ mail: { from: 'Davide <tours@example.it>', notifyTo: 'n@x.it', sales: { host: 'smtp.api.example', user: 'apikey', pass: 'x' } } });
+  t.after(key.cleanup);
+  assert.deepEqual([M.senderOf(key).from, M.senderOf(key).transport, M.senderOf(key).own, M.senderOf(key).replyTo], ['Davide <tours@example.it>', 'sales', false, 'n@x.it']);
+});
+
+test('mittente: indirizzi validi o vuoti, il nome solo con un indirizzo; salvare il mittente non tocca le altre impostazioni e viceversa', (t) => {
+  const { db, cleanup } = makeApp();
+  t.after(cleanup);
+  settings(db, { dailyCap: '9', signature: 'Firma mia' });
+  M.setPaused(db, true);
+  for (const [k, v] of [['fromEmail', 'senza-chiocciola'], ['replyTo', 'a@b'], ['bcc', 'due@@x.it']]) assert.match(M.saveSender(db, { [k]: v }).error, /indirizzo email valido/, k);
+  assert.match(M.saveSender(db, { fromName: 'Davide' }).error, /Il nome mostrato serve solo insieme all’indirizzo/);
+  assert.equal(M.sendSettings(db).fromEmail, '', 'un salvataggio rifiutato non cambia nulla');
+  assert.deepEqual(M.saveSender(db, { fromEmail: 'info@example.it', fromName: '  Davide   Tomio ' }), { ok: true });
+  const s = M.sendSettings(db);
+  assert.deepEqual([s.fromName, s.dailyCap, s.signature, s.paused], ['Davide Tomio', 9, 'Firma mia', true], 'le altre impostazioni e la pausa restano');
+  settings(db, { dailyCap: '12' });
+  assert.deepEqual([M.sendSettings(db).fromEmail, M.sendSettings(db).dailyCap, M.sendSettings(db).paused], ['info@example.it', 12, true], 'salvare orari e tetto non cancella il mittente');
+  // dati rovinati nel database: stringhe vuote, non errori
+  db.prepare("UPDATE settings SET value = '{\"fromEmail\": 5, \"bcc\": null}' WHERE key = 'lead_send'").run();
+  assert.deepEqual([M.sendSettings(db).fromEmail, M.sendSettings(db).bcc], ['', '']);
+});
+
+test('l’invio parte dal mittente scelto, con le risposte dove vuoi e la copia nascosta (mai a chi è già il destinatario); un errore del server di posta finisce nella nota', async (t) => {
+  const app = makeApp({ mail: { from: 'Davide <tours@example.it>', notifyTo: 'notifiche@posteo.example', sales: { host: 'smtp.hosting.example', user: 'info@example.it', pass: 'x' } } });
+  t.after(app.cleanup);
+  const { db } = app;
+  // (il mailer di prova non apre connessioni: si guarda cosa gli viene chiesto)
+  const calls = [];
+  const real = app.mail.send;
+  app.mail.send = async (msg) => { calls.push(msg); return real({ ...msg, transport: undefined }); };
+  M.saveSender(db, { fromEmail: 'info@example.it', fromName: 'Davide Tomio', replyTo: 'risposte@example.it', bcc: 'copia@posteo.example' });
+  const lead = mk(db, { contact: { name: 'Anna', email: 'anna@lagoon.it' } });
+  const send = (over = {}) => app.leads.write({ leadId: lead.id, contactId: L.mainContact(db, lead.id).id, to: 'anna@lagoon.it', template: 'custom', lang: 'it', subject: 'Ciao', body: 'Testo', mode: 'now', ...over }, NOW);
+  assert.equal((await send()).sent, true);
+  const m = calls.at(-1);
+  assert.deepEqual([m.from, m.replyTo, m.bcc, m.transport], [{ name: 'Davide Tomio', address: 'info@example.it' }, 'risposte@example.it', 'copia@posteo.example', 'sales']);
+  assert.ok(m.headers['List-Unsubscribe'], 'il resto non cambia');
+  // la copia nascosta a chi è già il destinatario non si manda due volte
+  M.saveSender(db, { fromEmail: 'info@example.it', bcc: 'ANNA@lagoon.it' });
+  await send({ template: 'thanks', subject: 'Altro' });
+  assert.equal(calls.at(-1).bcc, undefined);
+
+  // un invio rifiutato dal server: la nota dice perché, e il contatto non cambia
+  const other = mk(db, { company: 'Altra', email: 'altra@x.it' });
+  app.mail.send = async () => { app.mail.lastError = '553 5.7.1 Sender address rejected: not owned by user'; return false; };
+  const bad = await app.leads.write({ leadId: other.id, to: 'altra@x.it', template: 'custom', lang: 'it', subject: 'Ciao', body: 'Testo', mode: 'now' }, NOW);
+  assert.deepEqual([bad.sent, bad.row.status], [false, 'failed']);
+  assert.match(bad.row.note, /^L’email non è partita: controlla la posta in Aiuto › Email e il mittente in Commerciale › Email\. Il server di posta dice: 553 5\.7\.1 Sender address rejected/);
+  assert.equal(L.getLead(db, other.id).status, 'new');
+});
+
+test('anteprima e prova di invio: dal mittente scelto, senza copia nascosta; la prova dice se il server di posta lo accetta', async (t) => {
+  const app = makeApp({ mail: { from: 'Davide <tours@example.it>', notifyTo: 'notifiche@posteo.example' } });
+  t.after(app.cleanup);
+  const { db } = app;
+  const lead = mk(db);
+  // senza un mittente tuo: come prima, le risposte all'indirizzo delle notifiche
+  assert.equal(await app.leads.preview({ lead, lang: 'it', subject: 'Ciao', body: 'Testo' }), true);
+  let m = app.mail.sent.at(-1);
+  assert.deepEqual([m.to, m.from, m.replyTo, m.subject], ['notifiche@posteo.example', 'Davide <tours@example.it>', 'notifiche@posteo.example', '[Anteprima] Ciao']);
+  assert.deepEqual(await app.leads.testSender('me@posteo.example'), { ok: true, from: 'Davide <tours@example.it>' });
+  assert.match(app.mail.sent.at(-1).text, /partono da Davide <tours@example\.it>/);
+
+  M.saveSender(db, { fromEmail: 'info@example.it', bcc: 'copia@posteo.example' });
+  await app.leads.preview({ lead, lang: 'it', subject: 'Ciao', body: 'Testo' });
+  m = app.mail.sent.at(-1);
+  assert.deepEqual([m.from, m.replyTo, m.bcc], [{ name: app.cfg.site.name, address: 'info@example.it' }, 'notifiche@posteo.example', undefined], 'l’anteprima è già per te: niente copia nascosta');
+  const t2 = await app.leads.testSender('me@posteo.example');
+  assert.equal(t2.ok, true);
+  assert.match(app.mail.sent.at(-1).text, /torna a /, 'senza «rispondi a» la risposta torna al mittente');
+
+  app.mail.send = async () => { app.mail.lastError = '535 5.7.8 Authentication failed'; return false; };
+  assert.deepEqual(await app.leads.testSender('me@posteo.example'), { ok: false, from: `${app.cfg.site.name} <info@example.it>`, error: '535 5.7.8 Authentication failed' });
+  app.mail.send = async () => { app.mail.lastError = ''; return false; }; // rifiuta senza dire perché
+  assert.match((await app.leads.testSender('me@posteo.example')).error, /non ha accettato/);
+});

@@ -5,7 +5,7 @@ import { hashPassword, passwordFingerprint, signToken } from './auth.js';
 import { tx } from './db.js';
 import { sendPartnerInvite, sendPartnerWelcome } from './emails.js';
 import { COLD_STATUSES, LeadError, STATUS_LABEL, getContact, getLead, isSuppressed, listContacts, logActivity, setNextAction, setStatus, syncAccounts } from './leads.js';
-import { COLD_TEMPLATES, composeEmail, getEmail, inWindow, lastSentAt, queueEmail, renderOutgoing, sendSettings, sentOn } from './leadMail.js';
+import { COLD_TEMPLATES, composeEmail, getEmail, inWindow, lastSentAt, queueEmail, renderOutgoing, sendSettings, senderOf, sentOn } from './leadMail.js';
 import { normLang } from './langs.js';
 import { InviteError, createInvite, inviteUrl, markSent } from './partnerInvites.js';
 import { emailInUse } from './team.js';
@@ -50,6 +50,12 @@ export function createLeadServices(app) {
     }
   }
 
+  /** I campi d'invio comuni a tutte le email commerciali: da chi partono, dove si risponde, la copia nascosta e da quale posta. */
+  function outgoing(to) {
+    const s = senderOf(app);
+    return { from: s.from, replyTo: s.replyTo, bcc: s.bcc && s.bcc.toLowerCase() !== String(to).toLowerCase() ? s.bcc : undefined, transport: s.transport };
+  }
+
   const svc = {
     /**
      * Spedisce un'email della coda. Se non deve partire (non vuole più email, nel frattempo ha risposto…) la segna come saltata e dice perché.
@@ -70,12 +76,13 @@ export function createLeadServices(app) {
       const out = renderOutgoing(app, { lead, lang: row.lang, subject: row.subject, body: row.body }, nowMs);
       let ok = false;
       try {
-        ok = await app.mail.send({ to: row.to_email, subject: out.subject, text: out.text, html: out.html, headers: out.headers, replyTo: cfg.mail.notifyTo || undefined });
+        ok = await app.mail.send({ to: row.to_email, subject: out.subject, text: out.text, html: out.html, headers: out.headers, ...outgoing(row.to_email) });
       } catch (err) {
         console.error('[commerciale] invio non riuscito:', err.message);
       }
       if (!ok) {
-        if (!retry || row.attempts + 1 >= MAX_ATTEMPTS) db.prepare("UPDATE lead_emails SET status = 'failed', sent_at = NULL, note = ? WHERE id = ?").run('L’email non è partita: controlla la posta in Aiuto › Email.', id);
+        const why = app.mail.lastError ? ` Il server di posta dice: ${app.mail.lastError}` : '';
+        if (!retry || row.attempts + 1 >= MAX_ATTEMPTS) db.prepare("UPDATE lead_emails SET status = 'failed', sent_at = NULL, note = ? WHERE id = ?").run(`L’email non è partita: controlla la posta in Aiuto › Email e il mittente in Commerciale › Email.${why}`.slice(0, 400), id);
         else db.prepare("UPDATE lead_emails SET status = 'queued', sent_at = NULL, send_after = ? WHERE id = ?").run(iso(nowMs + RETRY_MS), id);
         return { sent: false, failed: true };
       }
@@ -100,7 +107,18 @@ export function createLeadServices(app) {
       const to = cfg.mail.notifyTo;
       if (!to) return false;
       const out = renderOutgoing(app, { lead, lang, subject, body, preview: true }, nowMs);
-      return (await app.mail.send({ to, subject: `[Anteprima] ${out.subject}`, text: out.text, html: out.html, replyTo: to })) !== false;
+      const { bcc, ...sender } = outgoing(to); // l'anteprima è già per te: niente copia nascosta
+      return (await app.mail.send({ to, subject: `[Anteprima] ${out.subject}`, text: out.text, html: out.html, ...sender, replyTo: sender.replyTo ?? to })) !== false;
+    },
+
+    /**
+     * Una prova di invio dal mittente scelto (senza toccare nessun contatto): serve a controllare che il server di posta lo accetti.
+     * @returns {Promise<{ ok: boolean, error?: string, from: string }>}
+     */
+    async testSender(to) {
+      const sender = senderOf(app);
+      const ok = (await app.mail.send({ to, subject: 'Prova di invio dal Commerciale', text: `Questa è una prova: se leggi questo messaggio, le email commerciali di ${cfg.site.name} partono da ${sender.label}.\n\nSe rispondi, la risposta ${sender.replyTo ? `va a ${sender.replyTo}` : `torna a ${sender.label}`}.\n`, ...outgoing(to) })) !== false;
+      return { ok, from: sender.label, ...(ok ? {} : { error: app.mail.lastError || 'il server di posta non ha accettato il messaggio' }) };
     },
 
     /** Lavoro periodico: manda l'email che tocca, se siamo dentro la finestra, sotto il tetto del giorno e dopo la pausa dall'ultima. @returns {Promise<number>} quante ne ha spedite */

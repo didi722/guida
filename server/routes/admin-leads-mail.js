@@ -3,7 +3,8 @@ import express from 'express';
 import { send } from '../http.js';
 import { normLang, LANGS } from '../langs.js';
 import { LeadError, getContact, getLead, recipients } from '../leads.js';
-import { TEMPLATE_KEYS, cancelEmail, composeEmail, fillTemplate, queuedEmails, recentEmails, saveSendSettings, saveTemplate, sendSettings, sentOn, setPaused, templates, unknownVariables, variablesFor } from '../leadMail.js';
+import { TEMPLATE_KEYS, cancelEmail, composeEmail, fillTemplate, queuedEmails, recentEmails, saveSendSettings, saveSender, saveTemplate, sendSettings, senderOf, sentOn, setPaused, templates, unknownVariables, variablesFor } from '../leadMail.js';
+import { isEmail } from '../util.js';
 import { localToInstant, nowRome, isDate } from '../time.js';
 import { cleanText } from '../util.js';
 import { composePage, mailPage, templatesPage } from '../views/admin-leads-mail.js';
@@ -17,6 +18,8 @@ const FLASH = {
   paused: 'Invio automatico in pausa: le email restano in coda.',
   resumed: 'Invio automatico ripreso.',
   settings: 'Impostazioni salvate.',
+  sender: 'Mittente salvato: da adesso le email commerciali partono da lì. Fai una prova di invio per esserne sicuro.',
+  senderTest: 'Prova inviata: controlla che sia arrivata e da quale indirizzo.',
   saved: 'Modello salvato.',
   reset: 'Tornato al testo di partenza.',
   test: 'Prova inviata al tuo indirizzo.',
@@ -51,9 +54,13 @@ export function adminLeadsMailRouter(app) {
   };
 
   // ───── coda e storico ─────
-  r.get('/leads/mail', (req, res) => {
-    send(res, mailPage(ctxOf(req), { queue: queuedEmails(db), history: recentEmails(db, 100), settings: sendSettings(db), sentToday: sentOn(db, nowRome().date), flash: flash(req), error: ERR[String(req.query.err ?? '')] ?? '' }));
-  });
+  /** La pagina Email: coda, storico, mittente e impostazioni. `over` porta ciò che si stava scrivendo in un modulo rifiutato. */
+  const mailView = (req, res, { error = '', settings = {}, status = 200 } = {}) =>
+    send(res, mailPage(ctxOf(req), {
+      queue: queuedEmails(db), history: recentEmails(db, 100), settings: { ...sendSettings(db), ...settings }, sender: senderOf(app), notifyTo: app.cfg.mail.notifyTo, sentToday: sentOn(db, nowRome().date),
+      flash: error ? '' : flash(req), error,
+    }), status);
+  r.get('/leads/mail', (req, res) => mailView(req, res, { error: ERR[String(req.query.err ?? '')] ?? '' }));
   r.post('/leads/mail/pause', form, (req, res) => {
     setPaused(db, true);
     res.redirect(303, '/admin/leads/mail?ok=paused');
@@ -64,8 +71,21 @@ export function adminLeadsMailRouter(app) {
   });
   r.post('/leads/mail/settings', form, (req, res) => {
     const out = saveSendSettings(db, req.body);
-    if (out.error) return send(res, mailPage(ctxOf(req), { queue: queuedEmails(db), history: recentEmails(db, 100), settings: { ...sendSettings(db), ...req.body, signature: String(req.body.signature ?? '') }, sentToday: sentOn(db, nowRome().date), error: out.error }), 400);
+    if (out.error) return mailView(req, res, { error: out.error, settings: { ...req.body, signature: String(req.body.signature ?? '') }, status: 400 });
     res.redirect(303, '/admin/leads/mail?ok=settings');
+  });
+  // da quale indirizzo partono le email commerciali, e una prova per vedere che il server di posta lo accetti
+  r.post('/leads/mail/sender', form, (req, res) => {
+    const out = saveSender(db, req.body);
+    if (out.error) return mailView(req, res, { error: out.error, settings: { fromEmail: req.body.fromEmail, fromName: req.body.fromName, replyTo: req.body.replyTo, bcc: req.body.bcc }, status: 400 });
+    res.redirect(303, '/admin/leads/mail?ok=sender#mittente');
+  });
+  r.post('/leads/mail/sender-test', form, async (req, res) => {
+    const to = cleanText(req.body.to, 254).toLowerCase();
+    if (!isEmail(to)) return mailView(req, res, { error: 'Scrivi un indirizzo email valido a cui mandare la prova.', status: 400 });
+    const out = await app.leads.testSender(to);
+    if (!out.ok) return mailView(req, res, { error: `La prova non è partita da ${out.from}. Il server di posta dice: ${out.error}`, status: 502 });
+    res.redirect(303, '/admin/leads/mail?ok=senderTest#mittente');
   });
   r.post('/leads/mail/:id/cancel', form, (req, res) => {
     cancelEmail(db, Number(req.params.id));

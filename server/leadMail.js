@@ -236,11 +236,17 @@ export const SEND_DEFAULTS = {
   followUpDays: 7, // tra quanti giorni parte il sollecito
   autoFollowUp: true, // proposto già spuntato quando scrivi una presentazione
   signature: '', // vuota = la firma si compone dai dati del sito
+  // da quale indirizzo partono le email commerciali (vuoto = lo stesso delle conferme di prenotazione, MAIL_FROM)
+  fromEmail: '',
+  fromName: '', // vuoto = il nome del sito
+  replyTo: '', // vuoto = chi risponde scrive al mittente (se l'hai scelto tu) o all'indirizzo delle notifiche
+  bcc: '', // ogni email commerciale arriva in copia nascosta anche qui (per ritrovarla nella tua posta, con le risposte)
 };
 const SEND_LIMITS = { dailyCap: [1, 100], fromHour: [0, 23], toHour: [1, 24], minGapMin: [1, 120], followUpDays: [2, 60] };
 
 export function sendSettings(db) {
   const s = { ...SEND_DEFAULTS, ...(getSetting(db, 'lead_send', {}) ?? {}) };
+  for (const k of ['fromEmail', 'fromName', 'replyTo', 'bcc', 'signature']) if (typeof s[k] !== 'string') s[k] = '';
   for (const [k, [min, max]] of Object.entries(SEND_LIMITS)) s[k] = Number.isInteger(s[k]) && s[k] >= min && s[k] <= max ? s[k] : SEND_DEFAULTS[k];
   if (s.toHour <= s.fromHour) Object.assign(s, { fromHour: SEND_DEFAULTS.fromHour, toHour: SEND_DEFAULTS.toHour });
   return s;
@@ -261,6 +267,45 @@ export function saveSendSettings(db, input) {
   return { ok: true };
 }
 export const SEND_LABEL = { dailyCap: 'Email al giorno', fromHour: 'Dalle ore', toHour: 'Alle ore', minGapMin: 'Pausa tra un invio e l’altro', followUpDays: 'Giorni prima del sollecito' };
+
+const ADDRESS_LABEL = { fromEmail: 'Indirizzo mittente', replyTo: 'Rispondi a', bcc: 'Copia nascosta a' };
+/**
+ * Salva il mittente delle email commerciali dal modulo. Gli indirizzi vuoti si tolgono; scritti, devono essere validi.
+ * @returns {{ ok: true } | { error: string }}
+ */
+export function saveSender(db, input) {
+  const next = {};
+  for (const [k, label] of Object.entries(ADDRESS_LABEL)) {
+    const v = cleanText(input[k], 254).toLowerCase();
+    if (v && !isEmail(v)) return { error: `${label}: scrivi un indirizzo email valido (o lascia vuoto).` };
+    next[k] = v;
+  }
+  next.fromName = cleanText(input.fromName, 80).replace(/[<>"]/g, '').replace(/\s+/g, ' ');
+  if (next.fromName && !next.fromEmail) return { error: 'Il nome mostrato serve solo insieme all’indirizzo mittente.' };
+  setSetting(db, 'lead_send', { ...getSetting(db, 'lead_send', {}), ...sendSettings(db), ...next });
+  return { ok: true };
+}
+
+/**
+ * Da chi partono le email commerciali e a chi rispondono. Di base come tutte le altre (MAIL_FROM, risposte all'indirizzo delle notifiche);
+ * se hai scelto un mittente tuo (o hai dato alla posta commerciale le credenziali di una casella: SALES_SMTP_*) partono da lì e le risposte tornano lì.
+ * @returns {{ from: string|{name: string, address: string}, replyTo: string|undefined, bcc: string|undefined, transport: 'sales'|'main', own: boolean, label: string }}
+ */
+export function senderOf(app) {
+  const s = sendSettings(app.db);
+  const { site, mail } = app.cfg;
+  const separate = !!mail.sales?.host;
+  const own = s.fromEmail || (separate && isEmail(mail.sales.user) ? mail.sales.user : '');
+  const from = own ? { name: s.fromName || site.name, address: own } : mail.from;
+  return {
+    from,
+    replyTo: s.replyTo || (own ? undefined : mail.notifyTo || undefined),
+    bcc: s.bcc || undefined,
+    transport: separate ? 'sales' : 'main',
+    own: !!own,
+    label: own ? `${s.fromName || site.name} <${own}>` : mail.from,
+  };
+}
 
 export function setPaused(db, paused) {
   setSetting(db, 'lead_send', { ...getSetting(db, 'lead_send', {}), ...sendSettings(db), paused: !!paused });
