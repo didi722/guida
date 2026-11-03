@@ -720,6 +720,120 @@ ALTER TABLE accounts ADD COLUMN referred_by INTEGER REFERENCES accounts(id);
 CREATE UNIQUE INDEX idx_accounts_ref_code ON accounts(ref_code) WHERE ref_code IS NOT NULL;
 `;
 
+const V38_LEADS = `
+-- Commerciale: agenzie e tour operator da conquistare («contatti»), i loro referenti, il registro di ciò che è successo, gli appuntamenti
+-- (compaiono in agenda e, se vuoi, tolgono le ore dalle disponibilità), la coda delle email di presentazione e gli indirizzi che non
+-- vogliono più riceverne.
+CREATE TABLE leads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  company TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'agency',        -- agency | operator | dmc | events | other
+  status TEXT NOT NULL DEFAULT 'new',         -- new | contacted | talking | invited | client | lost
+  priority INTEGER NOT NULL DEFAULT 2,        -- 1 alta · 2 media · 3 bassa
+  source TEXT,                                -- dove l'ho trovata (fiera, ricerca, passaparola…)
+  website TEXT,
+  email TEXT COLLATE NOCASE,                  -- indirizzo generale dell'agenzia (info@…)
+  phone TEXT,
+  country TEXT,                               -- sigla ISO
+  city TEXT,
+  lang TEXT NOT NULL DEFAULT 'it',            -- lingua delle email
+  notes TEXT,
+  next_action TEXT,                           -- cosa fare la prossima volta…
+  next_action_on TEXT,                        -- …e quando (data)
+  last_contact_on TEXT,                       -- l'ultima volta che ci siamo sentiti (data)
+  email_ok INTEGER NOT NULL DEFAULT 1,        -- 0 = non scrivere più (ha chiesto di non ricevere email)
+  optout_at TEXT,
+  account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,   -- il profilo B2B, se c'è
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX leads_status ON leads(status);
+CREATE INDEX leads_next ON leads(next_action_on);
+CREATE INDEX leads_account ON leads(account_id);
+CREATE INDEX leads_email ON leads(email);
+
+-- Le persone con cui si parla in un'agenzia
+CREATE TABLE lead_contacts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  role TEXT,
+  email TEXT COLLATE NOCASE,
+  phone TEXT,
+  lang TEXT,                                  -- vuota = la lingua dell'agenzia
+  notes TEXT,
+  is_main INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX lead_contacts_lead ON lead_contacts(lead_id);
+CREATE INDEX lead_contacts_email ON lead_contacts(email);
+
+-- Il registro: chiamate, email, incontri, note e ciò che il sito fa da solo (cambi di stato, inviti, profilo creato)
+CREATE TABLE lead_activities (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  contact_id INTEGER REFERENCES lead_contacts(id) ON DELETE SET NULL,
+  kind TEXT NOT NULL,
+  title TEXT,
+  body TEXT,
+  at TEXT NOT NULL,                           -- quando è successo (istante)
+  created_at TEXT NOT NULL
+);
+CREATE INDEX lead_activities_lead ON lead_activities(lead_id, at);
+
+-- Visite in azienda, videochiamate, telefonate fissate: stanno in agenda; con blocks = 1 le loro ore non sono prenotabili dal sito
+CREATE TABLE lead_appointments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  contact_id INTEGER REFERENCES lead_contacts(id) ON DELETE SET NULL,
+  kind TEXT NOT NULL,                         -- visit | video | call | other
+  date TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  end_time TEXT NOT NULL,
+  place TEXT,                                 -- indirizzo, oppure il collegamento della videochiamata
+  notes TEXT,
+  blocks INTEGER NOT NULL DEFAULT 1,
+  status TEXT NOT NULL DEFAULT 'planned',     -- planned | done | cancelled
+  outcome TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX lead_appointments_date ON lead_appointments(date);
+CREATE INDEX lead_appointments_lead ON lead_appointments(lead_id);
+
+-- Le email di presentazione e di sollecito: messe in coda (partono da sole, con un tetto al giorno) o già partite
+CREATE TABLE lead_emails (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  contact_id INTEGER REFERENCES lead_contacts(id) ON DELETE SET NULL,
+  to_email TEXT NOT NULL COLLATE NOCASE,
+  template TEXT NOT NULL,                     -- presentation | followup | thanks | custom
+  lang TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  body TEXT NOT NULL,                         -- il testo com'è stato approvato, senza il piede con il link di disiscrizione
+  send_after TEXT NOT NULL,                   -- non prima di (istante)
+  only_if_quiet INTEGER NOT NULL DEFAULT 0,   -- sollecito: parte solo se nel frattempo non è successo nulla
+  followup_days INTEGER,                      -- dopo l'invio, metti in coda un sollecito tra N giorni (vuoto = nessuno)
+  status TEXT NOT NULL DEFAULT 'queued',      -- queued | sent | failed | cancelled | skipped
+  attempts INTEGER NOT NULL DEFAULT 0,
+  note TEXT,                                  -- perché è stata saltata o non è partita
+  sent_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX lead_emails_state ON lead_emails(status, send_after);
+CREATE INDEX lead_emails_lead ON lead_emails(lead_id);
+CREATE INDEX lead_emails_sent ON lead_emails(sent_at);
+
+-- Chi ha chiesto di non ricevere più email di presentazione: vale anche se il contatto viene cancellato e poi importato di nuovo
+CREATE TABLE email_optouts (
+  email TEXT PRIMARY KEY COLLATE NOCASE,
+  at TEXT NOT NULL,
+  source TEXT
+);
+
+-- Un invito mandato da un contatto commerciale ricorda da quale
+ALTER TABLE partner_invites ADD COLUMN lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL;
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -791,6 +905,8 @@ export const MIGRATIONS = [
   V36_TUTORIAL,
   // v37 — segnalazione tra agenzie
   V37_REFERRAL,
+  // v38 — Commerciale: contatti con agenzie, referenti, registro, appuntamenti, coda delle email
+  V38_LEADS,
 ];
 
 export function migrate(db) {

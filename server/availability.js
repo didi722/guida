@@ -40,6 +40,8 @@ export function loadAvailabilityContext(db, cfg, fromDate, toDate, nowMs, { igno
   const blocks = groupBy(
     [
       ...db.prepare('SELECT date, start_time, end_time FROM blocks WHERE date BETWEEN ? AND ?').all(fromDate, toDate),
+      // appuntamenti commerciali (visite, videochiamate…) fissati con l'opzione «togli queste ore dalle disponibilità»
+      ...db.prepare("SELECT date, start_time, end_time FROM lead_appointments WHERE status = 'planned' AND blocks = 1 AND date BETWEEN ? AND ?").all(fromDate, toDate),
       // impegni letti dai calendari esterni (solo sorgenti attive)
       ...db
         .prepare(`SELECT e.date, e.start_time, e.end_time FROM external_busy e JOIN calendar_sources s ON s.id = e.source_id WHERE s.enabled = 1 AND e.date BETWEEN ? AND ?`)

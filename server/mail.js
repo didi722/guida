@@ -22,10 +22,10 @@ export function createMailer(cfg) {
   return {
     sent,
     live: !!transport,
-    async send({ to, subject, text, html, replyTo, attachments }) {
+    async send({ to, subject, text, html, replyTo, attachments, headers }) {
       if (!to) return false;
-      const msg = { from: cfg.mail.from, to, subject, text, html, replyTo, attachments };
-      sent.push({ id: ++seq, at: Date.now(), to, subject, text, html, replyTo, attachments });
+      const msg = { from: cfg.mail.from, to, subject, text, html, replyTo, attachments, headers };
+      sent.push({ id: ++seq, at: Date.now(), to, subject, text, html, replyTo, attachments, headers });
       if (sent.length > 200) sent.shift();
       try {
         if (transport) {
