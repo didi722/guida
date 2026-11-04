@@ -111,7 +111,7 @@ export function mailPage(ctx, { queue, history, settings, sender, notifyTo = '',
 <section class="card pad lead-card"><h2>In coda</h2>
 ${queue.length
   ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Parte</th><th>Agenzia</th><th>Oggetto</th><th>Tipo</th><th aria-label="Azioni"></th></tr></thead><tbody>
-  ${queue.map((e) => html`<tr><td>${when(e.send_after)}</td><td><a href="/admin/leads/${e.lead_id}">${e.company}</a><br><small class="muted">${e.to_email}</small></td><td>${e.subject}</td>
+  ${queue.map((e) => html`<tr><td>${e.eta ? html`circa ${when(e.eta)}` : settings.paused ? 'in pausa' : when(e.send_after)}</td><td><a href="/admin/leads/${e.lead_id}">${e.company}</a><br><small class="muted">${e.to_email}</small></td><td>${e.subject}</td>
     <td>${TEMPLATE_LABEL[e.template] ?? e.template}${e.only_if_quiet ? html`<br><small class="muted">solo se non risponde</small>` : ''}</td>
     <td class="actions"><form method="post" action="/admin/leads/mail/${e.id}/cancel"><button class="btn btn-sm btn-outline" type="submit">Annulla</button></form></td></tr>`)}</tbody></table></div>
   <p class="small muted">Partono da sole dal lunedì al venerdì, dalle ${settings.fromHour} alle ${settings.toHour} (ora di Venezia), una alla volta con una pausa di ${settings.minGapMin} minuti, fino a ${settings.dailyCap} al giorno. Prima di ogni invio il sito ricontrolla: se l’agenzia non vuole email, ha risposto o è diventata cliente, quella email salta.</p>`

@@ -5,7 +5,7 @@ import { getSetting, setSetting } from './db.js';
 import { esc } from './html.js';
 import { LANGS, normLang, pick } from './langs.js';
 import { LeadError, firstName, getLead, isSuppressed } from './leads.js';
-import { addDays, dayOfWeek, localToInstant } from './time.js';
+import { addDays, dayOfWeek, localToInstant, nowRome } from './time.js';
 import { cleanText, isEmail } from './util.js';
 
 export const TEMPLATE_KEYS = ['presentation', 'followup', 'thanks'];
@@ -491,6 +491,40 @@ export const sentOn = (db, date) => {
   return Number(db.prepare("SELECT COUNT(*) AS n FROM lead_emails WHERE status = 'sent' AND sent_at >= ? AND sent_at < ?").get(from, to).n);
 };
 export const lastSentAt = (db) => db.prepare("SELECT MAX(sent_at) AS at FROM lead_emails WHERE status = 'sent'").get().at ?? null;
+
+/**
+ * Quando partirà, più o meno, ciascuna email in coda (nell'ordine della coda): una alla volta, con la pausa scelta, solo nella finestra dei giorni
+ * lavorativi e sotto il tetto del giorno. È una stima: se la coda cambia, cambiano gli orari. `null` se l'invio è in pausa o non si trova un orario.
+ * @returns {(number|null)[]} istanti in millisecondi, uno per email
+ */
+export function estimateSendTimes(db, queue, nowMs = Date.now()) {
+  const s = sendSettings(db);
+  if (s.paused) return queue.map(() => null);
+  const gap = s.minGapMin * 60_000;
+  const last = lastSentAt(db);
+  const start = `${String(s.fromHour).padStart(2, '0')}:00`;
+  const used = new Map(); // giorno → quante ne sono già partite o previste
+  let cursor = Math.max(nowMs, last ? Date.parse(last) + gap : 0);
+  return queue.map((e) => {
+    let t = Math.max(cursor, Date.parse(e.send_after) || 0);
+    for (let i = 0; i < 90; i++) {
+      const rome = nowRome(t);
+      if (!used.has(rome.date)) used.set(rome.date, sentOn(db, rome.date));
+      const dow = dayOfWeek(rome.date);
+      const minutes = Number(rome.time.slice(0, 2)) * 60 + Number(rome.time.slice(3));
+      const nextDay = () => localToInstant(addDays(rome.date, 1), start);
+      if (dow === 0 || dow === 6) t = nextDay();
+      else if (minutes < s.fromHour * 60) t = localToInstant(rome.date, start);
+      else if (minutes >= s.toHour * 60 || used.get(rome.date) >= s.dailyCap) t = nextDay();
+      else {
+        used.set(rome.date, used.get(rome.date) + 1);
+        cursor = t + gap;
+        return t;
+      }
+    }
+    return null;
+  });
+}
 
 /** Adesso è un momento in cui la coda può partire? (lunedì–venerdì, dentro la finestra scelta; ora di Venezia) */
 export function inWindow(s, rome) {
