@@ -497,3 +497,24 @@ test('anteprima e prova di invio: dal mittente scelto, senza copia nascosta; la 
   app.mail.send = async () => { app.mail.lastError = ''; return false; }; // rifiuta senza dire perché
   assert.match((await app.leads.testSender('me@posteo.example')).error, /non ha accettato/);
 });
+
+test('coda: l’orario stimato segue la pausa, il tetto del giorno, la finestra e i giorni lavorativi; in pausa non c’è stima', async (t) => {
+  const app = await makeApp();
+  t.after(app.cleanup);
+  const { db } = app;
+  settings(db, { dailyCap: 3, minGapMin: 10 });
+  const leads = ['uno', 'due', 'tre', 'quattro', 'cinque'].map((n) => mk(db, { company: `Agenzia ${n}`, email: `info@${n}.it` }));
+  for (const l of leads) queue(app, l);
+  const rome = (ms) => (ms == null ? null : new Date(ms).toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).slice(0, 16));
+  const est = M.estimateSendTimes(db, M.queuedEmails(db), NOW); // lunedì 4 gennaio 2027, 10:00
+  assert.deepEqual(est.map(rome), ['2027-01-04 10:00', '2027-01-04 10:10', '2027-01-04 10:20', '2027-01-05 09:00', '2027-01-05 09:10'], 'una ogni 10 minuti; finito il tetto di 3, riparte il giorno dopo');
+  // il venerdì sera la coda riparte lunedì mattina
+  const fri = M.estimateSendTimes(db, M.queuedEmails(db).slice(0, 1), NOW + 4 * DAY + 7 * 60 * MIN); // venerdì 8 gennaio, 17:00
+  assert.equal(rome(fri[0]), '2027-01-11 09:00');
+  // una pausa dall'ultimo invio già avvenuto sposta la prima
+  db.prepare("UPDATE lead_emails SET status = 'sent', sent_at = ? WHERE id = (SELECT MIN(id) FROM lead_emails)").run(new Date(NOW - 3 * MIN).toISOString());
+  const after = M.estimateSendTimes(db, M.queuedEmails(db), NOW);
+  assert.equal(rome(after[0]), '2027-01-04 10:07', '10 minuti dopo l’ultimo invio delle 9:57');
+  M.setPaused(db, true);
+  assert.deepEqual(M.estimateSendTimes(db, M.queuedEmails(db), NOW), [null, null, null, null]);
+});

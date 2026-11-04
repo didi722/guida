@@ -3,7 +3,7 @@ import express from 'express';
 import { send } from '../http.js';
 import { normLang, LANGS } from '../langs.js';
 import { LeadError, getContact, getLead, recipients } from '../leads.js';
-import { TEMPLATE_KEYS, cancelEmail, composeEmail, fillTemplate, queuedEmails, recentEmails, saveSendSettings, saveSender, saveTemplate, sendSettings, senderOf, sentOn, setPaused, templates, unknownVariables, variablesFor } from '../leadMail.js';
+import { TEMPLATE_KEYS, cancelEmail, composeEmail, estimateSendTimes, fillTemplate, queuedEmails, recentEmails, saveSendSettings, saveSender, saveTemplate, sendSettings, senderOf, sentOn, setPaused, templates, unknownVariables, variablesFor } from '../leadMail.js';
 import { isEmail } from '../util.js';
 import { localToInstant, nowRome, isDate } from '../time.js';
 import { cleanText } from '../util.js';
@@ -54,10 +54,16 @@ export function adminLeadsMailRouter(app) {
   };
 
   // ───── coda e storico ─────
+  /** La coda con l'orario stimato di partenza di ciascuna email (`eta`, in ISO; vuoto se l'invio è in pausa). */
+  const queueWithTimes = () => {
+    const queue = queuedEmails(db);
+    const times = estimateSendTimes(db, queue);
+    return queue.map((e, i) => ({ ...e, eta: times[i] == null ? null : new Date(times[i]).toISOString() }));
+  };
   /** La pagina Email: coda, storico, mittente e impostazioni. `over` porta ciò che si stava scrivendo in un modulo rifiutato. */
   const mailView = (req, res, { error = '', settings = {}, status = 200 } = {}) =>
     send(res, mailPage(ctxOf(req), {
-      queue: queuedEmails(db), history: recentEmails(db, 100), settings: { ...sendSettings(db), ...settings }, sender: senderOf(app), notifyTo: app.cfg.mail.notifyTo, sentToday: sentOn(db, nowRome().date),
+      queue: queueWithTimes(), history: recentEmails(db, 100), settings: { ...sendSettings(db), ...settings }, sender: senderOf(app), notifyTo: app.cfg.mail.notifyTo, sentToday: sentOn(db, nowRome().date),
       flash: error ? '' : flash(req), error,
     }), status);
   r.get('/leads/mail', (req, res) => mailView(req, res, { error: ERR[String(req.query.err ?? '')] ?? '' }));
