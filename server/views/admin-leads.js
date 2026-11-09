@@ -134,6 +134,7 @@ ${rows.length
   ? html`<form id="${bulkId}" method="post" action="/admin/leads/bulk"><input type="hidden" name="return" value="${qs(f, { page: page > 1 ? page : '' })}">
   <div class="card lead-bulk"><label class="check"><input type="checkbox" data-check-all="#${bulkId}"> Seleziona tutti quelli in questa pagina</label>
     <div class="lead-bulk-actions"><button class="btn btn-sm btn-gold" type="submit" name="action" value="presentation">Scrivi la presentazione ai selezionati</button>
+      <button class="btn btn-sm btn-outline" type="submit" name="action" value="followup">Scrivi il sollecito ai selezionati</button>
       <select name="status" aria-label="Cambia stato"><option value="">Cambia stato…</option>${STATUSES.map((s) => html`<option value="${s}">${STATUS_LABEL[s]}</option>`)}</select><button class="btn btn-sm btn-outline" type="submit" name="action" value="set-status">Applica</button>
       <select name="priority" aria-label="Cambia priorità"><option value="">Priorità…</option>${Object.entries(PRIORITY_LABEL).map(([k, l]) => html`<option value="${k}">${l}</option>`)}</select><button class="btn btn-sm btn-outline" type="submit" name="action" value="set-priority">Applica</button>
       <button class="btn btn-sm btn-link-danger" type="submit" name="action" value="delete" data-confirm-click="Cancellare i contatti selezionati, con i loro referenti e il registro? Non si può tornare indietro.">Cancella</button></div></div>

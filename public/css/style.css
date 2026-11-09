@@ -166,6 +166,9 @@ ul.plain, ol.plain { list-style: none; margin: 0; padding: 0; }
 .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(175, 145, 104, 0.25); }
 .btn:active { transform: translateY(0); }
 .btn[disabled], .btn[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
+/* durante il giro guidato i pulsanti che prenotano o opzionano sono grigi, e il suggerimento (title) dice perché */
+.btn[data-tour-locked] { background: var(--line) !important; border-color: var(--line) !important; color: var(--muted) !important; opacity: 1; pointer-events: auto; cursor: not-allowed; }
+.btn[data-tour-locked]:hover { transform: none; box-shadow: none; }
 .btn-gold { background: var(--gold); color: var(--ink); border-color: var(--gold); }
 .btn-gold:hover { background: #e2ca66; color: var(--ink); }
 .btn-dark { background: var(--ink); color: var(--gold); border-color: var(--ink); }
@@ -405,7 +408,6 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 /* ───────── Prenota / checkout ───────── */
 .search-card { display: grid; grid-template-columns: 1fr 0.55fr 1.2fr auto; gap: 14px; align-items: end; }
 .search-card .field { margin: 0; } .search-card .btn { height: var(--control-h); }
-.search-card.has-hours { grid-template-columns: 1fr 0.55fr 1.2fr 0.75fr auto; }
 .search-card .kinds { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 24px; border: 0; padding: 0; margin: 0; } .search-card .kinds .check { margin: 4px 0; }
 .option-box { margin-top: 18px; padding: 16px 18px; border: 1.5px dashed var(--bronze); border-radius: 12px; background: var(--soft); } .option-box h3 { font-size: 1.05rem; margin: 0 0 6px; } .option-box p { margin: 0 0 12px; font-size: 0.95rem; color: var(--muted); }
 .option-note { margin: 12px 0 0; }
@@ -648,6 +650,7 @@ body.admin { --header-h: 64px; }
 /* Istanza di prova (pagamenti simulati) */
 .site-header .demo-note { position: absolute; top: 100%; left: 0; right: 0; background: #1c1c1c; color: #d6bb51; text-align: center; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.05em; padding: 4px 12px; pointer-events: none; }
 
+.b2b-rates { max-width: 440px; margin: 0 auto 14px; }
 /* Area agenzie: la panoramica con le tre cose da fare, e «La tua agenzia» */
 .home-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 4px 0 6px; }
 .home-card { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
@@ -658,6 +661,13 @@ body.admin { --header-h: 64px; }
 .home-card-main { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
 .home-card .tone-late { color: #b3261e; }
 .home-more { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 14px 0 24px; font-weight: 700; }
+/* «Da fare»: ciò che aspetta una mossa dell'agenzia, in cima alla panoramica */
+.ag-todo { margin: 4px 0 16px; border-color: var(--warn); } .ag-todo h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 1.2rem; }
+.ag-todo-list { list-style: none; margin: 0; padding: 0; }
+.ag-todo-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line); } .ag-todo-item:first-child { border-top: 0; }
+.ag-todo-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .ag-todo-text small { color: var(--muted); overflow-wrap: anywhere; }
+.ag-todo-item .btn { flex: none; }
+@media (max-width: 640px) { .ag-todo-item { flex-direction: column; align-items: flex-start; gap: 8px; } }
 @media (max-width: 800px) { .home-actions { grid-template-columns: minmax(0, 1fr); } }
 
 /* Demo per le agenzie: la fascia in alto ha anche i tasti «Ricomincia» e «Esci» */
@@ -991,9 +1001,11 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .pb-actions-in { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: center; }
 .pb-actions-in form { margin: 0; }
 .pb-actions-in .btn-link-danger { padding: 4px 6px; font-size: 0.85rem; }
+.overdue-note p { margin: 0 0 10px; } .overdue-note form { margin: 0; } .overdue-note p:last-child { margin: 0; }
+.btn-text { color: var(--accent-text); font-size: 0.85rem; font-weight: 700; text-decoration: underline; padding: 4px 6px; white-space: nowrap; } .btn-text:hover { color: var(--ink); }
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
 .empty-state { padding: 34px 20px; }
-.edit-card { margin-top: 18px; }
+.edit-card { margin-top: 18px; } .fold > .edit-card { margin-top: 0; }
 .edit-card h2 { font-size: 1.3rem; margin-bottom: 0.2em; }
 
 @media (max-width: 900px) {
@@ -1001,7 +1013,12 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
   .filters-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
-  .kpis { gap: 10px; } .kpi { padding: 12px 14px; } .kpi-n { font-size: 1.5rem; }
+  /* sul telefono i quattro riquadri stanno in una riga che scorre: l'elenco comincia subito sotto */
+  .kpis { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; margin-inline: -16px; padding: 2px 16px 4px; }
+  .kpis::-webkit-scrollbar { display: none; }
+  .kpi { flex: 0 0 156px; scroll-snap-align: start; padding: 10px 12px; gap: 1px; }
+  .kpi-l, .kpi-s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi-l { font-size: 0.66rem; letter-spacing: 0.08em; } .kpi-n { font-size: 1.45rem; } .kpi-s { font-size: 0.76rem; }
   .tabs-bar { margin-bottom: 8px; }
   .tabs-bar .tabs { flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; }
   .tabs .tab { flex: none; }
@@ -1121,6 +1138,23 @@ input[data-agency-search] { margin-bottom: 8px; }
 
 /* Pacchetto di più servizi (area agenzie) */
 .package-add { margin-top: 12px; } .package-add p { margin: 6px 0 0; text-align: center; }
+/* riquadri della scheda pratica che si aprono dal titolo (preventivo, nominativo e note): la pagina resta corta, soprattutto sul telefono */
+.fold > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; cursor: pointer; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary h2 { margin: 0; font-size: 1.15rem; }
+.fold > summary::after { content: '+'; color: var(--accent-text); font-size: 1.4rem; line-height: 1; }
+.fold[open] > summary::after { content: '−'; }
+.fold[open] > summary { border-bottom: 1px solid var(--line); }
+.fold > .pad, .fold > form.pad { padding-top: 18px; }
+@media (max-width: 640px) { .fold > summary { padding: 16px 20px; } }
+.top-actions { margin-top: 4px; }
+/* conferma per le agenzie: il referente è già compilato, una riga con «Modifica» */
+.ref-box { margin: 8px 0 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
+.ref-box > summary { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; cursor: pointer; list-style: none; font-size: 0.92rem; }
+.ref-box > summary::-webkit-details-marker { display: none; }
+.ref-box .ref-summary { min-width: 0; overflow-wrap: anywhere; } .ref-box .ref-change { color: var(--accent-text); font-weight: 700; white-space: nowrap; }
+.ref-box[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; } .ref-box[open] .ref-change { display: none; }
+.ref-box > .form-grid { padding: 0 14px 6px; }
 .header-cart { gap: 6px; padding: 0 12px; } .header-cart svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; } .header-cart .cart-count { font-size: 0.85rem; }
 .header-cart[aria-current] { background: var(--header-ink); color: var(--gold); }
 .table tfoot th { text-align: left; padding: 12px 14px; border-top: 2px solid var(--line); font-size: 1rem; } .table tfoot th.num { text-align: right; }
@@ -1154,9 +1188,13 @@ input[data-agency-search] { margin-bottom: 8px; }
 .partner-table .chip { white-space: normal; line-height: 1.35; }
 @media (max-width: 640px) { .copy-line { flex-wrap: wrap; } .copy-line .btn { flex: 1 1 100%; } .pay-box .copy-field { font-size: 0.74rem; padding-inline: 10px; } }
 
-/* ───────── Date libere e lista d'attesa (area agenzie) ───────── */
-.avail-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; align-items: end; margin-bottom: 18px; }
-.avail-form .field { margin: 0; } .avail-form .btn { justify-self: start; height: var(--control-h); }
+/* ───────── Nuova prenotazione (area agenzie): servizio, persone, giorno, orari, calendario e lista d'attesa ───────── */
+.avail-form { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: end; margin-bottom: 18px; }
+.avail-form .field { margin: 0; flex: 1 1 130px; min-width: 0; } .avail-form .field-wide { flex-basis: 100%; } .avail-form .field-date { flex: 2 1 190px; } .avail-form .btn { height: var(--control-h); }
+.page-head.is-compact .lead { font-size: 1rem; margin-bottom: 4px; }
+@media (max-width: 640px) { .page-head.is-compact .lead { display: none; } .page-head.is-compact h1 { font-size: 1.9rem; } }
+.day-price { margin: 0 0 4px; font-size: 1.05rem; }
+.also-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 6px; } .also-row .chip-link { padding: 6px 14px; }
 .btn.is-off { opacity: 0.35; pointer-events: none; }
 .avail-grid .acal-cell { min-height: 78px; }
 .acal-cell.is-none { background: var(--soft); opacity: 0.5; pointer-events: none; }

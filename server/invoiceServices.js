@@ -1,8 +1,9 @@
 // Fatture: collega la logica (invoices.js) a email e PEC.
-import { InvoiceError, configProblems, createCreditNote, createDrafts, createManualDraft, deleteDraft, discardIssued, getInvoice, invoiceDetail, invoiceQueue, invoicesCsv, issueInvoice, saveDraft, setSdiStatus, settingsOf } from './invoices.js';
+import { tx } from './db.js';
+import { InvoiceError, configProblems, createCreditNote, createDrafts, createManualDraft, deleteDraft, discardIssued, getInvoice, invoiceDetail, invoiceQueue, invoicesCsv, issueInvoice, parseJson, saveDraft, setSdiStatus, settingsOf } from './invoices.js';
 import { notifyGuideInvoice, sendInvoiceCopy, sendInvoiceOverdue, sendInvoicePaid } from './emails.js';
 import { makeT } from './i18n.js';
-import { ensurePayRef, getInvoiceByPayRef, invoiceDue, invoiceEmail, isPayable, markInvoicePaid, openPartsCents, payState, remindersDue, unmarkInvoicePaid } from './invoicePayments.js';
+import { ensurePayRef, getBatchByRef, getInvoiceByPayRef, invoiceDue, invoiceEmail, isPayable, markInvoicePaid, openBatch, openPartsCents, overdueOf, payState, remindersDue, unmarkInvoicePaid } from './invoicePayments.js';
 import { normLang } from './langs.js';
 import { onlinePaymentsOpen } from './opening.js';
 import { isDate, localToInstant, nowRome } from './time.js';
@@ -115,6 +116,74 @@ export function createInvoiceServices(app) {
       return res;
     },
 
+    // ───── «Paga tutto lo scaduto»: un solo pagamento con carta per tutte le fatture scadute dell'agenzia ─────
+    /** Le fatture scadute dell'agenzia che si possono pagare adesso con la carta. */
+    overdueToPay: (accountId, nowMs = Date.now()) => (onlinePaymentsOpen(app, nowMs) ? overdueOf(db, accountId, nowRome(nowMs).date) : []),
+
+    /** Prepara il pagamento unico delle fatture scadute. @returns la riga (con `ref` e `token`, per aprire il pagamento) o null se non c'è nulla da pagare adesso */
+    payOverdue(accountId, nowMs = Date.now()) {
+      const items = svc.overdueToPay(accountId, nowMs);
+      return items.length ? openBatch(db, accountId, items, nowMs) : null;
+    },
+
+    /** Crea la sessione di pagamento con carta del pagamento unico; se nel frattempo le fatture sono cambiate (un bonifico registrato, una nota di credito) non parte. */
+    async startBatchCheckout(batch, lang, nowMs = Date.now(), attempt = 0) {
+      const lines = parseJson(batch.lines_json, []);
+      if (lines.some((l) => invoiceDue(need(l.id)) !== l.cents)) throw new Error('le fatture sono cambiate: si ricomincia dall’elenco');
+      const acct = db.prepare('SELECT email, lang FROM accounts WHERE id = ?').get(batch.account_id);
+      const t = makeT(normLang(acct?.lang));
+      const session = await payments.createCheckout({
+        ref: batch.ref,
+        email: acct?.email || undefined,
+        amountCents: batch.amount_cents,
+        currency: batch.currency,
+        title: t('invpay.batch.title', { n: lines.length }),
+        description: `${cfg.site.name} · ${t('invpay.batch.title', { n: lines.length })}`,
+        lang: normLang(acct?.lang),
+        successUrl: `${cfg.baseUrl}/${lang}/b2b/invoices?paid=1&batch=${batch.ref}`,
+        cancelUrl: `${cfg.baseUrl}/${lang}/b2b/invoices?canceled=1&batch=${batch.ref}`,
+        demoUrl: `${cfg.baseUrl}/pay/demo/${batch.ref}?t=${batch.token}&lang=${lang}`,
+        nowMs,
+        attempt,
+      });
+      db.prepare('UPDATE invoice_batches SET stripe_session_id = ? WHERE id = ?').run(session.id, batch.id);
+      return session.url;
+    },
+
+    /**
+     * Pagamento unico ricevuto: ogni fattura risulta pagata (e l'agenzia riceve la ricevuta di ciascuna). Una fattura saldata nel frattempo in un altro modo
+     * non si paga due volte: la sua quota si rimborsa. Webhook e ritorno da Stripe arrivano entrambi: vale la prima volta.
+     */
+    async handleBatchPaid(batch, paymentIntent = null, nowMs = Date.now()) {
+      const settled = tx(db, () => {
+        if (!db.prepare("UPDATE invoice_batches SET status = 'paid', paid_at = ?, stripe_payment_intent = ? WHERE id = ? AND status = 'open'").run(new Date(nowMs).toISOString(), paymentIntent, batch.id).changes) return null;
+        const done = [];
+        const refund = [];
+        for (const line of parseJson(batch.lines_json, [])) {
+          const inv = getInvoice(db, line.id);
+          // la fattura deve essere ancora da pagare per lo stesso importo: altrimenti (saldata in un altro modo, stornata, cambiata) la sua quota si rimborsa
+          if (inv && isPayable(inv) && invoiceDue(inv) === line.cents) done.push({ cents: line.cents, invoice: markInvoicePaid(app, inv.id, { method: 'card', paymentIntent }, nowMs).invoice });
+          else refund.push(line);
+        }
+        return { done, refund };
+      });
+      if (!settled) return { already: true };
+      for (const { invoice, cents } of settled.done) {
+        const to = invoiceEmail(db, invoice);
+        if (to.email) await sendInvoicePaid(app, invoice, { to: to.email, lang: to.lang, amountCents: cents });
+        await notifyGuideInvoice(app, invoice, 'paid', `Importo: ${(cents / 100).toFixed(2).replace('.', ',')} € (pagamento unico ${batch.ref})`);
+      }
+      for (const line of settled.refund) {
+        if (!paymentIntent) continue;
+        try {
+          await payments.refund({ paymentIntent, cents: line.cents, ref: `${batch.ref}-${line.id}` });
+        } catch (err) {
+          console.error(`[rimborso pagamento unico] ${batch.ref}, fattura ${line.id}:`, err.message);
+        }
+      }
+      return { already: false, paid: settled.done.length, refunded: settled.refund.length };
+    },
+
     /** La guida segna l'incasso (di solito un bonifico arrivato): `date` è il giorno in cui è arrivato. L'agenzia riceve la ricevuta. */
     async markPaid(id, { date = null, method = 'bank', notify = true } = {}, nowMs = Date.now()) {
       const inv = need(id);
@@ -194,6 +263,17 @@ export function createInvoiceServices(app) {
     onExpired: () => {},
     startCheckout: (inv, lang, nowMs, attempt) => svc.startCheckout(inv, lang, nowMs, attempt),
     statusUrl: (inv, lang) => `/${lang}/invoices/${inv.pay_ref}?t=${inv.pay_token}`,
+  });
+  // «Paga tutto lo scaduto»: stesso meccanismo, con un riferimento suo (SD-…)
+  app.payables.register('balance', {
+    find: (ref) => getBatchByRef(db, ref),
+    dueCents: (b) => b.amount_cents,
+    isOpen: (b) => b.status === 'open' && onlinePaymentsOpen(app),
+    title: (b, lang) => makeT(lang)('invpay.batch.title', { n: parseJson(b.lines_json, []).length }),
+    onPaid: (b, pi, nowMs) => svc.handleBatchPaid(b, pi, nowMs),
+    onExpired: () => {},
+    startCheckout: (b, lang, nowMs, attempt) => svc.startBatchCheckout(b, lang, nowMs, attempt),
+    statusUrl: (b, lang) => `/${lang}/b2b/invoices?batch=${b.ref}`,
   });
   return svc;
 }

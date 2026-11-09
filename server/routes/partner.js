@@ -4,12 +4,14 @@
 import express from 'express';
 import { parseCookies, setCookie } from '../auth.js';
 import { getBookingByRef } from '../bookings.js';
+import { getBatchByRef } from '../invoicePayments.js';
 import { feedUrl } from '../agencyFeed.js';
 import { notifyGuideBookingEdited } from '../emails.js';
 import { getPackage } from '../packages.js';
 import { send, sendPdf } from '../http.js';
-import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerSummary } from '../partner.js';
+import { bookingsCsv, bookingsXlsx, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerPrograms, partnerSummary, partnerTodo } from '../partner.js';
 import { renderInvoicePdf } from '../pdf-invoice.js';
+import { XLSX_TYPE } from '../xlsx.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { refCodeOf, referralUrl, referralsOf } from '../referral.js';
 import { teamSize } from '../team.js';
@@ -20,6 +22,7 @@ import { LANGS } from '../langs.js';
 import { needPartner, safeNext, toLogin } from './guards.js';
 import { accountPage, bookingStatusText, bookingsPage, invoicesPage, ratesPage } from '../views/b2b.js';
 import { agencyHubPage } from '../views/agencyHub.js';
+import { agencyProgramsPage } from '../views/programs.js';
 import { bookingPage } from '../views/booking.js';
 import { helpPage } from '../views/tutorial.js';
 
@@ -29,7 +32,7 @@ export function partnerRouter(app) {
   const form = express.urlencoded({ extended: false, limit: '50kb' });
 
   // dati personali e fiscali: mai in cache del browser o di proxy
-  r.use(['/b2b/account', '/b2b/agency', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/help'], (req, res, next) => {
+  r.use(['/b2b/account', '/b2b/agency', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/bookings.xlsx', '/b2b/programs', '/b2b/help'], (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
   });
@@ -50,11 +53,15 @@ export function partnerRouter(app) {
     if (req.acct.status === 'approved' && ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page', 'v', 'm', 'd'].some((k) => req.query[k] !== undefined)) return res.redirect(302, `/${req.lang}/b2b/bookings?${new URLSearchParams(req.query)}`);
     const share = req.acct.status === 'approved' ? { url: referralUrl(app.cfg, req.lang, refCodeOf(db, req.acct)), count: referralsOf(db, req.acct.id).length } : null; // «Segnala un'agenzia collega»
     const summary = req.acct.status === 'approved' ? partnerSummary(app, req.acct.id) : null; // le tre schede: prenotare, prenotazioni, fatture
-    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor), share, summary }));
+    const todo = req.acct.status === 'approved' ? partnerTodo(app, req.acct.id) : []; // «Da fare»
+    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor), share, summary, todo }));
   });
 
   // «La tua agenzia»: team, logo e documenti, dati di fatturazione
   r.get('/b2b/agency', needPartner, (req, res) => send(res, agencyHubPage(res.locals.ctx, { acct: req.acct, team: teamSize(db, req.acct.id) })));
+
+  // «Programmi di più giorni»: le richieste dell'agenzia con il loro stato (la richiesta si fa dal modulo di /programs, dentro la stessa area)
+  r.get('/b2b/programs', needPartner, (req, res) => send(res, agencyProgramsPage(res.locals.ctx, { programs: partnerPrograms(db, req.acct.id) })));
 
   // «Guida e FAQ»: i passi del giro scritti per intero, il pulsante per rivederlo e le domande frequenti
   r.get('/b2b/help', needPartner, (req, res) => send(res, helpPage(res.locals.ctx, { due: tutorialDue(db, req.acct, req.actor) })));
@@ -81,22 +88,31 @@ export function partnerRouter(app) {
     }));
   });
 
-  // elenco filtrato in un foglio di calcolo (per la contabilità dell'agenzia)
-  r.get('/b2b/bookings.csv', needPartner, (req, res) => {
+  // elenco filtrato in un foglio di calcolo (per la contabilità dell'agenzia): CSV, oppure Excel (.xlsx) dove le date si vedono sempre
+  const exportOf = (req, res) => {
     const { t } = res.locals.ctx;
     const { rows } = partnerBookings(app, req.acct.id, { ...parseFilters(req.query), actorId: req.actor?.userId ?? null }, { limit: null });
     const head = [t('s.ref'), t('f.clientRef'), t('partner.edit.name'), t('s.service'), t('s.date'), t('s.time'), t('s.guests'), t('party.children'), t('party.infants'), t('b2b.state'), t('partner.col.booked'), t('s.total'), t('partner.col.invoice'), t('partner.col.by')];
+    return { t, rows, head, statusLabel: (b) => bookingStatusText(t, b) };
+  };
+  r.get('/b2b/bookings.csv', needPartner, (req, res) => {
+    const { rows, head, statusLabel } = exportOf(req, res);
     res
       .type('text/csv; charset=utf-8')
       .set({ 'Content-Disposition': 'attachment; filename="prenotazioni.csv"', 'Cache-Control': 'private, no-store' })
-      .send(bookingsCsv(rows, { content: app.content, statusLabel: (b) => bookingStatusText(t, b), head }));
+      .send(bookingsCsv(rows, { content: app.content, statusLabel, head }));
+  });
+  r.get('/b2b/bookings.xlsx', needPartner, async (req, res) => {
+    const { t, rows, head, statusLabel } = exportOf(req, res);
+    const file = await bookingsXlsx(rows, { content: app.content, statusLabel, head, sheet: t('partner.nav.bookings') });
+    res.type(XLSX_TYPE).set({ 'Content-Disposition': 'attachment; filename="prenotazioni.xlsx"', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }).send(file);
   });
 
   // scheda di una pratica: la stessa pagina del link nell'email, ma dentro l'area dell'agenzia (con fattura e modifica del nominativo)
   r.get('/b2b/bookings/:ref', needPartner, (req, res, next) => {
     const b = own(req);
     if (!b) return next();
-    send(res, bookingPage(res.locals.ctx, b, { flash: String(req.query.flash ?? ''), payLater: app.services.payableLater(b), nextUrl: `/${req.lang}/b2b/bookings/${b.ref}`, owner: true, invoice: invoiceOfBooking(db, b.id), group: b.group_id ? getPackage(db, b.group_id) : null }));
+    send(res, bookingPage(res.locals.ctx, b, { flash: String(req.query.flash ?? ''), payLater: app.services.payableLater(b), nextUrl: `/${req.lang}/b2b/bookings/${b.ref}`, owner: true, invoice: invoiceOfBooking(db, b.id), group: b.group_id ? getPackage(db, b.group_id) : null, openEdit: req.query.open === 'edit' }));
   });
   r.get('/b2b/bookings/:ref/voucher.pdf', needPartner, async (req, res, next) => {
     const b = own(req);
@@ -107,7 +123,7 @@ export function partnerRouter(app) {
   r.post('/b2b/bookings/:ref/edit', needPartner, form, async (req, res, next) => {
     const b = own(req);
     if (!b) return next();
-    const back = (flash) => res.redirect(303, `/${req.lang}/b2b/bookings/${b.ref}?flash=${flash}#edit`);
+    const back = (flash) => res.redirect(303, `/${req.lang}/b2b/bookings/${b.ref}?flash=${flash}${flash === 'edited' ? '' : '#edit'}`); // salvato: si resta in cima, dove c'è la conferma; con un errore si va al modulo (aperto)
     if (!isEditable(b)) return back('edit-locked'); // a servizio iniziato (o prenotazione chiusa) non si cambia più nulla
     const phone = optionalPhone(req.body);
     if (phone.error) return back('edit-phone');
@@ -122,7 +138,13 @@ export function partnerRouter(app) {
 
   r.get('/b2b/rates', needPartner, (req, res) => send(res, ratesPage(res.locals.ctx, { acct: req.acct })));
 
-  r.get('/b2b/invoices', needPartner, (req, res) => send(res, invoicesPage(res.locals.ctx, { acct: req.acct, invoices: partnerInvoices(db, req.acct.id), due: partnerSummary(app, req.acct.id).due })));
+  r.get('/b2b/invoices', needPartner, async (req, res) => {
+    // tornata dal pagamento unico prima del webhook: lo stato si verifica subito (solo per un pagamento dell'agenzia stessa)
+    const batch = req.query.paid ? getBatchByRef(db, String(req.query.batch ?? '')) : null;
+    if (batch && batch.account_id === req.acct.id && batch.status === 'open') await app.payables.sync(batch.ref);
+    const flash = req.query.paid ? 'paid' : req.query.canceled ? 'canceled' : req.query.flash === 'nothing' ? 'nothing' : '';
+    send(res, invoicesPage(res.locals.ctx, { acct: req.acct, invoices: partnerInvoices(db, req.acct.id), due: partnerSummary(app, req.acct.id).due, flash }));
+  });
   r.get('/b2b/invoices/:id/pdf', needPartner, async (req, res, next) => {
     const id = Number(req.params.id);
     const inv = Number.isInteger(id) ? partnerInvoice(db, req.acct.id, id) : null;

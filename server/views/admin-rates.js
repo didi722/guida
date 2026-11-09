@@ -5,7 +5,7 @@ import { formatMoney } from '../util.js';
 import { adminLayout } from './admin.js';
 import { hourlyPriceText } from './admin-tours.js';
 
-const SERVICE_LABEL = { guide: 'Servizio guida', assistant: 'Assistente in loco', leader: 'Tour leader', meetgreet: 'Meet & greet' };
+const SERVICE_LABEL = { guide: 'Guida privata', assistant: 'Assistente in loco', leader: 'Tour leader', meetgreet: 'Meet & greet' };
 const SERVICE_HINT = {
   guide: 'Il pubblico vede solo questo servizio. Le tariffe sono per l’intero gruppo.',
   assistant: 'Solo per le agenzie. Lascia vuota la colonna «Pubblico» per non offrirlo ai privati.',

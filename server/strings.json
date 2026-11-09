@@ -1085,6 +1085,12 @@
   "Haz clic en el punto resaltado.",
   "ハイライトされた場所をクリックしてください。"
  ],
+ "tour.locked": [
+  "Durante il giro guidato non si prenota: finito o interrotto il giro, il pulsante torna attivo.",
+  "You cannot book during the guided tour: once it is finished or stopped, the button works again.",
+  "Durante el recorrido guiado no se reserva: al terminarlo o interrumpirlo, el botón vuelve a funcionar.",
+  "ガイドツアー中は予約できません。ツアーを終了または中断すると、ボタンが使えるようになります。"
+ ],
  "tour.finish": [
   "Fine del giro",
   "End of the tour",
@@ -1110,10 +1116,10 @@
   "「新規予約」を押して始めましょう。ここからお客様の予約を、代理店料金で行えます。"
  ],
  "tour.s2": [
-  "Scegli un giorno e per quante persone, poi premi «Cerca»: vedrai gli orari liberi dei servizi. (Qui c’è anche la scheda «Date libere».)",
-  "Pick a day and the number of guests, then press “Search”: you will see the free times of the services. (The “Free dates” tab is here too.)",
-  "Elige un día y cuántas personas, y pulsa «Buscar»: verás los horarios libres de los servicios. (Aquí también está la pestaña «Fechas libres».)",
-  "日付と人数を選んで「検索」を押すと、サービスごとの空き時間が表示されます。（ここに「空き日」タブもあります。）"
+  "Scegli il servizio e quante persone siete: sotto compaiono subito gli orari liberi del primo giorno disponibile. Per un altro giorno usa la data o il calendario.",
+  "Pick the service and the number of guests: the free times of the first available day appear right below. For another day, use the date or the calendar.",
+  "Elige el servicio y cuántas personas sois: debajo aparecen al instante los horarios libres del primer día disponible. Para otro día, usa la fecha o el calendario.",
+  "サービスと人数を選ぶと、直近の空き日の空き時間がすぐ下に表示されます。別の日は日付かカレンダーで選べます。"
  ],
  "tour.s3": [
   "Ecco gli orari liberi. Scegli un orario: ti porta al riepilogo, ancora senza prenotare.",
@@ -1122,10 +1128,10 @@
   "空いている時間です。ひとつ選ぶと、まだ予約せずに確認画面へ進みます。"
  ],
  "tour.s3m": [
-  "Per quel giorno non ci sono orari liberi: scegli un altro giorno e cerca di nuovo.",
-  "There are no free times that day: pick another day and search again.",
-  "Ese día no hay horarios libres: elige otro día y busca de nuevo.",
-  "その日は空き時間がありません。別の日を選んでもう一度検索してください。"
+  "Per questo giorno non ci sono orari liberi: scegli un altro giorno dal calendario oppure un altro servizio.",
+  "There are no free times on this day: pick another day from the calendar, or another service.",
+  "Este día no hay horarios libres: elige otro día del calendario u otro servicio.",
+  "この日は空き時間がありません。カレンダーから別の日を選ぶか、別のサービスを選んでください。"
  ],
  "ref.title": [
   "Segnala un’agenzia collega",
@@ -1200,10 +1206,10 @@
   "ここでご参加の内訳（大人、子ども4〜12歳は50%、乳幼児0〜3歳は無料）を入力します。数字を変えてみてください。右側の料金が自動で更新されます。"
  ],
  "tour.s5": [
-  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata, mentre il tuo cliente decide. In «Nuova prenotazione», la scheda «Date libere» ti mostra i giorni liberi e ti avvisa se una data occupata si libera. Non premerlo adesso.",
-  "“Hold without paying” keeps the date for you until the deadline shown, while your client decides. In “New booking”, the “Free dates” tab shows the free days and tells you if a taken date frees up. Do not press it now.",
-  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado mientras tu cliente decide. En «Nueva reserva», la pestaña «Fechas libres» te muestra los días libres y te avisa si se libera una fecha ocupada. No lo pulses ahora.",
-  "「支払いなしで仮押さえする」は、お客様が決めるまで表示された期限まで日程を確保します。「新規予約」の「空き日」タブでは空いている日を確認でき、埋まっている日が空くと通知されます。今は押さないでください。"
+  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata, mentre il tuo cliente decide. In «Nuova prenotazione» il calendario ti mostra i giorni liberi e ti avvisa se una data occupata si libera. Non premerlo adesso.",
+  "“Hold without paying” keeps the date for you until the deadline shown, while your client decides. In “New booking” the calendar shows the free days and tells you if a taken date frees up. Do not press it now.",
+  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado mientras tu cliente decide. En «Nueva reserva» el calendario te muestra los días libres y te avisa si se libera una fecha ocupada. No lo pulses ahora.",
+  "「支払いなしで仮押さえする」は、お客様が決めるまで表示された期限まで日程を確保します。「新規予約」のカレンダーでは空いている日を確認でき、埋まっている日が空くと通知されます。今は押さないでください。"
  ],
  "tour.s6": [
   "«Aggiungi al pacchetto» serve quando il cliente vuole più servizi: una sola opzione, un solo pagamento, una sola fattura. Dal pacchetto prepari anche un preventivo con il tuo ricarico.",
@@ -1260,10 +1266,10 @@
   "仮押さえと空き日の確認"
  ],
  "tut.3.text": [
-  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata: prima la confermi oppure la rilasci. Nella scheda «Date libere» di «Nuova prenotazione» vedi i giorni disponibili servizio per servizio e, su una data occupata, puoi farti avvisare se si libera.",
-  "“Hold without paying” keeps the date for you until the deadline shown: before it ends you confirm or release it. In the “Free dates” tab of “New booking” you see the available days service by service and, on a taken date, you can ask to be told if it frees up.",
-  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado: antes de que termine, la confirmas o la liberas. En la pestaña «Fechas libres» de «Nueva reserva» ves los días disponibles servicio por servicio y, en una fecha ocupada, puedes pedir que te avisemos si se libera.",
-  "「支払いなしで仮押さえする」を選ぶと、表示された期限まで日程を確保できます。期限までに確定するか、解除してください。「新規予約」の「空き日」タブではサービスごとの空き状況を確認でき、埋まっている日は空いたときに通知を受け取れます。"
+  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata: prima la confermi oppure la rilasci. In «Nuova prenotazione» il calendario ti mostra i giorni disponibili servizio per servizio e, su una data occupata, puoi farti avvisare se si libera.",
+  "“Hold without paying” keeps the date for you until the deadline shown: before it ends you confirm or release it. In “New booking” the calendar shows the available days service by service and, on a taken date, you can ask to be told if it frees up.",
+  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado: antes de que termine, la confirmas o la liberas. En «Nueva reserva» el calendario te muestra los días disponibles servicio por servicio y, en una fecha ocupada, puedes pedir que te avisemos si se libera.",
+  "「支払いなしで仮押さえする」を選ぶと、表示された期限まで日程を確保できます。期限までに確定するか、解除してください。「新規予約」のカレンダーではサービスごとの空き状況を確認でき、埋まっている日は空いたときに通知を受け取れます。"
  ],
  "tut.4.title": [
   "Pacchetti e preventivi",
@@ -1410,10 +1416,10 @@
   "希望の日が埋まっています。空いたら通知してもらえますか？"
  ],
  "faq.6.a": [
-  "Sì. In «Nuova prenotazione», scheda «Date libere», scegli il servizio e il giorno: sulle date tenute da altri premi «Avvisami se si libera». Se si libera ti scriviamo subito; chi è davanti nella lista ha qualche ora di vantaggio, poi tocca alla successiva. Prenota chi arriva per primo, quindi non aspettare.",
-  "Yes. In “New booking”, on the “Free dates” tab, choose the service and the day: on dates held by others press “Notify me if it frees up”. If it frees up we email you straight away; whoever is first in line gets a few hours’ head start, then it is the next one’s turn. First to book gets it, so don’t wait.",
-  "Sí. En «Nueva reserva», pestaña «Fechas libres», elige el servicio y el día: en las fechas ocupadas por otros pulsa «Avísame si se libera». Si se libera te escribimos enseguida; quien va primero en la lista tiene unas horas de ventaja y después le toca a la siguiente. La consigue quien reserva primero, así que no esperes.",
-  "はい。「新規予約」の「空き日」タブでサービスと日を選び、他社が確保している日は「空いたら通知する」を押します。空いたらすぐにメールでお知らせします。リストの先頭の会社には数時間の優先期間があり、その後は次の会社に回ります。予約は先着順ですので、お早めにどうぞ。"
+  "Sì. In «Nuova prenotazione» scegli il servizio e il giorno: sulle date tenute da altri premi «Avvisami se si libera». Se si libera ti scriviamo subito; chi è davanti nella lista ha qualche ora di vantaggio, poi tocca alla successiva. Prenota chi arriva per primo, quindi non aspettare.",
+  "Yes. In “New booking” choose the service and the day: on dates held by others press “Notify me if it frees up”. If it frees up we email you straight away; whoever is first in line gets a few hours’ head start, then it is the next one’s turn. First to book gets it, so don’t wait.",
+  "Sí. En «Nueva reserva» elige el servicio y el día: en las fechas ocupadas por otros pulsa «Avísame si se libera». Si se libera te escribimos enseguida; quien va primero en la lista tiene unas horas de ventaja y después le toca a la siguiente. La consigue quien reserva primero, así que no esperes.",
+  "はい。「新規予約」でサービスと日を選び、他社が確保している日は「空いたら通知する」を押します。空いたらすぐにメールでお知らせします。リストの先頭の会社には数時間の優先期間があり、その後は次の会社に回ります。予約は先着順ですので、お早めにどうぞ。"
  ],
  "faq.7.q": [
   "Cos’è il pacchetto e come preparo un preventivo?",
@@ -1691,18 +1697,6 @@
   "¿Tienes alguna necesidad especial? Escríbeme:",
   "ご希望がある場合はご連絡ください："
  ],
- "book.pickPrompt": [
-  "Scegli una data per vedere gli orari disponibili.",
-  "Pick a date to see the available times.",
-  "Elige una fecha para ver los horarios disponibles.",
-  "日付を選ぶと、空いている時間が表示されます。"
- ],
- "book.partnerNote": [
-  "Tariffe riservate attive.",
-  "Reserved rates active.",
-  "Tarifas exclusivas activas.",
-  "パートナー料金が適用されています。"
- ],
  "checkout.title": [
   "Conferma la prenotazione",
   "Confirm your booking",
@@ -1720,6 +1714,24 @@
   "Contact person for this service",
   "Persona de contacto para este servicio",
   "このサービスのご担当者"
+ ],
+ "checkout.fileB2b": [
+  "Dati della pratica",
+  "File details",
+  "Datos del expediente",
+  "案件の情報"
+ ],
+ "checkout.confirmIn": [
+  "conferma in {lang}",
+  "confirmation in {lang}",
+  "confirmación en {lang}",
+  "確認メール：{lang}"
+ ],
+ "checkout.change": [
+  "Modifica",
+  "Change",
+  "Cambiar",
+  "変更"
  ],
  "checkout.payment": [
   "Pagamento",
@@ -2357,6 +2369,90 @@
   "Tu agencia",
   "貴社の設定"
  ],
+ "home.todo.title": [
+  "Da fare",
+  "To do",
+  "Por hacer",
+  "対応が必要なこと"
+ ],
+ "home.todo.option": [
+  "Opzione in scadenza",
+  "Option about to expire",
+  "Opción a punto de vencer",
+  "まもなく期限の仮押さえ"
+ ],
+ "home.todo.optionText": [
+  "{who} · {tour}, {date} · scade tra {left}",
+  "{who} · {tour}, {date} · expires in {left}",
+  "{who} · {tour}, {date} · vence en {left}",
+  "{who}・{tour}、{date}・あと{left}で期限"
+ ],
+ "home.todo.optionCta": [
+  "Conferma o rilascia",
+  "Confirm or release",
+  "Confirmar o liberar",
+  "確定または解除"
+ ],
+ "home.todo.phone": [
+  "Manca il telefono del referente",
+  "The contact’s phone number is missing",
+  "Falta el teléfono de la persona de contacto",
+  "担当者の電話番号がありません"
+ ],
+ "home.todo.phoneText": [
+  "{who} · {tour}, {date}: alla guida serve per trovare il gruppo",
+  "{who} · {tour}, {date}: the guide needs it to find the group",
+  "{who} · {tour}, {date}: la guía lo necesita para encontrar al grupo",
+  "{who}・{tour}、{date}：ガイドがグループを見つけるために必要です"
+ ],
+ "home.todo.phoneCta": [
+  "Aggiungi",
+  "Add",
+  "Añadir",
+  "追加"
+ ],
+ "home.todo.wait": [
+  "Si è liberata una data",
+  "A date has freed up",
+  "Se ha liberado una fecha",
+  "日程が空きました"
+ ],
+ "home.todo.program": [
+  "Proposta di programma pronta",
+  "Programme proposal ready",
+  "Propuesta de programa lista",
+  "プログラムの提案が届いています"
+ ],
+ "home.todo.programCta": [
+  "Apri la proposta",
+  "Open the proposal",
+  "Abrir la propuesta",
+  "提案を開く"
+ ],
+ "pg.agency.lead": [
+  "Un soggiorno di più giorni per un tuo gruppo? Chiedi un programma su misura: ricevi una proposta con giorni, orari e prezzo, che puoi accettare da qui.",
+  "A stay of several days for one of your groups? Ask for a tailor-made programme: you get a proposal with days, times and price, which you can accept from here.",
+  "¿Una estancia de varios días para uno de tus grupos? Pide un programa a medida: recibes una propuesta con días, horarios y precio, que puedes aceptar desde aquí.",
+  "お客様のグループの数日間の滞在をご計画ですか？オーダーメイドのプログラムを依頼すると、日程・時間・料金の入った提案が届き、ここから承諾できます。"
+ ],
+ "pg.agency.new": [
+  "Richiedi un programma",
+  "Request a programme",
+  "Pedir un programa",
+  "プログラムを依頼する"
+ ],
+ "pg.agency.empty": [
+  "Non hai ancora chiesto programmi di più giorni.",
+  "You have not requested any multi-day programmes yet.",
+  "Todavía no has pedido programas de varios días.",
+  "複数日プログラムの依頼はまだありません。"
+ ],
+ "pg.agency.back": [
+  "I tuoi programmi",
+  "Your programmes",
+  "Tus programas",
+  "プログラム一覧"
+ ],
  "agency.lead": [
   "Chi lavora con te, il tuo logo e i dati per le fatture, tutto in un posto.",
   "Who works with you, your logo and your billing details, all in one place.",
@@ -2446,6 +2542,18 @@
   "Service cancelled.",
   "Servicio anulado.",
   "サービスをキャンセルしました。"
+ ],
+ "b2b.rates.title": [
+  "Le tariffe della guida per le agenzie",
+  "Guide rates for agencies",
+  "Tarifas del guía para agencias",
+  "代理店向けガイド料金"
+ ],
+ "b2b.rates.more": [
+  "Assistente in loco, tour leader, meet & greet, ore in più, supplementi e sconti dedicati li trovi nell’area partner.",
+  "Local assistant, tour leader, meet & greet, extra hours, supplements and dedicated discounts are in the partner area.",
+  "Asistente local, tour leader, meet & greet, horas extra, suplementos y descuentos a medida están en el área de socios.",
+  "現地アシスタント、ツアーリーダー、ミート＆グリート、追加時間、割増料金、専用割引はパートナーエリアでご覧いただけます。"
  ],
  "demo.agency.banner": [
   "AREA DIMOSTRATIVA · dati inventati, nessuna email inviata, nessun pagamento reale",
@@ -4006,6 +4114,18 @@
   "Account status",
   "Estado de la cuenta",
   "アカウントの状態"
+ ],
+ "b2b.pending.rates": [
+  "Le tariffe per le agenzie",
+  "Rates for agencies",
+  "Tarifas para agencias",
+  "旅行会社向け料金"
+ ],
+ "b2b.pending.ratesLead": [
+  "Sono le tariffe base, solo da guardare: appena il tuo account è approvato potrai prenotare e vedrai le condizioni riservate a te.",
+  "These are the base rates, for viewing only: as soon as your account is approved you can book and you will see the terms reserved for you.",
+  "Son las tarifas base, solo para consultar: en cuanto tu cuenta esté aprobada podrás reservar y verás las condiciones reservadas para ti.",
+  "基本料金の閲覧のみです。アカウントが承認されると予約でき、あなた専用の条件が表示されます。"
  ],
  "b2b.st.pending": [
   "In attesa di approvazione",
@@ -5729,36 +5849,6 @@
   "Pago seguro",
   "安全なお支払い"
  ],
- "departures.title": [
-  "Prossime partenze",
-  "Next departures",
-  "Próximas salidas",
-  "次の出発"
- ],
- "departures.lead": [
-  "Tour in piccolo gruppo con posti liberi nei prossimi giorni. Tocca un orario per prenotare.",
-  "Small-group tours with free places in the coming days. Tap a departure to book.",
-  "Tours en grupo reducido con plazas libres en los próximos días. Toca una salida para reservar.",
-  "ここ数日で空席のある少人数ツアーです。時間をタップして予約してください。"
- ],
- "departures.left": [
-  "Ultimi {n} posti",
-  "Last {n} places",
-  "Últimas {n} plazas",
-  "残り{n}席"
- ],
- "departures.left1": [
-  "Ultimo posto",
-  "Last place",
-  "Última plaza",
-  "残り1席"
- ],
- "departures.more": [
-  "Cerca un’altra data",
-  "Look for another date",
-  "Buscar otra fecha",
-  "別の日付を探す"
- ],
  "checkout.update": [
   "Aggiorna",
   "Update",
@@ -5820,10 +5910,10 @@
   "ご希望の日時に、公認ガイドが専属でご案内します。日付、開始時間、時間数を選んでください。グループ全体の料金がすぐに表示されます。"
  ],
  "hourly.leadB2b": [
-  "Guida, assistente, tour leader e meet & greet a tariffa oraria. Calcola il preventivo e prenota in autonomia.",
-  "Guide, assistant, tour leader and meet & greet at hourly rates. Calculate your quote and book on your own.",
-  "Guía, asistente, tour leader y meet & greet por horas. Calcula el presupuesto y reserva por tu cuenta.",
-  "ガイド、現地アシスタント、ツアーリーダー、ミート＆グリートを時間料金でご利用いただけます。見積りを計算して、ご自身で予約してください。"
+  "Guida, assistente, tour leader e meet & greet a tariffa oraria. Calcola il prezzo e prenota in autonomia.",
+  "Guide, assistant, tour leader and meet & greet at hourly rates. Calculate the price and book on your own.",
+  "Guía, asistente, tour leader y meet & greet por horas. Calcula el precio y reserva por tu cuenta.",
+  "ガイド、現地アシスタント、ツアーリーダー、ミート＆グリートを時間料金でご利用いただけます。料金を計算して、ご自身で予約してください。"
  ],
  "hourly.rates": [
   "Tariffe",
@@ -5874,10 +5964,10 @@
   "1時間延長ごと"
  ],
  "hourly.s.guide": [
-  "Servizio guida",
-  "Guide service",
-  "Servicio de guía",
-  "ガイドサービス"
+  "Guida privata",
+  "Private guide",
+  "Guía privado",
+  "プライベートガイド"
  ],
  "hourly.s.assistant": [
   "Assistente in loco",
@@ -6042,10 +6132,10 @@
   "{n}時間"
  ],
  "hourly.quote.title": [
-  "Il tuo preventivo",
-  "Your quote",
-  "Tu presupuesto",
-  "お見積り"
+  "Il tuo prezzo",
+  "Your price",
+  "Tu precio",
+  "お客様の料金"
  ],
  "hourly.quote.total": [
   "Totale",
@@ -6060,10 +6150,10 @@
   "日付を選ぶと、空いている開始時間と割増料金が表示されます。"
  ],
  "hourly.quote.estimate": [
-  "Preventivo indicativo: festivo e notturno dipendono dalla data e dall’orario di inizio.",
-  "Indicative quote: holiday and night supplements depend on the date and start time.",
-  "Presupuesto orientativo: festivo y nocturno dependen de la fecha y la hora de inicio.",
-  "概算のお見積りです。日曜・祝祭日・夜間の割増は、日付と開始時間によって決まります。"
+  "Prezzo indicativo: festivo e notturno dipendono dalla data e dall’orario di inizio.",
+  "Indicative price: holiday and night supplements depend on the date and start time.",
+  "Precio orientativo: festivo y nocturno dependen de la fecha y la hora de inicio.",
+  "概算の料金です。日曜・祝祭日・夜間の割増は、日付と開始時間によって決まります。"
  ],
  "hourly.quote.times": [
   "Scegli l’orario di inizio",
@@ -6180,16 +6270,16 @@
   "所要時間"
  ],
  "b2b.ratesCta": [
-  "Calcola un preventivo",
-  "Calculate a quote",
-  "Calcular un presupuesto",
-  "見積りを計算する"
+  "Calcola il prezzo",
+  "Calculate the price",
+  "Calcular el precio",
+  "料金を計算する"
  ],
  "b2b.ratesPartnerLead": [
-  "Sono già le tariffe con il tuo sconto. Calcola un preventivo e prenota.",
-  "These already include your discount. Calculate a quote and book.",
-  "Ya incluyen tu descuento. Calcula un presupuesto y reserva.",
-  "貴社の割引がすでに反映された料金です。見積りを計算して、ご予約ください。"
+  "Sono già le tariffe con il tuo sconto. Calcola il prezzo e prenota.",
+  "These already include your discount. Calculate the price and book.",
+  "Ya incluyen tu descuento. Calcula el precio y reserva.",
+  "貴社の割引がすでに反映された料金です。料金を計算して、ご予約ください。"
  ],
  "book.hourlyHint": [
   "Cerchi una guida tutta per te, a ore?",
@@ -6198,10 +6288,10 @@
   "専属ガイドを時間制でお探しですか？"
  ],
  "book.hourlyLink": [
-  "Calcola il preventivo",
-  "Calculate a quote",
-  "Calcular un presupuesto",
-  "見積りを計算する"
+  "Calcola il prezzo",
+  "Calculate the price",
+  "Calcular el precio",
+  "料金を計算する"
  ],
  "tours.hourlyHint": [
   "Prezzo calcolato sulle ore che scegli.",
@@ -6436,18 +6526,6 @@
   "Shared tours",
   "Tours compartidos",
   "乗り合いツアー"
- ],
- "book.privateSlots": [
-  "Orari liberi per {hours}",
-  "Free start times for {hours}",
-  "Horarios libres para {hours}",
-  "{hours}の枠で空いている開始時刻"
- ],
- "book.privateOther": [
-  "Altre durate e orari →",
-  "Other durations and times →",
-  "Otras duraciones y horarios →",
-  "他の時間数・開始時刻を見る →"
  ],
  "partner.nav.bookings": [
   "Prenotazioni",
@@ -6713,6 +6791,12 @@
   "Descargar la lista (CSV)",
   "一覧をダウンロード（CSV）"
  ],
+ "partner.exportXlsx": [
+  "Scarica l’elenco per Excel (.xlsx)",
+  "Download the list for Excel (.xlsx)",
+  "Descargar la lista para Excel (.xlsx)",
+  "一覧をExcel用にダウンロード（.xlsx）"
+ ],
  "partner.results.none": [
   "Nessuna prenotazione corrisponde alla ricerca.",
   "No booking matches your search.",
@@ -6820,6 +6904,12 @@
   "Invoice {n}",
   "Factura {n}",
   "請求書 {n}"
+ ],
+ "partner.act.again": [
+  "Prenota di nuovo",
+  "Book again",
+  "Reservar de nuevo",
+  "もう一度予約する"
  ],
  "partner.act.confirm": [
   "Conferma",
@@ -8724,10 +8814,10 @@
   "お支払い"
  ],
  "partner.inv.payNow": [
-  "Paga ora",
-  "Pay now",
-  "Pagar ahora",
-  "今すぐ支払う"
+  "Paga con carta",
+  "Pay by card",
+  "Pagar con tarjeta",
+  "カードで支払う"
  ],
  "partner.inv.howToPay": [
   "Come pagare",
@@ -8735,11 +8825,59 @@
   "Cómo pagar",
   "お支払い方法"
  ],
+ "partner.inv.transfer": [
+  "Dati del bonifico",
+  "Bank transfer details",
+  "Datos de la transferencia",
+  "銀行振込の情報"
+ ],
+ "partner.inv.payAll": [
+  "Paga tutto lo scaduto",
+  "Pay everything overdue",
+  "Pagar todo lo vencido",
+  "期限切れをまとめて支払う"
+ ],
+ "partner.inv.flash.paid": [
+  "Pagamento ricevuto: grazie! Le fatture risultano pagate e ti abbiamo mandato una ricevuta per ciascuna.",
+  "Payment received: thank you! The invoices are marked as paid and we emailed you a receipt for each.",
+  "Pago recibido: ¡gracias! Las facturas figuran como pagadas y te hemos enviado un recibo de cada una.",
+  "お支払いを確認しました。ありがとうございます。請求書は支払い済みとなり、それぞれの領収メールをお送りしました。"
+ ],
+ "partner.inv.flash.canceled": [
+  "Pagamento annullato: puoi riprovare quando vuoi.",
+  "Payment cancelled: you can try again whenever you like.",
+  "Pago cancelado: puedes volver a intentarlo cuando quieras.",
+  "お支払いはキャンセルされました。いつでもやり直せます。"
+ ],
+ "partner.inv.flash.nothing": [
+  "Non c’è nulla da pagare con la carta adesso: le fatture risultano già saldate.",
+  "There is nothing to pay by card right now: the invoices are already settled.",
+  "No hay nada que pagar con tarjeta ahora: las facturas ya figuran saldadas.",
+  "現在カードで支払う請求書はありません。すでに精算済みです。"
+ ],
+ "invpay.batch.title": [
+  "Fatture scadute ({n})",
+  "Overdue invoices ({n})",
+  "Facturas vencidas ({n})",
+  "期限切れの請求書（{n}件）"
+ ],
  "partner.inv.overdue": [
-  "Fatture scadute da pagare: {n} (in tutto {amount}). Apri «Paga ora» o «Come pagare» nella riga della fattura.",
-  "Overdue invoices to pay: {n} ({amount} in total). Open “Pay now” or “How to pay” on the invoice row.",
-  "Facturas vencidas por pagar: {n} ({amount} en total). Abre «Pagar ahora» o «Cómo pagar» en la fila de la factura.",
-  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の「今すぐ支払う」または「お支払い方法」を開いてください。"
+  "Fatture scadute da pagare: {n} (in tutto {amount}). Apri «Come pagare» nella riga della fattura.",
+  "Overdue invoices to pay: {n} ({amount} in total). Open “How to pay” on the invoice row.",
+  "Facturas vencidas por pagar: {n} ({amount} en total). Abre «Cómo pagar» en la fila de la factura.",
+  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の「お支払い方法」を開いてください。"
+ ],
+ "partner.inv.overdueCardAll": [
+  "Fatture scadute da pagare: {n} (in tutto {amount}). Paga con carta dalla riga della fattura o tutte insieme con «Paga tutto lo scaduto»; per il bonifico apri «Dati del bonifico».",
+  "Overdue invoices to pay: {n} ({amount} in total). Pay by card from the invoice row, or all at once with “Pay everything overdue”; for a bank transfer open “Bank transfer details”.",
+  "Facturas vencidas por pagar: {n} ({amount} en total). Paga con tarjeta desde la fila de la factura o todas juntas con «Pagar todo lo vencido»; para la transferencia abre «Datos de la transferencia».",
+  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の行から、または「期限切れをまとめて支払う」でカード払いができます。銀行振込は「銀行振込の情報」をご覧ください。"
+ ],
+ "partner.inv.overdueCard": [
+  "Fatture scadute da pagare: {n} (in tutto {amount}). Paga con carta dalla riga della fattura; per il bonifico apri «Dati del bonifico».",
+  "Overdue invoices to pay: {n} ({amount} in total). Pay by card from the invoice row; for a bank transfer open “Bank transfer details”.",
+  "Facturas vencidas por pagar: {n} ({amount} en total). Paga con tarjeta desde la fila de la factura; para la transferencia abre «Datos de la transferencia».",
+  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の行からカードで支払えます。銀行振込は「銀行振込の情報」をご覧ください。"
  ],
  "partner.kpi.dueOverdue": [
   "di cui scaduti {amount}",
@@ -8765,29 +8903,35 @@
   "Factura {number}",
   "請求書 {number}"
  ],
- "avail.nav": [
-  "Date libere",
-  "Free dates",
-  "Fechas libres",
-  "空き日"
+ "book.new.lead": [
+  "Scegli servizio e persone: qui sotto vedi subito gli orari liberi del primo giorno disponibile. Per un altro giorno, scrivi la data o tocca il calendario.",
+  "Pick the service and the number of guests: the free times of the first available day show up right below. For another day, type the date or tap the calendar.",
+  "Elige el servicio y las personas: debajo ves al instante los horarios libres del primer día disponible. Para otro día, escribe la fecha o toca el calendario.",
+  "サービスと人数を選ぶと、直近の空き日の空き時間がすぐ下に表示されます。別の日は、日付を入力するかカレンダーをタップしてください。"
  ],
- "avail.tab.search": [
-  "Cerca per data",
-  "Search by date",
-  "Buscar por fecha",
-  "日付で探す"
+ "book.new.date": [
+  "Vai alla data",
+  "Go to date",
+  "Ir a la fecha",
+  "日付を指定"
  ],
- "avail.title": [
-  "Date libere",
-  "Free dates",
-  "Fechas libres",
-  "空き日"
+ "book.new.first": [
+  "Primo giorno libero",
+  "First free day",
+  "Primer día libre",
+  "最初の空き日"
  ],
- "avail.lead": [
-  "Scegli il servizio e quante persone siete: vedi a colpo d’occhio i giorni liberi del mese, senza provare una data alla volta.",
-  "Pick the service and the size of your group: see the free days of the month at a glance, without trying one date at a time.",
-  "Elige el servicio y cuántas personas sois: ve de un vistazo los días libres del mes, sin probar fecha por fecha.",
-  "サービスと人数を選ぶと、1日ずつ試さなくても、その月の空き日がひと目で分かります。"
+ "book.new.also": [
+  "Lo stesso giorno, altri servizi",
+  "Same day, other services",
+  "El mismo día, otros servicios",
+  "同じ日の他のサービス"
+ ],
+ "book.new.noFree": [
+  "In questo mese non ci sono giorni liberi: prova il mese dopo.",
+  "No free days this month: try the next one.",
+  "Este mes no hay días libres: prueba el siguiente.",
+  "この月に空き日はありません。翌月をご確認ください。"
  ],
  "avail.service": [
   "Servizio",
@@ -8920,30 +9064,6 @@
   "Another time is taken: you can ask to be notified if it frees up.",
   "Otra hora está ocupada: puedes pedir que te avisemos si se libera.",
   "別の時間は埋まっています。空いたら通知を受け取れます。"
- ],
- "avail.bookLink": [
-  "Non hai ancora una data? Guarda il calendario delle date libere →",
-  "No date in mind yet? See the calendar of free dates →",
-  "¿Aún no tienes fecha? Mira el calendario de fechas libres →",
-  "日程が未定ですか？空き日カレンダーを見る →"
- ],
- "avail.noneHint": [
-  "Data occupata? Guarda il calendario e fatti avvisare se si libera →",
-  "Date taken? Open the calendar and ask to be notified if it frees up →",
-  "¿Fecha ocupada? Abre el calendario y pide que te avisemos si se libera →",
-  "日程が埋まっていますか？カレンダーを開き、空いたら通知を受け取りましょう →"
- ],
- "avail.card.text": [
-  "Il calendario del mese per ogni servizio: i giorni liberi a colpo d’occhio e, se una data è occupata, l’avviso quando si libera.",
-  "The month calendar for each service: free days at a glance and, if a date is taken, a notice when it frees up.",
-  "El calendario del mes de cada servicio: los días libres de un vistazo y, si una fecha está ocupada, un aviso cuando se libera.",
-  "サービスごとの月間カレンダー。空き日がひと目で分かり、埋まっている日は空いたときに通知を受け取れます。"
- ],
- "avail.card.cta": [
-  "Guarda le date libere",
-  "See the free dates",
-  "Ver las fechas libres",
-  "空き日を見る"
  ],
  "avail.none": [
   "Non ci sono servizi prenotabili.",
@@ -9569,11 +9689,17 @@
   "Descargar PDF",
   "PDFをダウンロード"
  ],
+ "stmt.xlsx": [
+  "Scarica per Excel (.xlsx)",
+  "Download for Excel (.xlsx)",
+  "Descargar para Excel (.xlsx)",
+  "Excel用にダウンロード（.xlsx）"
+ ],
  "stmt.csv": [
-  "Scarica per il foglio di calcolo (CSV)",
-  "Download for spreadsheet (CSV)",
-  "Descargar para hoja de cálculo (CSV)",
-  "表計算用にダウンロード（CSV）"
+  "Scarica in CSV",
+  "Download as CSV",
+  "Descargar en CSV",
+  "CSVでダウンロード"
  ],
  "stmt.opening": [
   "Saldo iniziale",

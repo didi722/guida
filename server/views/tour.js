@@ -20,6 +20,7 @@ export function tourBlock(ctx) {
       exit: t('tour.exit'),
       skipStop: t('tour.skipStop'),
       hint: t('tour.hint'),
+      locked: t('tour.locked'),
       finish: t('tour.finish'),
       resume: t('tour.resume', { n: '{n}', total: '{total}' }),
       resumeBtn: t('tour.resumeBtn'),

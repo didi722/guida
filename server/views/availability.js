@@ -1,41 +1,41 @@
-// Area agenzie › Date libere: il calendario del mese di un servizio (giorni liberi, tenuti da altri, completi) e la lista d'attesa.
+// Area agenzie › Nuova prenotazione: servizio, persone e giorno su una pagina sola. Gli orari liberi del primo giorno disponibile compaiono subito;
+// sotto il calendario del mese (giorni liberi, tenuti da altri, completi) e la lista d'attesa.
 import { html, raw } from '../html.js';
 import { LANG_META, localeOf } from '../langs.js';
 import { hourOptions } from '../rates.js';
 import { dayOfWeek, fmtDate, fmtInstant, fmtMonth, monthDates, nowRome } from '../time.js';
+import { formatMoney } from '../util.js';
 import { MAX_ACTIVE } from '../waitlist.js';
 import { breadcrumbs, hoursLabel, homeCrumb } from './components.js';
 import { page } from './layout.js';
-
-/** «Cerca per data | Date libere»: i due modi di cominciare una nuova prenotazione. */
-export function bookTabs(ctx, active) {
-  const { t, u } = ctx;
-  return html`<nav class="tabs" aria-label="${t('partner.nav.new')}"><a href="${u('/book')}" ${active === 'search' ? raw('aria-current="page"') : ''}>${t('avail.tab.search')}</a><a href="${u('/b2b/availability')}" ${active === 'free' ? raw('aria-current="page"') : ''}>${t('avail.nav')}</a></nav>`;
-}
+import { preOpenNotice } from './booking.js';
 
 const EV = { free: 'ev-ok', held: 'ev-opt', full: 'ev-priv', mine: 'ev-prog' };
 const FLASH_OK = new Set(['joined', 'removed', 'rearmed']);
 const FLASH_ERR = new Set(['invalid', 'closed', 'free', 'mine', 'dup', 'limit']);
 
-/** I parametri della pagina, per costruire gli indirizzi (mese, giorno) mantenendo servizio, persone, durata e lingua. */
+/** I parametri della pagina, per costruire gli indirizzi (mese, giorno, altro servizio) mantenendo servizio, persone, durata e lingua. */
 const query = (v, extra = {}) => {
   const q = new URLSearchParams({ tour: v.tour.slug, pax: String(v.pax) });
   if (v.tour.chooseHours && v.hours != null) q.set('hours', String(v.hours));
   if (v.tourLang) q.set('tl', v.tourLang);
+  if (v.clientRef) q.set('cr', v.clientRef); // «Prenota di nuovo»: il riferimento pratica arriva fino alla conferma
   for (const [k, val] of Object.entries(extra)) if (val) q.set(k, val);
   return q.toString();
 };
 
+/** Servizio, persone, durata, lingua e data (facoltativa): ogni scelta ricarica la pagina. */
 function filters(ctx, v) {
   const { t, lang, u } = ctx;
-  const { tours, tour, pax, hours, tourLang, month } = v;
-  return html`<form class="card pad avail-form" method="get" action="${u('/b2b/availability')}">
-    <label class="field"><span class="label">${t('avail.service')}</span><select name="tour" data-autosubmit>${tours.map((x) => html`<option value="${x.slug}" ${x.slug === tour.slug ? raw('selected') : ''}>${x.i18n[lang].title}</option>`)}</select></label>
+  const { tours, tour, pax, hours, tourLang, month, asked, minDate, maxDate } = v;
+  return html`<form class="card pad avail-form" method="get" action="${u('/book')}">
+    <label class="field field-wide"><span class="label">${t('avail.service')}</span><select name="tour" data-autosubmit>${tours.map((x) => html`<option value="${x.slug}" ${x.slug === tour.slug ? raw('selected') : ''}>${x.i18n[lang].title}</option>`)}</select></label>
     <label class="field"><span class="label">${t('s.guests')}</span><select name="pax" data-autosubmit>${Array.from({ length: tour.maxParticipants }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select></label>
     ${tour.chooseHours ? html`<label class="field"><span class="label">${t('hourly.f.hours')}</span><select name="hours" data-autosubmit>${hourOptions(tour.service).map((h) => html`<option value="${h}" ${h === hours ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select></label>` : ''}
     ${tour.model === 'person' && tour.languages.length > 1 ? html`<label class="field"><span class="label">${t('s.tourLang')}</span><select name="tl" data-autosubmit><option value="">${t('avail.anyLang')}</option>${tour.languages.map((l) => html`<option value="${l}" ${l === tourLang ? raw('selected') : ''}>${LANG_META[l]?.name ?? l}</option>`)}</select></label>` : ''}
-    <input type="hidden" name="m" value="${month}">
-    <button class="btn btn-outline" type="submit">${t('avail.show')}</button>
+    <label class="field field-date"><span class="label">${t('book.new.date')}</span><input type="date" name="d" min="${minDate}" max="${maxDate}" value="${asked}" data-autosubmit></label>
+    <input type="hidden" name="m" value="${month}">${v.clientRef ? html`<input type="hidden" name="cr" value="${v.clientRef}">` : ''}
+    <noscript><button class="btn btn-outline" type="submit">${t('avail.show')}</button></noscript>
   </form>`;
 }
 
@@ -46,7 +46,7 @@ function grid(ctx, v) {
   const dates = monthDates(month);
   const pad = (dayOfWeek(dates[0]) + 6) % 7; // lunedì = 0
   const dows = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(localeOf(lang), { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, 0, 1 + i))));
-  const href = (m, d = '') => `${u('/b2b/availability')}?${query(v, { m, d })}`;
+  const href = (m, d = '') => `${u('/book')}?${query(v, { m, d })}`;
   const free = (n) => (n === 1 ? t('avail.free.one', { n }) : t('avail.free.many', { n }));
   return html`
 <div class="acal-head">
@@ -74,13 +74,22 @@ function grid(ctx, v) {
 <p class="small muted acal-legend"><span class="legend ev-ok"></span> ${t('avail.lg.free')} · <span class="legend ev-opt"></span> ${t('avail.lg.held')} · <span class="legend ev-priv"></span> ${t('avail.lg.full')} · <span class="legend ev-prog"></span> ${t('avail.lg.mine')} · ${t('avail.hint')}.</p>`;
 }
 
+/** Quanto costa per questo gruppo, nella tariffa dell'agenzia: «160 € · 2 ore · per tutto il gruppo». */
+function priceLine(ctx, v) {
+  const { t, lang } = ctx;
+  const { tour, pax, hours, price } = v;
+  if (price == null) return '';
+  const what = tour.pricing === 'hourly' ? `${hoursLabel(t, lang, hours)} · ${t('book.forGroup')}` : tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup');
+  return html`<p class="day-price"><strong>${formatMoney(price, lang)}</strong> <span class="muted">· ${what}</span></p>`;
+}
+
 /** Il giorno scelto: gli orari liberi con il collegamento al pagamento e, se non c'è posto, «Avvisami se si libera». */
 function dayDetail(ctx, v) {
   const { t, lang, u, app } = ctx;
-  const { tour, pax, hours, tourLang, selected, day, entries, here } = v;
+  const { tour, pax, hours, tourLang, selected, auto, day, entries, here } = v;
   const queue = app.cfg.waitlist;
-  if (!selected || !day) return '';
-  const checkout = (time) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour.slug)}&date=${selected}&time=${time}&pax=${pax}${tour.chooseHours && hours != null ? `&hours=${hours}` : ''}${tourLang ? `&tl=${tourLang}` : ''}`;
+  if (!selected || !day) return html`<div class="card pad empty"><p>${t('book.new.noFree')}</p></div>`;
+  const checkout = (time) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour.slug)}&date=${selected}&time=${time}&pax=${pax}${tour.chooseHours && hours != null ? `&hours=${hours}` : ''}${tourLang ? `&tl=${tourLang}` : ''}${v.clientRef ? `&cr=${encodeURIComponent(v.clientRef)}` : ''}`;
   const waiting = (time) => entries.some((e) => e.tour_slug === tour.slug && e.date === selected && (e.time ?? '') === time && e.pax === pax);
   // orari che hanno una partenza fissa ma sono occupati: ognuno si può seguire da solo
   const takenTimes = tour.flexible ? [] : day.possible.filter((p) => !day.slots.some((s) => s.time === p.time)).map((p) => p.time);
@@ -98,9 +107,9 @@ function dayDetail(ctx, v) {
         <button class="btn btn-gold" type="submit">${t('wl.cta')}</button>
       </div>
     </form>`;
-  return html`<section class="agenda-day" id="giorno"><h3>${fmtDate(selected, lang)} <span class="chip">${t('avail.pax', { n: pax })}</span></h3>
+  return html`<section class="agenda-day" id="giorno"><h3>${fmtDate(selected, lang)} <span class="chip">${t('avail.pax', { n: pax })}</span>${auto && day.state === 'free' ? html` <span class="chip chip-ok">${t('book.new.first')}</span>` : ''}</h3>
     ${day.state === 'free'
-      ? html`<div class="card pad"><p><strong>${t('avail.day.free')}</strong></p>
+      ? html`<div class="card pad">${priceLine(ctx, v)}
           <div class="slot-list">${day.slots.map((s) => html`<a class="slot" href="${checkout(s.time)}"><strong>${s.time}</strong>${tour.model === 'person' ? html`<small>${s.joined ? t('book.confirmedDeparture') : t('book.newDeparture')}${s.lang ? html` · ${t('w.inLang', { lang: LANG_META[s.lang]?.name ?? s.lang })}` : ''}${s.left <= 4 ? html` · ${t('w.left', { n: s.left })}` : ''}</small>` : ''}</a>`)}</div>
           ${canWait ? html`<p class="small muted">${t('avail.day.otherTimes')}</p>` : ''}</div>`
       : day.state === 'held' || day.state === 'full'
@@ -111,6 +120,13 @@ function dayDetail(ctx, v) {
     ${alreadyWaiting && day.state !== 'mine' ? html`<p class="notice notice-info" role="status">${t('wl.already')}</p>` : ''}
     ${canWait ? waitForm : ''}
   </section>`;
+}
+
+/** Gli altri servizi con posto nello stesso giorno: un tocco e si resta su quel giorno con l'altro servizio. */
+function alsoRow(ctx, v) {
+  const { t, lang, u } = ctx;
+  if (!v.also?.length) return '';
+  return html`<p class="also-row"><span class="muted small">${t('book.new.also')}:</span> ${v.also.map(({ tour, n }) => html`<a class="chip chip-link" href="${u('/book')}?${new URLSearchParams({ tour: tour.slug, pax: String(v.pax), d: v.selected, ...(v.clientRef ? { cr: v.clientRef } : {}) })}#giorno">${tour.i18n[lang].title} · ${n === 1 ? t('avail.free.one', { n }) : t('avail.free.many', { n })}</a>`)}</p>`;
 }
 
 /** Dove si è in coda: chi aspetta sa se è la prima, quante agenzie ha davanti, e chi è stata avvisata per prima fino a quando ha il vantaggio. */
@@ -129,7 +145,7 @@ function waitlist(ctx, v) {
   const row = (e) => {
     const [, mm, dd] = e.date.split('-');
     const notified = e.status === 'notified';
-    const search = `${u('/book')}?date=${e.date}&pax=${e.pax}&tour=${encodeURIComponent(e.tour_slug)}`;
+    const search = `${u('/book')}?d=${e.date}&pax=${e.pax}&tour=${encodeURIComponent(e.tour_slug)}${e.hours != null && app.content.tour(e.tour_slug)?.chooseHours ? `&hours=${e.hours}` : ''}#giorno`;
     const post = (action, label, cls = 'btn-outline') => html`<form method="post" action="${u(`/b2b/waitlist/${e.id}/${action}`)}"><input type="hidden" name="next" value="${here}"><button class="btn btn-sm ${cls}" type="submit">${label}</button></form>`;
     return html`<div class="agenda-item wait-item">
       <span class="agenda-time"><strong>${dd}/${mm}</strong><small>${e.date.slice(0, 4)}</small></span>
@@ -145,27 +161,28 @@ function waitlist(ctx, v) {
 /**
  * @param {object} v
  * @param {object[]} v.tours servizi prenotabili dall'agenzia; `tour` quello scelto (null se non ce ne sono)
- * @param {number} v.pax persone; `hours` durata (servizi a ore); `tourLang` lingua voluta
+ * @param {number} v.pax persone; `hours` durata (servizi a ore); `tourLang` lingua voluta; `price` il prezzo in centesimi (null se non si può calcolare)
  * @param {string} v.month AAAA-MM; `prev`/`next` mesi vicini ('' se non si può andare oltre)
  * @param {object} v.overview giorno → { state, n }
- * @param {string|null} v.selected giorno scelto; `day` il suo dettaglio ({state, slots, possible})
+ * @param {string|null} v.selected giorno mostrato (`auto`: scelto da noi, il primo libero); `asked` quello chiesto dall'agenzia ('' se nessuno); `day` il suo dettaglio ({state, slots, possible})
+ * @param {{tour: object, n: number}[]} v.also gli altri servizi con posto nello stesso giorno
  * @param {object[]} v.entries avvisi attivi dell'agenzia; `here` l'indirizzo di questa pagina (per tornarci dopo un invio)
  */
 export function availabilityPage(ctx, v) {
-  const { t, lang, u } = ctx;
+  const { t, lang } = ctx;
   const flash = v.flash?.startsWith('err-') && FLASH_ERR.has(v.flash.slice(4)) ? { err: t(`wl.err.${v.flash.slice(4)}`, { max: MAX_ACTIVE }) } : FLASH_OK.has(v.flash) ? { ok: t(`wl.flash.${v.flash}`) } : null;
   const body = html`
-<section class="page-head"><div class="wrap">
-  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('avail.title')]])}
-  <h1>${t('avail.title')}</h1><p class="lead">${t('avail.lead')}</p>
+<section class="page-head is-compact"><div class="wrap">
+  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('partner.nav.new')]])}
+  <h1>${t('partner.nav.new')}</h1><p class="lead">${t('book.new.lead')}</p>
+  ${preOpenNotice(ctx, { agency: true })}
 </div></section>
 <section class="section tight"><div class="wrap">
-  ${bookTabs(ctx, 'free')}
   ${flash?.ok ? html`<div class="notice notice-ok" role="status">${flash.ok}</div>` : ''}${flash?.err ? html`<div class="notice notice-err" role="alert">${flash.err}</div>` : ''}
   ${v.tour
-    ? html`${filters(ctx, v)}${grid(ctx, v)}${dayDetail(ctx, v)}`
+    ? html`${filters(ctx, v)}${dayDetail(ctx, v)}${alsoRow(ctx, v)}${grid(ctx, v)}`
     : html`<div class="card pad empty"><p>${t('avail.none')}</p></div>`}
   ${waitlist(ctx, v)}
 </div></section>`;
-  return page(ctx, { title: t('avail.title'), path: `/${lang}/b2b/availability`, body, noindex: true, activeNav: 'book', area: 'partner' });
+  return page(ctx, { title: t('partner.nav.new'), path: `/${lang}/book`, body, noindex: true, activeNav: 'book', area: 'partner' });
 }

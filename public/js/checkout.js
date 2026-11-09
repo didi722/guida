@@ -7,6 +7,8 @@
   });
   var form = document.getElementById('checkout-form');
   var optionBtn = document.getElementById('option-submit');
+  // un campo non valido dentro «Referente» chiuso: si apre, altrimenti il browser non saprebbe mostrarlo
+  if (form) form.addEventListener('invalid', function (e) { var box = e.target.closest && e.target.closest('details'); if (box && !box.open) box.open = true; }, true);
   if (form) form.addEventListener('submit', function (e) {
     if (e.submitter && e.submitter.name === 'apply') return; // «Applica» e cambio di persone: si ricarica la pagina, non si prenota
     if (e.submitter && e.submitter.value === 'package') { e.submitter.classList.add('is-busy'); return; } // «Aggiungi al pacchetto»: non si prenota, si passa al pacchetto

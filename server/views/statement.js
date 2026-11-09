@@ -85,7 +85,7 @@ export function statementBlocks({ t, lang, st, invoiceHref = () => '', serviceHr
     : html`<div class="card pad"><p class="muted">${t('stmt.servicesNone')}</p></div>`}`;
 }
 
-/** Il mese in alto: frecce per cambiarlo, PDF e CSV. `base`: il percorso della pagina (senza query). */
+/** Il mese in alto: frecce per cambiarlo, PDF, Excel e CSV. `base`: il percorso della pagina (senza query). */
 export function statementBar({ t, lang, st, range, base }) {
   const prev = addMonths(`${st.month}-01`, -1).slice(0, 7);
   const next = addMonths(`${st.month}-01`, 1).slice(0, 7);
@@ -96,7 +96,7 @@ export function statementBar({ t, lang, st, range, base }) {
       ${st.month < range.last ? html`<a class="btn btn-outline btn-sm" href="${base}?month=${next}" rel="next">${t('stmt.next')}</a>` : ''}
       ${st.month !== range.last ? html`<a class="btn btn-outline btn-sm" href="${base}">${t('stmt.current')}</a>` : ''}
     </div>
-    <div class="btn-row"><a class="btn btn-gold btn-sm" href="${base}.pdf?month=${st.month}" target="_blank" rel="noopener">${t('stmt.pdf')}</a><a class="btn btn-outline btn-sm" href="${base}.csv?month=${st.month}">${t('stmt.csv')}</a></div>
+    <div class="btn-row"><a class="btn btn-gold btn-sm" href="${base}.pdf?month=${st.month}" target="_blank" rel="noopener">${t('stmt.pdf')}</a><a class="btn btn-outline btn-sm" href="${base}.xlsx?month=${st.month}">${t('stmt.xlsx')}</a><a class="btn btn-outline btn-sm" href="${base}.csv?month=${st.month}">${t('stmt.csv')}</a></div>
   </div>`;
 }
 

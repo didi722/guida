@@ -1,10 +1,10 @@
 import { html, raw } from '../html.js';
 import { BUDGETS, GROUP_TYPES, INTERESTS, programDays, proposalExpired } from '../programs.js';
-import { fmtDate } from '../time.js';
+import { fmtDate, nowRome } from '../time.js';
 import { formatMoney } from '../util.js';
 import { page } from './layout.js';
 import { phoneField } from './fields.js';
-import { breadcrumbs, whoOf } from './components.js';
+import { areaOf, breadcrumbs, homeCrumb, whoOf } from './components.js';
 
 export function programsPage(ctx, { values = {}, error = '' } = {}) {
   const { t, lang, acct } = ctx;
@@ -14,14 +14,16 @@ export function programsPage(ctx, { values = {}, error = '' } = {}) {
   const picked = new Set([].concat(values.interests ?? []));
   const body = html`
 <section class="page-head"><div class="wrap">
-  ${breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('pg.title')]])}
-  <h1>${t('pg.title')}</h1><p class="lead">${t('pg.lead')}</p>
+  ${isB2b ? breadcrumbs(ctx, [homeCrumb(ctx), [t('pg.agency.back'), `/${lang}/b2b/programs`], [t('pg.agency.new')]]) : breadcrumbs(ctx, [[t('nav.home'), `/${lang}/`], [t('pg.title')]])}
+  <h1>${isB2b ? t('pg.agency.new') : t('pg.title')}</h1><p class="lead">${isB2b ? t('pg.agency.lead') : t('pg.lead')}</p>
 </div></section>
-<section class="section tight"><div class="wrap">
+${isB2b
+  ? ''
+  : html`<section class="section tight"><div class="wrap">
   <h2 class="h-sub">${t('pg.ideas.title')}</h2>
   <div class="grid grid-2 ideas">${[1, 2, 3, 4].map((n) => html`<div class="benefit"><h3>${t(`pg.idea.${n}.t`)}</h3><p>${t(`pg.idea.${n}.p`)}</p></div>`)}</div>
-</div></section>
-<section class="section section-alt"><div class="wrap narrow">
+</div></section>`}
+<section class="section ${isB2b ? 'tight' : 'section-alt'}"><div class="wrap narrow">
   <h2>${t('pg.form.title')}</h2><p class="lead">${t('pg.form.lead')}</p>
   <form class="card pad form" method="post" action="/${lang}/programs">
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
@@ -59,7 +61,7 @@ export function programsPage(ctx, { values = {}, error = '' } = {}) {
     <button class="btn btn-gold btn-block btn-lg" type="submit">${t('pg.send')}</button>
   </form>
 </div></section>`;
-  return page(ctx, { title: t('pg.title'), description: t('pg.lead'), path: `/${lang}/programs`, body, activeNav: 'programs' });
+  return page(ctx, { title: isB2b ? t('pg.agency.new') : t('pg.title'), description: t('pg.lead'), path: `/${lang}/programs`, body, activeNav: isB2b ? 'b2b-account' : 'programs', area: areaOf(ctx), noindex: isB2b });
 }
 
 export function programStatusPage(ctx, p, { flash = '', error = '' } = {}) {
@@ -77,6 +79,7 @@ export function programStatusPage(ctx, p, { flash = '', error = '' } = {}) {
 
   const body = html`
 <section class="page-head"><div class="wrap narrow">
+  ${ctx.acct?.status === 'approved' && p.account_id === ctx.acct.id ? html`<p class="back-link"><a href="/${lang}/b2b/programs">← ${t('pg.agency.back')}</a></p>` : ''}
   ${flash ? html`<div class="notice notice-ok" role="status">${flash}</div>` : ''}
   ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
   <div class="status status-${tone}"><span class="status-dot" aria-hidden="true"></span><div><h1>${t(`pg.status.${p.status}`)}</h1><p class="lead">${t(`pg.status.${p.status}.text`)}</p></div></div>
@@ -126,6 +129,37 @@ export function programStatusPage(ctx, p, { flash = '', error = '' } = {}) {
     <form method="post" action="${base}/message" class="form"><input type="hidden" name="t" value="${p.token}"><label class="field"><textarea name="message" rows="3" maxlength="2000" required></textarea></label><button class="btn btn-outline" type="submit">${t('pg.sendMessage')}</button></form></div>`
     : ''}
 </div></section>`;
-  return page(ctx, { title: `${t('pg.ref')} ${p.ref}`, path: `/${lang}/programs/${p.ref}`, body, noindex: true, activeNav: 'programs' });
+  const mine = ctx.acct?.status === 'approved' && p.account_id === ctx.acct.id; // l'agenzia che l'ha chiesto la vede nella sua area
+  return page(ctx, { title: `${t('pg.ref')} ${p.ref}`, path: `/${lang}/programs/${p.ref}`, body, noindex: true, activeNav: mine ? 'b2b-account' : 'programs', ...(mine ? { area: 'partner' } : {}) });
+}
+
+/** «Programmi di più giorni» nell'area dell'agenzia: le sue richieste con lo stato (e le proposte pronte) e il pulsante per chiederne un'altra. */
+export function agencyProgramsPage(ctx, { programs }) {
+  const { t, lang, u } = ctx;
+  const today = nowRome().date;
+  const chip = (p) => ({ new: 'chip-warn', quoted: 'chip-ok', accepted: 'chip-warn', confirmed: 'chip-ok', declined: 'chip-err', closed: 'chip-err' }[p.status] ?? '');
+  const body = html`
+<section class="page-head"><div class="wrap">
+  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('pg.title')]])}
+  <div class="account-head"><div><h1>${t('pg.title')}</h1><p class="lead">${t('pg.agency.lead')}</p></div>
+    <div class="btn-row"><a class="btn btn-gold" href="${u('/programs')}">${t('pg.agency.new')}</a></div></div>
+</div></section>
+<section class="section tight"><div class="wrap">
+  ${programs.length
+    ? html`<div class="table-wrap card"><table class="table table-stack partner-table"><thead><tr><th>${t('pg.ref')}</th><th>${t('pg.dates')}</th><th class="num">${t('s.guests')}</th><th>${t('b2b.state')}</th><th class="num">${t('s.total')}</th><th><span class="sr-only">${t('partner.col.actions')}</span></th></tr></thead><tbody>
+      ${programs.map((p) => {
+        const expired = p.status === 'quoted' && !!p.valid_until && p.valid_until < today;
+        return html`<tr>
+        <td data-label="${t('pg.ref')}"><a class="pb-title" href="/${lang}/programs/${p.ref}?t=${p.token}">${p.client_ref || p.ref}</a><small class="muted">${p.client_ref ? `${p.ref} · ` : ''}${fmtDate(nowRome(Date.parse(p.created_at)).date, lang, 'short')}</small></td>
+        <td data-label="${t('pg.dates')}">${p.date_from ? `${fmtDate(p.date_from, lang, 'short')}${p.date_to ? ' → ' + fmtDate(p.date_to, lang, 'short') : ''}` : t('pg.datesTbd')}</td>
+        <td class="num" data-label="${t('s.guests')}">${p.participants}</td>
+        <td data-label="${t('b2b.state')}"><span class="chip ${chip(p)}">${t(`pg.status.${p.status}`)}</span>${expired ? html`<small class="field-error">${t('pg.expired')}</small>` : p.status === 'quoted' && p.valid_until ? html`<small class="muted">${t('pg.validUntil', { date: fmtDate(p.valid_until, lang, 'date') })}</small>` : ''}</td>
+        <td class="num" data-label="${t('s.total')}">${p.total_cents != null ? formatMoney(p.total_cents, lang, p.currency) : '—'}</td>
+        <td class="pb-actions"><div class="pb-actions-in"><a class="btn ${p.status === 'quoted' && !expired ? 'btn-gold' : 'btn-outline'} btn-sm" href="/${lang}/programs/${p.ref}?t=${p.token}">${p.status === 'quoted' && !expired ? t('home.todo.programCta') : t('partner.act.open')}</a></div></td></tr>`;
+      })}
+    </tbody></table></div>`
+    : html`<div class="card pad center empty-state"><p>${t('pg.agency.empty')}</p><p class="btn-row center"><a class="btn btn-gold" href="${u('/programs')}">${t('pg.agency.new')}</a></p></div>`}
+</div></section>`;
+  return page(ctx, { title: t('pg.title'), path: `/${lang}/b2b/programs`, body, noindex: true, activeNav: 'b2b-account', area: 'partner' });
 }
 

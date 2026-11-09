@@ -38,17 +38,22 @@ const dayWords = (t, lang, text, sundays = false) =>
     ...parseDayList(text).tokens.map((tok) => (tok === 'pasqua' ? t('hourly.day.pasqua') : tok === 'pasquetta' ? t('hourly.day.pasquetta') : new Intl.DateTimeFormat(localeOf(lang), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, Number(tok.slice(0, 2)) - 1, Number(tok.slice(3))))))),
   ].join(lang === 'ja' ? '、' : ', ');
 
-/** Una tabella di tariffe (scaglioni + ora in più) per un servizio. `discountPercent`: sconto del partner, già applicato. */
-export function rateCard(ctx, { service, channel, discountPercent = 0, account = null }) {
+/**
+ * Una tabella di tariffe (scaglioni + ora in più) per un servizio. `discountPercent`: sconto del partner, già applicato.
+ * `onlyHours` limita le righe a certi scaglioni (la pagina pubblica per le agenzie mostra solo la guida a 2 e 4 ore) e `extra: false` toglie l'ora in più.
+ */
+export function rateCard(ctx, { service, channel, discountPercent = 0, account = null, onlyHours = null, extra = true }) {
   const { t, lang, app } = ctx;
   const data = rateRows(app.rates.get(), service, channel, account?.discount_percent ?? discountPercent);
   if (!data) return '';
+  if (onlyHours) data.rows = data.rows.filter((r) => onlyHours.includes(r.hours));
+  if (!data.rows.length) return '';
   return html`<div class="card pad rate-card reveal">
     <h3>${t(`hourly.s.${service}`)}</h3>
     <p class="muted small">${t(`hourly.d.${service}`)}</p>
     <table class="rate-table"><tbody>
       ${data.rows.map((r) => html`<tr><th scope="row">${t(`hourly.b.${r.hours}`)}</th><td>${formatMoney(r.cents, lang)}</td></tr>`)}
-      <tr class="rate-extra"><th scope="row">${t('hourly.b.extra')}</th><td>${formatMoney(data.extraCents, lang)}</td></tr>
+      ${extra ? html`<tr class="rate-extra"><th scope="row">${t('hourly.b.extra')}</th><td>${formatMoney(data.extraCents, lang)}</td></tr>` : ''}
     </tbody></table>
     ${minHours(service) > 2 ? html`<p class="small muted">${t('hourly.note.min', { n: minHours(service) })}</p>` : ''}
   </div>`;

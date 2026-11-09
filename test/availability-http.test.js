@@ -1,4 +1,4 @@
-// Date libere e lista d'attesa nell'area delle agenzie: la pagina, i moduli e gli avvisi, dall'inizio alla fine.
+// Nuova prenotazione e lista d'attesa nell'area delle agenzie: la pagina (servizio, persone, giorno, orari, calendario), i moduli e gli avvisi, dall'inizio alla fine.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
@@ -62,48 +62,87 @@ async function start() {
 function holdDay(app, acct, date) {
   return ['10:00', '15:00'].map((time) => createBooking(app, { tourSlug: SHARED, date, time, pax: 10, channel: 'b2b', account: acct, name: acct.contact_name, email: acct.email, lang: 'it', option: true, clientRef: 'Gruppo' }));
 }
-const view = (date, extra = '') => `/it/b2b/availability?tour=${SHARED}&pax=2&m=${date.slice(0, 7)}&d=${date}${extra}`;
+const view = (date, extra = '') => `/it/book?tour=${SHARED}&pax=2&m=${date.slice(0, 7)}&d=${date}${extra}`;
 
-test('la pagina Date libere: solo per le agenzie, con servizi, calendario del mese e parametri strani che non la rompono', async () => {
+test('la pagina Nuova prenotazione: solo per le agenzie, servizio e persone con gli orari del primo giorno libero subito sotto, calendario del mese e parametri strani che non la rompono', async () => {
   const s = await start();
   try {
-    const { pa, anon } = s;
+    const { pa, anon, app } = s;
+    // chi non è un'agenzia approvata resta sulla pagina pubblica (qui: l'elenco dei tour); il vecchio indirizzo chiede l'accesso
+    const pub = await anon('/it/book');
+    assert.equal(pub.status, 302);
+    assert.equal(loc(pub), '/it/tours');
     const r = await anon('/it/b2b/availability');
     assert.equal(r.status, 302);
     assert.match(loc(r), /^\/it\/b2b\/login\?next=%2Fit%2Fb2b%2Favailability/);
 
-    const page = await text(await pa('/it/b2b/availability'));
-    assert.match(page, /<h1>Date libere<\/h1>/);
-    assert.match(page, /Cerca per data/);
+    const page = await text(await pa('/it/book'));
+    assert.match(page, /<h1>Nuova prenotazione<\/h1>/);
+    assert.doesNotMatch(page, /<nav class="tabs"|Cerca per data|Date libere<\/h1>/, 'niente più due schede: una pagina sola');
     assert.match(page, /name="tour"/);
     assert.match(page, /Cannaregio e il Ghetto/);
     assert.match(page, /Guida privata/);
+    assert.match(page, /<input type="date" name="d" min="\d{4}-\d\d-\d\d" max="\d{4}-\d\d-\d\d" value="" data-autosubmit>/, 'la data è facoltativa e parte vuota');
     assert.match(page, /class="acal avail-grid"/);
     assert.match(page, /acal-cell is-free/);
     assert.match(page, /tenuto da altri: puoi farti avvisare/, 'la legenda');
     assert.match(page, /La mia lista d’attesa/);
     assert.match(page, /Non stai aspettando nessuna data/);
-    assert.match(page, /\/it\/book\/checkout\?tour=/, 'gli orari del primo giorno libero portano al pagamento');
+    // gli orari del primo giorno libero sono già lì, sopra il calendario, con il prezzo della tariffa agenzia
+    assert.match(page, /<span class="chip chip-ok">Primo giorno libero<\/span>/);
+    assert.match(page, /\/it\/book\/checkout\?tour=/, 'un tocco sull’orario porta al pagamento');
+    assert.ok(page.indexOf('class="slot"') < page.indexOf('class="acal avail-grid"'), 'gli orari stanno sopra il calendario');
+    assert.match(page, /<p class="day-price"><strong>[\d.,]+ €<\/strong> <span class="muted">· per 2 persone<\/span><\/p>/);
+    // gli altri servizi liberi lo stesso giorno, a un tocco
+    assert.match(page, /Lo stesso giorno, altri servizi:/);
+    assert.match(page, /class="chip chip-link" href="\/it\/book\?tour=[a-z-]+&amp;pax=2&amp;d=\d{4}-\d\d-\d\d#giorno"/);
 
-    // servizio a ore: la durata si sceglie e si ricorda
-    const hourly = await text(await pa(`/it/b2b/availability?tour=${HOURLY}&pax=3&hours=4`));
+    // servizio a ore: la durata si sceglie e si ricorda; il prezzo è quello di quelle ore
+    const hourly = await text(await pa(`/it/book?tour=${HOURLY}&pax=3&hours=4`));
     assert.match(hourly, /name="hours"/);
     assert.match(hourly, /<option value="4" selected>/);
     assert.match(hourly, /hours=4/, 'il collegamento al pagamento porta la durata');
+    assert.match(hourly, /300 €<\/strong> <span class="muted">· 4 ore · per tutto il gruppo/, 'mezza giornata: il prezzo di quelle ore');
     // la lingua si sceglie sui tour condivisi
-    const shared = await text(await pa(`/it/b2b/availability?tour=${SHARED}&pax=2&tl=en`));
+    const shared = await text(await pa(`/it/book?tour=${SHARED}&pax=2&tl=en`));
     assert.match(shared, /name="tl"/);
     assert.match(shared, /<option value="en" selected>/);
 
+    // un giorno chiesto (dal calendario, da un vecchio collegamento con «date» o dalla data scritta) è quello mostrato, senza «primo giorno libero»
+    const D = day(20);
+    for (const q of [`d=${D}`, `date=${D}`, `d=${D}&m=2001-01`]) {
+      const asked = await text(await pa(`/it/book?tour=${SHARED}&pax=2&${q}`));
+      assert.match(asked, new RegExp(`<section class="agenda-day" id="giorno"><h3>[^<]*${Number(D.slice(8))}[^<]*<span class="chip">Persone: 2</span></h3>`), q);
+      assert.match(asked, new RegExp(`name="d" min="[^"]*" max="[^"]*" value="${D}" data-autosubmit`), `${q}: la data resta nel campo`);
+      assert.doesNotMatch(asked, /Primo giorno libero/, q);
+      assert.match(asked, new RegExp(`checkout\\?tour=${SHARED}&amp;date=${D}&amp;time=\\d\\d:\\d\\d&amp;pax=2`), q);
+    }
+    // il vecchio «Date libere» porta qui con gli stessi parametri
+    const old = await pa(`/it/b2b/availability?tour=${SHARED}&pax=3&m=${D.slice(0, 7)}&d=${D}`);
+    assert.equal(old.status, 302);
+    assert.equal(loc(old), `/it/book?tour=${SHARED}&pax=3&m=${D.slice(0, 7)}&d=${D}`);
+    assert.equal(loc(await pa('/it/b2b/availability')), '/it/book');
+
     // valori non validi: ripiego su quelli di partenza, mai un errore
-    for (const q of ['tour=inesistente&pax=999&m=boh&d=ieri', 'pax=-3&hours=77&tl=xx&m=2099-12', 'm=1999-01&d=2001-01-01', 'tour[]=x&pax[]=1']) {
-      const res = await pa(`/it/b2b/availability?${q}`);
+    for (const q of ['tour=inesistente&pax=999&m=boh&d=ieri', 'pax=-3&hours=77&tl=xx&m=2099-12', 'm=1999-01&d=2001-01-01', 'tour[]=x&pax[]=1', `d=${day(5000)}`, `date=${day(-3)}`]) {
+      const res = await pa(`/it/book?${q}`);
       assert.equal(res.status, 200, q);
-      assert.match(await text(res), /<h1>Date libere<\/h1>/);
+      assert.match(await text(res), /<h1>Nuova prenotazione<\/h1>/);
     }
     // il mese non va indietro oltre quello in corso
-    const past = await text(await pa('/it/b2b/availability?m=2001-01'));
+    const past = await text(await pa('/it/book?m=2001-01'));
     assert.match(past, /is-off/, 'il mese precedente non si apre');
+    // un giorno passato o troppo lontano non conta: si torna al primo libero
+    assert.match(await text(await pa(`/it/book?date=${day(-3)}`)), /Primo giorno libero/);
+
+    // di partenza c'è il servizio dell'ultima prenotazione dell'agenzia (le persone restano due: ogni gruppo è diverso)
+    createBooking(app, { tourSlug: HOURLY, date: day(9), time: '10:00', pax: 5, hours: 2, channel: 'b2b', account: s.a, name: 'Anna', email: s.a.email, lang: 'it', paymentMethod: 'invoice' });
+    const usual = await text(await pa('/it/book'));
+    assert.match(usual, new RegExp(`<option value="${HOURLY}" selected>`), 'il servizio dell’ultima prenotazione');
+    assert.match(usual, /<option value="2" selected>/);
+    assert.doesNotMatch(usual, /<option value="5" selected>/);
+    const other = await text(await pa(`/it/book?tour=${SHARED}`));
+    assert.match(other, new RegExp(`<option value="${SHARED}" selected>`), 'un servizio chiesto vale più dell’ultimo usato');
   } finally {
     s.close();
   }
@@ -128,7 +167,7 @@ test('una data tenuta in opzione da un altro operatore: si segue, si vede in lis
     // si chiede l'avviso
     const join = await pa('/it/b2b/waitlist', form({ tour: SHARED, date: D, pax: '2', time: '', next: view(D) }));
     assert.equal(join.status, 303);
-    assert.match(loc(join), new RegExp(`^/it/b2b/availability\\?tour=${SHARED}.*flash=joined#giorno$`));
+    assert.match(loc(join), new RegExp(`^/it/book\\?tour=${SHARED}.*flash=joined#giorno$`));
     const after = await text(await pa(loc(join)));
     assert.match(after, /Fatto: ti scriviamo appena la data si libera/);
     assert.match(after, /\(1\/10\)/);
@@ -148,7 +187,7 @@ test('una data tenuta in opzione da un altro operatore: si segue, si vede in lis
     // dati strani: nessun errore del server, solo un messaggio; l'indirizzo di ritorno non può uscire dal sito
     const odd = await pa('/it/b2b/waitlist', form({ tour: 'zzz', date: 'x', pax: '0', next: 'https://evil.example/' }));
     assert.equal(odd.status, 303);
-    assert.match(loc(odd), /^\/it\/b2b\/availability\?flash=err-invalid/);
+    assert.match(loc(odd), /^\/it\/book\?flash=err-invalid/);
 
     // un'altra agenzia non può toccare l'avviso di A
     const id = app.db.prepare('SELECT id FROM waitlist WHERE account_id = ?').get(a.id).id;
@@ -160,7 +199,8 @@ test('una data tenuta in opzione da un altro operatore: si segue, si vede in lis
     assert.equal(await app.waitlist.sweep(Date.now()), 1);
     const mail = app.mail.sent.filter((m) => m.to === a.email).at(-1);
     assert.match(mail.subject, /Si è liberata una data: Cannaregio e il Ghetto/);
-    assert.match(mail.text, new RegExp(`/it/book\\?date=${D}&pax=2&tour=${SHARED}`));
+    assert.match(mail.text, new RegExp(`/it/book\\?d=${D}&pax=2&tour=${SHARED}#giorno`));
+    assert.match(mail.text, /\/it\/book#lista/, 'e il collegamento per gestire la lista');
     const notified = await text(await pa(view(D)));
     assert.match(notified, /Si è liberata il/);
     assert.match(notified, /Vedi gli orari/);
@@ -181,29 +221,31 @@ test('una data tenuta in opzione da un altro operatore: si segue, si vede in lis
   }
 });
 
-test('i collegamenti: schede in «Nuova prenotazione», pulsante nella panoramica, rimando quando non c’è posto; i privati non vedono nulla', async () => {
+test('i collegamenti: «Nuova prenotazione» è una pagina sola; su un giorno occupato si chiede l’avviso e si vedono gli altri servizi; i privati non vedono nulla', async () => {
   const s = await start();
   try {
     const { app, pa, anon, b } = s;
-    const book = await text(await pa('/it/book'));
-    assert.match(book, /<nav class="tabs"[^>]*><a href="\/it\/book" aria-current="page">Cerca per data<\/a><a href="\/it\/b2b\/availability" >Date libere<\/a><\/nav>/);
     const home = await text(await pa('/it/b2b/account'));
-    assert.doesNotMatch(home, /b2b\/availability/, 'la panoramica non ha più un pulsante a parte: «Date libere» sta dentro «Nuova prenotazione»');
-    // nessuna disponibilità per quella data: il rimando al calendario porta alla pagina giusta
+    assert.doesNotMatch(home, /b2b\/availability/, 'la panoramica non ha un pulsante a parte: si prenota da «Nuova prenotazione»');
+    // un giorno occupato dall’opzione di un altro operatore: lì il servizio non ha posto, il modulo per l’avviso c’è e gli altri servizi no/sì secondo la disponibilità
     const D = day(45);
     holdDay(app, b, D);
-    const none = await text(await pa(`/it/book?date=${D}&pax=2&tour=${SHARED}`));
-    assert.match(none, /Nessuna disponibilità per questa data/);
-    assert.match(none, new RegExp(`href="/it/b2b/availability\\?tour=${SHARED}&amp;pax=2&amp;m=${D.slice(0, 7)}">Data occupata\\? Guarda il calendario`));
-    // chi non è un'agenzia non ha né schede né pagina
+    const none = await text(await pa(`/it/book?d=${D}&pax=2&tour=${SHARED}`));
+    assert.doesNotMatch(none, /Primo giorno libero/);
+    assert.match(none, /occupata da un’opzione o da un pagamento in corso di un altro operatore/);
+    assert.match(none, /action="\/it\/b2b\/waitlist"/);
+    assert.doesNotMatch(none, /class="slot"[^>]*href="[^"]*cannaregio-ghetto-agenzie/, 'sul servizio occupato non ci sono orari');
+    assert.match(none, /Lo stesso giorno, altri servizi:/, 'ma altri servizi hanno posto quel giorno');
+    // chi non è un'agenzia non ha né pagina né collegamenti
     const pub = await text(await anon('/it/book?date=' + day(30)));
-    assert.ok(!pub.includes('Date libere'));
+    assert.ok(!pub.includes('Nuova prenotazione') && !pub.includes('Primo giorno libero'));
     assert.equal((await anon('/it/b2b/availability')).status, 302);
     assert.equal((await anon('/it/b2b/waitlist', form({ tour: SHARED, date: D, pax: '2' }))).status, 302);
-    // in giapponese e in spagnolo la pagina c'è
+    // in inglese, spagnolo e giapponese la pagina c'è
     for (const lang of ['en', 'es', 'ja']) {
-      const res = await pa(`/${lang}/b2b/availability`);
+      const res = await pa(`/${lang}/book`);
       assert.equal(res.status, 200, lang);
+      assert.doesNotMatch(await res.text(), /<h1>Nuova prenotazione<\/h1>/, lang);
     }
   } finally {
     s.close();

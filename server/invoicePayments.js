@@ -102,6 +102,34 @@ export function unmarkInvoicePaid(app, id, nowMs = Date.now()) {
   });
 }
 
+/** Le fatture dell'agenzia scadute e ancora da pagare (con quanto resta e da quanti giorni), dalla più vecchia: sono quelle del «Paga tutto lo scaduto». */
+export function overdueOf(db, accountId, today = nowRome().date) {
+  return db
+    .prepare(`SELECT * FROM invoices WHERE account_id = ? AND doc_type = 'TD01' AND number IS NOT NULL AND paid_at IS NULL AND credited = 0 AND status IN (${CREDITABLE_STATUS.map(() => '?').join(',')}) ORDER BY issue_date, id`)
+    .all(accountId, ...CREDITABLE_STATUS)
+    .map((inv) => ({ inv, ...payState(inv, today) }))
+    .filter((x) => x.state === 'overdue' && x.dueCents > 0);
+}
+
+export const getBatchByRef = (db, ref) => db.prepare('SELECT * FROM invoice_batches WHERE ref = ?').get(String(ref));
+
+/**
+ * Il pagamento unico delle fatture indicate: se ce n'è già uno aperto con le stesse fatture e gli stessi importi lo si riusa (un clic ripetuto
+ * non ne crea altri); gli altri ancora aperti dell'agenzia si chiudono, perché le fatture non sono più quelle.
+ * @param {{inv: object, dueCents: number}[]} items
+ */
+export function openBatch(db, accountId, items, nowMs = Date.now()) {
+  const lines = items.map(({ inv, dueCents }) => ({ id: inv.id, cents: dueCents }));
+  const amount = lines.reduce((s, l) => s + l.cents, 0);
+  const json = JSON.stringify(lines);
+  const same = db.prepare("SELECT * FROM invoice_batches WHERE account_id = ? AND status = 'open'").all(accountId).find((b) => b.amount_cents === amount && b.lines_json === json);
+  if (same) return same;
+  db.prepare("UPDATE invoice_batches SET status = 'expired' WHERE account_id = ? AND status = 'open'").run(accountId);
+  const ref = newRef('SD');
+  db.prepare('INSERT INTO invoice_batches (ref, token, account_id, lines_json, amount_cents, currency, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(ref, newToken(), accountId, json, amount, items[0].inv.currency ?? 'EUR', iso(nowMs));
+  return getBatchByRef(db, ref);
+}
+
 /** Le fatture scadute e non incassate, dalla più in ritardo. */
 export function overdueInvoices(db, today = nowRome().date) {
   return db

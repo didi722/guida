@@ -3,7 +3,8 @@ import express from 'express';
 import { send, sendPdf } from '../http.js';
 import { makeT } from '../i18n.js';
 import { renderStatementPdf } from '../pdf-statement.js';
-import { normMonth, statementCsv, statementOf, statementRange } from '../statement.js';
+import { normMonth, statementCsv, statementOf, statementRange, statementXlsx } from '../statement.js';
+import { XLSX_TYPE } from '../xlsx.js';
 import { movementLabel } from '../statementText.js';
 import { nowRome } from '../time.js';
 import { adminStatementPage } from '../views/admin-statement.js';
@@ -38,18 +39,30 @@ export function adminStatementRouter(app) {
     sendPdf(res, await renderStatementPdf(app, statementOf(app, a.id, month), { account: a }), `estratto-conto-${month}.pdf`);
   });
 
+  const registry = (t) => ({
+    head: [t('s.date'), t('stmt.col.doc'), t('stmt.col.detail'), t('invpay.dueBy'), t('stmt.col.amount'), t('stmt.col.balance')],
+    opening: t('stmt.opening'),
+    closing: t('stmt.closing'),
+    label: (m) => movementLabel(t, 'it', m),
+  });
+
   r.get('/partners/:id/statement.csv', (req, res, next) => {
     const a = account(req);
     if (!a) return next();
     const t = makeT('it');
     const month = monthOf(req);
-    const csv = statementCsv(statementOf(app, a.id, month), {
-      head: [t('s.date'), t('stmt.col.doc'), t('stmt.col.detail'), t('invpay.dueBy'), t('stmt.col.amount'), t('stmt.col.balance')],
-      opening: t('stmt.opening'),
-      closing: t('stmt.closing'),
-      label: (m) => movementLabel(t, 'it', m),
-    });
+    const csv = statementCsv(statementOf(app, a.id, month), registry(t));
     res.type('text/csv; charset=utf-8').set({ 'Content-Disposition': `attachment; filename="estratto-conto-${month}.csv"` }).send(csv);
+  });
+
+  // lo stesso per il foglio di calcolo, con date e importi veri e colonne larghe quanto serve (nel CSV le date si possono vedere come «####»)
+  r.get('/partners/:id/statement.xlsx', async (req, res, next) => {
+    const a = account(req);
+    if (!a) return next();
+    const t = makeT('it');
+    const month = monthOf(req);
+    const file = await statementXlsx(statementOf(app, a.id, month), { ...registry(t), sheet: `${t('stmt.title')} ${month}` });
+    res.type(XLSX_TYPE).set({ 'Content-Disposition': `attachment; filename="estratto-conto-${month}.xlsx"`, 'X-Content-Type-Options': 'nosniff' }).send(file);
   });
 
   r.post('/partners/:id/statement/send', form, async (req, res, next) => {

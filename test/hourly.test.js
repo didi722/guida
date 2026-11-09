@@ -127,39 +127,34 @@ test('servizi a ore: il pubblico vede la guida a ore con le tariffe al pubblico,
   }
 });
 
-test('agenzie, ricerca per data: per un servizio a durata libera compare il menu della durata, con prezzo esatto, orari per quelle ore e il collegamento al pagamento con le ore scelte', async () => {
+test('agenzie, nuova prenotazione: per un servizio a durata libera compare il menu della durata, con prezzo esatto, orari per quelle ore e il collegamento al pagamento con le ore scelte', async () => {
   const s = await start();
   try {
     const date = plainDay();
-    const base = `/it/book?date=${date}&pax=5`;
-    // senza scegliere il servizio: nessun menu visibile, il prezzo è «da» e resta il rimando alle altre durate
-    const all = await (await s.partner(base)).text().then(nb);
-    assert.match(all, /<div class="field" data-hours-field hidden>/);
-    assert.match(all, /data-hours-for="guida-a-ore-agenzie"[^>]*hidden disabled/, 'il menu non parte con il modulo se il servizio non è scelto');
-    assert.match(all, /da 140 €/);
-    assert.match(all, /Altre durate e orari/);
-    assert.match(all, /src="\/js\/book-hours\.js\?v=/);
-
-    // con il servizio: il menu c'è, parte dal minimo (2 ore) e il prezzo è quello esatto (guida 2 ore con lo sconto del 15%: 140 €)
-    const two = await (await s.partner(`${base}&tour=guida-a-ore-agenzie`)).text().then(nb);
-    assert.doesNotMatch(two, /<div class="field" data-hours-field hidden>/);
-    assert.match(two, /<select name="hours" data-hours-for="guida-a-ore-agenzie"[^>]*>\s*<option value="2" selected>2 ore<\/option>/);
+    const base = `/it/book?tour=guida-a-ore-agenzie&d=${date}&pax=5`;
+    // la durata parte dal minimo (2 ore) e il prezzo è quello esatto (guida 2 ore con lo sconto del 15%: 160 − 15% = 136 → 140)
+    const two = await (await s.partner(base)).text().then(nb);
+    assert.match(two, /<select name="hours" data-autosubmit>\s*<option value="2" selected>2 ore<\/option>/);
     for (const h of ['2.5', '3', '4', '8']) assert.match(two, new RegExp(`<option value="${h}"`), `${h} ore tra le scelte`);
-    assert.doesNotMatch(two, /da 140 €/, 'con la durata scelta il prezzo non è «da»');
-    assert.match(two, /140 € · 2 ore/);
-    assert.doesNotMatch(two, /Altre durate e orari/, 'il rimando non serve: la durata si sceglie qui');
+    assert.match(two, /<strong>140 €<\/strong> <span class="muted">· 2 ore · per tutto il gruppo<\/span>/);
+    assert.doesNotMatch(two, /da 140 €|Altre durate e orari/, 'la durata si sceglie qui: niente prezzo «da» né rimandi');
 
     // 4 ore: prezzo di mezza giornata (300 − 15% = 255), il menu resta su 4 ore e il collegamento porta al pagamento con le ore scelte
-    const four = await (await s.partner(`${base}&tour=guida-a-ore-agenzie&hours=4`)).text().then(nb);
-    assert.match(four, /255 € · 4 ore · Orari liberi per 4 ore/);
+    const four = await (await s.partner(`${base}&hours=4`)).text().then(nb);
+    assert.match(four, /<strong>255 €<\/strong> <span class="muted">· 4 ore · per tutto il gruppo<\/span>/);
     assert.match(four, /<option value="4" selected>4 ore<\/option>/);
     assert.match(four, /href="\/it\/book\/checkout\?tour=guida-a-ore-agenzie&amp;date=[^"]*&amp;pax=5&amp;hours=4"/);
     // una durata non valida si ignora (minimo del servizio)
-    const bad = await (await s.partner(`${base}&tour=guida-a-ore-agenzie&hours=1`)).text().then(nb);
-    assert.match(bad, /140 € · 2 ore/);
+    const bad = await (await s.partner(`${base}&hours=1`)).text().then(nb);
+    assert.match(bad, /<strong>140 €<\/strong> <span class="muted">· 2 ore/);
     // l'orario libero per 4 ore non è più largo di quello per 2: le fasce si accorciano a fine giornata
     const slotsOf = (html) => [...html.matchAll(/class="slot"[^>]*><strong>(\d\d:\d\d)</g)].map((m) => m[1]);
     assert.ok(slotsOf(four).length > 0 && slotsOf(four).length <= slotsOf(two).length, 'meno orari (o gli stessi) con più ore');
+    // gli altri servizi hanno la loro durata fissa o il minimo: nel resto della pagina compaiono come «stesso giorno»
+    assert.match(four, /Lo stesso giorno, altri servizi:/);
+    // un servizio con durata fissa non mostra il menu
+    const fixed = await (await s.partner(`/it/book?tour=cannaregio-ghetto-agenzie&d=${date}&pax=2`)).text().then(nb);
+    assert.doesNotMatch(fixed, /name="hours"/);
   } finally {
     s.close();
   }
@@ -171,10 +166,10 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
     const { anon, partner } = s;
     const page = await (await partner('/it/hourly')).text().then(nb);
     assert.match(page, /Servizi a ore per agenzie/);
-    for (const name of ['Servizio guida', 'Assistente in loco', 'Tour leader', 'Meet &amp; greet']) assert.ok(page.includes(name), name);
+    for (const name of ['Guida privata', 'Assistente in loco', 'Tour leader', 'Meet &amp; greet']) assert.ok(page.includes(name), name);
     // guida 4 ore: 300 − 15% = 255; guida 2 ore: 160 − 15% = 136 → 140; assistente 2 ore: 80 − 15% = 68 → 70 (sempre al multiplo di 5 € successivo)
     assert.match(page, /Mezza giornata · 4 ore[^]*?255 €/);
-    assert.match(page, /Servizio guida[^]*?140 €/, '160 − 15% = 136 → 140');
+    assert.match(page, /Guida privata[^]*?140 €/, '160 − 15% = 136 → 140');
     assert.match(page, /Assistente in loco[^]*?70 €/);
     assert.match(page, /Nelle fatture alle imprese|Operazione senza IVA/);
     // il menu dei servizi
@@ -182,11 +177,17 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
     assert.match(page, /<option value="meet-and-greet"/);
 
     // pagina «Per agenzie» e conto del partner
-    // le tariffe per le agenzie non compaiono mai nella pagina aperta a tutti (nemmeno per un partner che la visita)
+    // nella pagina aperta a tutti c'è una sola tariffa agenzie: la guida a 2 e a 4 ore, il prezzo base (anche per un partner con lo sconto che la visita); il resto resta nell'area partner
     for (const who of [anon, partner]) {
       const landing = await (await who('/it/b2b')).text().then(nb);
-      assert.ok(!landing.includes('Le mie tariffe a ore'));
-      assert.ok(!/Assistente in loco/.test(landing) && !/id="tariffe"/.test(landing), 'nessuna tariffa agenzie nella pagina pubblica');
+      assert.match(landing, /<h2[^>]*>Le tariffe della guida per le agenzie<\/h2>/);
+      assert.match(landing, /<h3>Guida privata<\/h3>/);
+      assert.match(landing, /<th scope="row">2 ore<\/th><td>160 €<\/td>/);
+      assert.match(landing, /<th scope="row">Mezza giornata · 4 ore<\/th><td>300 €<\/td>/);
+      for (const no of ['Giornata intera', 'Ogni ora in più', 'Supplementi', '<h3>Assistente in loco</h3>', '<h3>Tour leader</h3>', '<h3>Meet &amp; greet</h3>', '140 €', '255 €']) assert.ok(!landing.includes(no), `nella pagina pubblica non deve esserci «${no}»`);
+      assert.ok(!landing.includes('Le mie tariffe a ore') && !/id="tariffe"/.test(landing));
+      assert.match(landing, /Assistente in loco, tour leader, meet &amp; greet, ore in più, supplementi e sconti dedicati li trovi nell’area partner\./);
+      assert.equal(landing.includes('href="/it/hourly"'), who === partner, '«Calcola il prezzo» è solo per chi è già dentro: a un visitatore porterebbe ai prezzi dei privati');
     }
     const account = await (await partner('/it/b2b/rates')).text().then(nb);
     assert.match(account, /Le tue tariffe/);
@@ -607,9 +608,9 @@ test('tour dal pannello: servizio a ore (prezzo dalle tariffe) e prezzo fisso, l
   try {
     const { admin } = s;
     const list = await (await admin('/admin/tours')).text().then(nb);
-    assert.match(list, /Servizio guida · a ore \(il cliente sceglie le ore\)/);
+    assert.match(list, /Guida privata · a ore \(il cliente sceglie le ore\)/);
     assert.match(list, /href="\/admin\/rates">dalle tariffe a ore/);
-    assert.match(list, /Servizio guida · a ore \(il cliente sceglie le ore\)[^]*?da 200 €/, 'il prezzo di oggi, dalla tabella');
+    assert.match(list, /Guida privata · a ore \(il cliente sceglie le ore\)[^]*?da 200 €/, 'il prezzo di oggi, dalla tabella');
     assert.match(list, /Venezia tra Oriente e Occidente[^]*?290 €/, 'durata fissa: il prezzo della tabella per 3 ore');
     const listB2b = await (await admin('/admin/tours-b2b')).text().then(nb);
     assert.match(listB2b, /Assistente in loco · a ore/);

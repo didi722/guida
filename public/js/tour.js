@@ -11,7 +11,6 @@
   var T = cfg.t;
   var KEY = 'guida.tour';
   var P = location.pathname;
-  var Q = new URLSearchParams(location.search);
   var nodes = null; // { spot, tip }
   var current = null; // { target }
   var undo = []; // gli ascoltatori del passo in corso
@@ -26,11 +25,11 @@
   function mk(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
 
   var CHECKOUT = /\/book\/checkout\/?$/;
-  // mode: click (si clicca il punto), submit (si invia il modulo), interact (si prova, poi «Avanti»), info (si legge, poi «Avanti»; il punto non si clicca)
+  // mode: click (si clicca il punto), interact (si prova, poi «Avanti»), info (si legge, poi «Avanti»; il punto non si clicca)
   var STOPS = [
     { step: 1, text: 's1', path: /\/b2b\/account\/?$/, target: '[data-tour="new"]', mode: 'click', go: cfg.urls.book, resume: [0, cfg.urls.home] },
-    { step: 2, text: 's2', path: /\/book\/?$/, target: '.search-card', mode: 'submit', soft: true, auto: function () { return Q.has('date'); }, resume: [1, cfg.urls.book] },
-    { step: 2, text: 's3', path: /\/book\/?$/, target: '.slot-list .slot', mode: 'click', missing: 's3m', missingTarget: '.search-card', prereq: function () { return Q.has('date'); }, back: 1, resume: [1, cfg.urls.book] },
+    { step: 2, text: 's2', path: /\/book\/?$/, target: '.avail-form', mode: 'interact', soft: true, resume: [1, cfg.urls.book] },
+    { step: 2, text: 's3', path: /\/book\/?$/, target: '.slot-list .slot', mode: 'click', missing: 's3m', missingTarget: '.acal', resume: [1, cfg.urls.book] },
     { step: 2, text: 's4', path: CHECKOUT, target: '#co-party', mode: 'interact', soft: true, resume: [1, cfg.urls.book] },
     { step: 3, text: 's5', path: CHECKOUT, target: '#option-submit', mode: 'info', skip: true, resume: [1, cfg.urls.book] },
     { step: 4, text: 's6', path: CHECKOUT, target: '#package-add', mode: 'info', skip: true, resume: [1, cfg.urls.book] },
@@ -81,7 +80,7 @@
       spot.style.top = (r.top - 6) + 'px'; spot.style.left = (r.left - 6) + 'px';
       spot.style.width = (r.width + 12) + 'px'; spot.style.height = (r.height + 12) + 'px';
     }
-    if (narrow) { tip.style.top = ''; tip.style.left = ''; return; }
+    if (narrow || tip.classList.contains('is-resume')) { tip.style.top = ''; tip.style.left = ''; return; } // il riquadro «Riprendi» sta in basso a destra (CSS), non va centrato
     var th = tip.offsetHeight, tw = tip.offsetWidth;
     if (!r) { tip.style.top = Math.max(8, (window.innerHeight - th) / 2) + 'px'; tip.style.left = Math.max(8, (window.innerWidth - tw) / 2) + 'px'; return; }
     var below = r.bottom + 18;
@@ -107,10 +106,35 @@
   }
   function done() { post(); var b = document.querySelector('[data-tut-banner]'); if (b) b.remove(); }
 
+  // Finché il giro è in corso i pulsanti che prenotano o opzionano (data-books) sono grigi e non si premono: durante la prova non si prenota nulla.
+  // Il giro li lascia com'erano appena finisce o lo si abbandona. Anche un invio del modulo da tastiera o da script viene fermato.
+  function lock() {
+    [].slice.call(document.querySelectorAll('[data-books]')).forEach(function (el) {
+      if (el.hasAttribute('data-tour-locked')) return;
+      el.setAttribute('data-tour-locked', el.disabled ? 'was-disabled' : '1');
+      el.setAttribute('aria-disabled', 'true');
+      el.setAttribute('title', T.locked);
+      if ('disabled' in el) el.disabled = true; else el.setAttribute('tabindex', '-1');
+    });
+  }
+  function unlock() {
+    [].slice.call(document.querySelectorAll('[data-tour-locked]')).forEach(function (el) {
+      var was = el.getAttribute('data-tour-locked') === 'was-disabled';
+      el.removeAttribute('data-tour-locked');
+      el.removeAttribute('aria-disabled');
+      el.removeAttribute('title');
+      if ('disabled' in el) el.disabled = was; else el.removeAttribute('tabindex');
+    });
+  }
+  document.addEventListener('submit', function (e) {
+    if (load() && e.submitter && e.submitter.hasAttribute('data-books')) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
+
   function finish() {
     var s = load();
     if (s && s.mark) done();
     clear();
+    unlock();
     teardown();
   }
 
@@ -177,11 +201,10 @@
     teardown();
     var s = load();
     if (!s) return;
+    lock();
     var stop = STOPS[s.i];
     if (!stop) { finish(); return; }
     if (!stop.path.test(P)) { showResume(s, stop); return; }
-    if (stop.prereq && !stop.prereq()) { s.i = stop.back; save(s); run(); return; }
-    if (stop.auto && stop.auto()) { s.i += 1; save(s); run(); return; }
     var target = find(stop.target);
     var text = T.stops[stop.text];
     var goOn = function () { if (stop.last) finish(); else advance(); };
@@ -195,9 +218,6 @@
     if (stop.mode === 'click') {
       show(stop, target, text, stop.go ? { hint: true, skipLabel: T.skipStop, onSkip: function () { s.i += 1; save(s); location.href = stop.go; } } : { hint: true });
       on(document, 'click', function (e) { if (target.contains(e.target)) advanceAfter(); }, true);
-    } else if (stop.mode === 'submit') {
-      show(stop, target, text, {});
-      on(target, 'submit', advanceAfter);
     } else if (stop.mode === 'interact') {
       show(stop, target, text, { next: T.next, onNext: advance });
       on(target, 'change', advanceAfter);

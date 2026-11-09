@@ -16,7 +16,7 @@ import { billingGaps } from '../billing.js';
 import { gapWords } from './billing.js';
 import { stateText } from './invoicePay.js';
 import { tutorialBanner, tutorialDialog } from './tutorial.js';
-import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, timeLeft, whoOf } from './components.js';
+import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, rebookHref, timeLeft, whoOf } from './components.js';
 import { ratesBlock, ratesNotes, rateCard, supplementsBox } from './hourly.js';
 
 export function loginPage(ctx, { error = '', email = '', next = '' } = {}) {
@@ -234,8 +234,49 @@ function agencyCalendar(ctx, cal) {
     : html`<p class="muted">${t('partner.cal.none')}</p>`}</section>`;
 }
 
+/**
+ * Il collegamento «Approva con un clic» dell'email che la guida riceve a ogni richiesta: i dati dell'agenzia e il pulsante (solo italiano, come il pannello).
+ * state: ask (da approvare) | done (appena approvata) | already | gone (rifiutata o sospesa) | invalid (collegamento sbagliato o scaduto).
+ */
+export function approvePage(ctx, { account = null, vat = null, state, token = '' }) {
+  const { lang, u } = ctx;
+  const title = { ask: 'Approvare questa agenzia?', done: 'Agenzia approvata', already: 'Agenzia già approvata', gone: 'Richiesta non più in attesa', invalid: 'Collegamento non valido' }[state];
+  const body = html`
+<section class="page-head"><div class="wrap narrow"><h1>${title}</h1></div></section>
+<section class="section tight"><div class="wrap narrow">
+  ${state === 'invalid'
+    ? html`<div class="card pad"><p>Il collegamento non è valido o è scaduto (dura 30 giorni). Apri <strong>Clienti › Partner</strong> nel pannello per approvare l’agenzia.</p><p class="btn-row"><a class="btn btn-outline" href="/admin/partners">Apri il pannello</a></p></div>`
+    : html`<div class="card pad">
+    <dl class="summary-list">
+      <div><dt>Agenzia</dt><dd><strong>${account.company}</strong></dd></div>
+      <div><dt>Referente</dt><dd>${account.contact_name} · ${account.email}${account.phone ? ` · ${account.phone}` : ''}</dd></div>
+      <div><dt>Partita IVA</dt><dd>${account.vat || '—'} · ${vat.label}${vat.name ? ` (registro: ${vat.name})` : ''}${vat.sameName === false ? ' — il nome sembra diverso da quello scritto' : ''}</dd></div>
+      <div><dt>Dove</dt><dd>${[account.city, account.country].filter(Boolean).join(' · ')}</dd></div>
+      ${account.website ? html`<div><dt>Sito</dt><dd>${account.website}</dd></div>` : ''}
+      ${account.message ? html`<div><dt>Messaggio</dt><dd>${account.message}</dd></div>` : ''}
+    </dl>
+    ${state === 'ask'
+      ? html`<form method="post" action="${u(`/b2b/approve/${token}`)}" class="form">
+      <label class="check"><input type="checkbox" name="invoice" value="1"> Consenti il pagamento a fattura e bonifico</label>
+      <p class="small muted">Di partenza l’agenzia paga solo con la carta: accendilo se la conosci.</p>
+      <label class="field"><span class="label">Sconto sulle tariffe (%)</span><input type="number" name="discount" min="0" max="60" step="0.5" value="0" inputmode="decimal"></label>
+      <p class="small muted">Approvando, l’agenzia riceve subito l’email e può prenotare.</p>
+      <button class="btn btn-gold btn-lg" type="submit">Approva l’agenzia</button>
+    </form>`
+      : state === 'done'
+        ? html`<p class="notice notice-ok" role="status">Fatto: ${account.company} è approvata e le ho scritto. Pagamento a fattura: ${account.allow_invoice ? 'sì' : 'no (solo carta)'} · sconto: ${account.discount_percent || 0}%.</p>`
+        : html`<p class="muted">${state === 'already' ? 'Questa agenzia è già stata approvata.' : 'Questa richiesta non è più in attesa (è stata rifiutata o sospesa).'}</p>`}
+    <p class="btn-row"><a class="btn btn-outline" href="/admin/partners/${account.id}">Apri la scheda dell’agenzia</a></p>
+  </div>`}
+</div></section>`;
+  return page(ctx, { title, path: `/${lang}/b2b/approve`, body, noindex: true });
+}
+
 function pendingPage(ctx, acct) {
-  const { t, lang, u } = ctx;
+  const { t, lang, u, app } = ctx;
+  // le tariffe base, in sola lettura: chi aspetta l'approvazione sa già quanto costa (si prenota dopo, con le condizioni che le saranno riservate)
+  const rateServices = acct.status === 'pending' ? SERVICES.filter((s) => app.rates.has(s, 'b2b')) : [];
+  const fixedTours = acct.status === 'pending' ? app.content.tours.filter((x) => x.active && x.pricing !== 'hourly' && openTo(app.rates.get(), x, 'b2b')) : [];
   const chip = { pending: 'chip-warn', rejected: 'chip-err', suspended: 'chip-err' }[acct.status];
   const body = html`
 <section class="page-head"><div class="wrap narrow">
@@ -248,7 +289,14 @@ function pendingPage(ctx, acct) {
     <p class="muted">${t(`b2b.st.${acct.status}.text`)}</p>
     <div class="btn-row"><a class="btn btn-outline" href="${u('/contact')}">${t('nav.contact')}</a><form method="post" action="${u('/b2b/logout')}"><button class="btn btn-outline" type="submit">${t('b2b.logout')}</button></form></div>
   </div>
-</div></section>`;
+</div></section>
+${acct.status === 'pending' && (rateServices.length || fixedTours.length)
+    ? html`<section class="section tight"><div class="wrap">
+  <h2 class="h-sub">${t('b2b.pending.rates')}</h2><p class="muted sub-lead">${t('b2b.pending.ratesLead')}</p>
+  ${rateServices.length ? ratesBlock(ctx, { channel: 'b2b', services: rateServices, discountPercent: 0 }) : ''}
+  ${fixedTours.length ? html`<h3 class="h-sub spaced">${t('partner.rates.fixed')}</h3>${fixedRatesTable(ctx, acct, fixedTours)}` : ''}
+</div></section>`
+    : ''}`;
   return page(ctx, { title: t('nav.agencyArea'), path: `/${lang}/b2b/account`, body, noindex: true, activeNav: 'b2b-account' });
 }
 
@@ -291,6 +339,37 @@ function shareCard(ctx, { url, count }) {
 }
 
 /**
+ * «Da fare»: le cose che aspettano una mossa dell'agenzia (opzioni che scadono, telefono mancante, date liberate, proposte di programma pronte),
+ * ognuna con il pulsante che la risolve. Senza nulla da fare il riquadro non c'è.
+ * items: vedi partnerTodo.
+ */
+function todoBox(ctx, items) {
+  const { t, lang, u, app } = ctx;
+  if (!items?.length) return '';
+  const tourTitle = (slug) => app.content.tour(slug)?.i18n[lang]?.title ?? slug;
+  const who = (b) => b.client_ref || b.name;
+  const row = (title, text, href, cta, gold = false) => html`<li class="ag-todo-item"><span class="ag-todo-text"><strong>${title}</strong><small>${text}</small></span><a class="btn ${gold ? 'btn-gold' : 'btn-outline'} btn-sm" href="${href}">${cta}</a></li>`;
+  const rows = items.slice(0, 6).map((x) => {
+    if (x.kind === 'option') {
+      const b = x.booking;
+      return row(t('home.todo.option'), t('home.todo.optionText', { who: who(b), tour: tourTitle(b.tour_slug), date: fmtDate(b.date, lang, 'short'), left: timeLeft(t, Math.max(0, x.untilMs - Date.now())) }), `${x.groupRef ? u(`/b2b/packages/${x.groupRef}`) : u(`/b2b/bookings/${b.ref}`)}#option`, t('home.todo.optionCta'), true);
+    }
+    if (x.kind === 'phone') {
+      const b = x.booking;
+      return row(t('home.todo.phone'), t('home.todo.phoneText', { who: who(b), tour: tourTitle(b.tour_slug), date: fmtDate(b.date, lang, 'short') }), `${u(`/b2b/bookings/${b.ref}`)}?open=edit#edit`, t('home.todo.phoneCta'));
+    }
+    if (x.kind === 'wait') {
+      const e = x.entry;
+      const tour = app.content.tour(e.tour_slug);
+      return row(t('home.todo.wait'), `${tourTitle(e.tour_slug)}, ${fmtDate(e.date, lang, 'short')} · ${t('avail.pax', { n: e.pax })}`, `${u('/book')}?d=${e.date}&pax=${e.pax}&tour=${encodeURIComponent(e.tour_slug)}${e.hours != null && tour?.chooseHours ? `&hours=${e.hours}` : ''}#giorno`, t('wl.book'), true);
+    }
+    const p = x.program;
+    return row(t('home.todo.program'), `${p.client_ref ? `${p.client_ref} · ` : ''}${p.ref}${p.valid_until ? ` · ${t('pg.validUntil', { date: fmtDate(p.valid_until, lang, 'date') })}` : ''}`, `/${lang}/programs/${p.ref}?t=${p.token}`, t('home.todo.programCta'));
+  });
+  return html`<section class="card pad ag-todo" aria-labelledby="ag-todo-title"><h2 id="ag-todo-title">${t('home.todo.title')} <span class="chip chip-warn">${items.length}</span></h2><ul class="ag-todo-list">${rows}</ul></section>`;
+}
+
+/**
  * Le tre cose che un'agenzia fa qui, una per scheda: prenotare (o opzionare), vedere le prenotazioni, pagare le fatture.
  * Sotto, tre collegamenti piccoli: i preventivi per i suoi clienti, la pagina con team, logo e dati di fatturazione, e la guida.
  * summary: vedi partnerSummary (se manca, le schede mostrano solo i pulsanti).
@@ -308,14 +387,14 @@ function homeActions(ctx, summary) {
     <article class="card pad home-card"><h2>${t('home.bookings.title')}</h2>${bookingsLine ? html`<p>${bookingsLine}</p>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('home.bookings.cta')}</a></article>
     <article class="card pad home-card"><h2>${t('home.pay.title')}</h2>${payLine ? html`<p>${payLine}</p>` : ''}<a class="btn ${late ? 'btn-gold' : 'btn-outline'}" href="${u('/b2b/invoices')}">${t('home.pay.cta')}</a></article>
   </div>
-  <p class="home-more"><a href="${u('/b2b/quotes')}">${t('quotes.nav')}</a><a href="${u('/b2b/agency')}">${t('home.agency')}</a><a href="${u('/b2b/help')}">${t('partner.nav.help')}</a></p>`;
+  <p class="home-more"><a href="${u('/b2b/quotes')}">${t('quotes.nav')}</a><a href="${u('/b2b/programs')}">${t('pg.title')}</a><a href="${u('/b2b/agency')}">${t('home.agency')}</a><a href="${u('/b2b/help')}">${t('partner.nav.help')}</a></p>`;
 }
 
 /**
  * La prima pagina dell'area agenzie: tariffe e condizioni dell'agenzia, con i pulsanti per prenotare e per andare alle prenotazioni.
  * Per un account non ancora approvato mostra la pagina di stato.
  */
-export function accountPage(ctx, { acct, flash = '', tutorial = false, share = null, summary = null }) {
+export function accountPage(ctx, { acct, flash = '', tutorial = false, share = null, summary = null, todo = [] }) {
   if (acct.status !== 'approved') return pendingPage(ctx, acct);
   const { t, u } = ctx;
   const body = html`
@@ -328,6 +407,7 @@ export function accountPage(ctx, { acct, flash = '', tutorial = false, share = n
   ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
   ${tutorial ? tutorialBanner(ctx) : ''}
   ${whoOf(ctx).owner && billingGaps(acct).length ? html`<div class="notice notice-info" role="note">${t('billing.missing', { list: gapWords(t, acct) })} <a href="${u('/b2b/billing')}">${t('billing.complete')} →</a></div>` : ''}
+  ${todoBox(ctx, todo)}
   ${homeActions(ctx, summary)}
   ${tariffario(ctx, acct)}
   <details class="terms-strip card spaced"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>
@@ -388,7 +468,7 @@ export function bookingsPage(ctx, { acct, team = false, filters, list, summary, 
     <div class="tabs" role="tablist" aria-label="${t('b2b.myBookings')}">
       ${PARTNER_VIEWS.map((v) => html`<a class="tab" role="tab" href="${base}${qs({ view: v, page: '' })}" aria-selected="${v === filters.view ? 'true' : 'false'}" ${v === filters.view ? raw('aria-current="page"') : ''}>${t(`partner.tab.${v}`)} <span class="tab-n">${list.counts[v]}</span></a>`)}
     </div>
-    ${list.total ? html`<a class="tabs-export small" href="${u('/b2b/bookings.csv')}${qs({ page: '' })}">${t('partner.export')}</a>` : ''}
+    ${list.total ? html`<span class="tabs-export small"><a href="${u('/b2b/bookings.xlsx')}${qs({ page: '' })}">${t('partner.exportXlsx')}</a> · <a href="${u('/b2b/bookings.csv')}${qs({ page: '' })}">${t('partner.export')}</a></span>` : ''}
   </div>
 
   <form class="filters" method="get" action="${base}">
@@ -423,6 +503,7 @@ export function bookingsPage(ctx, { acct, team = false, filters, list, summary, 
             ${b.status === 'option' ? html`<a class="btn btn-gold btn-sm" href="${detail(b)}#option">${t('partner.act.confirm')}</a>` : html`<a class="btn btn-outline btn-sm" href="${detail(b)}">${t('partner.act.open')}</a>`}
             ${b.status === 'confirmed' ? html`<a class="btn btn-outline btn-sm" href="${detail(b)}/voucher.pdf" target="_blank" rel="noopener">${t('partner.act.voucher')}</a>` : ''}
             ${b.invoice ? html`<a class="btn btn-outline btn-sm" href="${u(`/b2b/invoices/${b.invoice.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.act.invoice', { n: b.invoice.number })}</a>` : ''}
+            ${b.status === 'confirmed' || b.status === 'cancelled' || b.status === 'expired' ? html`<a class="btn-text" href="${rebookHref(ctx, b)}">${t('partner.act.again')}</a>` : ''}
             ${b.status === 'option'
               ? html`<form method="post" action="${u(`/booking/${b.ref}/option/release`)}" data-confirm="${t('booking.optionReleaseAsk')}"><input type="hidden" name="t" value="${b.token}"><input type="hidden" name="next" value="${base}"><button class="btn btn-link-danger btn-sm" type="submit">${t('partner.act.release')}</button></form>`
               : ''}
@@ -470,22 +551,26 @@ export function ratesPage(ctx, { acct }) {
     ? html`<h2 class="h-sub spaced">${t('hourly.ratesYours')}</h2><p class="muted sub-lead">${t('b2b.ratesPartnerLead')}</p>
     ${ratesBlock(ctx, { channel: 'b2b', services: rateServices, discountPercent: acct.discount_percent ?? 0 })}`
     : ''}
-  ${fixedTours.length
-    ? html`<h2 class="h-sub spaced">${t('partner.rates.fixed')}</h2>
-    <div class="table-wrap card"><table class="table"><thead><tr><th>${t('s.service')}</th><th class="num">${t('b2b.yours')}</th></tr></thead><tbody>
-      ${fixedTours.map((x) => html`<tr><td>${x.i18n[lang].title}<br><small class="muted">${fmtDuration(x.durationMin, lang)} · ${x.model === 'person' ? t('price.perPerson') : t('price.perGroup')}</small></td><td class="num"><strong>${formatMoney(unitPriceFor(x, 'b2b', acct), lang)}</strong></td></tr>`)}
-    </tbody></table></div>`
-    : ''}
+  ${fixedTours.length ? html`<h2 class="h-sub spaced">${t('partner.rates.fixed')}</h2>${fixedRatesTable(ctx, acct, fixedTours)}` : ''}
 </div></section>`;
   return page(ctx, { title: t('partner.nav.rates'), path: `/${lang}/b2b/rates`, body, noindex: true, activeNav: 'b2b-rates', area: 'partner' });
 }
 
+/** I tour a prezzo fisso con il prezzo che paga l'agenzia (nelle sue condizioni: per chi è in attesa, quelle base). */
+function fixedRatesTable(ctx, acct, tours) {
+  const { t, lang } = ctx;
+  return html`<div class="table-wrap card"><table class="table"><thead><tr><th>${t('s.service')}</th><th class="num">${t('b2b.yours')}</th></tr></thead><tbody>
+      ${tours.map((x) => html`<tr><td>${x.i18n[lang].title}<br><small class="muted">${fmtDuration(x.durationMin, lang)} · ${x.model === 'person' ? t('price.perPerson') : t('price.perGroup')}</small></td><td class="num"><strong>${formatMoney(unitPriceFor(x, 'b2b', acct), lang)}</strong></td></tr>`)}
+    </tbody></table></div>`;
+}
+
 /** Fatture e note di credito emesse all'agenzia, con la copia in PDF, lo stato del pagamento e come pagare. */
-export function invoicesPage(ctx, { acct, invoices, due }) {
+export function invoicesPage(ctx, { acct, invoices, due, flash = '' }) {
   const { t, lang, u, app } = ctx;
   const today = nowRome().date;
   const states = new Map(invoices.map((i) => [i.id, payState(i, today)]));
   const late = [...states.values()].filter((x) => x.state === 'overdue');
+  const lateByCard = invoices.filter((i) => states.get(i.id).state === 'overdue' && app.invoices.canPayByCard(i)); // quelle che il pagamento unico può saldare
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [homeCrumb(ctx), [t('partner.nav.invoices')]])}
@@ -493,7 +578,11 @@ export function invoicesPage(ctx, { acct, invoices, due }) {
     <div class="btn-row"><a class="btn btn-outline" href="${u('/b2b/statement')}">${t('stmt.title')}</a></div></div>
 </div></section>
 <section class="section tight"><div class="wrap">
-  ${late.length ? html`<div class="notice notice-err" role="alert">${t('partner.inv.overdue', { n: late.length, amount: formatMoney(late.reduce((a, x) => a + x.dueCents, 0), lang) })}</div>` : ''}
+  ${['paid', 'canceled', 'nothing'].includes(flash) ? html`<div class="notice notice-${flash === 'paid' ? 'ok' : 'info'}" role="status">${t(`partner.inv.flash.${flash}`)}</div>` : ''}
+  ${late.length
+    ? html`<div class="notice notice-err overdue-note" role="alert"><p>${t(lateByCard.length ? (lateByCard.length > 1 ? 'partner.inv.overdueCardAll' : 'partner.inv.overdueCard') : 'partner.inv.overdue', { n: late.length, amount: formatMoney(late.reduce((a, x) => a + x.dueCents, 0), lang) })}</p>
+      ${lateByCard.length > 1 ? html`<form method="post" action="${u('/b2b/invoices/pay-all')}"><button class="btn btn-gold" type="submit">${t('partner.inv.payAll')} · ${formatMoney(lateByCard.reduce((a, i) => a + states.get(i.id).dueCents, 0), lang)}</button></form>` : ''}</div>`
+    : ''}
   ${due.cents ? html`<div class="notice notice-info" role="note">${t('partner.inv.due', { amount: formatMoney(due.cents, lang) })}</div>` : ''}
   ${invoices.length
     ? html`<div class="table-wrap card"><table class="table table-stack partner-table"><thead><tr><th>${t('partner.inv.number')}</th><th>${t('s.date')}</th><th>${t('partner.inv.type')}</th><th>${t('partner.inv.payment')}</th><th class="num">${t('s.total')}</th><th><span class="sr-only">PDF</span></th></tr></thead><tbody>
@@ -506,7 +595,11 @@ export function invoicesPage(ctx, { acct, invoices, due }) {
         <td data-label="${t('partner.inv.type')}">${i.doc_type === 'TD04' ? t('partner.inv.td04') : t('partner.inv.td01')}</td>
         <td data-label="${t('partner.inv.payment')}">${i.doc_type === 'TD04' ? '—' : html`<span class="chip ${{ paid: 'chip-ok', settled: 'chip-ok', credited: '', open: 'chip-warn', overdue: 'chip-err' }[st.state]}">${stateText(t, lang, i, st)}</span>${pending && st.dueCents !== i.total_cents ? html`<small class="muted">${t('invpay.toPay')}: ${formatMoney(st.dueCents, lang, i.currency)}</small>` : ''}`}</td>
         <td class="num" data-label="${t('s.total')}">${formatMoney(i.total_cents, lang, i.currency)}</td>
-        <td class="pb-actions"><div class="pb-actions-in">${pending && i.pay_ref ? html`<a class="btn ${st.state === 'overdue' ? 'btn-gold' : 'btn-outline'} btn-sm" href="/${lang}/invoices/${i.pay_ref}?t=${i.pay_token}">${app.invoices.canPayByCard(i) ? t('partner.inv.payNow') : t('partner.inv.howToPay')}</a>` : ''}<a class="btn btn-outline btn-sm" href="${u(`/b2b/invoices/${i.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.inv.pdf')}</a></div></td></tr>`;
+        <td class="pb-actions"><div class="pb-actions-in">${pending && i.pay_ref
+          ? (app.invoices.canPayByCard(i)
+            ? html`<a class="btn ${st.state === 'overdue' ? 'btn-gold' : 'btn-outline'} btn-sm" href="/pay/resume/${i.pay_ref}?t=${i.pay_token}&amp;lang=${lang}">${t('partner.inv.payNow')}</a><a class="btn-text" href="/${lang}/invoices/${i.pay_ref}?t=${i.pay_token}">${t('partner.inv.transfer')}</a>`
+            : html`<a class="btn btn-outline btn-sm" href="/${lang}/invoices/${i.pay_ref}?t=${i.pay_token}">${t('partner.inv.howToPay')}</a>`)
+          : ''}<a class="btn btn-outline btn-sm" href="${u(`/b2b/invoices/${i.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.inv.pdf')}</a></div></td></tr>`;
       })}
     </tbody></table></div>`
     : html`<div class="card pad center empty-state"><p>${t('partner.inv.none')}</p></div>`}

@@ -148,6 +148,9 @@ export function createConfig(overrides = {}) {
       },
     },
 
+    // nuove agenzie: con la partita IVA valida su VIES (e il nome che coincide) l'agenzia entra da sola, con la carta e senza sconto; si regola da Impostazioni
+    partners: { autoApprove: bool(e.PARTNERS_AUTO_APPROVE, true) },
+
     // estratto conto mensile alle agenzie (email con il PDF, i primi giorni del mese): disattivato finché non lo accendi dal pannello
     statements: { enabled: bool(e.STATEMENTS_ENABLED, false), day: num(e.STATEMENTS_DAY, 3) },
 

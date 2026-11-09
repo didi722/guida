@@ -49,7 +49,7 @@ export function defToValues(def = {}, slug = '') {
   return v;
 }
 
-const SERVICE_LABEL = { guide: 'Servizio guida', assistant: 'Assistente in loco', leader: 'Tour leader', meetgreet: 'Meet & greet' };
+const SERVICE_LABEL = { guide: 'Guida privata', assistant: 'Assistente in loco', leader: 'Tour leader', meetgreet: 'Meet & greet' };
 /** Le due sezioni del pannello: ogni tour è B2C (privati) oppure B2B (agenzie), mai entrambi. */
 export const AUDIENCE = {
   b2c: { label: 'Tour B2C', noun: 'tour B2C', add: 'Nuovo tour B2C', path: '/admin/tours', short: 'B2C', who: 'i clienti privati (il sito pubblico)', price: 'Prezzo' },
@@ -151,7 +151,7 @@ export function tourFormPage(ctx, { v, isNew, media, error = '', flash = '', pro
         ? html`<p class="notice notice-err" role="note"><strong>Prezzo fisso su un servizio privato.</strong> Non segue le tariffe a ore: se cambi quelle (per esempio la guida di 2 ore), questo prezzo resta com’è. Se è lo stesso servizio di una tariffa a ore, scegli <em>A ore</em> e lascia la durata fissa: il prezzo sarà sempre quello della tabella.</p>`
         : ''}
     <div class="form-grid">
-      <label class="field"><span class="label">Servizio a ore <em>(solo se «A ore»)</em></span><select name="service">${[['guide', 'Servizio guida'], ['assistant', 'Assistente in loco'], ['leader', 'Tour leader'], ['meetgreet', 'Meet & greet']].map(([k, l]) => html`<option value="${k}" ${v.service === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
+      <label class="field"><span class="label">Servizio a ore <em>(solo se «A ore»)</em></span><select name="service">${[['guide', 'Guida privata'], ['assistant', 'Assistente in loco'], ['leader', 'Tour leader'], ['meetgreet', 'Meet & greet']].map(([k, l]) => html`<option value="${k}" ${v.service === k ? raw('selected') : ''}>${l}</option>`)}</select></label>
       <label class="check"><input type="checkbox" name="chooseHours" value="1" ${v.chooseHours ? raw('checked') : ''}> Il cliente sceglie quante ore (altrimenti la durata sopra è fissa)</label>
       <label class="check"><input type="checkbox" name="roundHours" value="1" ${v.roundHours ? raw('checked') : ''}> Si paga a ore intere: 2,5 ore costano come 3 <em>(solo se il cliente sceglie le ore)</em></label>
     </div>

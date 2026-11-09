@@ -12,6 +12,8 @@ import { openDb } from '../server/db.js';
 import { createCreditNote, createDrafts, getInvoice, invoiceDetail, issueInvoice, saveDraft } from '../server/invoices.js';
 import { openPartsCents } from '../server/invoicePayments.js';
 import { addDays, addMonths, localToInstant, nowRome } from '../server/time.js';
+import { openZip } from '../server/zipread.js';
+import { dateSerial } from '../server/xlsx.js';
 import { addAccount, HAS_PDFTOTEXT, isPdf, pdfText } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
@@ -80,7 +82,7 @@ test('pagina: senza accesso si va al login; con l’accesso si vedono saldo, mov
   const s = await start();
   try {
     const { anon, partner, other } = s;
-    for (const p of ['/it/b2b/statement', '/it/b2b/statement.pdf', '/it/b2b/statement.csv']) {
+    for (const p of ['/it/b2b/statement', '/it/b2b/statement.pdf', '/it/b2b/statement.csv', '/it/b2b/statement.xlsx']) {
       const res = await anon(p);
       assert.equal(res.status, 302, p);
       assert.match(loc(res), /\/b2b\/login/);
@@ -222,6 +224,23 @@ test('CSV: saldo iniziale, movimenti, saldo finale; importi con la virgola', asy
     assert.match(rows[2], new RegExp(`^${inv.issue_date};Fattura ${inv.number.replace('/', '\\/')};;\\d{4}-\\d{2}-\\d{2};114,00;114,00$`));
     assert.match(rows[3], /^\d{4}-\d{2}-\d{2};Saldo finale;;;;114,00$/);
     assert.ok(!/BlueSail/.test(csv));
+
+    // lo stesso per Excel: nel CSV le date possono vedersi come «####», qui sono date vere in colonne abbastanza larghe
+    const page = await text(await partner(`/it/b2b/statement?month=${month}`));
+    assert.match(page, new RegExp(`<a class="btn btn-outline btn-sm" href="/it/b2b/statement\\.xlsx\\?month=${month}">Scarica per Excel \\(\\.xlsx\\)</a><a class="btn btn-outline btn-sm" href="/it/b2b/statement\\.csv\\?month=${month}">Scarica in CSV</a>`));
+    const x = await partner(`/it/b2b/statement.xlsx?month=${month}`);
+    assert.equal(x.status, 200);
+    assert.equal(x.headers.get('content-type'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    assert.match(x.headers.get('content-disposition'), new RegExp(`attachment; filename="estratto-conto-${month}\\.xlsx"`));
+    const file = path.join(tmp, `${crypto.randomBytes(3).toString('hex')}.xlsx`);
+    fs.writeFileSync(file, Buffer.from(await x.arrayBuffer()));
+    const zip = await openZip(file);
+    const sheet = (await zip.read(zip.entries.find((e) => e.name === 'xl/worksheets/sheet1.xml'), 1 << 24)).toString('utf8');
+    await zip.close();
+    assert.match(sheet, new RegExp(`<c r="A3" s="2"><v>${dateSerial(inv.issue_date)}</v></c>`), 'la data della fattura è una data');
+    assert.match(sheet, /<c r="E3" s="3"><v>114\.00<\/v><\/c><c r="F3" s="3"><v>114\.00<\/v><\/c>/, 'gli importi sono numeri');
+    assert.ok(!/BlueSail/.test(sheet), 'solo le righe dell’agenzia');
+    assert.equal((await partner('/it/b2b/statement.xlsx?month=boh')).status, 200, 'un mese strano ripiega su quello in corso');
   } finally {
     s.close();
   }
@@ -280,6 +299,14 @@ test('pannello: la scheda partner ha il link, lo stesso estratto conto, PDF, CSV
     assert.ok(isPdf(Buffer.from(await pdf.arrayBuffer())));
     const csv = await (await admin(`/admin/partners/${agency.id}/statement.csv?month=${month}`)).text();
     assert.match(csv, /Fattura \d+\/\d{4}/);
+    assert.match(page, new RegExp(`href="/admin/partners/${agency.id}/statement\\.xlsx\\?month=${month}">Scarica per Excel`));
+    const xl = await admin(`/admin/partners/${agency.id}/statement.xlsx?month=${month}`);
+    assert.equal(xl.status, 200);
+    assert.equal(xl.headers.get('content-type'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    assert.deepEqual([...Buffer.from(await xl.arrayBuffer()).subarray(0, 2)], [0x50, 0x4b], 'è uno zip');
+    assert.equal((await anon(`/admin/partners/${agency.id}/statement.xlsx?month=${month}`)).status, 302, 'serve l’accesso del pannello');
+    assert.equal((await partner(`/admin/partners/${agency.id}/statement.xlsx?month=${month}`)).status, 302);
+    assert.equal((await admin(`/admin/partners/9999/statement.xlsx?month=${month}`)).status, 404);
 
     // invio manuale: l'email va all'agenzia, con il PDF, e si registra
     const sent = await admin(`/admin/partners/${agency.id}/statement/send`, form({ month }));

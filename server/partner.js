@@ -3,6 +3,7 @@
 import { addDays, addMonths, dayOfWeek, isDate, isMonth, localToInstant, monthDates, nowRome } from './time.js';
 import { CREDITABLE_STATUS } from './invoices.js';
 import { ensurePayRef, invoiceDue, isPayable, overdueInvoices } from './invoicePayments.js';
+import { xlsxBuffer } from './xlsx.js';
 
 /** Le schede dell'elenco, nell'ordine in cui si mostrano. */
 export const PARTNER_VIEWS = ['upcoming', 'options', 'past', 'cancelled', 'all'];
@@ -166,6 +167,35 @@ export function partnerSummary(app, accountId, nowMs = Date.now()) {
   };
 }
 
+/**
+ * «Da fare»: le cose che aspettano una mossa dell'agenzia, dalla più urgente.
+ *  - option: un'opzione (o un pacchetto in opzione) che scade entro 48 ore;
+ *  - phone: un servizio confermato dei prossimi due giorni senza il telefono del referente (alla guida serve per trovare il gruppo);
+ *  - wait: una data della lista d'attesa che si è liberata;
+ *  - program: una proposta di programma di più giorni pronta e non scaduta.
+ * @returns {{kind: 'option'|'phone'|'wait'|'program', booking?: object, groupRef?: string|null, untilMs?: number, entry?: object, program?: object}[]}
+ */
+export function partnerTodo(app, accountId, nowMs = Date.now()) {
+  const { db } = app;
+  const today = nowRome(nowMs).date;
+  const iso = (ms) => new Date(ms).toISOString();
+  const out = [];
+  const seen = new Set();
+  for (const b of db.prepare(`SELECT * FROM bookings WHERE account_id = ? AND status = 'option' AND option_expires_at > ? AND option_expires_at <= ? ORDER BY option_expires_at, id`).all(accountId, iso(nowMs), iso(nowMs + 48 * 3600_000))) {
+    const key = b.group_id ? `g${b.group_id}` : `b${b.id}`; // un pacchetto scade tutto insieme: una voce sola
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ kind: 'option', booking: b, groupRef: b.group_id ? (db.prepare('SELECT ref FROM booking_groups WHERE id = ?').get(b.group_id)?.ref ?? null) : null, untilMs: Date.parse(b.option_expires_at) });
+  }
+  for (const b of db.prepare(`SELECT * FROM bookings WHERE account_id = ? AND status = 'confirmed' AND date >= ? AND date <= ? AND (phone IS NULL OR TRIM(phone) = '') ORDER BY date, start_time`).all(accountId, today, addDays(today, 2))) out.push({ kind: 'phone', booking: b });
+  for (const e of db.prepare(`SELECT * FROM waitlist WHERE account_id = ? AND status = 'notified' AND date >= ? ORDER BY date, id`).all(accountId, today)) out.push({ kind: 'wait', entry: e });
+  for (const p of db.prepare(`SELECT * FROM programs WHERE account_id = ? AND status = 'quoted' ORDER BY created_at DESC, id DESC`).all(accountId)) if (!p.valid_until || p.valid_until >= today) out.push({ kind: 'program', program: p });
+  return out;
+}
+
+/** Le richieste di programma di più giorni dell'agenzia, dalla più recente. */
+export const partnerPrograms = (db, accountId) => db.prepare('SELECT * FROM programs WHERE account_id = ? ORDER BY created_at DESC, id DESC').all(accountId);
+
 /** Fatture e note di credito emesse all'agenzia, dalla più recente. */
 export function partnerInvoices(db, accountId) {
   return db
@@ -192,6 +222,11 @@ export const isDone = (b, nowMs = Date.now()) => b.status === 'confirmed' && loc
 
 export const isEditable = (b, nowMs = Date.now()) => ['confirmed', 'held', 'option'].includes(b.status) && localToInstant(b.date, b.start_time) > nowMs;
 
+/** Le righe dell'elenco per CSV ed Excel: [pratica, riferimento, nominativo, servizio, data, ora, persone, bambini, infanti, stato, prenotata il, totale in centesimi, fattura, prenotata da]. */
+function bookingsRows(rows, { content, statusLabel }) {
+  return rows.map((b) => [b.ref, b.client_ref ?? '', b.name, content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug, b.date, b.start_time, b.participants, b.children ?? 0, b.infants ?? 0, statusLabel(b), b.created_at.slice(0, 10), b.total_cents - (b.gift_cents ?? 0), b.invoice?.number ?? '', b.booked_by_name ?? '']);
+}
+
 /** Esportazione CSV delle righe (Excel italiano: separatore «;», UTF-8 con BOM, importi con la virgola). */
 export function bookingsCsv(rows, { content, statusLabel, head }) {
   const cell = (v) => {
@@ -200,8 +235,12 @@ export function bookingsCsv(rows, { content, statusLabel, head }) {
     return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const money = (c) => (c / 100).toFixed(2).replace('.', ',');
-  const lines = rows.map((b) =>
-    [b.ref, b.client_ref, b.name, content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug, b.date, b.start_time, b.participants, b.children ?? 0, b.infants ?? 0, statusLabel(b), b.created_at.slice(0, 10), money(b.total_cents - (b.gift_cents ?? 0)), b.invoice?.number ?? '', b.booked_by_name ?? ''].map(cell).join(';'),
-  );
+  const lines = bookingsRows(rows, { content, statusLabel }).map((r) => r.map((v, i) => cell(i === 11 ? money(v) : v)).join(';'));
   return `﻿${[head.join(';'), ...lines].join('\r\n')}\r\n`;
+}
+
+/** Lo stesso elenco come foglio di calcolo .xlsx (date e importi veri, colonne larghe quanto serve): in un CSV le date si possono vedere come «####». */
+export function bookingsXlsx(rows, { content, statusLabel, head, sheet }) {
+  const types = ['text', 'text', 'text', 'text', 'date', 'text', 'int', 'int', 'int', 'text', 'date', 'money', 'text', 'text'];
+  return xlsxBuffer({ sheet, columns: head.map((title, i) => ({ title, type: types[i] })), rows: bookingsRows(rows, { content, statusLabel }) });
 }
