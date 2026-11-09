@@ -285,13 +285,17 @@ test('accessi separati: quello della demo non vale sul sito vero (nemmeno con lo
     assert.notEqual(res.status, 200, 'l’accesso della demo non apre l’agenzia vera');
     assert.match(loc(res) ?? '', /\/b2b\/login/);
 
-    // il pannello vero, aperto da un browser che è dentro la demo, non esiste
+    // il pannello è sempre quello vero, anche da un browser che è dentro la demo (la demo non ha un pannello suo)
     const both = s.jar();
     both.cookies.set('ga', s.admin.cookies.get('ga'));
     both.cookies.set('gd', demo.cookies.get('gd'));
     const adminRes = await both('/admin');
-    assert.notEqual(adminRes.status, 200, 'nella demo non c’è il pannello');
-    assert.match(await adminRes.text(), /Pannello admin disattivato/, 'è il pannello spento della demo, non quello vero');
+    assert.equal(adminRes.status, 200);
+    assert.doesNotMatch(await adminRes.text(), /Pannello admin disattivato/, 'è il pannello vero, non quello spento della demo');
+    const noAdmin = s.jar();
+    noAdmin.cookies.set('gd', demo.cookies.get('gd'));
+    assert.equal((await noAdmin('/admin/leads/demo')).status, 302, 'senza il tuo accesso il pannello resta chiuso, demo o no');
+    assert.equal((await s.app.demo.ensure()).app.cfg.admin.password, '', 'e dentro la demo il pannello non esiste');
     // e il cookie che porta alla demo, falsificato, non vale
     const forged = s.jar();
     forged.cookies.set('gd', 'eyJrIjoiZGVtbyIsImV4cCI6OTk5OTk5OTk5OTk5OX0.firma-falsa');
