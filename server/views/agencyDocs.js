@@ -62,8 +62,8 @@ export function documentsBox(ctx, { ref, bookings }) {
   const expiries = lines.filter((b) => b.status === 'option' && b.option_expires_at).map((b) => Date.parse(b.option_expires_at));
   const until = expiries.length ? nowRome(Math.min(...expiries)).date : ''; // un'opzione tiene la data fino alla scadenza: è la validità naturale del preventivo
   const first = lines[0];
-  return html`<div class="card pad docs-box" id="documenti">
-  <h2>${t('docs.box.title')}</h2>
+  return html`<details class="card fold docs-box" id="documenti"><summary><h2>${t('docs.box.title')}</h2></summary>
+  <div class="pad">
   <p class="small muted">${t('docs.box.lead')}</p>
   ${hasLogo ? '' : html`<p class="small muted">${t('docs.q.noLogo')} <a href="${u('/b2b/documents')}">${t('docs.q.settings')}</a></p>`}
   <form class="form" method="get" action="${u('/b2b/quote.pdf')}" target="_blank">
@@ -80,5 +80,6 @@ export function documentsBox(ctx, { ref, bookings }) {
     <label class="field"><span class="label">${t('docs.q.note')}</span><textarea name="note" rows="2" maxlength="800"></textarea></label>
     <div class="btn-row"><button class="btn btn-gold" type="submit">${t('docs.q.download')}</button><a class="small" href="${u('/b2b/documents')}">${t('docs.q.settings')}</a></div>
   </form>
-</div>`;
+  </div>
+</details>`;
 }

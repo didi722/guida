@@ -167,7 +167,8 @@ test('quando una data si libera l’agenzia riceve l’email, una volta sola; po
   assert.match(mail.subject, /Si è liberata una data: Tour di prova, .*20 feb/);
   assert.match(mail.text, /Ciao Anna,/);
   assert.match(mail.text, /Orari liberi: 09:30/);
-  assert.match(mail.text, /\/it\/book\?date=2027-02-20&pax=2&tour=shared-agenzie/);
+  assert.match(mail.text, /\/it\/book\?d=2027-02-20&pax=2&tour=shared-agenzie#giorno/);
+  assert.match(mail.text, /\/it\/book#lista/, 'e il collegamento per gestire la lista');
   assert.match(mail.text, /chi prenota per primo/);
   assert.match(mail.html, /Vedi gli orari e prenota/);
   assert.equal(getEntry(app.db, e.id).status, 'notified');

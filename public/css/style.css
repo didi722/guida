@@ -405,7 +405,6 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 /* ───────── Prenota / checkout ───────── */
 .search-card { display: grid; grid-template-columns: 1fr 0.55fr 1.2fr auto; gap: 14px; align-items: end; }
 .search-card .field { margin: 0; } .search-card .btn { height: var(--control-h); }
-.search-card.has-hours { grid-template-columns: 1fr 0.55fr 1.2fr 0.75fr auto; }
 .search-card .kinds { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 24px; border: 0; padding: 0; margin: 0; } .search-card .kinds .check { margin: 4px 0; }
 .option-box { margin-top: 18px; padding: 16px 18px; border: 1.5px dashed var(--bronze); border-radius: 12px; background: var(--soft); } .option-box h3 { font-size: 1.05rem; margin: 0 0 6px; } .option-box p { margin: 0 0 12px; font-size: 0.95rem; color: var(--muted); }
 .option-note { margin: 12px 0 0; }
@@ -992,9 +991,10 @@ button.linklike { background: none; border: 0; padding: 0; font: inherit; color:
 .pb-actions-in { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: center; }
 .pb-actions-in form { margin: 0; }
 .pb-actions-in .btn-link-danger { padding: 4px 6px; font-size: 0.85rem; }
+.btn-text { color: var(--accent-text); font-size: 0.85rem; font-weight: 700; text-decoration: underline; padding: 4px 6px; white-space: nowrap; } .btn-text:hover { color: var(--ink); }
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
 .empty-state { padding: 34px 20px; }
-.edit-card { margin-top: 18px; }
+.edit-card { margin-top: 18px; } .fold > .edit-card { margin-top: 0; }
 .edit-card h2 { font-size: 1.3rem; margin-bottom: 0.2em; }
 
 @media (max-width: 900px) {
@@ -1122,6 +1122,23 @@ input[data-agency-search] { margin-bottom: 8px; }
 
 /* Pacchetto di più servizi (area agenzie) */
 .package-add { margin-top: 12px; } .package-add p { margin: 6px 0 0; text-align: center; }
+/* riquadri della scheda pratica che si aprono dal titolo (preventivo, nominativo e note): la pagina resta corta, soprattutto sul telefono */
+.fold > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; cursor: pointer; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary h2 { margin: 0; font-size: 1.15rem; }
+.fold > summary::after { content: '+'; color: var(--accent-text); font-size: 1.4rem; line-height: 1; }
+.fold[open] > summary::after { content: '−'; }
+.fold[open] > summary { border-bottom: 1px solid var(--line); }
+.fold > .pad, .fold > form.pad { padding-top: 18px; }
+@media (max-width: 640px) { .fold > summary { padding: 16px 20px; } }
+.top-actions { margin-top: 4px; }
+/* conferma per le agenzie: il referente è già compilato, una riga con «Modifica» */
+.ref-box { margin: 8px 0 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
+.ref-box > summary { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; cursor: pointer; list-style: none; font-size: 0.92rem; }
+.ref-box > summary::-webkit-details-marker { display: none; }
+.ref-box .ref-line { min-width: 0; overflow-wrap: anywhere; } .ref-box .ref-change { color: var(--accent-text); font-weight: 700; white-space: nowrap; }
+.ref-box[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; } .ref-box[open] .ref-change { display: none; }
+.ref-box > .form-grid { padding: 0 14px 6px; }
 .header-cart { gap: 6px; padding: 0 12px; } .header-cart svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; } .header-cart .cart-count { font-size: 0.85rem; }
 .header-cart[aria-current] { background: var(--header-ink); color: var(--gold); }
 .table tfoot th { text-align: left; padding: 12px 14px; border-top: 2px solid var(--line); font-size: 1rem; } .table tfoot th.num { text-align: right; }
@@ -1155,9 +1172,13 @@ input[data-agency-search] { margin-bottom: 8px; }
 .partner-table .chip { white-space: normal; line-height: 1.35; }
 @media (max-width: 640px) { .copy-line { flex-wrap: wrap; } .copy-line .btn { flex: 1 1 100%; } .pay-box .copy-field { font-size: 0.74rem; padding-inline: 10px; } }
 
-/* ───────── Date libere e lista d'attesa (area agenzie) ───────── */
-.avail-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; align-items: end; margin-bottom: 18px; }
-.avail-form .field { margin: 0; } .avail-form .btn { justify-self: start; height: var(--control-h); }
+/* ───────── Nuova prenotazione (area agenzie): servizio, persone, giorno, orari, calendario e lista d'attesa ───────── */
+.avail-form { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: end; margin-bottom: 18px; }
+.avail-form .field { margin: 0; flex: 1 1 130px; min-width: 0; } .avail-form .field-wide { flex-basis: 100%; } .avail-form .field-date { flex: 2 1 190px; } .avail-form .btn { height: var(--control-h); }
+.page-head.is-compact .lead { font-size: 1rem; margin-bottom: 4px; }
+@media (max-width: 640px) { .page-head.is-compact .lead { display: none; } .page-head.is-compact h1 { font-size: 1.9rem; } }
+.day-price { margin: 0 0 4px; font-size: 1.05rem; }
+.also-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 6px; } .also-row .chip-link { padding: 6px 14px; }
 .btn.is-off { opacity: 0.35; pointer-events: none; }
 .avail-grid .acal-cell { min-height: 78px; }
 .acal-cell.is-none { background: var(--soft); opacity: 0.5; pointer-events: none; }

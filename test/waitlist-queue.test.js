@@ -271,7 +271,7 @@ test('pagine: l’agenzia vede il suo posto in coda e il suo vantaggio; il panne
     assert.equal((await pa('/it/b2b/waitlist', form(joinForm))).status, 303);
     assert.equal((await pb('/it/b2b/waitlist', form(joinForm))).status, 303);
 
-    const view = (d) => `/it/b2b/availability?tour=${REAL}&pax=8&m=${date.slice(0, 7)}&d=${d}`;
+    const view = (d) => `/it/book?tour=${REAL}&pax=8&m=${date.slice(0, 7)}&d=${d}`;
     const pageA = await text(await pa(view(date)));
     const pageB = await text(await pb(view(date)));
     assert.match(pageA, /Sei la prima in lista: sarai avvisata per prima\./);

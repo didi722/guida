@@ -14,14 +14,13 @@ import { icon, page } from './layout.js';
 import { partyField, phoneField } from './fields.js';
 import { adultsOnly, bookingPeople, childPriceCents, partyWord } from '../party.js';
 import { walletOptions } from '../wallet.js';
-import { areaOf, breadcrumbs, departuresList, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, timeLeft, tourMedia, whoOf } from './components.js';
+import { areaOf, breadcrumbs, durationText, fmtDuration, fmtHours, homeCrumb, hoursLabel, langOptions, rebookHref, timeLeft, tourMedia, whoOf } from './components.js';
 import { quoteLines } from './hourly.js';
 import { changeBox, extensionBox } from './changes.js';
 import { documentsBox } from './agencyDocs.js';
-import { bookTabs } from './availability.js';
 import { bookingPayBlock } from './invoicePay.js';
 import { pendingExtension } from '../changes.js';
-import { extraHourOptions, hourOptions, parseServiceRecord } from '../rates.js';
+import { extraHourOptions, parseServiceRecord } from '../rates.js';
 
 const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
 
@@ -33,66 +32,46 @@ export function preOpenNotice(ctx, { agency = false } = {}) {
   return html`<div class="notice notice-info" role="note">${t(agency ? 'preopen.agency' : 'preopen.notice', { date: fmtDate(paymentsFrom(app.cfg), lang, 'date') })}</div>`;
 }
 
-export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures = [], channel, kinds = { shown: false }, tours = ctx.app.content.tours, hourly = false, hours = null }) {
-  const { t, lang, u, app } = ctx;
-  const durationTours = tours.filter((x) => x.pricing === 'hourly' && x.chooseHours); // i servizi la cui durata la sceglie il cliente
-  const hoursShown = durationTours.some((x) => x.slug === tourSlug); // la durata si sceglie solo dopo aver scelto il servizio
+/** La ricerca per data dei privati (vecchi link con una data): gli orari liberi dei tour a prezzo fisso. Le agenzie prenotano da routes/availability.js. */
+export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, tours = ctx.app.content.tours, hourly = false }) {
+  const { t, lang, u } = ctx;
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [homeCrumb(ctx), [t('nav.book')]])}
   <h1>${t('book.title')}</h1><p class="lead">${t('book.lead')}</p>
-  ${channel === 'b2b' ? html`<p><span class="chip chip-accent">${t('b2b.partnerRate')}</span> ${t('book.partnerNote')}</p>` : ''}
-  ${preOpenNotice(ctx, { agency: channel === 'b2b' })}
+  ${preOpenNotice(ctx)}
 </div></section>
 
 <section class="section tight"><div class="wrap">
-  ${channel === 'b2b' ? bookTabs(ctx, 'search') : ''}
-  <form class="card pad search-card ${hoursShown ? 'has-hours' : ''}" method="get" action="${u('/book')}">
+  <form class="card pad search-card" method="get" action="${u('/book')}">
     <label class="field"><span class="label">${t('quick.date')}</span><input type="date" name="date" min="${minDate}" value="${date ?? ''}" required></label>
     <label class="field"><span class="label">${t('quick.guests')}</span><select name="pax">${Array.from({ length: 25 }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select></label>
     <label class="field"><span class="label">${t('book.tour')}</span>
       <select name="tour"><option value="">${t('book.allTours')}</option>${tours.map((x) => html`<option value="${x.slug}" ${x.slug === tourSlug ? raw('selected') : ''}>${x.i18n[lang].title}</option>`)}</select>
     </label>
-    ${durationTours.length
-      ? html`<div class="field" data-hours-field ${hoursShown ? '' : raw('hidden')}><span class="label">${t('hourly.f.hours')}</span>${durationTours.map((x) => {
-          const options = hourOptions(x.service);
-          const picked = hours != null && options.includes(hours) ? hours : options[0];
-          return html`<select name="hours" data-hours-for="${x.slug}" aria-label="${t('hourly.f.hours')}" ${x.slug === tourSlug ? '' : raw('hidden disabled')}>${options.map((h) => html`<option value="${h}" ${h === picked ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>`;
-        })}</div>`
-      : ''}
     <button class="btn btn-gold" type="submit">${t('quick.go')}</button>
   </form>
-  ${hourly && channel !== 'b2b' ? html`<p class="hourly-hint">${t('book.hourlyHint')} <a href="${u('/hourly')}">${t('book.hourlyLink')} →</a></p>` : ''}
+  ${hourly ? html`<p class="hourly-hint">${t('book.hourlyHint')} <a href="${u('/hourly')}">${t('book.hourlyLink')} →</a></p>` : ''}
 
-  ${date
-    ? html`<h2 class="h-sub spaced">${t('book.resultsFor', { date: fmtDate(date, lang) })}</h2>
-      ${results.length
-        ? html`<div class="results">${results.map(({ tour, slots, hours: serviceHours, quote, chosen }) => {
-            const ti = tour.i18n[lang];
-            const isHourly = tour.pricing === 'hourly';
-            const unit = isHourly ? 0 : unitPriceFor(tour, channel, ctx.acct);
-            const checkoutUrl = (time) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour.slug)}&date=${date}&time=${time}&pax=${pax}${isHourly && tour.chooseHours ? `&hours=${serviceHours}` : ''}`;
-            return html`<article class="card result reveal">
-              <div class="result-media">${tourMedia(ctx, tour, '')}</div>
-              <div class="result-body">
-                <h3><a href="${u('/tours/' + tour.slug)}">${ti.title}</a> ${tour.model === 'person' ? '' : html`<span class="chip">${t('tour.kindPrivate')}</span>`}</h3>
-                ${isHourly
-                  ? html`<p class="muted small">${tour.chooseHours && !chosen ? t('price.from', { price: formatMoney(quote.totalCents, lang) }) : formatMoney(quote.totalCents, lang)} · ${hoursLabel(t, lang, serviceHours)} · ${tour.chooseHours ? t('book.privateSlots', { hours: hoursLabel(t, lang, serviceHours) }) : t('book.forGroup')}</p>`
-                  : html`<p class="muted small">${durationText(t, lang, tour)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>`}
-                <div class="slot-list">${slots.map((s) => html`<a class="slot" href="${isHourly ? checkoutUrl(s.time) : slotUrl(u, tour.slug, date, s.time, pax)}"><strong>${s.time}</strong>${tour.model === 'person' ? html`<small>${s.joined ? t('book.confirmedDeparture') : t('book.newDeparture')}${s.lang ? html` · ${t('w.inLang', { lang: LANG_META[s.lang].name })}` : ''}${s.left <= 4 ? html` · ${t('w.left', { n: s.left })}` : ''}</small>` : ''}</a>`)}</div>
-                ${isHourly && tour.chooseHours && !chosen ? html`<p class="small"><a href="${u('/hourly')}?product=${tour.slug}&date=${date}&pax=${pax}">${t('book.privateOther')}</a></p>` : ''}
-              </div>
-            </article>`;
-          })}</div>`
-        : html`<div class="card pad empty"><p>${t('book.none')}</p>
-            ${channel === 'b2b' ? html`<p><a href="${u('/b2b/availability')}?${new URLSearchParams({ ...(tourSlug ? { tour: tourSlug } : {}), pax: String(pax), ...(hoursShown && hours ? { hours: String(hours) } : {}), m: date.slice(0, 7) })}">${t('avail.noneHint')}</a></p>` : ''}
-            ${suggestions.length ? html`<p>${t('book.nextDates')}</p><p class="date-chips">${suggestions.map((d) => html`<a class="chip chip-link" href="${u('/book')}?date=${d}&pax=${pax}${tourSlug ? '&tour=' + tourSlug : ''}${hoursShown && hours ? '&hours=' + hours : ''}${kinds.shown ? '&kinds=1' + (kinds.private ? '&kind=private' : '') + (kinds.shared ? '&kind=shared' : '') : ''}">${fmtDate(d, lang, 'weekday')}</a>`)}</p>` : ''}
-            <p class="small muted">${t('book.askUs')} <a href="${u('/contact')}">${t('nav.contact')}</a></p></div>`}`
-    : html`<p class="muted spaced">${t('book.pickPrompt')}</p>
-      ${departures.length ? html`<h2 class="h-sub spaced">${t('departures.title')}</h2>${departuresList(ctx, departures, { pax })}` : ''}`}
+  <h2 class="h-sub spaced">${t('book.resultsFor', { date: fmtDate(date, lang) })}</h2>
+  ${results.length
+    ? html`<div class="results">${results.map(({ tour, slots }) => {
+        const ti = tour.i18n[lang];
+        const unit = unitPriceFor(tour, 'b2c', null);
+        return html`<article class="card result reveal">
+          <div class="result-media">${tourMedia(ctx, tour, '')}</div>
+          <div class="result-body">
+            <h3><a href="${u('/tours/' + tour.slug)}">${ti.title}</a> ${tour.model === 'person' ? '' : html`<span class="chip">${t('tour.kindPrivate')}</span>`}</h3>
+            <p class="muted small">${durationText(t, lang, tour)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>
+            <div class="slot-list">${slots.map((s) => html`<a class="slot" href="${slotUrl(u, tour.slug, date, s.time, pax)}"><strong>${s.time}</strong>${tour.model === 'person' ? html`<small>${s.joined ? t('book.confirmedDeparture') : t('book.newDeparture')}${s.lang ? html` · ${t('w.inLang', { lang: LANG_META[s.lang].name })}` : ''}${s.left <= 4 ? html` · ${t('w.left', { n: s.left })}` : ''}</small>` : ''}</a>`)}</div>
+          </div>
+        </article>`;
+      })}</div>`
+    : html`<div class="card pad empty"><p>${t('book.none')}</p>
+        ${suggestions.length ? html`<p>${t('book.nextDates')}</p><p class="date-chips">${suggestions.map((d) => html`<a class="chip chip-link" href="${u('/book')}?date=${d}&pax=${pax}${tourSlug ? '&tour=' + tourSlug : ''}">${fmtDate(d, lang, 'weekday')}</a>`)}</p>` : ''}
+        <p class="small muted">${t('book.askUs')} <a href="${u('/contact')}">${t('nav.contact')}</a></p></div>`}
 </div></section>`;
-  const scripts = durationTours.length ? raw(`<script src="/js/book-hours.js?v=${app.assetVersion}" defer></script>`) : '';
-  return page(ctx, { title: t('nav.book'), description: t('book.lead'), path: `/${lang}/book`, body, activeNav: 'book', area: areaOf(ctx), scripts });
+  return page(ctx, { title: t('nav.book'), description: t('book.lead'), path: `/${lang}/book`, body, activeNav: 'book', area: areaOf(ctx) });
 }
 
 // ───────────────────────── Checkout ─────────────────────────
@@ -134,8 +113,29 @@ export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pa
   const tourLangField = slot.lang
     ? html`<div class="field"><span class="label">${t('f.tourLang')}</span><strong>${LANG_META[tourLang].name}</strong><input type="hidden" name="tourLang" value="${tourLang}"><small class="muted">${t('checkout.langLocked', { lang: LANG_META[tourLang].name })}</small></div>`
     : offered.length > 1
-      ? html`<label class="field"><span class="label">${t('f.tourLang')}</span><select name="tourLang">${offered.map((l) => html`<option value="${l}" ${l === tourLang ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}</select><small class="muted">${t('f.tourLangHint')}</small></label>`
+      ? html`<label class="field"><span class="label">${t('f.tourLang')}</span><select name="tourLang">${offered.map((l) => html`<option value="${l}" ${l === tourLang ? raw('selected') : ''}>${LANG_META[l].name}</option>`)}</select>${isB2b ? '' : html`<small class="muted">${t('f.tourLangHint')}</small>`}</label>`
       : html`<input type="hidden" name="tourLang" value="${tourLang}">`;
+
+  // i campi del modulo: i privati li compilano tutti; le agenzie hanno già il referente (loro) e vedono solo pratica, lingua del tour e note
+  const nameValue = v('name', isB2b ? who.name : '');
+  const emailValue = v('email', isB2b ? who.email : '');
+  const phoneValue = v('phone', isB2b ? (acct.phone ?? '') : '');
+  const nameField = html`<label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${nameValue}"></label>`;
+  const emailField = html`<label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${emailValue}"></label>`;
+  const phoneInput = phoneField(ctx, { value: phoneValue, cc: v('phone_cc'), defaultCc: isB2b ? acct.country : '', label: html`${t('f.phone')} <em>${isB2b ? t('f.phoneB2b') : t('f.optional')}</em>` });
+  const langField = html`<label class="field"><span class="label">${t('f.lang')}</span><select name="lang">${langOptions(v('lang', lang))}</select></label>`;
+  const pickupField = tour.meetingChoice ? html`<label class="field span-2"><span class="label">${t('f.pickup')} <em>${t('f.optional')}</em></span><input name="pickup" maxlength="200" value="${v('pickup')}" placeholder="${t('f.pickupHint')}" autocomplete="off"><small class="muted">${isB2b ? t('f.pickupNoteB2b') : t('f.pickupNote', { place: DEFAULT_MEETING.text[lang] })}</small></label>` : '';
+  const themesBox = hasThemes(tour)
+    ? html`<fieldset class="field themes"><legend class="label">${t('f.theme')}</legend>
+        ${ti.themes.map((x, i) => html`<label class="check"><input type="radio" name="theme" value="${i}" required ${v('theme') === String(i) ? raw('checked') : ''}> <span>${x}</span></label>`)}
+        ${tour.themeOther ? html`<label class="check"><input type="radio" name="theme" value="other" required ${v('theme') === 'other' ? raw('checked') : ''}> <span>${t('f.themeOther')}</span></label>
+          <textarea name="themeNote" rows="3" maxlength="500" placeholder="${t('f.themeNote')}" aria-label="${t('f.themeNote')}">${v('themeNote')}</textarea>` : ''}</fieldset>`
+    : '';
+  const clientRefField = html`<label class="field span-2"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${v('clientRef')}" placeholder="${t('f.clientRefHint')}"></label>`;
+  const notesField = html`<label class="field"><span class="label">${t('f.notes')} <em>${t('f.optional')}</em></span><textarea name="notes" rows="${isB2b ? 2 : 3}" maxlength="1000" placeholder="${isB2b ? t('f.notesHintB2b') : t('f.notesHint')}">${v('notes')}</textarea></label>`;
+  // per le agenzie il referente è già compilato: una riga con «Modifica»; si apre da sola se manca qualcosa o c'è un errore
+  const refOpen = !!error || !nameValue || !emailValue;
+  const refLine = [nameValue, emailValue, phoneValue].filter(Boolean).join(' · ') + ` · ${t('checkout.confirmIn', { lang: LANG_META[v('lang', lang)]?.name ?? lang })}`;
 
   const body = html`
 <section class="page-head"><div class="wrap">
@@ -148,23 +148,23 @@ export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pa
     ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
     <input type="hidden" name="tour" value="${tour.slug}"><input type="hidden" name="date" value="${date}"><input type="hidden" name="time" value="${time}">${hourly && tour.chooseHours ? html`<input type="hidden" name="hours" value="${serviceHours}">` : ''}
     <button type="submit" name="apply" value="1" formnovalidate hidden tabindex="-1" id="pax-apply"></button>
-    <h2>${isB2b ? t('checkout.contactB2b') : t('checkout.contact')}</h2>
-    <div class="form-grid">
-      <label class="field"><span class="label">${t('f.name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${v('name', isB2b ? who.name : '')}"></label>
-      <label class="field"><span class="label">${t('f.email')}</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="${v('email', isB2b ? who.email : '')}"></label>
-      ${phoneField(ctx, { value: v('phone', isB2b ? (acct.phone ?? '') : ''), cc: v('phone_cc'), defaultCc: isB2b ? acct.country : '', label: html`${t('f.phone')} <em>${isB2b ? t('f.phoneB2b') : t('f.optional')}</em>` })}
-      ${tourLangField}
-      ${tour.meetingChoice ? html`<label class="field wide"><span class="label">${t('f.pickup')} <em>${t('f.optional')}</em></span><input name="pickup" maxlength="200" value="${v('pickup')}" placeholder="${t('f.pickupHint')}" autocomplete="off"><small class="muted">${isB2b ? t('f.pickupNoteB2b') : t('f.pickupNote', { place: DEFAULT_MEETING.text[lang] })}</small></label>` : ''}
-      <label class="field"><span class="label">${t('f.lang')}</span><select name="lang">${langOptions(v('lang', lang))}</select></label>
-    </div>
-    ${hasThemes(tour)
-      ? html`<fieldset class="field themes"><legend class="label">${t('f.theme')}</legend>
-        ${ti.themes.map((x, i) => html`<label class="check"><input type="radio" name="theme" value="${i}" required ${v('theme') === String(i) ? raw('checked') : ''}> <span>${x}</span></label>`)}
-        ${tour.themeOther ? html`<label class="check"><input type="radio" name="theme" value="other" required ${v('theme') === 'other' ? raw('checked') : ''}> <span>${t('f.themeOther')}</span></label>
-          <textarea name="themeNote" rows="3" maxlength="500" placeholder="${t('f.themeNote')}" aria-label="${t('f.themeNote')}">${v('themeNote')}</textarea>` : ''}</fieldset>`
-      : ''}
-    ${isB2b ? html`<label class="field"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${v('clientRef')}" placeholder="${t('f.clientRefHint')}"></label>` : ''}
-    <label class="field"><span class="label">${t('f.notes')} <em>${t('f.optional')}</em></span><textarea name="notes" rows="3" maxlength="1000" placeholder="${isB2b ? t('f.notesHintB2b') : t('f.notesHint')}">${v('notes')}</textarea></label>
+    ${isB2b
+      ? html`<h2>${t('checkout.fileB2b')}</h2>
+        <div class="form-grid">
+          ${clientRefField}
+          ${tourLangField}
+          ${pickupField}
+        </div>
+        ${themesBox}
+        ${notesField}
+        <details class="ref-box" ${refOpen ? raw('open') : ''}>
+          <summary><span class="ref-line"><strong>${t('checkout.contactB2b')}</strong> · ${refLine}</span> <span class="ref-change">${t('checkout.change')}</span></summary>
+          <div class="form-grid">${nameField}${emailField}${phoneInput}${langField}</div>
+        </details>`
+      : html`<h2>${t('checkout.contact')}</h2>
+        <div class="form-grid">${nameField}${emailField}${phoneInput}${tourLangField}${pickupField}${langField}</div>
+        ${themesBox}
+        ${notesField}`}
 
     ${!isB2b
       ? html`<details class="invoice-opt" ${values.invoice ? raw('open') : ''}><summary>${t('f.invoiceAsk')}</summary>
@@ -245,11 +245,13 @@ export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pa
   return page(ctx, { title: t('checkout.title'), path: `/${lang}/book/checkout`, body, noindex: true, activeNav: 'book', area: areaOf(ctx), scripts: raw(`<script src="/js/checkout.js?v=${ctx.app.assetVersion}" defer></script>`) });
 }
 
-export function slotGonePage(ctx, { tour, date, pax }) {
+export function slotGonePage(ctx, { tour, date, pax, hours = null }) {
   const { t, lang, u } = ctx;
+  // l'agenzia torna alla sua pagina di prenotazione, con servizio, giorno, persone e durata già scelti
+  const again = `${u('/book')}?${new URLSearchParams({ ...(tour ? { tour: tour.slug } : {}), ...(date ? { d: date } : {}), pax: String(pax), ...(tour?.chooseHours && hours ? { hours: String(hours) } : {}) })}`;
   const body = html`<section class="page-head"><div class="wrap narrow center">
     <h1>${t('checkout.goneTitle')}</h1><p class="lead">${t('checkout.goneText')}</p>
-    <p class="btn-row center"><a class="btn btn-gold" href="${ctx.acct?.status === 'approved' ? (tour?.pricing === 'hourly' ? `${u('/hourly')}?product=${tour.slug}${date ? '&date=' + date : ''}&pax=${pax}` : `${u('/book')}?${tour ? 'tour=' + tour.slug + '&' : ''}${date ? 'date=' + date + '&' : ''}pax=${pax}`) : tour ? u('/tours/' + tour.slug) : u('/tours')}">${t('checkout.pickAnother')}</a></p></div></section>`;
+    <p class="btn-row center"><a class="btn btn-gold" href="${ctx.acct?.status === 'approved' ? again : tour ? u('/tours/' + tour.slug) : u('/tours')}">${t('checkout.pickAnother')}</a></p></div></section>`;
   return page(ctx, { title: t('checkout.goneTitle'), path: `/${lang}/book/checkout`, body, noindex: true, area: areaOf(ctx) });
 }
 
@@ -309,6 +311,12 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
 
   const wallet = walletOptions(app, b); // pulsanti «Aggiungi al wallet» solo se sono configurati e la prenotazione è di un cliente privato
   const invoiceBtn = owner && invoice ? html`<a class="btn btn-outline" href="${u(`/b2b/invoices/${invoice.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.act.invoice', { n: invoice.number })}</a>` : '';
+  const rebook = owner && ['confirmed', 'cancelled', 'expired'].includes(b.status) ? html`<a class="btn btn-outline" href="${rebookHref(ctx, b)}">${t('partner.act.again')}</a>` : '';
+  const voucherLangs = html`<p class="voucher-langs small"><span class="muted">${t('booking.voucherIn')}</span> ${LANGS.map((l) => html`<a class="chip chip-link" href="${base}/voucher.pdf${q}&amp;vl=${l}" target="_blank" rel="noopener" hreflang="${l}">${LANG_META[l].name}</a>`)}</p>`;
+  // l'agenzia ha le azioni di ogni giorno subito sotto il codice: voucher da girare al cliente, calendario, fattura, «Prenota di nuovo»
+  const topActions = owner && b.status === 'confirmed'
+    ? html`<p class="btn-row top-actions"><a class="btn btn-gold" href="${base}/voucher.pdf${q}" target="_blank" rel="noopener">${t('booking.voucher')}</a><a class="btn btn-outline" href="${base}/calendar.ics${q}">${t('booking.addCalendar')}</a>${invoiceBtn}${rebook}</p>${voucherLangs}`
+    : '';
   const wasOption = !!b.option_expires_at; // un'opzione (anche se poi scaduta o confermata)
   const optionUntil = b.option_expires_at ? fmtInstant(Date.parse(b.option_expires_at), lang) : '';
   const heads = {
@@ -339,6 +347,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   ${inviteBox(ctx, b, invite)}
   <div class="card pad">
     <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${b.ref}</strong>${group ? html` · <a class="chip chip-link" href="${owner ? u(`/b2b/packages/${group.ref}`) : `/${lang}/packages/${group.ref}?t=${group.token}`}">${t('pkg.chip', { ref: group.ref })}</a>` : ''}</p>
+    ${topActions}
     <dl class="summary-list">
       <div><dt>${t('s.service')}</dt><dd>${ti.title}</dd></div>
       <div><dt>${t('s.date')}</dt><dd>${fmtDate(b.date, lang)}</dd></div>
@@ -372,12 +381,11 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
         ? html`<p class="policy-box ${st.free ? 'ok' : 'warn'}">${st.everRefundable ? (st.free ? t('booking.canCancel', { until: fmtInstant(st.until, lang) }) : t('booking.cancelClosed', { until: fmtInstant(st.until, lang) })) : t('checkout.nonRefundable')}</p>`
         : html`<div class="policy-box ${st.percent === 100 ? 'ok' : 'warn'}"><strong>${t('policy.title')}</strong><ul class="plain tier-list">${tierSentences(t, lang, st.tiers, st.startsAt).map((x) => html`<li>${x}</li>`)}</ul></div>
         ${st.percent > 0 && st.percent < 100 ? html`<p class="small">${due && b.payment_status !== 'paid' ? t('booking.cancelNowFee', { percent: 100 - st.percent, amount: formatMoney(due - Math.round((due * st.percent) / 100), lang, b.currency) }) : t('booking.cancelNow', { percent: st.percent, amount: formatMoney(Math.round((due * st.percent) / 100), lang, b.currency) })}</p>` : ''}`}
-      <p class="btn-row">
+      ${owner ? '' : html`<p class="btn-row">
         <a class="btn btn-outline" href="${base}/calendar.ics${q}">${t('booking.addCalendar')}</a>
         <a class="btn btn-outline" href="${base}/voucher.pdf${q}" target="_blank" rel="noopener">${t('booking.voucher')}</a>
         ${invoiceBtn}
-      </p>
-      <p class="voucher-langs small"><span class="muted">${t('booking.voucherIn')}</span> ${LANGS.map((l) => html`<a class="chip chip-link" href="${base}/voucher.pdf${q}&amp;vl=${l}" target="_blank" rel="noopener" hreflang="${l}">${LANG_META[l].name}</a>`)}</p>
+      </p>${voucherLangs}`}
       ${wallet.google || wallet.apple
         ? html`<div class="wallet-box"><p class="small muted">${t('wallet.hint')}</p><p class="btn-row">
           ${wallet.apple ? html`<a class="btn btn-dark" href="${base}/wallet/apple.pkpass${q}">${icon('wallet')} ${t('wallet.apple')}</a>` : ''}
@@ -387,15 +395,16 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
       ${st.percent > 0
         ? html`<form method="post" action="${base}/cancel" class="cancel-form" data-confirm="${inviteOwed > 0 ? t('booking.confirmCancelInvite', { amount: formatMoney(inviteOwed, lang, b.currency) }) : st.percent < 100 && b.payment_status !== 'paid' ? t('booking.confirmCancelFee') : t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>`
         : st.started ? '' : html`<p class="small muted">${t('booking.contactForChanges')} <a href="mailto:${cfg.site.email}">${cfg.site.email}</a>${cfg.site.whatsapp ? html` · <a href="https://wa.me/${cfg.site.whatsapp}">WhatsApp</a>` : ''}</p>`}`
-      : invoiceBtn ? html`<p class="btn-row">${invoiceBtn}</p>` : ''}
+      : invoiceBtn || rebook ? html`<p class="btn-row">${invoiceBtn}${rebook}</p>` : ''}
     ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && !invoice ? html`<p class="small muted">${t('partner.docs.invoiceLater')}</p>` : ''}
     ${owner && b.status === 'confirmed' && b.payment_method === 'invoice' && b.payment_status === 'unpaid' ? bookingPayBlock(ctx, b, invoice) : ''}
   </div>
   ${owner ? changeBox(ctx, b) : ''}
   ${owner && b.channel === 'b2b' ? documentsBox(ctx, { ref: b.ref, bookings: [b] }) : ''}
   ${owner && isEditable(b)
-    ? html`<form class="card pad form edit-card" method="post" action="${u(`/b2b/bookings/${b.ref}/edit`)}" id="edit">
-    <h2>${t('partner.edit.title')}</h2><p class="small muted">${t('partner.edit.hint')}</p>
+    ? html`<details class="card fold" id="edit" ${/^edit-/.test(flash) ? raw('open') : ''}><summary><h2>${t('partner.edit.title')}</h2></summary>
+    <form class="pad form edit-card" method="post" action="${u(`/b2b/bookings/${b.ref}/edit`)}">
+    <p class="small muted">${t('partner.edit.hint')}</p>
     <div class="form-grid">
       <label class="field"><span class="label">${t('partner.edit.name')}</span><input name="name" required maxlength="120" value="${b.name}"></label>
       <label class="field"><span class="label">${t('f.clientRef')}</span><input name="clientRef" maxlength="120" value="${b.client_ref ?? ''}"></label>
@@ -404,7 +413,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
     ${tour.meetingChoice ? html`<label class="field"><span class="label">${t('f.pickup')}</span><input name="pickup" maxlength="200" value="${b.pickup ?? ''}" placeholder="${t('f.pickupHint')}" autocomplete="off"></label>` : ''}
     <label class="field"><span class="label">${t('f.notes')}</span><textarea name="notes" rows="3" maxlength="1000">${b.notes ?? ''}</textarea></label>
     <button class="btn btn-gold" type="submit">${t('partner.edit.btn')}</button>
-  </form>`
+  </form></details>`
     : ''}
 </div></section>`;
   return page(ctx, { title: `${t('s.ref')} ${b.ref}`, path: `/${lang}/booking/${b.ref}`, body, noindex: true, ...(owner ? { area: 'partner', activeNav: 'b2b-account' } : {}) });

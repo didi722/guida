@@ -16,7 +16,7 @@ import { billingGaps } from '../billing.js';
 import { gapWords } from './billing.js';
 import { stateText } from './invoicePay.js';
 import { tutorialBanner, tutorialDialog } from './tutorial.js';
-import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, timeLeft, whoOf } from './components.js';
+import { breadcrumbs, fmtDuration, fmtHours, hasHourlyProducts, homeCrumb, rebookHref, timeLeft, whoOf } from './components.js';
 import { ratesBlock, ratesNotes, rateCard, supplementsBox } from './hourly.js';
 
 export function loginPage(ctx, { error = '', email = '', next = '' } = {}) {
@@ -423,6 +423,7 @@ export function bookingsPage(ctx, { acct, team = false, filters, list, summary, 
             ${b.status === 'option' ? html`<a class="btn btn-gold btn-sm" href="${detail(b)}#option">${t('partner.act.confirm')}</a>` : html`<a class="btn btn-outline btn-sm" href="${detail(b)}">${t('partner.act.open')}</a>`}
             ${b.status === 'confirmed' ? html`<a class="btn btn-outline btn-sm" href="${detail(b)}/voucher.pdf" target="_blank" rel="noopener">${t('partner.act.voucher')}</a>` : ''}
             ${b.invoice ? html`<a class="btn btn-outline btn-sm" href="${u(`/b2b/invoices/${b.invoice.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.act.invoice', { n: b.invoice.number })}</a>` : ''}
+            ${b.status === 'confirmed' || b.status === 'cancelled' || b.status === 'expired' ? html`<a class="btn-text" href="${rebookHref(ctx, b)}">${t('partner.act.again')}</a>` : ''}
             ${b.status === 'option'
               ? html`<form method="post" action="${u(`/booking/${b.ref}/option/release`)}" data-confirm="${t('booking.optionReleaseAsk')}"><input type="hidden" name="t" value="${b.token}"><input type="hidden" name="next" value="${base}"><button class="btn btn-link-danger btn-sm" type="submit">${t('partner.act.release')}</button></form>`
               : ''}

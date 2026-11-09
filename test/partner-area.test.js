@@ -317,7 +317,10 @@ test('scheda della pratica: solo la propria; si cambia il nominativo (la guida l
 
     const page = nb(await (await f(`/it/b2b/bookings/${mia.ref}`)).text());
     assert.match(page, /<body class="[^"]*partner-area/);
-    assert.match(page, new RegExp(`<form class="card pad form edit-card" method="post" action="/it/b2b/bookings/${mia.ref}/edit"`));
+    // «Nominativo e note» e il preventivo si aprono dal titolo (la scheda resta corta); chiusi finché non serve
+    assert.match(page, /<details class="card fold" id="edit" ><summary><h2>Nominativo e note<\/h2><\/summary>/);
+    assert.match(page, /<details class="card fold docs-box" id="documenti"><summary><h2>Documenti per il tuo cliente<\/h2><\/summary>/);
+    assert.match(page, new RegExp(`<form class="pad form edit-card" method="post" action="/it/b2b/bookings/${mia.ref}/edit">`));
     assert.match(page, /name="name" required maxlength="120" value="Giulia Bianchi"/);
     assert.match(page, /← Tutte le prenotazioni/);
     assert.match(page, new RegExp(`/it/b2b/bookings/${mia.ref}/voucher.pdf|/it/booking/${mia.ref}/voucher.pdf\\?t=${mia.token}`));
@@ -333,7 +336,7 @@ test('scheda della pratica: solo la propria; si cambia il nominativo (la guida l
     // cambio di nominativo, telefono e note: salvato, la guida riceve l’aggiornamento
     const ok = await f(`/it/b2b/bookings/${mia.ref}/edit`, post({ name: '  Famiglia Conti  ', clientRef: 'Pratica 12', phone: '+39 333 111', notes: 'Una carrozzina' }));
     assert.equal(ok.status, 303);
-    assert.equal(loc(ok), `/it/b2b/bookings/${mia.ref}?flash=edited#edit`);
+    assert.equal(loc(ok), `/it/b2b/bookings/${mia.ref}?flash=edited`, 'salvato: si resta in cima, dove c’è la conferma');
     const row = s.app.db.prepare('SELECT name, client_ref, phone, notes FROM bookings WHERE id = ?').get(mia.id);
     assert.deepEqual({ ...row }, { name: 'Famiglia Conti', client_ref: 'Pratica 12', phone: '+39 333111', notes: 'Una carrozzina' }, 'il telefono si salva con il prefisso e senza spazi nel numero');
     assert.equal(sent().length, 1);
@@ -353,10 +356,13 @@ test('scheda della pratica: solo la propria; si cambia il nominativo (la guida l
     const empty = await f(`/it/b2b/bookings/${mia.ref}/edit`, post({ name: '   ', clientRef: 'X' }));
     assert.equal(loc(empty), `/it/b2b/bookings/${mia.ref}?flash=edit-error#edit`);
     assert.equal(s.app.db.prepare('SELECT name FROM bookings WHERE id = ?').get(mia.id).name, 'Famiglia Conti');
-    assert.match(nb(await (await f(`/it/b2b/bookings/${mia.ref}?flash=edit-error`)).text()), /Il nominativo è obbligatorio/);
+    const errPage = nb(await (await f(`/it/b2b/bookings/${mia.ref}?flash=edit-error`)).text());
+    assert.match(errPage, /Il nominativo è obbligatorio/);
+    assert.match(errPage, /<details class="card fold" id="edit" open>/, 'con un errore il modulo è aperto');
+    assert.doesNotMatch(nb(await (await f(`/it/b2b/bookings/${mia.ref}?flash=edited`)).text()), /id="edit" open/, 'con l’esito positivo resta chiuso');
 
     // anche un’opzione si può intestare (la guida non riceve nulla: la prenotazione non è ancora confermata)
-    assert.equal(loc(await f(`/it/b2b/bookings/${opzione.ref}/edit`, post({ name: 'Cliente scelto', clientRef: 'Preventivo' }))), `/it/b2b/bookings/${opzione.ref}?flash=edited#edit`);
+    assert.equal(loc(await f(`/it/b2b/bookings/${opzione.ref}/edit`, post({ name: 'Cliente scelto', clientRef: 'Preventivo' }))), `/it/b2b/bookings/${opzione.ref}?flash=edited`);
     assert.equal(sent().length, 1);
 
     // servizio già iniziato: non si cambia più nulla e il modulo non c’è
@@ -470,26 +476,132 @@ test('fatture: l’agenzia vede e scarica solo le sue (PDF), dall’elenco e dal
   }
 });
 
-test('prenotare da agenzia: «Cerca» mostra tutti i tour e i servizi a ore (senza spunte); la barra resta quella dell’area agenzie fino al pagamento', async () => {
+test('prenotare da agenzia: una pagina sola con tutti i tour e i servizi a ore (senza spunte); la barra resta quella dell’area agenzie fino al pagamento', async () => {
   const s = await start();
   try {
     const f = await s.login('giulia@lagoon.example');
     const date = day(12);
-    const titles = (html) => [...html.matchAll(/<h3><a href="\/it\/tours\/([a-z0-9-]+)"/g)].map((m) => m[1]);
-    const page = nb(await (await f(`/it/book?date=${date}&pax=4`)).text());
+    const page = nb(await (await f(`/it/book?d=${date}&pax=4`)).text());
+    assert.match(page, /partner-area/);
     assert.ok(!page.includes('name="kind"'), 'niente spunte privati/condivisi: l’agenzia vede tutto');
-    // l'agenzia vede solo i tour B2B (con il suo indirizzo «-agenzie»), mai quelli dei privati: privati, condivisi e servizi insieme
-    assert.ok(titles(page).includes('guida-a-ore-agenzie') && titles(page).includes('cannaregio-ghetto-agenzie'), `tutti: ${titles(page)}`);
-    assert.ok(!titles(page).includes('cannaregio-ghetto') && !titles(page).includes('guida-a-ore'));
+    // l'agenzia sceglie tra i soli servizi B2B (con il suo indirizzo «-agenzie»), mai tra quelli dei privati: privati, condivisi e servizi insieme
     const options = [...page.matchAll(/<option value="([a-z0-9-]+)"/g)].map((m) => m[1]);
+    assert.ok(options.includes('guida-a-ore-agenzie') && options.includes('cannaregio-ghetto-agenzie'), `tutti: ${options}`);
+    assert.ok(!options.includes('cannaregio-ghetto') && !options.includes('guida-a-ore'));
     for (const svc of ['assistente-a-ore', 'tour-leader', 'meet-and-greet']) assert.ok(options.includes(svc), `${svc} nell'elenco dei servizi`);
+    // ogni servizio si apre con il suo prezzo (sconto compreso) e i suoi orari, senza passare dai vecchi «Cerca» e «Date libere»
+    for (const svc of ['cannaregio-ghetto-agenzie', 'assistente-a-ore', 'meet-and-greet']) {
+      const one = nb(await (await f(`/it/book?tour=${svc}&d=${date}&pax=2`)).text());
+      assert.match(one, new RegExp(`<option value="${svc}" selected>`), svc);
+      assert.match(one, /class="day-price"/, `${svc}: il prezzo`);
+    }
     // pagina di checkout: stessa barra
     const checkout = await (await f(`/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${date}&time=10:00&pax=2`)).text();
     assert.match(checkout, /partner-area/);
     assert.match(checkout, /Area agenzia<\/a><span aria-hidden="true">›<\/span>/);
-    // il pubblico (e chi non è dentro) non vede le spunte: sono solo per le agenzie
-    const pub = await (await s.anon(`/it/book?date=${date}&pax=4`)).text();
-    assert.ok(!pub.includes('name="kind"') && !pub.includes('partner-area'));
+    // il pubblico (e chi non è dentro) non vede la pagina delle agenzie
+    const pub = await s.anon(`/it/book?date=${date}&pax=4`);
+    assert.equal(pub.status, 200);
+    const pubHtml = await pub.text();
+    assert.ok(!pubHtml.includes('name="kind"') && !pubHtml.includes('partner-area') && !pubHtml.includes('avail-form'));
+  } finally {
+    s.close();
+  }
+});
+
+test('conferma per le agenzie: pratica, lingua del tour e note in vista; il referente (già compilato) è una riga con «Modifica» che si apre se serve; i privati vedono il modulo di sempre', async () => {
+  const s = await start();
+  try {
+    const f = await s.login('giulia@lagoon.example');
+    const date = day(12);
+    const url = `/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${date}&time=10:00&pax=2`;
+    const page = nb(await (await f(`${url}&cr=${encodeURIComponent('Gruppo "Rossi" 14')}`)).text());
+    // in vista, in quest'ordine: riferimento pratica (precompilato dal link «cr»), lingua del tour, note; poi il pagamento
+    assert.match(page, /<h2>Dati della pratica<\/h2>/);
+    assert.match(page, /name="clientRef" maxlength="120" value="Gruppo &quot;Rossi&quot; 14"/, 'il riferimento arriva dal link, senza poter rompere la pagina');
+    const at = (needle) => page.indexOf(needle);
+    assert.ok(at('name="clientRef"') < at('name="tourLang"') && at('name="tourLang"') < at('name="notes"') && at('name="notes"') < at('<h2>Pagamento</h2>'));
+    assert.doesNotMatch(page, /La lingua in cui si svolge il tour\./, 'ai privati serve il suggerimento, alle agenzie no');
+    // il referente è già compilato: una riga chiusa (nome, email, telefono, lingua della conferma) con «Modifica»; i campi restano nel modulo e partono con esso
+    assert.match(page, /<details class="ref-box" >\s*<summary><span class="ref-line"><strong>Referente per questo servizio<\/strong> · Giulia Bianchi · giulia@lagoon\.example · [^<]*conferma in Italiano<\/span> <span class="ref-change">Modifica<\/span><\/summary>/);
+    const box = page.match(/<details class="ref-box"[^]*?<\/details>/)[0];
+    for (const field of ['name="name"', 'name="email"', 'name="phone"', 'name="lang"']) assert.ok(box.includes(field), `${field} dentro «Referente»`);
+    assert.ok(at('name="notes"') < at('<details class="ref-box"') && at('<details class="ref-box"') < at('<h2>Pagamento</h2>'));
+    // il consenso resta, e i pulsanti di prima
+    assert.match(page, /name="consent" value="1" required/);
+    assert.match(page, /id="checkout-submit"/);
+    assert.match(page, /id="package-add"/);
+    // senza «cr» il riferimento è vuoto; un riferimento lunghissimo si taglia
+    assert.match(nb(await (await f(url)).text()), /name="clientRef" maxlength="120" value=""/);
+    assert.match(nb(await (await f(`${url}&cr=${'x'.repeat(500)}`)).text()), new RegExp(`name="clientRef" maxlength="120" value="x{120}"`));
+
+    // se la richiesta torna con un errore (qui: manca il telefono valido) il referente si apre da solo, con quello che era stato scritto
+    const co = { tour: 'cannaregio-ghetto-agenzie', date, time: '10:00', pax: '2', name: 'Giulia Bianchi', email: 'giulia@lagoon.example', phone: '12', phone_cc: 'IT', lang: 'it', tourLang: 'it', paymentMethod: 'card', consent: '1', clientRef: 'Gruppo Rossi 14' };
+    const bad = await f('/it/book/checkout', post(co));
+    assert.equal(bad.status, 400);
+    const badHtml = nb(await bad.text());
+    assert.match(badHtml, /<details class="ref-box" open>/, 'con un errore il referente è aperto');
+    assert.match(badHtml, /name="clientRef" maxlength="120" value="Gruppo Rossi 14"/);
+    // un privato: modulo completo con il referente in chiaro, senza riga «Modifica» né riferimento pratica; il link «cr» non fa nulla
+    const pub = nb(await (await s.anon(`${url.replace('-agenzie', '')}&cr=Gruppo`)).text());
+    assert.match(pub, /<h2>I tuoi dati<\/h2>/);
+    assert.match(pub, /<input name="name" required maxlength="120" autocomplete="name" value="">/);
+    assert.doesNotMatch(pub, /ref-box|name="clientRef"|Dati della pratica/);
+    assert.match(pub, /La lingua in cui si svolge il tour\./);
+  } finally {
+    s.close();
+  }
+});
+
+test('«Prenota di nuovo»: dalla scheda e dall’elenco porta alla pagina di prenotazione con servizio, persone, durata e riferimento già scelti, e il riferimento arriva fino alla conferma; la scheda ha le azioni in cima', async () => {
+  const s = await start();
+  try {
+    const { app, lagoon } = s;
+    const mia = book(app, lagoon, { ref: 'Gruppo Rossi 14', pax: 6, date: day(15) });
+    const ore = book(app, lagoon, { tour: 'guida-a-ore', pax: 3, hours: 4, ref: 'Gita "scolastica"', date: day(16), time: '09:00' });
+    const opzione = book(app, lagoon, { ref: 'Preventivo', date: day(40), kind: 'option' });
+    const annullata = book(app, lagoon, { ref: 'Gruppo Verdi', date: day(20), time: '15:00' });
+    cancelBooking(app, annullata.id, { by: 'customer' });
+    const f = await s.login('giulia@lagoon.example');
+
+    // la scheda: voucher, calendario e «Prenota di nuovo» subito sotto il codice, prima del riepilogo; i riquadri lunghi restano chiusi
+    const page = nb(await (await f(`/it/b2b/bookings/${mia.ref}`)).text());
+    const top = page.match(/<p class="btn-row top-actions">[^]*?<\/p>/)[0];
+    assert.match(top, /class="btn btn-gold" href="[^"]*voucher\.pdf[^"]*"[^>]*>Scarica il voucher \(PDF\)/);
+    assert.match(top, /Aggiungi al calendario/);
+    assert.match(top, /href="\/it\/book\?tour=cannaregio-ghetto-agenzie&amp;pax=6&amp;tl=it&amp;cr=Gruppo\+Rossi\+14">Prenota di nuovo<\/a>/);
+    assert.ok(page.indexOf('top-actions') < page.indexOf('class="summary-list"'), 'le azioni stanno sopra il riepilogo');
+    assert.equal((page.match(/voucher\.pdf/g) ?? []).length, 1 + 4, 'il voucher compare una volta come pulsante (più le quattro lingue)');
+    assert.doesNotMatch(page, /<details class="card fold"[^>]* open/, 'preventivo e nominativo restano chiusi');
+    // il cliente privato (link con il codice) ha la scheda di sempre: pulsanti dopo il riepilogo, niente «Prenota di nuovo»
+    const asCustomer = nb(await (await s.anon(`/it/booking/${mia.ref}?t=${mia.token}`)).text());
+    assert.doesNotMatch(asCustomer, /top-actions|Prenota di nuovo/);
+    assert.ok(asCustomer.indexOf('class="summary-list"') < asCustomer.indexOf('Aggiungi al calendario'));
+    // un'opzione non ha «Prenota di nuovo» (ha Conferma e Rilascia); una prenotazione annullata sì, in fondo
+    assert.doesNotMatch(nb(await (await f(`/it/b2b/bookings/${opzione.ref}`)).text()), /Prenota di nuovo/);
+    assert.match(nb(await (await f(`/it/b2b/bookings/${annullata.ref}`)).text()), /<p class="btn-row"><a class="btn btn-outline" href="\/it\/book\?tour=cannaregio-ghetto-agenzie&amp;pax=2&amp;tl=it&amp;cr=Gruppo\+Verdi">Prenota di nuovo<\/a><\/p>/);
+    // un tour condiviso porta anche la lingua della partenza; un servizio a durata libera, le ore
+    assert.match(nb(await (await f(`/it/b2b/bookings/${ore.ref}`)).text()), /href="\/it\/book\?tour=guida-a-ore-agenzie&amp;pax=3&amp;hours=4&amp;cr=Gita\+%22scolastica%22">Prenota di nuovo/);
+
+    // l'elenco: stesso collegamento sulle righe confermate e annullate, non sulle opzioni
+    const list = nb(await (await f('/it/b2b/bookings?view=all')).text());
+    const rows = list.split('<tr class="pb-').slice(1);
+    const rowOf = (b) => rows.find((r) => r.includes(`/it/b2b/bookings/${b.ref}"`));
+    assert.match(rowOf(mia), /<a class="btn-text" href="\/it\/book\?tour=cannaregio-ghetto-agenzie&amp;pax=6&amp;tl=it&amp;cr=Gruppo\+Rossi\+14">Prenota di nuovo<\/a>/);
+    assert.match(rowOf(annullata), /Prenota di nuovo/);
+    assert.doesNotMatch(rowOf(opzione), /Prenota di nuovo/);
+
+    // il collegamento apre la pagina con servizio, persone e durata già scelti e il riferimento che resta nei collegamenti agli orari e al calendario
+    const rebook = nb(await (await f(`/it/book?tour=guida-a-ore-agenzie&pax=3&hours=4&cr=${encodeURIComponent('Gita "scolastica"')}`)).text());
+    assert.match(rebook, /<option value="guida-a-ore-agenzie" selected>/);
+    assert.match(rebook, /<option value="3" selected>/);
+    assert.match(rebook, /<option value="4" selected>/);
+    assert.match(rebook, /<input type="hidden" name="cr" value="Gita &quot;scolastica&quot;">/, 'il riferimento resta nel modulo: cambiare servizio o data non lo perde');
+    const slot = rebook.match(/class="slot" href="([^"]+)"/)[1].replace(/&amp;/g, '&');
+    assert.match(slot, /&hours=4&cr=Gita%20%22scolastica%22$/);
+    assert.match(rebook, /<a class="acal-cell is-free[^"]*" href="[^"]*&amp;cr=Gita\+%22scolastica%22/, 'anche i giorni del calendario');
+    // fino al pagamento: il riferimento è già scritto
+    assert.match(nb(await (await f(slot)).text()), /name="clientRef" maxlength="120" value="Gita &quot;scolastica&quot;"/);
   } finally {
     s.close();
   }

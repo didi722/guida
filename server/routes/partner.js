@@ -107,7 +107,7 @@ export function partnerRouter(app) {
   r.post('/b2b/bookings/:ref/edit', needPartner, form, async (req, res, next) => {
     const b = own(req);
     if (!b) return next();
-    const back = (flash) => res.redirect(303, `/${req.lang}/b2b/bookings/${b.ref}?flash=${flash}#edit`);
+    const back = (flash) => res.redirect(303, `/${req.lang}/b2b/bookings/${b.ref}?flash=${flash}${flash === 'edited' ? '' : '#edit'}`); // salvato: si resta in cima, dove c'è la conferma; con un errore si va al modulo (aperto)
     if (!isEditable(b)) return back('edit-locked'); // a servizio iniziato (o prenotazione chiusa) non si cambia più nulla
     const phone = optionalPhone(req.body);
     if (phone.error) return back('edit-phone');

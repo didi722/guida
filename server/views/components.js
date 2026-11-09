@@ -4,7 +4,7 @@ import { freeCancelHours, unitPriceFor } from '../bookings.js';
 import { fmtDate, fmtMonth } from '../time.js';
 import { formatMoney } from '../util.js';
 import { LANGS, LANG_META, localeOf } from '../langs.js';
-import { minHours, openTo } from '../rates.js';
+import { minHours, openTo, parseServiceRecord } from '../rates.js';
 import { invitePercentFor } from '../invites.js';
 import { MEDIA_NAME, smallName } from '../media.js';
 import { actorOf } from '../team.js';
@@ -120,20 +120,18 @@ export function testimonials(ctx, quotes, { stats = null, readUrl = '' } = {}) {
   </div>`;
 }
 
-/** «Prossime partenze»: i primi orari prenotabili dei tour a partenza fissa; un tocco porta al pagamento. */
-export function departuresList(ctx, departures, { pax = 2 } = {}) {
-  const { t, lang, u } = ctx;
-  if (!departures.length) return '';
-  return html`<ul class="dep-list">${departures.map((d) => {
-    const { money, per } = priceParts(ctx, d.tour);
-    const n = Math.max(1, Math.min(pax, d.left));
-    const note = d.left <= 3 ? (d.left === 1 ? t('departures.left1') : t('departures.left', { n: d.left })) : d.joined ? t('book.confirmedDeparture') : fmtDuration(d.tour.durationMin, lang);
-    return html`<li><a class="dep" href="${u('/book/checkout')}?tour=${encodeURIComponent(d.tour.slug)}&date=${d.date}&time=${d.time}&pax=${n}">
-      <span class="dep-when"><strong>${fmtDate(d.date, lang, 'weekday')}</strong><span class="dep-time">${d.time}</span></span>
-      <span class="dep-what"><strong>${d.tour.i18n[lang].title}</strong><small class="${d.left <= 3 ? 'dep-few' : ''}">${note}${d.lang ? ` · ${t('w.inLang', { lang: LANG_META[d.lang]?.name ?? d.lang })}` : ''}</small></span>
-      <span class="dep-price"><strong>${money}</strong><small>/ ${per}</small></span>
-    </a></li>`;
-  })}</ul>`;
+/**
+ * «Prenota di nuovo»: la pagina di prenotazione con servizio, persone, durata e lingua di questa pratica già scelti
+ * e il suo riferimento pratica, che arriva fino alla conferma (così un gruppo che torna si prenota in due tocchi).
+ */
+export function rebookHref(ctx, b) {
+  const tour = ctx.app.content.tour(b.tour_slug);
+  const service = parseServiceRecord(b.service_json);
+  const q = new URLSearchParams({ tour: b.tour_slug, pax: String(b.participants) });
+  if (tour?.chooseHours && service?.hours) q.set('hours', String(service.hours));
+  if (tour?.model === 'person' && b.tour_lang) q.set('tl', b.tour_lang);
+  if (b.client_ref) q.set('cr', b.client_ref);
+  return `${ctx.u('/book')}?${q}`;
 }
 
 export function tourCard(ctx, tour) {

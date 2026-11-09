@@ -11,7 +11,6 @@
   var T = cfg.t;
   var KEY = 'guida.tour';
   var P = location.pathname;
-  var Q = new URLSearchParams(location.search);
   var nodes = null; // { spot, tip }
   var current = null; // { target }
   var undo = []; // gli ascoltatori del passo in corso
@@ -26,11 +25,11 @@
   function mk(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
 
   var CHECKOUT = /\/book\/checkout\/?$/;
-  // mode: click (si clicca il punto), submit (si invia il modulo), interact (si prova, poi «Avanti»), info (si legge, poi «Avanti»; il punto non si clicca)
+  // mode: click (si clicca il punto), interact (si prova, poi «Avanti»), info (si legge, poi «Avanti»; il punto non si clicca)
   var STOPS = [
     { step: 1, text: 's1', path: /\/b2b\/account\/?$/, target: '[data-tour="new"]', mode: 'click', go: cfg.urls.book, resume: [0, cfg.urls.home] },
-    { step: 2, text: 's2', path: /\/book\/?$/, target: '.search-card', mode: 'submit', soft: true, auto: function () { return Q.has('date'); }, resume: [1, cfg.urls.book] },
-    { step: 2, text: 's3', path: /\/book\/?$/, target: '.slot-list .slot', mode: 'click', missing: 's3m', missingTarget: '.search-card', prereq: function () { return Q.has('date'); }, back: 1, resume: [1, cfg.urls.book] },
+    { step: 2, text: 's2', path: /\/book\/?$/, target: '.avail-form', mode: 'interact', soft: true, resume: [1, cfg.urls.book] },
+    { step: 2, text: 's3', path: /\/book\/?$/, target: '.slot-list .slot', mode: 'click', missing: 's3m', missingTarget: '.acal', resume: [1, cfg.urls.book] },
     { step: 2, text: 's4', path: CHECKOUT, target: '#co-party', mode: 'interact', soft: true, resume: [1, cfg.urls.book] },
     { step: 3, text: 's5', path: CHECKOUT, target: '#option-submit', mode: 'info', skip: true, resume: [1, cfg.urls.book] },
     { step: 4, text: 's6', path: CHECKOUT, target: '#package-add', mode: 'info', skip: true, resume: [1, cfg.urls.book] },
@@ -180,8 +179,6 @@
     var stop = STOPS[s.i];
     if (!stop) { finish(); return; }
     if (!stop.path.test(P)) { showResume(s, stop); return; }
-    if (stop.prereq && !stop.prereq()) { s.i = stop.back; save(s); run(); return; }
-    if (stop.auto && stop.auto()) { s.i += 1; save(s); run(); return; }
     var target = find(stop.target);
     var text = T.stops[stop.text];
     var goOn = function () { if (stop.last) finish(); else advance(); };
@@ -195,9 +192,6 @@
     if (stop.mode === 'click') {
       show(stop, target, text, stop.go ? { hint: true, skipLabel: T.skipStop, onSkip: function () { s.i += 1; save(s); location.href = stop.go; } } : { hint: true });
       on(document, 'click', function (e) { if (target.contains(e.target)) advanceAfter(); }, true);
-    } else if (stop.mode === 'submit') {
-      show(stop, target, text, {});
-      on(target, 'submit', advanceAfter);
     } else if (stop.mode === 'interact') {
       show(stop, target, text, { next: T.next, onNext: advance });
       on(target, 'change', advanceAfter);

@@ -1,5 +1,5 @@
 import express from 'express';
-import { loadAvailabilityContext, nextAvailableDates, nextDepartures, slotsForDay } from '../availability.js';
+import { loadAvailabilityContext, nextAvailableDates, slotsForDay } from '../availability.js';
 import { BookingError, activeOptionCount, cancellationState, getBookingByRef, slotStillOpen } from '../bookings.js';
 import { maxActiveOptions, optionWindow } from '../optionPolicy.js';
 import { onlinePaymentsOpen } from '../opening.js';
@@ -24,7 +24,7 @@ import { readSignup } from '../signup.js';
 import { optionalPhone } from '../countries.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
 import { hourlyPage } from '../views/hourly.js';
-import { extraHourOptions, hourOptions, minHours, openTo } from '../rates.js';
+import { extraHourOptions, hourOptions, openTo } from '../rates.js';
 import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postPage, staticPage, toursPage, tourPage } from '../views/site.js';
 import { LANGS, LANG_META, normLang, pick } from '../langs.js';
 import { featuredQuotes, feedbackStats } from '../reviews.js';
@@ -112,55 +112,26 @@ export function publicRouter(app) {
   });
 
   // ───── prenota: prima la data ─────
-  /**
-   * Spunte della ricerca per le agenzie: «tour privati» (guida a ore, itinerari privati) e «tour condivisi» (partenze a persona).
-   * Se non si è scelto nulla, solo i privati; se si invia il modulo senza nessuna spunta, tutto.
-   */
-  const readKinds = (q, channel) => {
-    if (channel !== 'b2b') return { private: true, shared: true, shown: false };
-    return { private: true, shared: true, shown: false }; // le agenzie vedono tutto: tour privati, condivisi e servizi a ore
-  };
-  const isShared = (x) => x.model === 'person';
-  const isPrivateTour = (x) => x.model === 'group' && (x.pricing !== 'hourly' || x.service === 'guide'); // assistente, tour leader e meet & greet sono servizi, non tour
-  /** I tour che compaiono nella ricerca: i privati e/o i condivisi per le agenzie; per i privati cittadini i tour a prezzo fisso. */
-  const searchable = (channel, kinds) => (channel === 'b2b' ? visible(channel) : selectable(channel));
-  /** Ore con cui si cerca la disponibilità di un servizio a ore: la durata fissa del tour; se la sceglie il cliente, quella chiesta (se è valida) o il minimo del servizio. */
-  const searchHours = (tour, asked = null) => (tour.chooseHours ? (hourOptions(tour.service).includes(asked) ? asked : minHours(tour.service)) : tour.durationMin / 60);
-
-  r.get('/book', (req, res) => {
+  // Le agenzie prenotano dalla loro pagina (routes/availability.js: servizio, persone e giorno con gli orari subito sotto); questa è per i privati con un vecchio link con la data.
+  r.get('/book', (req, res, next) => {
     const ctx = res.locals.ctx;
     const channel = channelOf(req.acct);
+    if (channel === 'b2b') return next();
     const asked = content.tour(String(req.query.tour ?? ''));
-    // standard di prenotazione per i privati: si sceglie il tour e da lì calendario, persone, orari e prezzo (la ricerca per data resta per le agenzie)
-    if (channel !== 'b2b' && !isDate(req.query.date)) return res.redirect(302, asked?.active && openTo(app.rates.get(), asked, channel) ? `/${req.lang}/tours/${asked.slug}` : `/${req.lang}/tours`);
-    if (asked?.pricing === 'hourly' && channel !== 'b2b') return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
-    const kinds = readKinds(req.query, channel);
+    // standard di prenotazione per i privati: si sceglie il tour e da lì calendario, persone, orari e prezzo
+    if (!isDate(req.query.date)) return res.redirect(302, asked?.active && openTo(app.rates.get(), asked, channel) ? `/${req.lang}/tours/${asked.slug}` : `/${req.lang}/tours`);
+    if (asked?.pricing === 'hourly') return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
+    const date = req.query.date;
     const pax = clampInt(req.query.pax, 1, 25, 2);
-    const askedHours = Number(req.query.hours) > 0 ? Number(req.query.hours) : null; // la durata, per i servizi che la sceglie il cliente
-    const list0 = searchable(channel, kinds);
-    const tourSlug = asked?.active && (channel === 'b2b' ? visible(channel).includes(asked) : list0.includes(asked)) ? asked.slug : '';
+    const tours = selectable(channel);
+    const tourSlug = asked?.active && tours.includes(asked) ? asked.slug : '';
+    const nowMs = Date.now();
+    const list = tourSlug ? [asked] : tours;
+    const actx = loadAvailabilityContext(db, cfg, date, date, nowMs);
+    const results = list.map((tour) => ({ tour, slots: slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs }) })).filter((x) => x.slots.length);
     const minDate = minBookableDate(app, channel);
-    const date = isDate(req.query.date) ? req.query.date : null;
-    let results = [];
-    let suggestions = [];
-    if (date) {
-      const nowMs = Date.now();
-      const list = tourSlug ? [content.tour(tourSlug)] : list0;
-      const actx = loadAvailabilityContext(db, cfg, date, date, nowMs);
-      results = list
-        .map((tour) => {
-          if (tour.pricing !== 'hourly') return { tour, slots: slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs }) };
-          // servizio a ore: orari liberi per la durata chiesta (o per il minimo, col prezzo «da» se non si è scelto il servizio)
-          const hours = searchHours(tour, askedHours);
-          const quote = hourlyQuote(app, tour, { pax, channel, account: req.acct, date, time: null, hours });
-          return { tour, hours, quote, chosen: tour.chooseHours && !!tourSlug, slots: quote.ok ? slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs, durationMin: Math.round(hours * 60) }) : [] };
-        })
-        .filter((x) => x.slots.length);
-      if (!results.length) suggestions = nextAvailableDates(db, cfg, list, date < minDate ? minDate : date, { pax, channel, nowMs });
-    }
-    // senza una data in mente: le prossime partenze, prenotabili con un tocco
-    const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : list0.filter(isShared), nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
-    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, kinds, hours: askedHours, tours: channel === 'b2b' ? visible(channel) : selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
+    const suggestions = results.length ? [] : nextAvailableDates(db, cfg, list, date < minDate ? minDate : date, { pax, channel, nowMs });
+    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, tours, hourly: hourlyProducts(channel).length > 0 }));
   });
 
   // ───── servizi a ore: preventivo e orari liberi ─────
@@ -208,7 +179,7 @@ export function publicRouter(app) {
     const slot = openSlot(p, channel);
     if (!slot) return send(res, slotGonePage(ctx, p), 409);
     // link promozionali: /book/checkout?...&promo=CODICE (o &gift=CODICE)
-    const values = { promo: cleanText(req.query.promo, 40), gift: cleanText(req.query.gift, 120), tourLang: p.tour.languages.includes(String(req.query.tl)) ? String(req.query.tl) : '' };
+    const values = { promo: cleanText(req.query.promo, 40), gift: cleanText(req.query.gift, 120), tourLang: p.tour.languages.includes(String(req.query.tl)) ? String(req.query.tl) : '', clientRef: channel === 'b2b' ? cleanText(req.query.cr, 120) : '' }; // «cr»: il riferimento pratica, per «Prenota di nuovo»
     if ((values.promo || values.gift) && !app.limits.codes(ip(req))) return tooMany(res);
     send(res, checkoutPage(ctx, { ...p, slot, channel, values, pricing: pricingFor(req, p, values, channel), option: optionPreview(req, p, channel) }));
   });

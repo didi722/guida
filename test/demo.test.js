@@ -223,7 +223,7 @@ test('l’area agenzie della demo funziona: prenotazioni, fatture (anche il PDF)
     const pdf = await get(`/it/b2b/invoices/${first}/pdf`);
     assert.equal(pdf.headers.get('content-type'), 'application/pdf');
     assert.equal(Buffer.from(await pdf.arrayBuffer()).subarray(0, 4).toString(), '%PDF');
-    for (const p of ['/it/b2b/rates', '/it/b2b/quotes', '/it/b2b/package', '/it/b2b/statement', '/it/b2b/team', '/it/b2b/billing', '/it/b2b/documents', '/it/b2b/help', '/it/b2b/availability']) await get(p);
+    for (const p of ['/it/b2b/rates', '/it/b2b/quotes', '/it/b2b/package', '/it/b2b/statement', '/it/b2b/team', '/it/b2b/billing', '/it/b2b/documents', '/it/b2b/help', '/it/book']) await get(p);
     const team = await (await get('/it/b2b/team')).text();
     assert.match(team, /Marco Verdi/);
     const program = inst.app.db.prepare('SELECT ref, token FROM programs').get();

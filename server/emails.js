@@ -1845,8 +1845,8 @@ export async function sendWaitlistFree(app, e, slots, { advantageUntilMs = null 
   // chi è avvisata per prima ha un vantaggio: poi la data viene segnalata anche alle altre agenzie in lista (ma non è bloccata per nessuno)
   const note = advantageUntilMs ? `${t('wl.mail.advantage', { when: fmtInstant(advantageUntilMs, lang) })} ${t('wl.mail.note')}` : t('wl.mail.note');
   const cta = t('wl.mail.cta');
-  const link = `${app.cfg.baseUrl}/${lang}/book?date=${e.date}&pax=${e.pax}&tour=${encodeURIComponent(e.tour_slug)}`;
-  const manage = `${app.cfg.baseUrl}/${lang}/b2b/availability#lista`;
+  const link = `${app.cfg.baseUrl}/${lang}/book?d=${e.date}&pax=${e.pax}&tour=${encodeURIComponent(e.tour_slug)}${e.hours != null && app.content.tour(e.tour_slug)?.chooseHours ? `&hours=${e.hours}` : ''}#giorno`;
+  const manage = `${app.cfg.baseUrl}/${lang}/book#lista`;
   return app.mail.send({
     to: e.acct_email,
     subject: t('wl.mail.subject', { tour: title, date: fmtDate(e.date, lang, 'short') }),
