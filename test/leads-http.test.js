@@ -494,6 +494,74 @@ test('presentazione a più agenzie: si rivede chi la riceve e in che lingua, poi
   }
 });
 
+test('sollecito a più agenzie: stessa rivista della presentazione, con l’ultima email di ognuna; va in coda come sollecito che parte solo se l’agenzia non ha risposto', async () => {
+  const s = await start();
+  try {
+    const { db } = s.app;
+    const sent = (lead, template, at) => db.prepare("INSERT INTO lead_emails(lead_id, to_email, template, lang, subject, body, send_after, status, sent_at, created_at) VALUES(?, 'x@x.it', ?, 'it', 'Oggetto', 'Testo', ?, 'sent', ?, ?)").run(lead.id, template, at, at, at);
+    const a = L.insertLead(db, L.cleanLead({ company: 'Agenzia Presentata', email: 'info@presentata.it', status: 'contacted' }).value);
+    const b = L.insertLead(db, L.cleanLead({ company: 'Mai Scritta', country: 'JP', email: 'info@maiscritta.jp' }).value, { contact: L.cleanContact({ name: 'Taro Yamada', email: 'taro@maiscritta.jp' }).value });
+    const already = L.insertLead(db, L.cleanLead({ company: 'Già Sollecitata', email: 'info@gia.it', status: 'contacted' }).value);
+    const queuedAlready = L.insertLead(db, L.cleanLead({ company: 'Sollecito In Coda', email: 'info@incoda.it', status: 'contacted' }).value);
+    const lost = L.insertLead(db, L.cleanLead({ company: 'Non Interessata', email: 'info@no.it', status: 'lost' }).value);
+    const talking = L.insertLead(db, L.cleanLead({ company: 'Ha Risposto', email: 'info@risposto.it', status: 'talking' }).value);
+    const noMail = L.insertLead(db, L.cleanLead({ company: 'Senza email' }).value);
+    const blocked = L.insertLead(db, L.cleanLead({ company: 'Non scrivere', email: 'no@x.it' }).value);
+    L.optOut(db, blocked.id);
+    sent(a, 'presentation', '2026-10-20T08:00:00.000Z');
+    sent(already, 'presentation', '2026-10-01T08:00:00.000Z');
+    sent(already, 'followup', '2026-10-09T08:00:00.000Z');
+    db.prepare("INSERT INTO lead_emails(lead_id, to_email, template, lang, subject, body, send_after, status, created_at) VALUES(?, 'info@incoda.it', 'followup', 'it', 'Oggetto', 'Testo', '2099-01-01T00:00:00.000Z', 'queued', '2026-11-01T08:00:00.000Z')").run(queuedAlready.id);
+
+    // dall'elenco: il pulsante accanto alla presentazione
+    const list = await text(await s.admin('/admin/leads?status='));
+    assert.match(list, /<button class="btn btn-sm btn-gold" type="submit" name="action" value="presentation">Scrivi la presentazione ai selezionati<\/button>\s*<button class="btn btn-sm btn-outline" type="submit" name="action" value="followup">Scrivi il sollecito ai selezionati<\/button>/);
+
+    const ids = [a, b, already, queuedAlready, lost, talking, noMail, blocked].map((l) => ['ids', l.id]);
+    const review = await s.admin('/admin/leads/bulk', formPairs([...ids, ['action', 'followup'], ['return', '?status=contacted']]));
+    assert.equal(review.status, 200);
+    const page = await text(review);
+    assert.match(page, /<h2>Sollecito a 8 agenzie<\/h2>/);
+    assert.match(page, /modello «Sollecito»/);
+    assert.match(page, /Un sollecito parte solo se nel frattempo l’agenzia non ha risposto/);
+    assert.match(page, /<input type="hidden" name="template" value="followup">/);
+    assert.doesNotMatch(page, /name="followup"/, 'dopo un sollecito non ce n’è un altro automatico');
+    assert.match(page, /Sollecito già in coda/);
+    assert.match(page, /È «non interessata»/);
+    assert.match(page, /Ha già risposto: è «In dialogo»/, 'chi è già in trattativa non si sollecita: il sollecito sarebbe saltato comunque');
+    assert.match(page, /Nessun indirizzo/);
+    assert.match(page, /Non vuole email/);
+    assert.match(page, /Metti in coda 3 email/, 'la presentata, quella mai scritta e quella già sollecitata');
+    assert.match(page, /Presentazione il 20 ott 2026/, 'l’ultima email partita');
+    assert.match(page, /nessuna email inviata finora/);
+    assert.match(page, /sollecito già inviato il 9 ott 2026/, 'si vede se è già stata sollecitata');
+    assert.match(page, new RegExp(`name="lang_${b.id}"[\\s\\S]*?<option value="ja" selected>`), 'il giapponese per chi lo parla');
+    // la presentazione resta com'era
+    const pres = await text(await s.admin('/admin/leads/bulk', formPairs([['ids', a.id], ['action', 'presentation']])));
+    assert.match(pres, /<h2>Presentazione a 1 agenzia<\/h2>/);
+    assert.match(pres, /name="followup" value="1"/);
+    assert.doesNotMatch(pres, /Sollecito già in coda/);
+
+    // in coda: sollecito, solo se non risponde, senza un altro sollecito dopo
+    const queued = await s.admin('/admin/leads/bulk/queue', formPairs([['ids', a.id], ['ids', b.id], ['ids', already.id], ['ids', queuedAlready.id], ['ids', noMail.id], ['template', 'followup'], [`lang_${a.id}`, 'en'], [`lang_${b.id}`, 'ja'], ['followup', '1'], ['followupDays', '9']]));
+    assert.equal(loc(queued), '/admin/leads/mail?ok=queuedMany&n=3&skip=2&tpl=followup');
+    const rows = queueRows(s).filter((r) => r.id > 0 && r.template === 'followup' && r.to_email !== 'info@incoda.it');
+    assert.deepEqual(rows.map((r) => [r.to_email, r.lang, r.template, r.only_if_quiet, r.followup_days]), [['info@presentata.it', 'en', 'followup', 1, null], ['taro@maiscritta.jp', 'ja', 'followup', 1, null], ['info@gia.it', 'it', 'followup', 1, null]]);
+    assert.match(rows[0].subject, /Agenzia Presentata/);
+    assert.match(rows[1].body, /Taro Yamada 様/);
+    assert.match(await text(await s.admin(loc(queued))), /3 solleciti messi in coda \(2 saltati\): partono da soli, poche al giorno, e solo se nel frattempo l’agenzia non ha risposto\./);
+    assert.match(await text(await s.admin('/admin/leads/mail')), /Sollecito/);
+    // una presentazione in coda non impedisce un sollecito, e viceversa (sono due cose diverse)
+    const mixed = await s.admin('/admin/leads/bulk/queue', formPairs([['ids', a.id], [`lang_${a.id}`, 'it']]));
+    assert.equal(loc(mixed), '/admin/leads/mail?ok=queuedMany&n=1&skip=0', 'senza «template» è la presentazione, come sempre');
+    assert.deepEqual(queueRows(s).filter((r) => r.lead_id === a.id).map((r) => r.template).sort(), ['followup', 'presentation']);
+    // senza nessuna agenzia scelta: si torna all'elenco con un avviso
+    assert.match(loc(await s.admin('/admin/leads/bulk', formPairs([['action', 'followup']]))), /err=none/);
+  } finally {
+    s.close();
+  }
+});
+
 test('modelli: si modificano e si ripristinano, un segnaposto sbagliato è rifiutato (e ciò che si scriveva resta), la prova arriva a te', async () => {
   const s = await start();
   try {

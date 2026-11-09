@@ -49,31 +49,38 @@ export function composePage(ctx, { lead, recipients, pick, template, lang, compo
   return adminLayout(ctx, { title: 'Scrivi', active: '/admin/leads', body, flash, error });
 }
 
-// ───────────── la presentazione a più agenzie ─────────────
+// ───────────── la presentazione (o il sollecito) a più agenzie ─────────────
 /**
- * @param {object} o items ({lead, to, lang, problem, contactId}), settings, perDay
+ * @param {object} o items ({lead, to, lang, problem, contactId, last, followedUp}), settings, template ('presentation' | 'followup')
  */
-export function bulkReviewPage(ctx, { items, settings, ret = '', error = '' }) {
+export function bulkReviewPage(ctx, { items, settings, ret = '', error = '', template = 'presentation' }) {
+  const followup = template === 'followup';
   const ready = items.filter((i) => !i.problem).length;
   const days = Math.max(1, Math.ceil(ready / settings.dailyCap));
+  // l'ultima email partita: aiuta a capire se un sollecito ha senso (mai scritto prima? già sollecitata?)
+  const lastLine = (i) => (i.last ? html`<small class="muted">${TEMPLATE_LABEL[i.last.template] ?? i.last.template} il ${day(i.last.sent_at.slice(0, 10))}</small>` : html`<small class="muted">nessuna email inviata finora</small>`);
+  const note = (i) => (i.followedUp ? html`<br><small class="field-error">sollecito già inviato il ${day(i.followedUp.slice(0, 10))}</small>` : '');
   const body = html`
 <p class="back-link"><a href="/admin/leads${ret}">← Torna all’elenco</a></p>
 <form class="card pad form" method="post" action="/admin/leads/bulk/queue">
-  <input type="hidden" name="return" value="${ret}">
-  <h2>Presentazione a ${plural(items.length, 'agenzia', 'agenzie')}</h2>
-  <p class="muted">Controlla chi la riceve e in che lingua: ogni email usa il <a href="/admin/leads/templates">modello «Presentazione»</a> con il nome dell’agenzia e del referente. Vengono messe <strong>in coda</strong> e partono da sole, nei giorni lavorativi dalle ${settings.fromHour} alle ${settings.toHour}, al massimo ${settings.dailyCap} al giorno (con una pausa di ${settings.minGapMin} minuti): ${ready ? `${plural(ready, 'email', 'email')} in circa ${plural(days, 'giorno', 'giorni')}` : 'nessuna da inviare'}. Puoi annullarle una per una da <a href="/admin/leads/mail">Email</a>.</p>
-  <div class="card table-wrap"><table class="table"><thead><tr><th aria-label="Includi"></th><th>Agenzia</th><th>Scrivo a</th><th>Lingua</th></tr></thead><tbody>
+  <input type="hidden" name="return" value="${ret}"><input type="hidden" name="template" value="${template}">
+  <h2>${followup ? 'Sollecito' : 'Presentazione'} a ${plural(items.length, 'agenzia', 'agenzie')}</h2>
+  <p class="muted">Controlla chi ${followup ? 'lo' : 'la'} riceve e in che lingua: ogni email usa il <a href="/admin/leads/templates">modello «${TEMPLATE_LABEL[template]}»</a> con il nome dell’agenzia e del referente. Vengono messe <strong>in coda</strong> e partono da sole, nei giorni lavorativi dalle ${settings.fromHour} alle ${settings.toHour}, al massimo ${settings.dailyCap} al giorno (con una pausa di ${settings.minGapMin} minuti): ${ready ? `${plural(ready, 'email', 'email')} in circa ${plural(days, 'giorno', 'giorni')}` : 'nessuna da inviare'}. Puoi annullarle una per una da <a href="/admin/leads/mail">Email</a>.${followup ? ' Un sollecito parte solo se nel frattempo l’agenzia non ha risposto: se il contatto è andato avanti (in trattativa, cliente…) viene saltato da solo.' : ''}</p>
+  <div class="card table-wrap"><table class="table"><thead><tr><th aria-label="Includi"></th><th>Agenzia</th><th>Scrivo a</th><th>Ultima email</th><th>Lingua</th></tr></thead><tbody>
   ${items.map((i) => html`<tr class="${i.problem ? 'is-skip' : ''}">
     <td class="lead-check">${i.problem ? '' : html`<input type="checkbox" name="ids" value="${i.lead.id}" checked aria-label="Includi ${i.lead.company}">`}</td>
     <td><a href="/admin/leads/${i.lead.id}">${i.lead.company}</a><br>${statusChip(i.lead.status)}${i.lead.last_contact_on ? html` <small class="muted">ultimo contatto il ${day(i.lead.last_contact_on)}</small>` : ''}</td>
     <td>${i.problem ? html`<span class="field-error">${i.problem}</span>` : html`${i.to}${i.name ? html`<br><small class="muted">${i.name}</small>` : ''}`}</td>
+    <td>${i.problem ? '' : html`${lastLine(i)}${note(i)}`}</td>
     <td>${i.problem ? '' : html`<select name="lang_${i.lead.id}" aria-label="Lingua per ${i.lead.company}">${LANGS.map((l) => html`<option value="${l}" ${sel(i.lang === l)}>${LANG_META[l].name}</option>`)}</select>`}</td></tr>`)}
   </tbody></table></div>
-  <label class="check"><input type="checkbox" name="followup" value="1" ${settings.autoFollowUp ? raw('checked') : ''}> <span>Se non rispondono, manda un <strong>sollecito</strong> dopo <input type="number" name="followupDays" min="2" max="60" value="${settings.followUpDays}" class="lead-days"> giorni <em class="muted">(solo a chi non ha fatto nulla nel frattempo)</em></span></label>
+  ${followup
+    ? ''
+    : html`<label class="check"><input type="checkbox" name="followup" value="1" ${settings.autoFollowUp ? raw('checked') : ''}> <span>Se non rispondono, manda un <strong>sollecito</strong> dopo <input type="number" name="followupDays" min="2" max="60" value="${settings.followUpDays}" class="lead-days"> giorni <em class="muted">(solo a chi non ha fatto nulla nel frattempo)</em></span></label>`}
   <p class="small muted">${FOOT_NOTE}</p>
   <div class="btn-row"><button class="btn btn-gold" type="submit" ${ready ? '' : raw('disabled')}>Metti in coda ${ready ? plural(ready, 'email', 'email') : ''}</button><a class="btn btn-outline" href="/admin/leads${ret}">Annulla</a></div>
 </form>`;
-  return adminLayout(ctx, { title: 'Presentazione', active: '/admin/leads', body, error });
+  return adminLayout(ctx, { title: followup ? 'Sollecito' : 'Presentazione', active: '/admin/leads', body, error });
 }
 
 // ───────────── coda e storico ─────────────

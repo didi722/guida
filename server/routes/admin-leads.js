@@ -4,7 +4,7 @@ import express from 'express';
 import { optionalPhone } from '../countries.js';
 import { send } from '../http.js';
 import {
-  APPT_LABEL, KIND_LABEL, LeadError, MANUAL_ACTIVITIES, PRIORITY_LABEL, STATUSES, accountOf, accountStats, addAppointment, addContact, addRegistered, allowEmail, cancelAppointment, cleanContact, cleanLead, completeAppointment, countriesUsed,
+  APPT_LABEL, COLD_STATUSES, KIND_LABEL, LeadError, MANUAL_ACTIVITIES, PRIORITY_LABEL, STATUSES, STATUS_LABEL, accountOf, accountStats, addAppointment, addContact, addRegistered, allowEmail, cancelAppointment, cleanContact, cleanLead, completeAppointment, countriesUsed,
   deleteLead, dueLeads, duplicateIndex, getAppointment, getContact, getLead, importLeads, insertLead, leadAppointments, leadCounts, leadsCsv, listContacts, logActivity, optOut, overlapCount, parseImport, plannedAppointments, recipients,
   removeContact, searchLeads, setMainContact, setNextAction, setStatus, snooze, sourcesUsed, syncAccounts, timeline, toContact, unlinkedAccounts, updateAppointment, updateContact, updateLead,
 } from '../leads.js';
@@ -180,13 +180,16 @@ export function adminLeadsRouter(app) {
     const ret = retQs(req.body.return);
     if (!ids.length) return res.redirect(303, `/admin/leads${ret}${ret ? '&' : '?'}err=none`);
     const action = String(req.body.action ?? '');
-    if (action === 'presentation') {
+    if (action === 'presentation' || action === 'followup') {
+      // la presentazione o il sollecito a più agenzie: prima si rivede chi lo riceve e in che lingua, poi va in coda
       const items = ids.map((id) => getLead(db, id)).filter(Boolean).map((lead) => {
         const rec = recipients(db, lead)[0];
-        const problem = !lead.email_ok ? 'Non vuole email' : ['lost', 'client'].includes(lead.status) ? `È «${lead.status === 'lost' ? 'non interessata' : 'cliente'}»` : !rec ? 'Nessun indirizzo' : db.prepare("SELECT 1 FROM lead_emails WHERE lead_id = ? AND template = 'presentation' AND status = 'queued'").get(lead.id) ? 'Presentazione già in coda' : '';
-        return { lead, to: rec?.email, name: rec?.name, lang: rec?.lang ?? lead.lang, contactId: rec?.contactId ?? null, problem };
+        const problem = !lead.email_ok ? 'Non vuole email' : ['lost', 'client'].includes(lead.status) ? `È «${lead.status === 'lost' ? 'non interessata' : 'cliente'}»` : action === 'followup' && !COLD_STATUSES.includes(lead.status) ? `Ha già risposto: è «${STATUS_LABEL[lead.status]}»` : !rec ? 'Nessun indirizzo' : db.prepare("SELECT 1 FROM lead_emails WHERE lead_id = ? AND template = ? AND status = 'queued'").get(lead.id, action) ? `${action === 'followup' ? 'Sollecito' : 'Presentazione'} già in coda` : '';
+        const last = db.prepare("SELECT template, sent_at FROM lead_emails WHERE lead_id = ? AND status = 'sent' ORDER BY sent_at DESC, id DESC LIMIT 1").get(lead.id) ?? null; // l'ultima email partita, per capire se ha senso scrivere
+        const followedUp = action === 'followup' ? (db.prepare("SELECT MAX(sent_at) AS at FROM lead_emails WHERE lead_id = ? AND template = 'followup' AND status = 'sent'").get(lead.id).at ?? null) : null;
+        return { lead, to: rec?.email, name: rec?.name, lang: rec?.lang ?? lead.lang, contactId: rec?.contactId ?? null, problem, last, followedUp };
       });
-      return send(res, bulkReviewPage(ctxOf(req), { items, settings: sendSettings(db), ret }));
+      return send(res, bulkReviewPage(ctxOf(req), { items, settings: sendSettings(db), ret, template: action }));
     }
     let n = 0;
     if (action === 'set-status' && STATUSES.includes(req.body.status)) {
@@ -205,7 +208,8 @@ export function adminLeadsRouter(app) {
   });
   r.post('/leads/bulk/queue', form, (req, res) => {
     const ids = [...new Set([].concat(req.body.ids ?? []).map(Number).filter((n) => Number.isInteger(n) && n > 0))];
-    const days = req.body.followup === '1' ? int(req.body.followupDays) : null;
+    const template = req.body.template === 'followup' ? 'followup' : 'presentation';
+    const days = template === 'presentation' && req.body.followup === '1' ? int(req.body.followupDays) : null; // il sollecito automatico dopo la presentazione; dopo un sollecito non ce n'è un altro
     let queued = 0;
     let skipped = 0;
     for (const id of ids) {
@@ -217,15 +221,16 @@ export function adminLeadsRouter(app) {
       }
       const lang = String(req.body[`lang_${id}`] ?? rec.lang);
       try {
-        const c = composeEmail(app, { lead, contact: rec.contactId ? getContact(db, id, rec.contactId) : null, template: 'presentation', lang });
-        queueEmail(db, { leadId: id, contactId: rec.contactId, to: rec.email, template: 'presentation', lang: c.lang, subject: c.subject, body: c.body, followupDays: days });
+        const c = composeEmail(app, { lead, contact: rec.contactId ? getContact(db, id, rec.contactId) : null, template, lang });
+        // un sollecito parte solo se nel frattempo non è successo nulla (se l'agenzia ha risposto e il contatto è andato avanti, si salta da solo)
+        queueEmail(db, { leadId: id, contactId: rec.contactId, to: rec.email, template, lang: c.lang, subject: c.subject, body: c.body, followupDays: days, onlyIfQuiet: template === 'followup' });
         queued++;
       } catch (err) {
         if (!(err instanceof LeadError)) throw err;
         skipped++; // non vuole email, è già in coda, indirizzo non valido…
       }
     }
-    res.redirect(303, `/admin/leads/mail?ok=queuedMany&n=${queued}&skip=${skipped}`);
+    res.redirect(303, `/admin/leads/mail?ok=queuedMany&n=${queued}&skip=${skipped}${template === 'followup' ? '&tpl=followup' : ''}`);
   });
 
   // ───── appuntamenti ─────
