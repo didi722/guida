@@ -124,8 +124,8 @@ export function publicRouter(app) {
   const isPrivateTour = (x) => x.model === 'group' && (x.pricing !== 'hourly' || x.service === 'guide'); // assistente, tour leader e meet & greet sono servizi, non tour
   /** I tour che compaiono nella ricerca: i privati e/o i condivisi per le agenzie; per i privati cittadini i tour a prezzo fisso. */
   const searchable = (channel, kinds) => (channel === 'b2b' ? visible(channel) : selectable(channel));
-  /** Ore con cui si cerca la disponibilità di un servizio a ore: la durata fissa del tour, o il minimo del servizio. */
-  const searchHours = (tour) => (tour.chooseHours ? minHours(tour.service) : tour.durationMin / 60);
+  /** Ore con cui si cerca la disponibilità di un servizio a ore: la durata fissa del tour; se la sceglie il cliente, quella chiesta (se è valida) o il minimo del servizio. */
+  const searchHours = (tour, asked = null) => (tour.chooseHours ? (hourOptions(tour.service).includes(asked) ? asked : minHours(tour.service)) : tour.durationMin / 60);
 
   r.get('/book', (req, res) => {
     const ctx = res.locals.ctx;
@@ -136,6 +136,7 @@ export function publicRouter(app) {
     if (asked?.pricing === 'hourly' && channel !== 'b2b') return res.redirect(302, `/${req.lang}/hourly?product=${asked.slug}`);
     const kinds = readKinds(req.query, channel);
     const pax = clampInt(req.query.pax, 1, 25, 2);
+    const askedHours = Number(req.query.hours) > 0 ? Number(req.query.hours) : null; // la durata, per i servizi che la sceglie il cliente
     const list0 = searchable(channel, kinds);
     const tourSlug = asked?.active && (channel === 'b2b' ? visible(channel).includes(asked) : list0.includes(asked)) ? asked.slug : '';
     const minDate = minBookableDate(app, channel);
@@ -149,17 +150,17 @@ export function publicRouter(app) {
       results = list
         .map((tour) => {
           if (tour.pricing !== 'hourly') return { tour, slots: slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs }) };
-          // servizio a ore: orari liberi per la durata minima, e il prezzo «da»
-          const hours = searchHours(tour);
+          // servizio a ore: orari liberi per la durata chiesta (o per il minimo, col prezzo «da» se non si è scelto il servizio)
+          const hours = searchHours(tour, askedHours);
           const quote = hourlyQuote(app, tour, { pax, channel, account: req.acct, date, time: null, hours });
-          return { tour, hours, quote, slots: quote.ok ? slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs, durationMin: Math.round(hours * 60) }) : [] };
+          return { tour, hours, quote, chosen: tour.chooseHours && !!tourSlug, slots: quote.ok ? slotsForDay(actx, cfg, tour, date, { pax, channel, nowMs, durationMin: Math.round(hours * 60) }) : [] };
         })
         .filter((x) => x.slots.length);
       if (!results.length) suggestions = nextAvailableDates(db, cfg, list, date < minDate ? minDate : date, { pax, channel, nowMs });
     }
     // senza una data in mente: le prossime partenze, prenotabili con un tocco
     const departures = date ? [] : nextDepartures(db, cfg, tourSlug ? [content.tour(tourSlug)] : list0.filter(isShared), nowRome(Date.now()).date, { pax: 1, channel, nowMs: Date.now(), limit: 6 });
-    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, kinds, tours: channel === 'b2b' ? visible(channel) : selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
+    send(res, bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures, channel, kinds, hours: askedHours, tours: channel === 'b2b' ? visible(channel) : selectable(channel), hourly: hourlyProducts(channel).length > 0 }));
   });
 
   // ───── servizi a ore: preventivo e orari liberi ─────
@@ -329,7 +330,8 @@ export function publicRouter(app) {
   r.post('/booking/:ref/cancel', form, async (req, res, next) => {
     const b = loadBooking(req);
     if (!b) return next();
-    const back = (flash) => res.redirect(303, `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}`);
+    const nextUrl = safeNext(req.body?.next); // dalla pagina di un pacchetto si torna lì
+    const back = (flash) => res.redirect(303, nextUrl ? `${nextUrl}${nextUrl.includes('?') ? '&' : '?'}flash=${flash === 'cancelled' ? 'line-cancelled' : flash}` : `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}`);
     if (b.status !== 'confirmed' || cancellationState(b).percent <= 0) return back('cancel-error'); // senza rimborso si scrive alla guida
     await services.cancel(b.id, { by: 'customer' });
     back('cancelled');

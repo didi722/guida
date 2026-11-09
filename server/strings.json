@@ -2393,6 +2393,60 @@
   "Completos.",
   "入力済みです。"
  ],
+ "pkg.clear": [
+  "Svuota il pacchetto",
+  "Empty the package",
+  "Vaciar el paquete",
+  "パッケージを空にする"
+ ],
+ "pkg.clearAsk": [
+  "Togliere tutti i servizi dal pacchetto in preparazione?",
+  "Remove all services from the package you are preparing?",
+  "¿Quitar todos los servicios del paquete en preparación?",
+  "作成中のパッケージからすべてのサービスを削除しますか？"
+ ],
+ "pkg.flash.cleared": [
+  "Pacchetto svuotato.",
+  "Package emptied.",
+  "Paquete vaciado.",
+  "パッケージを空にしました。"
+ ],
+ "pkg.line.release": [
+  "Togli",
+  "Remove",
+  "Quitar",
+  "外す"
+ ],
+ "pkg.line.releaseAsk": [
+  "Togliere questo servizio dal pacchetto? La data torna libera.",
+  "Remove this service from the package? The date becomes free again.",
+  "¿Quitar este servicio del paquete? La fecha vuelve a quedar libre.",
+  "このサービスをパッケージから外しますか？日程は空きに戻ります。"
+ ],
+ "pkg.line.cancel": [
+  "Annulla",
+  "Cancel",
+  "Anular",
+  "キャンセル"
+ ],
+ "pkg.line.cancelAsk": [
+  "Annullare questo servizio? Rimborso o penale secondo la politica indicata.",
+  "Cancel this service? Refund or penalty according to the policy shown.",
+  "¿Anular este servicio? Reembolso o penalización según la política indicada.",
+  "このサービスをキャンセルしますか？表示のポリシーに従って返金または違約金が適用されます。"
+ ],
+ "pkg.flash.option-released": [
+  "Servizio tolto dal pacchetto: la data è tornata libera.",
+  "Service removed from the package: the date is free again.",
+  "Servicio quitado del paquete: la fecha vuelve a estar libre.",
+  "サービスをパッケージから外しました。日程は空きに戻りました。"
+ ],
+ "pkg.flash.line-cancelled": [
+  "Servizio annullato.",
+  "Service cancelled.",
+  "Servicio anulado.",
+  "サービスをキャンセルしました。"
+ ],
  "demo.agency.banner": [
   "AREA DIMOSTRATIVA · dati inventati, nessuna email inviata, nessun pagamento reale",
   "DEMO AREA · made-up data, no emails sent, no real payments",

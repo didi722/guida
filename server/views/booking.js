@@ -21,7 +21,7 @@ import { documentsBox } from './agencyDocs.js';
 import { bookTabs } from './availability.js';
 import { bookingPayBlock } from './invoicePay.js';
 import { pendingExtension } from '../changes.js';
-import { extraHourOptions, parseServiceRecord } from '../rates.js';
+import { extraHourOptions, hourOptions, parseServiceRecord } from '../rates.js';
 
 const slotUrl = (u, tour, date, time, pax) => `${u('/book/checkout')}?tour=${encodeURIComponent(tour)}&date=${date}&time=${time}&pax=${pax}`;
 
@@ -33,8 +33,10 @@ export function preOpenNotice(ctx, { agency = false } = {}) {
   return html`<div class="notice notice-info" role="note">${t(agency ? 'preopen.agency' : 'preopen.notice', { date: fmtDate(paymentsFrom(app.cfg), lang, 'date') })}</div>`;
 }
 
-export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures = [], channel, kinds = { shown: false }, tours = ctx.app.content.tours, hourly = false }) {
+export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestions, departures = [], channel, kinds = { shown: false }, tours = ctx.app.content.tours, hourly = false, hours = null }) {
   const { t, lang, u, app } = ctx;
+  const durationTours = tours.filter((x) => x.pricing === 'hourly' && x.chooseHours); // i servizi la cui durata la sceglie il cliente
+  const hoursShown = durationTours.some((x) => x.slug === tourSlug); // la durata si sceglie solo dopo aver scelto il servizio
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [homeCrumb(ctx), [t('nav.book')]])}
@@ -45,12 +47,19 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
 
 <section class="section tight"><div class="wrap">
   ${channel === 'b2b' ? bookTabs(ctx, 'search') : ''}
-  <form class="card pad search-card" method="get" action="${u('/book')}">
+  <form class="card pad search-card ${hoursShown ? 'has-hours' : ''}" method="get" action="${u('/book')}">
     <label class="field"><span class="label">${t('quick.date')}</span><input type="date" name="date" min="${minDate}" value="${date ?? ''}" required></label>
     <label class="field"><span class="label">${t('quick.guests')}</span><select name="pax">${Array.from({ length: 25 }, (_, i) => i + 1).map((n) => html`<option value="${n}" ${n === pax ? raw('selected') : ''}>${n}</option>`)}</select></label>
     <label class="field"><span class="label">${t('book.tour')}</span>
       <select name="tour"><option value="">${t('book.allTours')}</option>${tours.map((x) => html`<option value="${x.slug}" ${x.slug === tourSlug ? raw('selected') : ''}>${x.i18n[lang].title}</option>`)}</select>
     </label>
+    ${durationTours.length
+      ? html`<div class="field" data-hours-field ${hoursShown ? '' : raw('hidden')}><span class="label">${t('hourly.f.hours')}</span>${durationTours.map((x) => {
+          const options = hourOptions(x.service);
+          const picked = hours != null && options.includes(hours) ? hours : options[0];
+          return html`<select name="hours" data-hours-for="${x.slug}" aria-label="${t('hourly.f.hours')}" ${x.slug === tourSlug ? '' : raw('hidden disabled')}>${options.map((h) => html`<option value="${h}" ${h === picked ? raw('selected') : ''}>${hoursLabel(t, lang, h)}</option>`)}</select>`;
+        })}</div>`
+      : ''}
     <button class="btn btn-gold" type="submit">${t('quick.go')}</button>
   </form>
   ${hourly && channel !== 'b2b' ? html`<p class="hourly-hint">${t('book.hourlyHint')} <a href="${u('/hourly')}">${t('book.hourlyLink')} →</a></p>` : ''}
@@ -58,7 +67,7 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
   ${date
     ? html`<h2 class="h-sub spaced">${t('book.resultsFor', { date: fmtDate(date, lang) })}</h2>
       ${results.length
-        ? html`<div class="results">${results.map(({ tour, slots, hours: serviceHours, quote }) => {
+        ? html`<div class="results">${results.map(({ tour, slots, hours: serviceHours, quote, chosen }) => {
             const ti = tour.i18n[lang];
             const isHourly = tour.pricing === 'hourly';
             const unit = isHourly ? 0 : unitPriceFor(tour, channel, ctx.acct);
@@ -68,21 +77,22 @@ export function bookPage(ctx, { date, pax, tourSlug, minDate, results, suggestio
               <div class="result-body">
                 <h3><a href="${u('/tours/' + tour.slug)}">${ti.title}</a> ${tour.model === 'person' ? '' : html`<span class="chip">${t('tour.kindPrivate')}</span>`}</h3>
                 ${isHourly
-                  ? html`<p class="muted small">${tour.chooseHours ? t('price.from', { price: formatMoney(quote.totalCents, lang) }) : formatMoney(quote.totalCents, lang)} · ${hoursLabel(t, lang, serviceHours)} · ${tour.chooseHours ? t('book.privateSlots', { hours: hoursLabel(t, lang, serviceHours) }) : t('book.forGroup')}</p>`
+                  ? html`<p class="muted small">${tour.chooseHours && !chosen ? t('price.from', { price: formatMoney(quote.totalCents, lang) }) : formatMoney(quote.totalCents, lang)} · ${hoursLabel(t, lang, serviceHours)} · ${tour.chooseHours ? t('book.privateSlots', { hours: hoursLabel(t, lang, serviceHours) }) : t('book.forGroup')}</p>`
                   : html`<p class="muted small">${durationText(t, lang, tour)} · ${tour.model === 'person' ? t('tour.maxPeople', { n: tour.maxParticipants }) : t('tour.upTo', { n: tour.maxParticipants })} · <strong>${formatMoney(tour.model === 'person' ? unit * pax : unit, lang)}</strong> <span class="muted">${tour.model === 'person' ? t('book.forPax', { n: pax }) : t('book.forGroup')}</span></p>`}
                 <div class="slot-list">${slots.map((s) => html`<a class="slot" href="${isHourly ? checkoutUrl(s.time) : slotUrl(u, tour.slug, date, s.time, pax)}"><strong>${s.time}</strong>${tour.model === 'person' ? html`<small>${s.joined ? t('book.confirmedDeparture') : t('book.newDeparture')}${s.lang ? html` · ${t('w.inLang', { lang: LANG_META[s.lang].name })}` : ''}${s.left <= 4 ? html` · ${t('w.left', { n: s.left })}` : ''}</small>` : ''}</a>`)}</div>
-                ${isHourly && tour.chooseHours ? html`<p class="small"><a href="${u('/hourly')}?product=${tour.slug}&date=${date}&pax=${pax}">${t('book.privateOther')}</a></p>` : ''}
+                ${isHourly && tour.chooseHours && !chosen ? html`<p class="small"><a href="${u('/hourly')}?product=${tour.slug}&date=${date}&pax=${pax}">${t('book.privateOther')}</a></p>` : ''}
               </div>
             </article>`;
           })}</div>`
         : html`<div class="card pad empty"><p>${t('book.none')}</p>
-            ${channel === 'b2b' ? html`<p><a href="${u('/b2b/availability')}?${new URLSearchParams({ ...(tourSlug ? { tour: tourSlug } : {}), pax: String(pax), m: date.slice(0, 7) })}">${t('avail.noneHint')}</a></p>` : ''}
-            ${suggestions.length ? html`<p>${t('book.nextDates')}</p><p class="date-chips">${suggestions.map((d) => html`<a class="chip chip-link" href="${u('/book')}?date=${d}&pax=${pax}${tourSlug ? '&tour=' + tourSlug : ''}${kinds.shown ? '&kinds=1' + (kinds.private ? '&kind=private' : '') + (kinds.shared ? '&kind=shared' : '') : ''}">${fmtDate(d, lang, 'weekday')}</a>`)}</p>` : ''}
+            ${channel === 'b2b' ? html`<p><a href="${u('/b2b/availability')}?${new URLSearchParams({ ...(tourSlug ? { tour: tourSlug } : {}), pax: String(pax), ...(hoursShown && hours ? { hours: String(hours) } : {}), m: date.slice(0, 7) })}">${t('avail.noneHint')}</a></p>` : ''}
+            ${suggestions.length ? html`<p>${t('book.nextDates')}</p><p class="date-chips">${suggestions.map((d) => html`<a class="chip chip-link" href="${u('/book')}?date=${d}&pax=${pax}${tourSlug ? '&tour=' + tourSlug : ''}${hoursShown && hours ? '&hours=' + hours : ''}${kinds.shown ? '&kinds=1' + (kinds.private ? '&kind=private' : '') + (kinds.shared ? '&kind=shared' : '') : ''}">${fmtDate(d, lang, 'weekday')}</a>`)}</p>` : ''}
             <p class="small muted">${t('book.askUs')} <a href="${u('/contact')}">${t('nav.contact')}</a></p></div>`}`
     : html`<p class="muted spaced">${t('book.pickPrompt')}</p>
       ${departures.length ? html`<h2 class="h-sub spaced">${t('departures.title')}</h2>${departuresList(ctx, departures, { pax })}` : ''}`}
 </div></section>`;
-  return page(ctx, { title: t('nav.book'), description: t('book.lead'), path: `/${lang}/book`, body, activeNav: 'book', area: areaOf(ctx) });
+  const scripts = durationTours.length ? raw(`<script src="/js/book-hours.js?v=${app.assetVersion}" defer></script>`) : '';
+  return page(ctx, { title: t('nav.book'), description: t('book.lead'), path: `/${lang}/book`, body, activeNav: 'book', area: areaOf(ctx), scripts });
 }
 
 // ───────────────────────── Checkout ─────────────────────────

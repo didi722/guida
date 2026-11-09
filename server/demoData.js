@@ -1,5 +1,5 @@
 // Dati d'esempio della demo per le agenzie (vedi demo.js): un'agenzia finta con prenotazioni in tutti gli stati, opzioni, fatture emesse, pagate e scadute,
-// tre preventivi (da inviare, inviato, accettato), una nota di credito, un collaboratore e un programma di più giorni. Si crea tutto con le funzioni vere del sito (come in sandbox), quindi ciò che l'agenzia
+// tre preventivi (da inviare, inviato, accettato), una nota di credito, un pacchetto in opzione, un collaboratore e un programma di più giorni. Si crea tutto con le funzioni vere del sito (come in sandbox), quindi ciò che l'agenzia
 // vede è esattamente ciò che vedrebbe un'agenzia vera. Tour e tariffe sono quelli del catalogo copiato dal sito, perciò ogni passo prova e salta se non
 // c'è (per esempio un servizio che la guida ha spento): la demo si accende comunque con ciò che c'è.
 import crypto from 'node:crypto';
@@ -8,7 +8,7 @@ import { hashPassword } from './auth.js';
 import { cancelBooking, confirmPaid, createBooking, markRefund } from './bookings.js';
 import { createCreditNote, createDrafts, issueInvoice, setSdiStatus } from './invoices.js';
 import { markInvoicePaid } from './invoicePayments.js';
-import { cartAdd } from './packages.js';
+import { cartAdd, createPackage, resolveLine } from './packages.js';
 import { createProgramRequest, saveProposal } from './programs.js';
 import { createQuote, decide, markViewed, recordSent } from './quotes.js';
 import { openTo } from './rates.js';
@@ -228,6 +228,23 @@ export async function seedDemoData(app, { nowMs = Date.now() } = {}) {
     markViewed(db, accepted.id, nowMs - 4 * DAY);
     decide(db, accepted.id, 'approved', 'Perfetto, procediamo!', nowMs - 3 * DAY);
     createQuote(app, account, byOwner, { client: 'Famiglia Esposito', email: '', clientRef: 'Da rivedere con il cliente', markup: 15, round: 5 }, nowMs);
+  });
+
+  // ───── un pacchetto già prenotato: due servizi in opzione, con una sola scadenza (si confermano o si rilasciano insieme, o si toglie un servizio solo) ─────
+  await step('Pacchetto di due servizi tenuto in opzione', async () => {
+    const wanted = [{ tour: take(perPerson, fixed, tours), from: 58, pax: 8 }, { tour: take(hourlyChoose, tours), from: 59, pax: 8, hours: 3 }];
+    const lines = [];
+    for (const w of wanted) {
+      for (let i = 0; i < 40 && lines.length < wanted.indexOf(w) + 1; i++) {
+        const date = addDays(today, w.from + i);
+        const hrs = w.tour.pricing === 'hourly' ? (w.tour.chooseHours ? w.hours : w.tour.durationMin / 60) : null;
+        const slot = daySlots(db, cfg, w.tour, date, { pax: w.pax, channel: 'b2b', nowMs, durationMin: hrs ? Math.round(hrs * 60) : null })[0];
+        const line = slot && resolveLine(app, { tour: w.tour.slug, date, time: slot.time, pax: String(w.pax), ...(hrs ? { hours: String(hrs) } : {}) });
+        if (line) lines.push(line);
+      }
+    }
+    if (lines.length < 2) throw new Error('servono due servizi liberi');
+    createPackage(app, account, lines, { name: account.contact_name, email: account.email, lang: 'it', clientRef: 'Gruppo Hoffmann (pacchetto in opzione)', option: true, bookedBy: byOwner }, nowMs - DAY);
   });
 
   // ───── un programma di più giorni con la proposta già inviata ─────
