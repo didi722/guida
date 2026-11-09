@@ -20,7 +20,7 @@ export function demoPage(ctx, { link, linkFor, status, flash = '' }) {
 <section class="card pad">
   <h2>Come usarla</h2>
   <ol class="info-list">
-    <li><strong>Aprila in una finestra privata del browser</strong>: finché sei dentro la demo, tutto il sito in quel browser è la demo (compreso <code>/admin</code>, che lì è spento). In una finestra privata il tuo pannello vero resta aperto nell’altra.</li>
+    <li><strong>Aprila in una finestra privata del browser</strong>: finché sei dentro la demo, il sito in quel browser è la demo (il pannello <code>/admin</code> resta sempre quello vero). In una finestra privata il tuo sito vero resta visibile nell’altra.</li>
     <li>In alto, su ogni pagina, c’è la fascia <strong>«Area dimostrativa»</strong>: <strong>Ricomincia</strong> cancella ciò che hai provato e riparte con dati nuovi; <strong>Esci dalla demo</strong> torna al sito vero. Dopo 8 ore si esce da sola.</li>
     <li>Puoi prenotare, opzionare, annullare, preparare preventivi e pagare con carta (finta): <strong>niente di tutto questo esiste fuori dalla demo</strong>.</li>
   </ol>

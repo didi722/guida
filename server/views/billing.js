@@ -15,7 +15,7 @@ export function billingPage(ctx, { acct, flash = '', error = '' }) {
   const gaps = gapWords(t, acct);
   const body = html`
 <section class="page-head"><div class="wrap narrow">
-  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('billing.title')]])}
+  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('home.agency'), u('/b2b/agency')], [t('billing.title')]])}
   <h1>${t('billing.title')}</h1><p class="lead">${t('billing.lead')}</p>
 </div></section>
 <section class="section tight"><div class="wrap narrow">

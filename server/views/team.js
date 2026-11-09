@@ -24,7 +24,7 @@ export function teamPage(ctx, { acct, members, values = {}, flash = '', error = 
   const full = members.length >= MAX_MEMBERS;
   const body = html`
 <section class="page-head"><div class="wrap narrow">
-  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('team.title')]])}
+  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('home.agency'), u('/b2b/agency')], [t('team.title')]])}
   <h1>${t('team.title')}</h1><p class="lead">${t('team.lead')}</p>
 </div></section>
 <section class="section tight"><div class="wrap narrow">

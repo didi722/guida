@@ -155,13 +155,21 @@ test('il collaboratore sceglie la password (una volta sola) ed entra: vede l’a
     assert.doesNotMatch(page, /href="\/en\/b2b\/team"/);
     const ownerPage = await text(await owner('/it/b2b/account'));
     assert.match(ownerPage, /<p class="muted">Giulia Bianchi · giulia@lagoon\.example<\/p>/);
-    assert.match(ownerPage, /href="\/it\/b2b\/team">Team<\/a>/);
+    assert.doesNotMatch(ownerPage, /href="\/it\/b2b\/team"/, 'dalla panoramica il team non è più un pulsante');
+    assert.match(ownerPage, /href="\/it\/b2b\/agency">La tua agenzia<\/a>/);
+    const hub = await text(await owner('/it/b2b/agency'));
+    assert.match(hub, /href="\/it\/b2b\/team">/, 'il titolare trova il team in «La tua agenzia»');
+    assert.match(hub, /href="\/it\/b2b\/billing">/);
+    assert.match(hub, /Collaboratori: \d+/);
 
     // un collaboratore non gestisce il team
     assert.equal(loc(await me('/en/b2b/team')), '/en/b2b/account');
     assert.equal(loc(await me('/en/b2b/team', form({ name: 'Altra Persona', email: 'altra@lagoon.example' }))), '/en/b2b/account');
     assert.equal(loc(await me(`/en/b2b/team/${row.id}/remove`, form())), '/en/b2b/account');
     assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM account_users').get().n, 1);
+    const memberHub = await text(await me('/en/b2b/agency'));
+    assert.doesNotMatch(memberHub, /b2b\/team|b2b\/billing/, 'in «Your agency» il collaboratore non vede team e dati di fatturazione');
+    assert.match(memberHub, /href="\/en\/b2b\/documents">/, 'ma il logo e i documenti sì');
 
     // una volta sola
     const again = await anon(at);

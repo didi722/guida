@@ -277,7 +277,7 @@ export function mountDemo(server, app) {
         logoutPartner(res, cfg);
         return res.set('Cache-Control', 'no-store').redirect(303, '/');
       }
-      if (!flag(req)) return next();
+      if (!flag(req) || path === '/admin' || path.startsWith('/admin/')) return next(); // il pannello è sempre quello vero, anche da dentro la demo (che non ne ha uno)
       if (path === '/demo/reset' && req.method === 'POST') {
         return sameOrigin(req, res, () => {
           restart(req, res).catch(next);

@@ -291,24 +291,44 @@ function shareCard(ctx, { url, count }) {
 }
 
 /**
+ * Le tre cose che un'agenzia fa qui, una per scheda: prenotare (o opzionare), vedere le prenotazioni, pagare le fatture.
+ * Sotto, tre collegamenti piccoli: i preventivi per i suoi clienti, la pagina con team, logo e dati di fatturazione, e la guida.
+ * summary: vedi partnerSummary (se manca, le schede mostrano solo i pulsanti).
+ */
+function homeActions(ctx, summary) {
+  const { t, lang, u } = ctx;
+  const due = summary?.due;
+  const late = !!due?.overdueCount;
+  const bookingsLine = summary
+    ? html`${summary.upcoming.count ? t('home.bookings.upcoming', { n: summary.upcoming.count }) : t('home.bookings.none')}${summary.options.count ? html`<br>${t('home.bookings.options', { n: summary.options.count })}` : ''}`
+    : '';
+  const payLine = !summary ? '' : late ? html`<strong class="tone-late">${t('home.pay.overdue', { amount: formatMoney(due.overdueCents, lang) })}</strong>` : due.cents ? html`<strong>${t('home.pay.due', { amount: formatMoney(due.cents, lang) })}</strong>` : html`<span class="muted">${t('home.pay.ok')}</span>`;
+  return html`<div class="home-actions">
+    <article class="card pad home-card home-card-main"><h2>${t('home.new.title')}</h2><p>${t('home.new.text')}</p><a class="btn btn-gold btn-lg" href="${u('/book')}" data-tour="new">${t('partner.nav.new')}</a></article>
+    <article class="card pad home-card"><h2>${t('home.bookings.title')}</h2>${bookingsLine ? html`<p>${bookingsLine}</p>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('home.bookings.cta')}</a></article>
+    <article class="card pad home-card"><h2>${t('home.pay.title')}</h2>${payLine ? html`<p>${payLine}</p>` : ''}<a class="btn ${late ? 'btn-gold' : 'btn-outline'}" href="${u('/b2b/invoices')}">${t('home.pay.cta')}</a></article>
+  </div>
+  <p class="home-more"><a href="${u('/b2b/quotes')}">${t('quotes.nav')}</a><a href="${u('/b2b/agency')}">${t('home.agency')}</a><a href="${u('/b2b/help')}">${t('partner.nav.help')}</a></p>`;
+}
+
+/**
  * La prima pagina dell'area agenzie: tariffe e condizioni dell'agenzia, con i pulsanti per prenotare e per andare alle prenotazioni.
  * Per un account non ancora approvato mostra la pagina di stato.
  */
-export function accountPage(ctx, { acct, flash = '', tutorial = false, share = null }) {
+export function accountPage(ctx, { acct, flash = '', tutorial = false, share = null, summary = null }) {
   if (acct.status !== 'approved') return pendingPage(ctx, acct);
   const { t, u } = ctx;
-  const canQuote = hasHourlyProducts(ctx, 'b2b'); // senza servizi a ore prenotabili il calcolatore non avrebbe nulla da mostrare
   const body = html`
 <section class="page-head partner-head"><div class="wrap">
   <div class="account-head">
     <div><p class="eyebrow">${t('nav.agencyArea')}</p><h1>${acct.company}</h1><p class="muted">${whoOf(ctx).name} · ${whoOf(ctx).email}</p></div>
-    <div class="btn-row"><a class="btn btn-gold btn-lg" href="${u('/book')}" data-tour="new">${t('partner.nav.new')}</a><a class="btn btn-outline" href="${u('/b2b/availability')}">${t('avail.nav')}</a><a class="btn btn-outline" href="${u('/b2b/documents')}">${t('docs.title')}</a>${canQuote ? html`<a class="btn btn-outline" href="${u('/hourly')}">${t('b2b.ratesCta')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('partner.nav.bookings')}</a><a class="btn btn-outline" href="${u('/b2b/quotes')}">${t('quotes.nav')}</a>${whoOf(ctx).owner ? html`<a class="btn btn-outline" href="${u('/b2b/team')}">${t('team.nav')}</a><a class="btn btn-outline" href="${u('/b2b/billing')}">${t('billing.nav')}</a>` : ''}<a class="btn btn-outline" href="${u('/b2b/help')}">${t('partner.nav.help')}</a></div>
   </div>
 </div></section>
 <section class="section tight tariff-section" aria-labelledby="tariffario"><div class="wrap">
   ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
   ${tutorial ? tutorialBanner(ctx) : ''}
   ${whoOf(ctx).owner && billingGaps(acct).length ? html`<div class="notice notice-info" role="note">${t('billing.missing', { list: gapWords(t, acct) })} <a href="${u('/b2b/billing')}">${t('billing.complete')} →</a></div>` : ''}
+  ${homeActions(ctx, summary)}
   ${tariffario(ctx, acct)}
   <details class="terms-strip card spaced"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>
     ${termsFacts(ctx, acct)}

@@ -19,6 +19,7 @@ import { optionalPhone } from '../countries.js';
 import { LANGS } from '../langs.js';
 import { needPartner, safeNext, toLogin } from './guards.js';
 import { accountPage, bookingStatusText, bookingsPage, invoicesPage, ratesPage } from '../views/b2b.js';
+import { agencyHubPage } from '../views/agencyHub.js';
 import { bookingPage } from '../views/booking.js';
 import { helpPage } from '../views/tutorial.js';
 
@@ -28,7 +29,7 @@ export function partnerRouter(app) {
   const form = express.urlencoded({ extended: false, limit: '50kb' });
 
   // dati personali e fiscali: mai in cache del browser o di proxy
-  r.use(['/b2b/account', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/help'], (req, res, next) => {
+  r.use(['/b2b/account', '/b2b/agency', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/help'], (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
   });
@@ -48,8 +49,12 @@ export function partnerRouter(app) {
     const ctx = res.locals.ctx;
     if (req.acct.status === 'approved' && ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page', 'v', 'm', 'd'].some((k) => req.query[k] !== undefined)) return res.redirect(302, `/${req.lang}/b2b/bookings?${new URLSearchParams(req.query)}`);
     const share = req.acct.status === 'approved' ? { url: referralUrl(app.cfg, req.lang, refCodeOf(db, req.acct)), count: referralsOf(db, req.acct.id).length } : null; // «Segnala un'agenzia collega»
-    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor), share }));
+    const summary = req.acct.status === 'approved' ? partnerSummary(app, req.acct.id) : null; // le tre schede: prenotare, prenotazioni, fatture
+    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor), share, summary }));
   });
+
+  // «La tua agenzia»: team, logo e documenti, dati di fatturazione
+  r.get('/b2b/agency', needPartner, (req, res) => send(res, agencyHubPage(res.locals.ctx, { acct: req.acct, team: teamSize(db, req.acct.id) })));
 
   // «Guida e FAQ»: i passi del giro scritti per intero, il pulsante per rivederlo e le domande frequenti
   r.get('/b2b/help', needPartner, (req, res) => send(res, helpPage(res.locals.ctx, { due: tutorialDue(db, req.acct, req.actor) })));

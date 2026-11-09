@@ -1200,10 +1200,10 @@
   "ここでご参加の内訳（大人、子ども4〜12歳は50%、乳幼児0〜3歳は無料）を入力します。数字を変えてみてください。右側の料金が自動で更新されます。"
  ],
  "tour.s5": [
-  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata, mentre il tuo cliente decide. Dalla Panoramica, «Date libere» ti mostra i giorni liberi e ti avvisa se una data occupata si libera. Non premerlo adesso.",
-  "“Hold without paying” keeps the date for you until the deadline shown, while your client decides. From the Overview, “Free dates” shows the free days and tells you if a taken date frees up. Do not press it now.",
-  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado mientras tu cliente decide. Desde el Resumen, «Fechas libres» te muestra los días libres y te avisa si se libera una fecha ocupada. No lo pulses ahora.",
-  "「支払いなしで仮押さえする」は、お客様が決めるまで表示された期限まで日程を確保します。概要の「空き日」では空いている日を確認でき、埋まっている日が空くと通知されます。今は押さないでください。"
+  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata, mentre il tuo cliente decide. In «Nuova prenotazione», la scheda «Date libere» ti mostra i giorni liberi e ti avvisa se una data occupata si libera. Non premerlo adesso.",
+  "“Hold without paying” keeps the date for you until the deadline shown, while your client decides. In “New booking”, the “Free dates” tab shows the free days and tells you if a taken date frees up. Do not press it now.",
+  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado mientras tu cliente decide. En «Nueva reserva», la pestaña «Fechas libres» te muestra los días libres y te avisa si se libera una fecha ocupada. No lo pulses ahora.",
+  "「支払いなしで仮押さえする」は、お客様が決めるまで表示された期限まで日程を確保します。「新規予約」の「空き日」タブでは空いている日を確認でき、埋まっている日が空くと通知されます。今は押さないでください。"
  ],
  "tour.s6": [
   "«Aggiungi al pacchetto» serve quando il cliente vuole più servizi: una sola opzione, un solo pagamento, una sola fattura. Dal pacchetto prepari anche un preventivo con il tuo ricarico.",
@@ -1260,10 +1260,10 @@
   "仮押さえと空き日の確認"
  ],
  "tut.3.text": [
-  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata: prima la confermi oppure la rilasci. In «Date libere» vedi i giorni disponibili servizio per servizio e, su una data occupata, puoi farti avvisare se si libera.",
-  "“Hold without paying” keeps the date for you until the deadline shown: before it ends you confirm or release it. In “Free dates” you see the available days service by service and, on a taken date, you can ask to be told if it frees up.",
-  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado: antes de que termine, la confirmas o la liberas. En «Fechas libres» ves los días disponibles servicio por servicio y, en una fecha ocupada, puedes pedir que te avisemos si se libera.",
-  "「支払いなしで仮押さえする」を選ぶと、表示された期限まで日程を確保できます。期限までに確定するか、解除してください。「空き日」ではサービスごとの空き状況を確認でき、埋まっている日は空いたときに通知を受け取れます。"
+  "«Opziona senza pagare» tiene da parte la data fino alla scadenza indicata: prima la confermi oppure la rilasci. Nella scheda «Date libere» di «Nuova prenotazione» vedi i giorni disponibili servizio per servizio e, su una data occupata, puoi farti avvisare se si libera.",
+  "“Hold without paying” keeps the date for you until the deadline shown: before it ends you confirm or release it. In the “Free dates” tab of “New booking” you see the available days service by service and, on a taken date, you can ask to be told if it frees up.",
+  "«Opcionar sin pagar» reserva la fecha hasta el plazo indicado: antes de que termine, la confirmas o la liberas. En la pestaña «Fechas libres» de «Nueva reserva» ves los días disponibles servicio por servicio y, en una fecha ocupada, puedes pedir que te avisemos si se libera.",
+  "「支払いなしで仮押さえする」を選ぶと、表示された期限まで日程を確保できます。期限までに確定するか、解除してください。「新規予約」の「空き日」タブではサービスごとの空き状況を確認でき、埋まっている日は空いたときに通知を受け取れます。"
  ],
  "tut.4.title": [
   "Pacchetti e preventivi",
@@ -1410,10 +1410,10 @@
   "希望の日が埋まっています。空いたら通知してもらえますか？"
  ],
  "faq.6.a": [
-  "Sì. In «Date libere» scegli il servizio e il giorno: sulle date tenute da altri premi «Avvisami se si libera». Se si libera ti scriviamo subito; chi è davanti nella lista ha qualche ora di vantaggio, poi tocca alla successiva. Prenota chi arriva per primo, quindi non aspettare.",
-  "Yes. In “Free dates” choose the service and the day: on dates held by others press “Notify me if it frees up”. If it frees up we email you straight away; whoever is first in line gets a few hours’ head start, then it is the next one’s turn. First to book gets it, so don’t wait.",
-  "Sí. En «Fechas libres» elige el servicio y el día: en las fechas ocupadas por otros pulsa «Avísame si se libera». Si se libera te escribimos enseguida; quien va primero en la lista tiene unas horas de ventaja y después le toca a la siguiente. La consigue quien reserva primero, así que no esperes.",
-  "はい。「空き日」でサービスと日を選び、他社が確保している日は「空いたら通知する」を押します。空いたらすぐにメールでお知らせします。リストの先頭の会社には数時間の優先期間があり、その後は次の会社に回ります。予約は先着順ですので、お早めにどうぞ。"
+  "Sì. In «Nuova prenotazione», scheda «Date libere», scegli il servizio e il giorno: sulle date tenute da altri premi «Avvisami se si libera». Se si libera ti scriviamo subito; chi è davanti nella lista ha qualche ora di vantaggio, poi tocca alla successiva. Prenota chi arriva per primo, quindi non aspettare.",
+  "Yes. In “New booking”, on the “Free dates” tab, choose the service and the day: on dates held by others press “Notify me if it frees up”. If it frees up we email you straight away; whoever is first in line gets a few hours’ head start, then it is the next one’s turn. First to book gets it, so don’t wait.",
+  "Sí. En «Nueva reserva», pestaña «Fechas libres», elige el servicio y el día: en las fechas ocupadas por otros pulsa «Avísame si se libera». Si se libera te escribimos enseguida; quien va primero en la lista tiene unas horas de ventaja y después le toca a la siguiente. La consigue quien reserva primero, así que no esperes.",
+  "はい。「新規予約」の「空き日」タブでサービスと日を選び、他社が確保している日は「空いたら通知する」を押します。空いたらすぐにメールでお知らせします。リストの先頭の会社には数時間の優先期間があり、その後は次の会社に回ります。予約は先着順ですので、お早めにどうぞ。"
  ],
  "faq.7.q": [
   "Cos’è il pacchetto e come preparo un preventivo?",
@@ -2278,6 +2278,120 @@
   "Test site: payments are simulated and no card is charged.",
   "Sitio de prueba: los pagos son simulados y no se cobra ninguna tarjeta.",
   "テスト用サイトです。お支払いは模擬で、カードには請求されません。"
+ ],
+ "home.new.title": [
+  "Prenota o opziona",
+  "Book or option a date",
+  "Reserva u opciona una fecha",
+  "予約・オプション"
+ ],
+ "home.new.text": [
+  "Scegli servizio, data e persone. Se il tuo cliente deve ancora decidere, opziona la data: la tieni da parte senza pagare.",
+  "Choose the service, date and guests. If your client is still deciding, option the date: we hold it for you without payment.",
+  "Elige servicio, fecha y personas. Si tu cliente aún está decidiendo, opciona la fecha: la reservamos sin pagar.",
+  "サービス・日付・人数を選びます。お客様がまだ決めていない場合は、日程をオプションで押さえられます（お支払いは不要です）。"
+ ],
+ "home.bookings.title": [
+  "Le tue prenotazioni",
+  "Your bookings",
+  "Tus reservas",
+  "ご予約"
+ ],
+ "home.bookings.upcoming": [
+  "In arrivo: {n}",
+  "Upcoming: {n}",
+  "Próximas: {n}",
+  "これからの予約：{n}件"
+ ],
+ "home.bookings.none": [
+  "Nessuna prenotazione in arrivo.",
+  "No upcoming bookings.",
+  "Ninguna reserva próxima.",
+  "これからの予約はありません。"
+ ],
+ "home.bookings.options": [
+  "Opzioni aperte: {n}",
+  "Open options: {n}",
+  "Opciones abiertas: {n}",
+  "保留中のオプション：{n}件"
+ ],
+ "home.bookings.cta": [
+  "Vedi le prenotazioni",
+  "See your bookings",
+  "Ver las reservas",
+  "予約を見る"
+ ],
+ "home.pay.title": [
+  "Fatture e pagamenti",
+  "Invoices and payments",
+  "Facturas y pagos",
+  "請求書とお支払い"
+ ],
+ "home.pay.overdue": [
+  "Scaduto da pagare: {amount}",
+  "Overdue: {amount}",
+  "Vencido por pagar: {amount}",
+  "支払期限超過：{amount}"
+ ],
+ "home.pay.due": [
+  "Da saldare: {amount}",
+  "To pay: {amount}",
+  "Por pagar: {amount}",
+  "お支払い予定：{amount}"
+ ],
+ "home.pay.ok": [
+  "Nulla da pagare.",
+  "Nothing to pay.",
+  "Nada que pagar.",
+  "お支払いはありません。"
+ ],
+ "home.pay.cta": [
+  "Vedi e paga le fatture",
+  "View and pay invoices",
+  "Ver y pagar facturas",
+  "請求書を見て支払う"
+ ],
+ "home.agency": [
+  "La tua agenzia",
+  "Your agency",
+  "Tu agencia",
+  "貴社の設定"
+ ],
+ "agency.lead": [
+  "Chi lavora con te, il tuo logo e i dati per le fatture, tutto in un posto.",
+  "Who works with you, your logo and your billing details, all in one place.",
+  "Quién trabaja contigo, tu logo y tus datos de facturación, todo en un lugar.",
+  "チームメンバー、ロゴ、請求先情報をまとめて管理できます。"
+ ],
+ "agency.docs.text": [
+  "Il logo e il ricarico per i voucher e i preventivi che dai al tuo cliente.",
+  "Your logo and markup for the vouchers and quotes you give your client.",
+  "Tu logo y tu recargo para los vouchers y presupuestos que das a tu cliente.",
+  "お客様にお渡しするバウチャーと見積書に使うロゴと上乗せ率です。"
+ ],
+ "agency.team.text": [
+  "I colleghi che possono prenotare e vedere le prenotazioni dell’agenzia.",
+  "Colleagues who can book and see the agency’s bookings.",
+  "Los compañeros que pueden reservar y ver las reservas de la agencia.",
+  "予約をしたり、代理店の予約を確認できる同僚です。"
+ ],
+ "agency.team.count": [
+  "Collaboratori: {n}",
+  "Team members: {n}",
+  "Colaboradores: {n}",
+  "メンバー：{n}名"
+ ],
+ "agency.billing.text": [
+  "I dati con cui prepariamo le tue fatture.",
+  "The details we use to prepare your invoices.",
+  "Los datos con los que preparamos tus facturas.",
+  "請求書の作成に使うお客様の情報です。"
+ ],
+ "agency.billing.ok": [
+  "Completi.",
+  "Complete.",
+  "Completos.",
+  "入力済みです。"
  ],
  "demo.agency.banner": [
   "AREA DIMOSTRATIVA · dati inventati, nessuna email inviata, nessun pagamento reale",
