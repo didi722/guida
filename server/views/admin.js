@@ -16,7 +16,7 @@ import { meetingOf, themeText } from '../choices.js';
 // Il menu in alto ha poche voci (i gruppi); dentro ogni gruppo una riga di schede porta alle singole pagine.
 export const ADMIN_GROUPS = [
   { label: 'Agenda', items: [['/admin', 'Agenda'], ['/admin/todo', 'Da fare'], ['/admin/day', 'Scheda del giorno'], ['/admin/bookings', 'Prenotazioni'], ['/admin/programs', 'Programmi'], ['/admin/availability', 'Disponibilità'], ['/admin/waitlist', 'Lista d’attesa']] },
-  { label: 'Commerciale', items: [['/admin/leads/today', 'Oggi'], ['/admin/leads', 'Contatti'], ['/admin/leads/mail', 'Email'], ['/admin/leads/templates', 'Modelli']] },
+  { label: 'Commerciale', items: [['/admin/leads/today', 'Oggi'], ['/admin/leads', 'Contatti'], ['/admin/leads/mail', 'Email'], ['/admin/leads/templates', 'Modelli'], ['/admin/leads/demo', 'Demo']] },
   { label: 'Clienti', items: [['/admin/partners', 'Partner'], ['/admin/discounts', 'Sconti'], ['/admin/feedback', 'Feedback']] },
   { label: 'Conti', items: [['/admin/invoices', 'Fatture'], ['/admin/stats', 'Statistiche']] },
   { label: 'Sito', items: [['/admin/tours', 'Tour B2C'], ['/admin/tours-b2b', 'Tour B2B'], ['/admin/prices', 'Listino'], ['/admin/rates', 'Tariffe a ore'], ['/admin/blog', 'Blog'], ['/admin/pages', 'Pagine'], ['/admin/texts', 'Testi'], ['/admin/media', 'Immagini'], ['/admin/periods', 'Periodi'], ['/admin/settings', 'Impostazioni']] },

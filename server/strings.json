@@ -2279,6 +2279,30 @@
   "Sitio de prueba: los pagos son simulados y no se cobra ninguna tarjeta.",
   "テスト用サイトです。お支払いは模擬で、カードには請求されません。"
  ],
+ "demo.agency.banner": [
+  "AREA DIMOSTRATIVA · dati inventati, nessuna email inviata, nessun pagamento reale",
+  "DEMO AREA · made-up data, no emails sent, no real payments",
+  "ÁREA DE DEMOSTRACIÓN · datos inventados, sin correos enviados, sin pagos reales",
+  "デモ環境 · 架空のデータです。メールは送信されず、実際の決済も行われません"
+ ],
+ "demo.agency.short": [
+  "DEMO · dati inventati",
+  "DEMO · made-up data",
+  "DEMO · datos inventados",
+  "デモ · 架空のデータ"
+ ],
+ "demo.agency.reset": [
+  "Ricomincia",
+  "Start over",
+  "Empezar de nuevo",
+  "最初からやり直す"
+ ],
+ "demo.agency.exit": [
+  "Esci dalla demo",
+  "Leave the demo",
+  "Salir de la demo",
+  "デモを終了"
+ ],
  "demo.title": [
   "Pagamento (simulato)",
   "Payment (simulated)",

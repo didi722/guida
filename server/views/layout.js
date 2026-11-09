@@ -48,7 +48,7 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
   const partner = area === 'partner' && ctx.acct?.status === 'approved'; // barra e piè di pagina dell'area agenzie
   const cart = partner ? cartCount(app.db, ctx.acct.id, ctx.actor?.userId ?? null) : 0; // servizi nel pacchetto in preparazione: la voce compare solo se ce ne sono
   const { cfg } = app;
-  const demo = app.payments.demo; // istanza di prova (pagamenti simulati): non si indicizza e lo si dice a chiare lettere
+  const demo = app.payments.demo; // istanza di prova (pagamenti simulati): non si indicizza e lo si dice a chiare lettere (la demo per le agenzie, cfg.isDemo, ha anche i tasti per ricominciare e uscire)
   noindex = noindex || demo || !!cfg.site.hideFromSearch;
   const others = LANGS.filter((l) => l !== lang);
   const canonical = `${cfg.baseUrl}${path}`;
@@ -117,7 +117,9 @@ export function page(ctx, { title, description = '', path, body, bodyClass = '',
     </div>
   </div>
   ${article ? raw('<div class="progress" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div></div>') : ''}
-  ${demo ? html`<div class="demo-note" role="note">${t('demo.siteBanner')}</div>` : ''}
+  ${cfg.isDemo
+    ? html`<div class="demo-note demo-bar" role="note"><span class="demo-long">${t('demo.agency.banner')}</span><span class="demo-short">${t('demo.agency.short')}</span><form method="post" action="/demo/reset"><button type="submit">${t('demo.agency.reset')}</button></form><a href="/demo/exit">${t('demo.agency.exit')}</a></div>`
+    : demo ? html`<div class="demo-note" role="note">${t('demo.siteBanner')}</div>` : ''}
 </header>
 
 <nav class="side-menu" id="side-menu" aria-label="${t('a11y.menu')}" hidden>

@@ -3,6 +3,7 @@ import path from 'node:path';
 import express from 'express';
 import { createConfig, ROOT } from './config.js';
 import { createContentStore } from './contentStore.js';
+import { createDemo, mountDemo } from './demo.js';
 import { MEDIA_NAME, MIME_BY_EXT } from './media.js';
 import { openDb } from './db.js';
 import { createContext } from './context.js';
@@ -45,7 +46,7 @@ function assetVersion() {
   return v.toString(36);
 }
 
-/** Crea l'applicazione. `overrides` serve ai test (cfg, content, mail, payments). */
+/** Crea l'applicazione. `overrides` serve ai test (cfg, content, mail, payments; `demo: false` per non montare la demo delle agenzie). */
 export function createApp(overrides = {}) {
   const cfg = overrides.cfg ?? createConfig();
   const db = overrides.db ?? openDb(cfg.dbFile);
@@ -55,6 +56,11 @@ export function createApp(overrides = {}) {
   const server = express();
   server.disable('x-powered-by');
   server.set('trust proxy', cfg.trustProxy);
+  // la demo per le agenzie (vedi demo.js) è un'altra applicazione, con dati finti: lo smistamento va prima di tutto il resto, e la demo stessa non ne ha una
+  if (!cfg.isDemo && overrides.demo !== false) {
+    app.demo = createDemo(app, createApp);
+    mountDemo(server, app);
+  }
   server.use(securityHeaders(app));
 
   const day = 24 * 3600 * 1000;
@@ -129,6 +135,9 @@ export function createApp(overrides = {}) {
   // libera gli slot dei pagamenti non completati
   const timer = setInterval(() => app.runJobs(), 60_000);
   timer.unref();
-  app.close = () => clearInterval(timer);
+  app.close = () => {
+    clearInterval(timer);
+    app.demo?.stop();
+  };
   return { app, server };
 }

@@ -294,6 +294,7 @@ Partner      giulia@lagoon-dmc.example  (approvato: sconto 15%, un prezzo dedica
              elena@serenissima-travel.example  (approvata, appena iscritta: al primo accesso vede il giro dell'area, poi lo rivede da «Guida e FAQ»)
              password di tutti: prova-prova-1      (Rialto Travel è "da approvare")
 Commerciale  http://localhost:${PORT}/admin/leads/today   (${sampleLeads ? `${sampleLeads} agenzie d'esempio: un richiamo scaduto, uno per oggi, una videochiamata domani, una presentazione in coda` : 'i contatti li aggiungi tu'})
+Demo agenzie http://localhost:${PORT}/admin/leads/demo   (il collegamento riservato all'area agenzie di prova: un'agenzia finta con prenotazioni e fatture)
 Codici       sconto PROVA10${giftCode ? `   ·   buono regalo ${giftCode}` : ''}
 Dati         ${path.relative(ROOT, DIR) || DIR}/   (npm run sandbox -- --reset per ricominciare)
 Ctrl+C per fermare.

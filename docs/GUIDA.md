@@ -107,6 +107,7 @@ Il pannello contiene i dati dei clienti e le fatture: oltre alla password puoi c
 | Vedere cosa è **in coda**, **mettere in pausa** l'invio o cambiare il **tetto giornaliero** | **Commerciale › Email** |
 | Fissare una **visita in azienda** o una **videochiamata** con un'agenzia (e farla comparire in agenda) | **Commerciale › Oggi › Fissa un appuntamento**, oppure dalla scheda del contatto, oppure dall'**Agenda** ([come funziona](#appuntamenti-e-agenda)) |
 | **Invitare** un'agenzia sul sito, o **creare subito il suo profilo** B2B | **Commerciale › Contatti** › tocca il contatto › **Profilo B2B sul sito** ([come funziona](#dal-contatto-allarea-b2b)) |
+| Far vedere a un'agenzia, in videochiamata, **come funziona l'area agenzie** (prenotazioni e fatture di prova) | **Commerciale › Demo** ([come funziona](#la-demo-per-le-agenzie)) |
 | **Approvare** un'agenzia, dare **sconti, prezzi e cancellazione** dedicati | **Clienti › Partner** › tocca l'agenzia |
 | **Invitare un'agenzia** che conosci con un collegamento personale (account già approvato) | **Clienti › Partner › Inviti** ([come funziona](#invitare-unagenzia)) |
 | Capire cosa succede quando il cliente di un'agenzia **accetta un preventivo online** | Ti arriva un'email; l'agenzia deve poi prenotare ([come funziona](#preventivi-online-delle-agenzie)) |
@@ -940,7 +941,7 @@ Finché non hai la Partita IVA non puoi incassare, ma puoi già prendere **appun
 
 ## 21. Commerciale: cercare agenzie e tour operator
 
-**Commerciale** è il tuo piccolo gestionale per trovare agenzie, tour operator e DMC e portarli a prenotare da te: chi sono, con chi hai parlato, quando richiamare, cosa hai scritto loro, le visite e le videochiamate fissate. Sta nel menu in alto, con quattro schede: **Oggi**, **Contatti**, **Email** e **Modelli**. È collegato all'**Agenda** (gli appuntamenti compaiono lì) e all'**area agenzie** (da un contatto puoi invitare l'agenzia sul sito o creare subito il suo profilo). Nella sandbox ([SIMULAZIONI](SIMULAZIONI.md)) trovi otto agenzie d'esempio per provare tutto senza rischi.
+**Commerciale** è il tuo piccolo gestionale per trovare agenzie, tour operator e DMC e portarli a prenotare da te: chi sono, con chi hai parlato, quando richiamare, cosa hai scritto loro, le visite e le videochiamate fissate. Sta nel menu in alto, con cinque schede: **Oggi**, **Contatti**, **Email**, **Modelli** e **Demo**. È collegato all'**Agenda** (gli appuntamenti compaiono lì) e all'**area agenzie** (da un contatto puoi invitare l'agenzia sul sito o creare subito il suo profilo). Nella sandbox ([SIMULAZIONI](SIMULAZIONI.md)) trovi otto agenzie d'esempio per provare tutto senza rischi.
 
 ### Il giro, in cinque passi
 1. **Aggiungi i contatti**: uno alla volta oppure incollando un elenco da un foglio di calcolo ([sotto](#aggiungere-contatti)).
@@ -1016,6 +1017,21 @@ Nella scheda, il riquadro **Profilo B2B sul sito** offre due strade (se l'agenzi
 - **Crea il profilo adesso**: per chi ti ha detto di sì a voce. Il sito crea subito l'account **approvato** con i dati del contatto; **nessuno conosce la password**: l'agenzia la sceglie da un collegamento (vale **7 giorni**, una volta sola) che il sito le manda per email (lo puoi togliere e copiare tu il collegamento, che si vede **solo in quel momento**). I **dati di fatturazione** li completa lei dalla sua area; finché mancano compaiono in **Agenda › Da fare**. Da subito puoi anche registrarle una prenotazione con **Registra una prenotazione di un'agenzia** (Agenda).
 
 Il collegamento tra contatto e profilo si fa **da solo**: se un'agenzia si registra (dall'invito o da sola) con lo stesso indirizzo di un tuo contatto o di un suo referente, il contatto si aggancia al profilo e diventa *Cliente* (o *In dialogo*, se aspetta la tua approvazione). Nella scheda di un partner (**Clienti › Partner**) trovi **Contatto commerciale** per saltare alla scheda commerciale, oppure **Aggiungi ai contatti commerciali** se non c'è ancora; da **Oggi**, **Aggiungile** porta tra i contatti tutte le agenzie già registrate in un colpo solo.
+
+### La demo per le agenzie
+**Commerciale › Demo** ti dà un collegamento riservato a un'**area agenzie di prova**, da mostrare in videochiamata: **Apri la demo** e sei dentro come *Laguna Viaggi (demo)*, un'agenzia inventata che ha già **prenotazioni** in tutti gli stati (confermate, pagate con carta o a fattura, opzioni, annullate, già svolte), **fatture** (una pagata, una scaduta, una stornata con la nota di credito, una da pagare), tre **preventivi** (da inviare, inviato, accettato), un collaboratore, il pacchetto in preparazione e un programma di più giorni. I tour e le tariffe sono i tuoi, quelli veri: l'agenzia vede ciò che vedrebbe da cliente. Sotto il pulsante ci sono i collegamenti in italiano, inglese, spagnolo e giapponese.
+
+- **Aprila in una finestra privata del browser.** Finché sei dentro la demo, tutto il sito in quel browser è la demo, compreso `/admin` (che lì è spento): in una finestra privata il tuo pannello vero resta aperto nell'altra.
+- In alto, su ogni pagina, c'è la fascia **«Area dimostrativa»**. **Ricomincia** cancella ciò che hai provato e riparte da capo con dati nuovi; **Esci dalla demo** torna al sito vero (da sola, dopo 8 ore, si esce).
+- Dentro puoi fare tutto: prenotare, opzionare, annullare, preparare un preventivo, scaricare il PDF di una fattura, pagare con la carta (finta). **Niente di tutto questo esiste fuori dalla demo.**
+
+**Cosa non è vero**, per costruzione (la demo è un'altra copia del sito, con il suo database in memoria):
+- Nessun dato vero: agenzie, prenotazioni, fatture e contatti si creano da zero a ogni apertura e non toccano mai le tue statistiche, l'agenda, le disponibilità o la numerazione delle fatture. Del sito vero copia **solo** tour, tariffe, testi, immagini, orari di lavoro e regole di prenotazione.
+- Nessuna email parte (né all'agenzia né a te), nessuna carta viene addebitata, nessuna fattura va a SdI.
+- Le **fatture hanno dati fiscali inventati** (partita IVA, codice fiscale, IBAN e indirizzo di chi emette) e la dicitura «documento dimostrativo, nessun valore fiscale»; resta il nome del sito.
+- Le date seguono il giorno in cui apri la demo («tra 6 giorni», «due settimane fa»): la mattina dopo si rifà da sola. Ogni riavvio del sito, o 3 ore senza usarla, la azzera.
+
+Chi ha il collegamento entra senza password: se lo hai mandato a qualcuno e non vuoi più che entri, **Crea un nuovo collegamento** (il vecchio smette di funzionare subito). La chiave non finisce nelle copie di sicurezza.
 
 ### Cosa il Commerciale non fa
 - **Non cerca le agenzie da solo** su internet e non legge la tua casella di posta: i contatti li aggiungi (o importi) tu, le risposte le registri tu.
