@@ -27,7 +27,7 @@ function oldDb() {
   return db;
 }
 
-test('database creato prima dei servizi a ore: al riavvio compaiono guida, assistente, tour leader e meet & greet (e «Calcola un preventivo» funziona)', () => {
+test('database creato prima dei servizi a ore: al riavvio compaiono guida, assistente, tour leader e meet & greet (e «Calcola il prezzo» funziona)', () => {
   const db = oldDb();
   const slugs = () => db.prepare('SELECT slug FROM content_tours').all().map((r) => r.slug);
   for (const s of ['guida-a-ore', 'assistente-a-ore', 'tour-leader', 'meet-and-greet']) assert.ok(!slugs().includes(s), `prima del recupero ${s} non c’è`);

@@ -171,10 +171,10 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
     const { anon, partner } = s;
     const page = await (await partner('/it/hourly')).text().then(nb);
     assert.match(page, /Servizi a ore per agenzie/);
-    for (const name of ['Servizio guida', 'Assistente in loco', 'Tour leader', 'Meet &amp; greet']) assert.ok(page.includes(name), name);
+    for (const name of ['Guida privata', 'Assistente in loco', 'Tour leader', 'Meet &amp; greet']) assert.ok(page.includes(name), name);
     // guida 4 ore: 300 − 15% = 255; guida 2 ore: 160 − 15% = 136 → 140; assistente 2 ore: 80 − 15% = 68 → 70 (sempre al multiplo di 5 € successivo)
     assert.match(page, /Mezza giornata · 4 ore[^]*?255 €/);
-    assert.match(page, /Servizio guida[^]*?140 €/, '160 − 15% = 136 → 140');
+    assert.match(page, /Guida privata[^]*?140 €/, '160 − 15% = 136 → 140');
     assert.match(page, /Assistente in loco[^]*?70 €/);
     assert.match(page, /Nelle fatture alle imprese|Operazione senza IVA/);
     // il menu dei servizi
@@ -182,11 +182,17 @@ test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (scont
     assert.match(page, /<option value="meet-and-greet"/);
 
     // pagina «Per agenzie» e conto del partner
-    // le tariffe per le agenzie non compaiono mai nella pagina aperta a tutti (nemmeno per un partner che la visita)
+    // nella pagina aperta a tutti c'è una sola tariffa agenzie: la guida a 2 e a 4 ore, il prezzo base (anche per un partner con lo sconto che la visita); il resto resta nell'area partner
     for (const who of [anon, partner]) {
       const landing = await (await who('/it/b2b')).text().then(nb);
-      assert.ok(!landing.includes('Le mie tariffe a ore'));
-      assert.ok(!/Assistente in loco/.test(landing) && !/id="tariffe"/.test(landing), 'nessuna tariffa agenzie nella pagina pubblica');
+      assert.match(landing, /<h2[^>]*>Le tariffe della guida per le agenzie<\/h2>/);
+      assert.match(landing, /<h3>Guida privata<\/h3>/);
+      assert.match(landing, /<th scope="row">2 ore<\/th><td>160 €<\/td>/);
+      assert.match(landing, /<th scope="row">Mezza giornata · 4 ore<\/th><td>300 €<\/td>/);
+      for (const no of ['Giornata intera', 'Ogni ora in più', 'Supplementi', '<h3>Assistente in loco</h3>', '<h3>Tour leader</h3>', '<h3>Meet &amp; greet</h3>', '140 €', '255 €']) assert.ok(!landing.includes(no), `nella pagina pubblica non deve esserci «${no}»`);
+      assert.ok(!landing.includes('Le mie tariffe a ore') && !/id="tariffe"/.test(landing));
+      assert.match(landing, /Assistente in loco, tour leader, meet &amp; greet, ore in più, supplementi e sconti dedicati li trovi nell’area partner\./);
+      assert.equal(landing.includes('href="/it/hourly"'), who === partner, '«Calcola il prezzo» è solo per chi è già dentro: a un visitatore porterebbe ai prezzi dei privati');
     }
     const account = await (await partner('/it/b2b/rates')).text().then(nb);
     assert.match(account, /Le tue tariffe/);
@@ -607,9 +613,9 @@ test('tour dal pannello: servizio a ore (prezzo dalle tariffe) e prezzo fisso, l
   try {
     const { admin } = s;
     const list = await (await admin('/admin/tours')).text().then(nb);
-    assert.match(list, /Servizio guida · a ore \(il cliente sceglie le ore\)/);
+    assert.match(list, /Guida privata · a ore \(il cliente sceglie le ore\)/);
     assert.match(list, /href="\/admin\/rates">dalle tariffe a ore/);
-    assert.match(list, /Servizio guida · a ore \(il cliente sceglie le ore\)[^]*?da 200 €/, 'il prezzo di oggi, dalla tabella');
+    assert.match(list, /Guida privata · a ore \(il cliente sceglie le ore\)[^]*?da 200 €/, 'il prezzo di oggi, dalla tabella');
     assert.match(list, /Venezia tra Oriente e Occidente[^]*?290 €/, 'durata fissa: il prezzo della tabella per 3 ore');
     const listB2b = await (await admin('/admin/tours-b2b')).text().then(nb);
     assert.match(listB2b, /Assistente in loco · a ore/);

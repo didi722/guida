@@ -2447,6 +2447,18 @@
   "Servicio anulado.",
   "サービスをキャンセルしました。"
  ],
+ "b2b.rates.title": [
+  "Le tariffe della guida per le agenzie",
+  "Guide rates for agencies",
+  "Tarifas del guía para agencias",
+  "代理店向けガイド料金"
+ ],
+ "b2b.rates.more": [
+  "Assistente in loco, tour leader, meet & greet, ore in più, supplementi e sconti dedicati li trovi nell’area partner.",
+  "Local assistant, tour leader, meet & greet, extra hours, supplements and dedicated discounts are in the partner area.",
+  "Asistente local, tour leader, meet & greet, horas extra, suplementos y descuentos a medida están en el área de socios.",
+  "現地アシスタント、ツアーリーダー、ミート＆グリート、追加時間、割増料金、専用割引はパートナーエリアでご覧いただけます。"
+ ],
  "demo.agency.banner": [
   "AREA DIMOSTRATIVA · dati inventati, nessuna email inviata, nessun pagamento reale",
   "DEMO AREA · made-up data, no emails sent, no real payments",
@@ -5820,10 +5832,10 @@
   "ご希望の日時に、公認ガイドが専属でご案内します。日付、開始時間、時間数を選んでください。グループ全体の料金がすぐに表示されます。"
  ],
  "hourly.leadB2b": [
-  "Guida, assistente, tour leader e meet & greet a tariffa oraria. Calcola il preventivo e prenota in autonomia.",
-  "Guide, assistant, tour leader and meet & greet at hourly rates. Calculate your quote and book on your own.",
-  "Guía, asistente, tour leader y meet & greet por horas. Calcula el presupuesto y reserva por tu cuenta.",
-  "ガイド、現地アシスタント、ツアーリーダー、ミート＆グリートを時間料金でご利用いただけます。見積りを計算して、ご自身で予約してください。"
+  "Guida, assistente, tour leader e meet & greet a tariffa oraria. Calcola il prezzo e prenota in autonomia.",
+  "Guide, assistant, tour leader and meet & greet at hourly rates. Calculate the price and book on your own.",
+  "Guía, asistente, tour leader y meet & greet por horas. Calcula el precio y reserva por tu cuenta.",
+  "ガイド、現地アシスタント、ツアーリーダー、ミート＆グリートを時間料金でご利用いただけます。料金を計算して、ご自身で予約してください。"
  ],
  "hourly.rates": [
   "Tariffe",
@@ -5874,10 +5886,10 @@
   "1時間延長ごと"
  ],
  "hourly.s.guide": [
-  "Servizio guida",
-  "Guide service",
-  "Servicio de guía",
-  "ガイドサービス"
+  "Guida privata",
+  "Private guide",
+  "Guía privado",
+  "プライベートガイド"
  ],
  "hourly.s.assistant": [
   "Assistente in loco",
@@ -6042,10 +6054,10 @@
   "{n}時間"
  ],
  "hourly.quote.title": [
-  "Il tuo preventivo",
-  "Your quote",
-  "Tu presupuesto",
-  "お見積り"
+  "Il tuo prezzo",
+  "Your price",
+  "Tu precio",
+  "お客様の料金"
  ],
  "hourly.quote.total": [
   "Totale",
@@ -6060,10 +6072,10 @@
   "日付を選ぶと、空いている開始時間と割増料金が表示されます。"
  ],
  "hourly.quote.estimate": [
-  "Preventivo indicativo: festivo e notturno dipendono dalla data e dall’orario di inizio.",
-  "Indicative quote: holiday and night supplements depend on the date and start time.",
-  "Presupuesto orientativo: festivo y nocturno dependen de la fecha y la hora de inicio.",
-  "概算のお見積りです。日曜・祝祭日・夜間の割増は、日付と開始時間によって決まります。"
+  "Prezzo indicativo: festivo e notturno dipendono dalla data e dall’orario di inizio.",
+  "Indicative price: holiday and night supplements depend on the date and start time.",
+  "Precio orientativo: festivo y nocturno dependen de la fecha y la hora de inicio.",
+  "概算の料金です。日曜・祝祭日・夜間の割増は、日付と開始時間によって決まります。"
  ],
  "hourly.quote.times": [
   "Scegli l’orario di inizio",
@@ -6180,16 +6192,16 @@
   "所要時間"
  ],
  "b2b.ratesCta": [
-  "Calcola un preventivo",
-  "Calculate a quote",
-  "Calcular un presupuesto",
-  "見積りを計算する"
+  "Calcola il prezzo",
+  "Calculate the price",
+  "Calcular el precio",
+  "料金を計算する"
  ],
  "b2b.ratesPartnerLead": [
-  "Sono già le tariffe con il tuo sconto. Calcola un preventivo e prenota.",
-  "These already include your discount. Calculate a quote and book.",
-  "Ya incluyen tu descuento. Calcula un presupuesto y reserva.",
-  "貴社の割引がすでに反映された料金です。見積りを計算して、ご予約ください。"
+  "Sono già le tariffe con il tuo sconto. Calcola il prezzo e prenota.",
+  "These already include your discount. Calculate the price and book.",
+  "Ya incluyen tu descuento. Calcula el precio y reserva.",
+  "貴社の割引がすでに反映された料金です。料金を計算して、ご予約ください。"
  ],
  "book.hourlyHint": [
   "Cerchi una guida tutta per te, a ore?",
@@ -6198,10 +6210,10 @@
   "専属ガイドを時間制でお探しですか？"
  ],
  "book.hourlyLink": [
-  "Calcola il preventivo",
-  "Calculate a quote",
-  "Calcular un presupuesto",
-  "見積りを計算する"
+  "Calcola il prezzo",
+  "Calculate the price",
+  "Calcular el precio",
+  "料金を計算する"
  ],
  "tours.hourlyHint": [
   "Prezzo calcolato sulle ore che scegli.",

@@ -15,6 +15,7 @@ import { LANGS, LANG_META, pick } from '../langs.js';
 import { hourOptions, minHours, openTo, rateRows } from '../rates.js';
 import { formatMoney } from '../util.js';
 import { paymentsFrom } from '../opening.js';
+import { rateCard, ratesNotes } from './hourly.js';
 
 /** Prima data prenotabile (indicativa) in base al preavviso minimo B2C. */
 export function minBookableDate(app, channel = 'b2c', nowMs = Date.now()) {
@@ -394,7 +395,9 @@ export function b2bLandingPage(ctx) {
   const { cfg, content } = app;
   const hours = fmtHours(t, cfg.policy.b2bFreeCancelHours);
   const notice = fmtHours(t, cfg.policy.b2bMinNoticeHours);
-  const canQuote = hasHourlyProducts(ctx, ctx.acct?.status === 'approved' ? 'b2b' : 'b2c'); // il calcolatore (/hourly) mostra i servizi a ore di questo visitatore: se non ce ne sono, il pulsante non si mostra
+  const partner = ctx.acct?.status === 'approved';
+  const canQuote = partner && hasHourlyProducts(ctx, 'b2b'); // il calcolatore (/hourly) è delle agenzie registrate: a chi non lo è porterebbe ai prezzi dei privati
+  const guideRates = rateCard(ctx, { service: 'guide', channel: 'b2b', onlyHours: [2, 4], extra: false }); // l'unica tariffa agenzie che si vede senza accedere: la guida a 2 e a 4 ore (il resto è nell'area partner)
   const body = html`
 <section class="hero hero-b2b">
   <div class="wrap hero-grid">
@@ -410,6 +413,17 @@ export function b2bLandingPage(ctx) {
     <div class="hero-art">${siteArt(ctx, 'b2b', 'walk', { alt: t('b2b.h1'), sizes: '(max-width: 900px) 100vw, 560px', eager: true })}</div>
   </div>
 </section>
+
+${guideRates
+  ? html`<section class="section tight">
+  <div class="wrap narrow">
+    ${sectionHead(t('b2b.rates.title'))}
+    <div class="b2b-rates">${guideRates}</div>
+    ${ratesNotes(ctx, { channel: 'b2b' })}
+    <p class="muted small center">${t('b2b.rates.more')}</p>
+  </div>
+</section>`
+  : ''}
 
 <section class="section">
   <div class="wrap">

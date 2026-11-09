@@ -42,7 +42,7 @@ export function timeLeft(t, ms) {
   return t('time.hours', { n: Math.max(1, Math.round(hours)) });
 }
 
-/** Ci sono servizi a ore prenotabili da questo canale? Se no, «Calcola un preventivo» non porterebbe da nessuna parte e il pulsante non si mostra. */
+/** Ci sono servizi a ore prenotabili da questo canale? Se no, «Calcola il prezzo» non porterebbe da nessuna parte e il pulsante non si mostra. */
 export const hasHourlyProducts = (ctx, channel) => {
   const rates = ctx.app.rates.get();
   return ctx.app.content.tours.some((x) => x.pricing === 'hourly' && openTo(rates, x, channel));

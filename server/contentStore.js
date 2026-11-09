@@ -38,7 +38,7 @@ export function seedContent(db, root) {
 /**
  * Il contenuto iniziale si importa una volta sola: un sito creato con una versione più vecchia del codice non riceverebbe
  * mai ciò che è arrivato dopo. Qui si recupera, una volta per ciascuna cosa e SENZA mai toccare ciò che c'è già:
- *  - i servizi a ore (guida, assistente, tour leader, meet & greet): senza di essi «Calcola un preventivo» non ha nulla da mostrare;
+ *  - i servizi a ore (guida, assistente, tour leader, meet & greet): senza di essi «Calcola il prezzo» non ha nulla da mostrare;
  *  - le traduzioni di una lingua arrivata dopo (blocchi di testo che nel database mancano del tutto: spagnolo, giapponese…).
  * Ritorna cosa è stato aggiunto (utile ai test e al log).
  */
