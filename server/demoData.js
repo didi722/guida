@@ -56,14 +56,13 @@ export async function seedDemoData(app, { nowMs = Date.now() } = {}) {
     }
   };
 
-  // ───── l'agenzia: approvata, con sconto, un prezzo dedicato e annullo a scaglioni ─────
+  // ───── l'agenzia: approvata, alle tariffe di listino, con annullo a scaglioni ─────
   const rates = app.rates.get();
   const tours = content.tours.filter((t) => t.active && openTo(rates, t, 'b2b'));
   const fixed = tours.filter((t) => t.pricing !== 'hourly');
   const perPerson = fixed.filter((t) => t.model === 'person');
   const hourlyChoose = tours.filter((t) => t.pricing === 'hourly' && t.chooseHours);
   const hourlyFixed = tours.filter((t) => t.pricing === 'hourly' && !t.chooseHours);
-  const dedicated = perPerson[0] ?? fixed[0];
   const password = await hashPassword(crypto.randomBytes(24).toString('hex')); // nessuno la conosce: si entra solo dal link riservato
   const row = {
     ...DEMO_AGENCY,
@@ -71,8 +70,8 @@ export async function seedDemoData(app, { nowMs = Date.now() } = {}) {
     status: 'approved',
     approved_at: iso,
     allow_invoice: 1,
-    discount_percent: 10,
-    prices_json: dedicated ? JSON.stringify({ [dedicated.slug]: Math.round((dedicated.priceCents * 0.85) / 100) * 100 }) : null,
+    discount_percent: 0, // nessuno sconto né prezzi dedicati: l'agenzia di prova vede le tariffe che vedranno le aziende vere
+    prices_json: null,
     cancel_policy_json: JSON.stringify([{ hours: 168, refund: 100 }, { hours: 72, refund: 50 }]),
     admin_notes: 'Agenzia dimostrativa: tutti i dati sono inventati.',
     tutorial_done_at: iso,
