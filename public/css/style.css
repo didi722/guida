@@ -647,6 +647,18 @@ body.admin { --header-h: 64px; }
 /* Istanza di prova (pagamenti simulati) */
 .site-header .demo-note { position: absolute; top: 100%; left: 0; right: 0; background: #1c1c1c; color: #d6bb51; text-align: center; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.05em; padding: 4px 12px; pointer-events: none; }
 
+/* Area agenzie: la panoramica con le tre cose da fare, e «La tua agenzia» */
+.home-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 4px 0 6px; }
+.home-card { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.home-card h2 { margin: 0; font-size: 1.15rem; }
+.home-card p { margin: 0; }
+.home-card .notice { width: 100%; }
+.home-card .btn { margin-top: auto; }
+.home-card-main { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.home-card .tone-late { color: #b3261e; }
+.home-more { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 14px 0 24px; font-weight: 700; }
+@media (max-width: 800px) { .home-actions { grid-template-columns: minmax(0, 1fr); } }
+
 /* Demo per le agenzie: la fascia in alto ha anche i tasti «Ricomincia» e «Esci» */
 .site-header .demo-note.demo-bar { pointer-events: auto; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 2px 18px; }
 .demo-bar form { margin: 0; display: inline; }

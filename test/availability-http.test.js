@@ -188,7 +188,7 @@ test('i collegamenti: schede in «Nuova prenotazione», pulsante nella panoramic
     const book = await text(await pa('/it/book'));
     assert.match(book, /<nav class="tabs"[^>]*><a href="\/it\/book" aria-current="page">Cerca per data<\/a><a href="\/it\/b2b\/availability" >Date libere<\/a><\/nav>/);
     const home = await text(await pa('/it/b2b/account'));
-    assert.match(home, /href="\/it\/b2b\/availability">Date libere<\/a>/);
+    assert.doesNotMatch(home, /b2b\/availability/, 'la panoramica non ha più un pulsante a parte: «Date libere» sta dentro «Nuova prenotazione»');
     // nessuna disponibilità per quella data: il rimando al calendario porta alla pagina giusta
     const D = day(45);
     holdDay(app, b, D);

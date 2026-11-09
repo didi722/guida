@@ -98,7 +98,12 @@ test('pagina Logo e documenti: valori di partenza, salvataggio, ricarico non val
     assert.match(badPage, /value="Mai salvato"/, 'quel che si era scritto resta nel modulo');
     assert.equal(app.db.prepare('SELECT doc_name FROM accounts WHERE id = ?').get(a.id).doc_name, 'Lagoon Travel');
     for (const lang of ['en', 'es', 'ja']) assert.equal((await pa(`/${lang}/b2b/documents`)).status, 200, lang);
-    assert.match(await text(await pa('/it/b2b/account')), /href="\/it\/b2b\/documents">Logo e documenti<\/a>/);
+    // dalla panoramica si arriva da «La tua agenzia», che raccoglie logo e documenti, team e dati di fatturazione
+    assert.match(await text(await pa('/it/b2b/account')), /href="\/it\/b2b\/agency">La tua agenzia<\/a>/);
+    const hub = await text(await pa('/it/b2b/agency'));
+    assert.match(hub, /href="\/it\/b2b\/documents">Apri<\/a>/);
+    assert.match(hub, /<h2>Logo e documenti<\/h2>/);
+    assert.match(await text(await pa('/it/b2b/documents')), /<a href="\/it\/b2b\/agency">La tua agenzia<\/a>/, 'la pagina ha la briciola verso «La tua agenzia»');
   } finally {
     s.close();
   }

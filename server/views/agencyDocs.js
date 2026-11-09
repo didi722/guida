@@ -15,7 +15,7 @@ export function documentsPage(ctx, { acct, profile, hasLogo, flash = '', error =
   const logo = hasLogo ? getLogo(app.db, acct.id) : null;
   const body = html`
 <section class="page-head"><div class="wrap narrow">
-  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('docs.title')]])}
+  ${breadcrumbs(ctx, [homeCrumb(ctx), [t('home.agency'), u('/b2b/agency')], [t('docs.title')]])}
   <h1>${t('docs.title')}</h1><p class="lead">${t('docs.lead')}</p>
 </div></section>
 <section class="section tight"><div class="wrap narrow">

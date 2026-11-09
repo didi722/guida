@@ -383,3 +383,27 @@ test('la demo non si porta fuori: la chiave non finisce nelle copie di sicurezza
     s.close();
   }
 });
+
+test('panoramica dell’agenzia: tre schede (prenotare, prenotazioni, fatture) con i numeri veri; team, logo e fatturazione stanno in «La tua agenzia»', async () => {
+  const s = await start();
+  try {
+    const demo = s.jar();
+    await demo(`/demo?k=${s.app.demo.key()}&lang=it`);
+    const page = await (await demo('/it/b2b/account')).text();
+    assert.match(page, /<h2>Prenota o opziona<\/h2>/);
+    assert.match(page, /<h2>Le tue prenotazioni<\/h2>/);
+    assert.match(page, /<h2>Fatture e pagamenti<\/h2>/);
+    assert.match(page, /In arrivo: \d+/);
+    assert.match(page, /Opzioni aperte: 2/);
+    assert.match(page, /Scaduto da pagare: 422/, 'la fattura scaduta di 422 € si vede subito, senza aprire le fatture');
+    assert.match(page, /class="btn btn-gold" href="\/it\/b2b\/invoices"/, 'con una fattura scaduta il pulsante delle fatture è quello in evidenza');
+    for (const sparito of ['b2b/availability', 'b2b/team', 'b2b/billing', 'b2b/documents']) assert.doesNotMatch(page, new RegExp(sparito), `${sparito} non è più un pulsante della panoramica`);
+    for (const rimasto of ['/it/book', '/it/b2b/bookings', '/it/b2b/invoices', '/it/b2b/quotes', '/it/b2b/agency', '/it/b2b/help']) assert.ok(page.includes(`href="${rimasto}"`), rimasto);
+    const hub = await (await demo('/it/b2b/agency')).text();
+    for (const link of ['/it/b2b/billing', '/it/b2b/team', '/it/b2b/documents']) assert.ok(hub.includes(`href="${link}"`), link);
+    assert.match(hub, /Collaboratori: 1/);
+    for (const sub of ['team', 'billing', 'documents']) assert.ok((await (await demo(`/it/b2b/${sub}`)).text()).includes('<a href="/it/b2b/agency">La tua agenzia</a>'), `${sub}: la briciola porta a «La tua agenzia»`);
+  } finally {
+    s.close();
+  }
+});
