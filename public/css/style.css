@@ -405,6 +405,7 @@ html[lang='es'] .cal-title { text-transform: none; } html[lang='es'] .cal-title:
 /* ───────── Prenota / checkout ───────── */
 .search-card { display: grid; grid-template-columns: 1fr 0.55fr 1.2fr auto; gap: 14px; align-items: end; }
 .search-card .field { margin: 0; } .search-card .btn { height: var(--control-h); }
+.search-card.has-hours { grid-template-columns: 1fr 0.55fr 1.2fr 0.75fr auto; }
 .search-card .kinds { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 24px; border: 0; padding: 0; margin: 0; } .search-card .kinds .check { margin: 4px 0; }
 .option-box { margin-top: 18px; padding: 16px 18px; border: 1.5px dashed var(--bronze); border-radius: 12px; background: var(--soft); } .option-box h3 { font-size: 1.05rem; margin: 0 0 6px; } .option-box p { margin: 0 0 12px; font-size: 0.95rem; color: var(--muted); }
 .option-note { margin: 12px 0 0; }

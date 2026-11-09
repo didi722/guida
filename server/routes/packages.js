@@ -58,6 +58,12 @@ export function packagesRouter(app) {
     res.redirect(303, `/${req.lang}/b2b/package?flash=removed`);
   });
 
+  // «Svuota il pacchetto»: tutti i servizi in preparazione (non prenota nulla e non tocca i preventivi già fatti)
+  r.post('/b2b/package/clear', needPartner, form, (req, res) => {
+    cartClear(db, req.acct.id, uid(req));
+    res.redirect(303, `/${req.lang}/b2b/package?flash=cleared`);
+  });
+
   // prenota (o opziona) tutti i servizi insieme
   r.post('/b2b/package', needPartner, form, async (req, res) => {
     const ctx = res.locals.ctx;

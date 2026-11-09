@@ -19,11 +19,11 @@ import { breadcrumbs, fmtDuration, homeCrumb, hoursLabel, langOptions, timeLeft,
 const checkoutScript = (ctx) => raw(`<script src="/js/checkout.js?v=${ctx.app.assetVersion}" defer></script>`);
 
 /** Messaggi che le azioni sul pacchetto possono lasciare al ritorno sulla sua pagina. */
-const FLASH = ['confirmed', 'released', 'expired', 'error', 'cancelled', 'cancelPartial', 'cancel-error', 'new', 'extension-sent', 'extension-error'];
+const FLASH = ['confirmed', 'released', 'expired', 'error', 'cancelled', 'cancelPartial', 'cancel-error', 'new', 'extension-sent', 'extension-error', 'option-released', 'line-cancelled'];
 
 // ───────────────────────── Il pacchetto in preparazione ─────────────────────────
 /**
- * summary: vedi cartSummary · values: i dati già scritti nel modulo (se si torna con un errore) · error: messaggio · flash: 'added' | 'removed'
+ * summary: vedi cartSummary · values: i dati già scritti nel modulo (se si torna con un errore) · error: messaggio · flash: 'added' | 'removed' | 'cleared'
  */
 export function packageCartPage(ctx, { acct, summary, values = {}, error = '', flash = '' }) {
   const { t, lang, u, app } = ctx;
@@ -59,12 +59,13 @@ export function packageCartPage(ctx, { acct, summary, values = {}, error = '', f
     <div class="btn-row"><a class="btn btn-outline btn-lg" href="${u('/book')}">${t('pkg.addAnother')}</a>${lines.length ? html`<a class="btn btn-outline btn-lg" href="${u('/b2b/quotes/new')}">${t('quotes.fromCart')}</a>` : ''}</div></div>
 </div></section>
 <section class="section tight"><div class="wrap">
-  ${flash === 'added' || flash === 'removed' ? html`<div class="notice notice-ok" role="status">${t(`pkg.flash.${flash}`)}</div>` : ''}
+  ${['added', 'removed', 'cleared'].includes(flash) ? html`<div class="notice notice-ok" role="status">${t(`pkg.flash.${flash}`)}</div>` : ''}
   ${error ? html`<div class="notice notice-err" role="alert">${error}</div>` : ''}
   ${lines.length
     ? html`<div class="table-wrap card"><table class="table table-stack partner-table"><thead><tr><th>${t('s.service')}</th><th>${t('s.date')}</th><th class="num">${t('s.guests')}</th><th class="num">${t('s.total')}</th><th><span class="sr-only">${t('partner.col.actions')}</span></th></tr></thead><tbody>${rows}</tbody>
         <tfoot><tr><th colspan="3">${t('pkg.total')}</th><th class="num">${money(summary.totalCents)}</th><th></th></tr></tfoot></table></div>
       ${ready ? '' : html`<div class="notice notice-err" role="alert">${t('pkg.err.stale')}</div>`}
+      ${lines.length > 1 ? html`<form method="post" action="${u('/b2b/package/clear')}" class="clear-form" data-confirm="${t('pkg.clearAsk')}"><button class="btn btn-link-danger btn-sm" type="submit">${t('pkg.clear')}</button></form>` : ''}
       <form class="card pad form spaced" method="post" action="${u('/b2b/package')}" id="checkout-form">
         <h2>${t('pkg.details')}</h2>
         <div class="form-grid">
@@ -141,18 +142,21 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
 <section class="section tight"><div class="wrap narrow">
   <div class="card pad">
     <p class="ref-line"><span class="muted">${t('s.ref')}</span> <strong class="ref">${group.ref}</strong>${group.client_ref ? html` · <span class="muted">${t('f.clientRef')}</span> <strong>${group.client_ref}</strong>` : ''}${owner && group.booked_by_name ? html` · <span class="muted">${t('partner.by', { name: group.booked_by_name })}</span>` : ''}</p>
-    <div class="table-wrap"><table class="table table-stack partner-table"><thead><tr><th>${t('s.service')}</th><th>${t('s.date')}</th><th class="num">${t('s.guests')}</th><th>${t('b2b.state')}</th><th class="num">${t('s.total')}</th></tr></thead><tbody>
+    <div class="table-wrap"><table class="table table-stack partner-table"><thead><tr><th>${t('s.service')}</th><th>${t('s.date')}</th><th class="num">${t('s.guests')}</th><th>${t('b2b.state')}</th><th class="num">${t('s.total')}</th><th><span class="sr-only">${t('pkg.line.cancel')}</span></th></tr></thead><tbody>
       ${bookings.map((b) => {
         const tour = app.content.tour(b.tour_slug);
+        const lineForm = (action, ask, label) => html`<form method="post" action="/${lang}/booking/${b.ref}/${action}" data-confirm="${ask}"><input type="hidden" name="t" value="${b.token}"><input type="hidden" name="next" value="${u(owner ? `/b2b/packages/${group.ref}` : `/packages/${group.ref}`) + (owner ? '' : q)}"><button class="btn btn-link-danger btn-sm" type="submit">${label}</button></form>`;
+        const lineAction = b.status === 'option' ? lineForm('option/release', t('pkg.line.releaseAsk'), t('pkg.line.release')) : b.status === 'confirmed' && !isDone(b) && cancellationState(b).percent > 0 ? lineForm('cancel', t('pkg.line.cancelAsk'), t('pkg.line.cancel')) : '';
         return html`<tr class="pb-${b.status}">
           <td data-label="${t('s.service')}"><a class="pb-title" href="${lineUrl(b)}">${tour?.i18n[lang].title ?? b.tour_slug}</a><small class="muted">${b.ref}</small></td>
           <td data-label="${t('s.date')}"><strong>${fmtDate(b.date, lang, 'short')}</strong><small class="muted">${b.start_time}–${b.end_time}</small></td>
           <td class="num" data-label="${t('s.guests')}">${partyCompact(partyOfBooking(b))}</td>
           <td data-label="${t('b2b.state')}"><span class="chip ${bookingStatusChip(b)}">${bookingStatusText(t, b)}</span>${b.status === 'confirmed' && !isDone(b) ? html`<small class="muted">${cancelCell(b)}</small>` : ''}</td>
           <td class="num" data-label="${t('s.total')}">${money(b.total_cents - (b.gift_cents ?? 0), b.currency)}</td>
+          <td class="pb-actions"><div class="pb-actions-in">${lineAction}</div></td>
         </tr>`;
       })}
-    </tbody><tfoot><tr><th colspan="4">${t('pkg.total')}</th><th class="num">${money(packageTotal(bookings))}</th></tr></tfoot></table></div>
+    </tbody><tfoot><tr><th colspan="4">${t('pkg.total')}</th><th class="num">${money(packageTotal(bookings))}</th><th></th></tr></tfoot></table></div>
     <dl class="summary-list">
       <div><dt>${t('s.name')}</dt><dd>${group.name} · ${group.email}${group.phone ? ' · ' + group.phone : ''}</dd></div>
       ${group.notes ? html`<div><dt>${t('f.notes')}</dt><dd>${group.notes}</dd></div>` : ''}

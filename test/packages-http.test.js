@@ -183,6 +183,77 @@ test('opzione del pacchetto: una sola pagina, una sola scadenza; conferma a fatt
   }
 });
 
+test('«Svuota il pacchetto»: compare con due o più servizi, li toglie tutti e non tocca i preventivi né il pacchetto dei colleghi', async () => {
+  const s = await start();
+  try {
+    const { partner, anon, app } = s;
+    await partner('/it/b2b/package/add', form(TOUR()));
+    assert.doesNotMatch(await text(await partner('/it/b2b/package')), /Svuota il pacchetto/, 'con un solo servizio basta «Togli»');
+    await partner('/it/b2b/package/add', form(HOURLY()));
+    const cart = await text(await partner('/it/b2b/package'));
+    assert.match(cart, /<form method="post" action="\/it\/b2b\/package\/clear" class="clear-form" data-confirm="[^"]+"><button[^>]*>Svuota il pacchetto<\/button>/);
+    assert.equal(loc(await anon('/it/b2b/package/clear', form({}))).includes('/b2b/login'), true, 'senza accesso non si svuota nulla');
+    const res = await partner('/it/b2b/package/clear', form({}));
+    assert.equal(res.status, 303);
+    assert.equal(loc(res), '/it/b2b/package?flash=cleared');
+    assert.equal(app.db.prepare('SELECT COUNT(*) n FROM cart_items').get().n, 0);
+    assert.match(await text(await partner(loc(res))), /Pacchetto svuotato\./);
+  } finally {
+    s.close();
+  }
+});
+
+test('pacchetto prenotato: ogni servizio ha il suo «Togli» (opzione) o «Annulla» (confermato), e si torna alla pagina del pacchetto; con il link dell’email come dall’area riservata', async () => {
+  const s = await start();
+  try {
+    const { partner, anon, app } = s;
+    await partner('/it/b2b/package/add', form(TOUR()));
+    await partner('/it/b2b/package/add', form(HOURLY()));
+    const res = await partner('/it/b2b/package', form({ ...DETAILS(), action: 'option' }));
+    const [, ref, token] = groupRef(res);
+    const rows = () => app.db.prepare('SELECT * FROM bookings WHERE group_id = (SELECT id FROM booking_groups WHERE ref = ?) ORDER BY start_time').all(ref);
+    const [first, second] = rows();
+
+    // opzione: un «Togli» per servizio, nella pagina dell'agenzia e in quella del link; restano «Conferma» e «Rilascia le date» per tutto il pacchetto
+    const own = await text(await partner(`/it/b2b/packages/${ref}`));
+    for (const b of [first, second]) assert.ok(own.includes(`action="/it/booking/${b.ref}/option/release"`), `Togli per ${b.ref}`);
+    assert.match(own, /<input type="hidden" name="next" value="\/it\/b2b\/packages\/PT-[A-Z0-9]{6}">/);
+    assert.match(own, /Conferma il pacchetto/);
+    assert.match(own, /Rilascia le date/);
+    const viaLink = await text(await anon(`/it/packages/${ref}?t=${token}`));
+    assert.ok(viaLink.includes(`<input type="hidden" name="next" value="/it/packages/${ref}?t=${token}">`), 'col link dell’email si torna al link');
+
+    // si toglie un solo servizio: la sua data si libera, l'altro resta in opzione
+    const out = await partner(`/it/booking/${first.ref}/option/release`, form({ t: first.token, next: `/it/b2b/packages/${ref}` }));
+    assert.equal(loc(out), `/it/b2b/packages/${ref}?flash=option-released`);
+    assert.deepEqual(rows().map((b) => b.status), ['expired', 'option']);
+    const after = await text(await partner(loc(out)));
+    assert.match(after, /Servizio tolto dal pacchetto: la data è tornata libera\./);
+    assert.ok(!after.includes(`action="/it/booking/${first.ref}/option/release"`), 'il servizio tolto non ha più il pulsante');
+    assert.ok(after.includes(`action="/it/booking/${second.ref}/option/release"`));
+
+    // conferma di ciò che resta, poi annullo di un solo servizio (dentro il periodo gratuito)
+    await anon(`/it/packages/${ref}/confirm`, form({ t: token, method: 'invoice' }));
+    assert.deepEqual(rows().map((b) => b.status), ['expired', 'confirmed']);
+    const confirmed = await text(await anon(`/it/packages/${ref}?t=${token}`));
+    assert.ok(confirmed.includes(`action="/it/booking/${second.ref}/cancel"`), 'Annulla per il servizio confermato');
+    assert.ok(!confirmed.includes('/option/release'), 'niente più «Togli»: non ci sono opzioni');
+    const gone = await anon(`/it/booking/${second.ref}/cancel`, form({ t: 'sbagliato', next: `/it/packages/${ref}?t=${token}` }));
+    assert.equal(gone.status, 404, 'serve il codice del servizio');
+    const done = await anon(`/it/booking/${second.ref}/cancel`, form({ t: second.token, next: `/it/packages/${ref}?t=${token}` }));
+    assert.equal(loc(done), `/it/packages/${ref}?t=${token}&flash=line-cancelled`);
+    assert.deepEqual(rows().map((b) => b.status), ['expired', 'cancelled']);
+    assert.match(await text(await anon(loc(done))), /Servizio annullato\./);
+    // il ritorno è solo dentro il sito: un indirizzo esterno si ignora
+    const away = await anon(`/it/booking/${second.ref}/cancel`, form({ t: second.token, next: 'https://altro.example/' }));
+    assert.ok(!loc(away).includes('altro.example'));
+    // senza «next» (dalla pagina del servizio) il ritorno è quello di sempre
+    assert.match(loc(await anon(`/it/booking/${second.ref}/cancel`, form({ t: second.token }))), new RegExp(`/it/booking/${second.ref}\\?t=.*flash=cancel-error`));
+  } finally {
+    s.close();
+  }
+});
+
 test('rilascio dell’opzione dal pacchetto: tutte le date tornano libere; un secondo clic non dà errore', async () => {
   const s = await start();
   try {

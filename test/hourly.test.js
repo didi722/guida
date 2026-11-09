@@ -127,6 +127,44 @@ test('servizi a ore: il pubblico vede la guida a ore con le tariffe al pubblico,
   }
 });
 
+test('agenzie, ricerca per data: per un servizio a durata libera compare il menu della durata, con prezzo esatto, orari per quelle ore e il collegamento al pagamento con le ore scelte', async () => {
+  const s = await start();
+  try {
+    const date = plainDay();
+    const base = `/it/book?date=${date}&pax=5`;
+    // senza scegliere il servizio: nessun menu visibile, il prezzo è «da» e resta il rimando alle altre durate
+    const all = await (await s.partner(base)).text().then(nb);
+    assert.match(all, /<div class="field" data-hours-field hidden>/);
+    assert.match(all, /data-hours-for="guida-a-ore-agenzie"[^>]*hidden disabled/, 'il menu non parte con il modulo se il servizio non è scelto');
+    assert.match(all, /da 140 €/);
+    assert.match(all, /Altre durate e orari/);
+    assert.match(all, /src="\/js\/book-hours\.js\?v=/);
+
+    // con il servizio: il menu c'è, parte dal minimo (2 ore) e il prezzo è quello esatto (guida 2 ore con lo sconto del 15%: 140 €)
+    const two = await (await s.partner(`${base}&tour=guida-a-ore-agenzie`)).text().then(nb);
+    assert.doesNotMatch(two, /<div class="field" data-hours-field hidden>/);
+    assert.match(two, /<select name="hours" data-hours-for="guida-a-ore-agenzie"[^>]*>\s*<option value="2" selected>2 ore<\/option>/);
+    for (const h of ['2.5', '3', '4', '8']) assert.match(two, new RegExp(`<option value="${h}"`), `${h} ore tra le scelte`);
+    assert.doesNotMatch(two, /da 140 €/, 'con la durata scelta il prezzo non è «da»');
+    assert.match(two, /140 € · 2 ore/);
+    assert.doesNotMatch(two, /Altre durate e orari/, 'il rimando non serve: la durata si sceglie qui');
+
+    // 4 ore: prezzo di mezza giornata (300 − 15% = 255), il menu resta su 4 ore e il collegamento porta al pagamento con le ore scelte
+    const four = await (await s.partner(`${base}&tour=guida-a-ore-agenzie&hours=4`)).text().then(nb);
+    assert.match(four, /255 € · 4 ore · Orari liberi per 4 ore/);
+    assert.match(four, /<option value="4" selected>4 ore<\/option>/);
+    assert.match(four, /href="\/it\/book\/checkout\?tour=guida-a-ore-agenzie&amp;date=[^"]*&amp;pax=5&amp;hours=4"/);
+    // una durata non valida si ignora (minimo del servizio)
+    const bad = await (await s.partner(`${base}&tour=guida-a-ore-agenzie&hours=1`)).text().then(nb);
+    assert.match(bad, /140 € · 2 ore/);
+    // l'orario libero per 4 ore non è più largo di quello per 2: le fasce si accorciano a fine giornata
+    const slotsOf = (html) => [...html.matchAll(/class="slot"[^>]*><strong>(\d\d:\d\d)</g)].map((m) => m[1]);
+    assert.ok(slotsOf(four).length > 0 && slotsOf(four).length <= slotsOf(two).length, 'meno orari (o gli stessi) con più ore');
+  } finally {
+    s.close();
+  }
+});
+
 test('servizi a ore: i partner vedono tutti i servizi con le loro tariffe (sconto compreso); i servizi per agenzie sono chiusi al pubblico', async () => {
   const s = await start();
   try {

@@ -141,6 +141,8 @@ test('dati d’esempio: agenzia approvata con prenotazioni in tutti gli stati e 
     assert.ok(db.prepare("SELECT COUNT(*) AS n FROM bookings WHERE booked_by_name = 'Marco Verdi'").get().n > 0, 'qualcuna è del collaboratore');
     assert.deepEqual(db.prepare('SELECT status FROM quotes ORDER BY id').all().map((q) => q.status), ['sent', 'approved', 'draft'], 'preventivi: inviato, accettato, da inviare');
     assert.equal(db.prepare('SELECT COUNT(*) AS n FROM programs').get().n, 1);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM booking_groups').get().n, 1, 'un pacchetto prenotato');
+    assert.deepEqual(db.prepare("SELECT status FROM bookings WHERE group_id IS NOT NULL").all().map((b) => b.status), ['option', 'option'], 'due servizi in opzione');
 
     const today = nowRome().date;
     const invs = db.prepare("SELECT * FROM invoices ORDER BY seq").all();
@@ -394,7 +396,7 @@ test('panoramica dell’agenzia: tre schede (prenotare, prenotazioni, fatture) c
     assert.match(page, /<h2>Le tue prenotazioni<\/h2>/);
     assert.match(page, /<h2>Fatture e pagamenti<\/h2>/);
     assert.match(page, /In arrivo: \d+/);
-    assert.match(page, /Opzioni aperte: 2/);
+    assert.match(page, /Opzioni aperte: 3/, 'due opzioni singole e un pacchetto in opzione');
     assert.match(page, /Scaduto da pagare: 422/, 'la fattura scaduta di 422 € si vede subito, senza aprire le fatture');
     assert.match(page, /class="btn btn-gold" href="\/it\/b2b\/invoices"/, 'con una fattura scaduta il pulsante delle fatture è quello in evidenza');
     for (const sparito of ['b2b/availability', 'b2b/team', 'b2b/billing', 'b2b/documents']) assert.doesNotMatch(page, new RegExp(sparito), `${sparito} non è più un pulsante della panoramica`);
