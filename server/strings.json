@@ -6785,6 +6785,12 @@
   "Descargar la lista (CSV)",
   "一覧をダウンロード（CSV）"
  ],
+ "partner.exportXlsx": [
+  "Scarica l’elenco per Excel (.xlsx)",
+  "Download the list for Excel (.xlsx)",
+  "Descargar la lista para Excel (.xlsx)",
+  "一覧をExcel用にダウンロード（.xlsx）"
+ ],
  "partner.results.none": [
   "Nessuna prenotazione corrisponde alla ricerca.",
   "No booking matches your search.",
@@ -9677,11 +9683,17 @@
   "Descargar PDF",
   "PDFをダウンロード"
  ],
+ "stmt.xlsx": [
+  "Scarica per Excel (.xlsx)",
+  "Download for Excel (.xlsx)",
+  "Descargar para Excel (.xlsx)",
+  "Excel用にダウンロード（.xlsx）"
+ ],
  "stmt.csv": [
-  "Scarica per il foglio di calcolo (CSV)",
-  "Download for spreadsheet (CSV)",
-  "Descargar para hoja de cálculo (CSV)",
-  "表計算用にダウンロード（CSV）"
+  "Scarica in CSV",
+  "Download as CSV",
+  "Descargar en CSV",
+  "CSVでダウンロード"
  ],
  "stmt.opening": [
   "Saldo iniziale",

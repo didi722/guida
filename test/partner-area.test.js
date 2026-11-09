@@ -13,6 +13,9 @@ import { openDb } from '../server/db.js';
 import { createDrafts, invoiceDetail, issueInvoice, saveDraft } from '../server/invoices.js';
 import { createProgramRequest, markQuoted, saveProposal } from '../server/programs.js';
 import { addDays, nowRome } from '../server/time.js';
+import { openZip } from '../server/zipread.js';
+import { dateSerial } from '../server/xlsx.js';
+import os from 'node:os';
 import { addAccount, isPdf } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
@@ -299,6 +302,30 @@ test('area agenzie: esportazione dell’elenco in CSV (solo le proprie pratiche,
     const only = (await (await f('/it/b2b/bookings.csv?q=rossi')).text()).trim().split('\r\n');
     assert.equal(only.length, 2);
     assert.match(Buffer.from(await (await f('/en/b2b/bookings.csv')).arrayBuffer()).toString('utf8').slice(1), /^Reference;/);
+
+    // lo stesso elenco per Excel (.xlsx): date e importi veri, anche qui con il filtro e solo le proprie pratiche
+    const list = nb(await (await f('/it/b2b/bookings?view=all')).text());
+    assert.match(list, /<span class="tabs-export small"><a href="\/it\/b2b\/bookings\.xlsx\?view=all">Scarica l’elenco per Excel \(\.xlsx\)<\/a> · <a href="\/it\/b2b\/bookings\.csv\?view=all">Scarica l’elenco \(CSV\)<\/a><\/span>/);
+    const xl = await f('/it/b2b/bookings.xlsx?view=all');
+    assert.equal(xl.status, 200);
+    assert.equal(xl.headers.get('content-type'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    assert.match(xl.headers.get('content-disposition'), /attachment; filename="prenotazioni\.xlsx"/);
+    assert.equal(xl.headers.get('cache-control'), 'private, no-store');
+    const file = path.join(os.tmpdir(), `prenotazioni-${process.pid}-${Date.now()}.xlsx`);
+    fs.writeFileSync(file, Buffer.from(await xl.arrayBuffer()));
+    const zip = await openZip(file);
+    const sheet = (await zip.read(zip.entries.find((e) => e.name === 'xl/worksheets/sheet1.xml'), 1 << 24)).toString('utf8');
+    await zip.close();
+    fs.rmSync(file, { force: true });
+    assert.equal((sheet.match(/<row /g) ?? []).length, 3, 'intestazione + 2 pratiche');
+    assert.match(sheet, /<c r="A1" t="inlineStr" s="1"><is><t>Codice<\/t><\/is><\/c>/);
+    for (const n of [10, 12]) assert.match(sheet, new RegExp(`<c r="E[23]" s="2"><v>${dateSerial(day(n))}</v></c>`), `la data del servizio (${n} giorni) è una data`);
+    assert.match(sheet, /<c r="G[23]"><v>2<\/v><\/c><c r="H[23]"><v>0<\/v><\/c>/, 'persone e bambini sono numeri');
+    assert.match(sheet, /<c r="L[23]" s="3"><v>\d+\.\d\d<\/v><\/c>/, 'il totale è un importo');
+    assert.ok(!sheet.includes('Gruppo Altrui'), 'solo le pratiche dell’agenzia');
+    assert.match(sheet, /<t xml:space="preserve">=HYPERLINK\(&quot;http:\/\/evil\.example&quot;\)<\/t>/, 'una formula resta un testo: nel file non si calcola nulla');
+    assert.equal((await s.anon('/it/b2b/bookings.xlsx')).status, 302, 'serve l’accesso');
+    assert.equal((await f('/it/b2b/bookings.xlsx?q=rossi')).status, 200);
   } finally {
     s.close();
   }

@@ -4,7 +4,12 @@ import assert from 'node:assert/strict';
 import { cancelBooking, confirmPaid, createBooking } from '../server/bookings.js';
 import { createCreditNote, createDrafts, getInvoice, invoiceDetail, issueInvoice, saveDraft } from '../server/invoices.js';
 import { invoiceDue, openPartsCents } from '../server/invoicePayments.js';
-import { ledger, lastDayOf, normMonth, statementCsv, statementOf, statementRange } from '../server/statement.js';
+import { ledger, lastDayOf, normMonth, statementCsv, statementOf, statementRange, statementXlsx } from '../server/statement.js';
+import { dateSerial, xlsxBuffer } from '../server/xlsx.js';
+import { openZip } from '../server/zipread.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { localToInstant } from '../server/time.js';
 import { addAccount, base, makeApp, NOW } from './helpers.js';
 
@@ -312,5 +317,70 @@ test('CSV: saldo iniziale, movimenti con segno e saldo progressivo, saldo finale
     `2027-01-20;'=Incasso ${inv.number};"bonifico; ""grazie""";;-56,00;0,00`,
     '2027-01-31;Saldo finale;;;;0,00',
   ]);
+  app.cleanup();
+});
+
+/** Il contenuto di un .xlsx (uno zip): nome del file → testo. */
+async function sheetFiles(buf) {
+  const file = path.join(os.tmpdir(), `xlsx-${process.pid}-${Math.random().toString(36).slice(2)}.xlsx`);
+  fs.writeFileSync(file, buf);
+  try {
+    const zip = await openZip(file);
+    const out = {};
+    for (const e of zip.entries) out[e.name] = (await zip.read(e, 1 << 24)).toString('utf8');
+    await zip.close();
+    return out;
+  } finally {
+    fs.rmSync(file, { force: true });
+  }
+}
+
+test('Excel: date e importi veri (non testo), colonne larghe quanto serve, intestazione bloccata; i testi con simboli XML non rompono il file', async () => {
+  assert.equal(dateSerial('2026-11-09'), 46335);
+  assert.equal(dateSerial('1900-03-01'), 61);
+  assert.equal(dateSerial('2027-01-05') - dateSerial('2027-01-01'), 4);
+  assert.equal(dateSerial('boh'), null);
+  assert.equal(dateSerial(''), null);
+
+  const buf = await xlsxBuffer({
+    sheet: 'Estratto: 2027/01 [prova]',
+    columns: [{ title: 'Data', type: 'date' }, { title: 'Documento' }, { title: 'Importo', type: 'money' }],
+    rows: [['2027-01-05', 'Gruppo "Rossi" & C. <ok> \u0001\u0007', 5600], ['non una data', '', null], ['', 'Un testo molto più lungo di tutti gli altri nella stessa colonna', -1234]],
+  });
+  assert.deepEqual([...buf.subarray(0, 2)], [0x50, 0x4b], 'è uno zip');
+  const files = await sheetFiles(buf);
+  assert.deepEqual(Object.keys(files).sort(), ['[Content_Types].xml', '_rels/.rels', 'xl/_rels/workbook.xml.rels', 'xl/styles.xml', 'xl/workbook.xml', 'xl/worksheets/sheet1.xml']);
+  assert.match(files['xl/workbook.xml'], /<sheet name="Estratto  2027 01  prova " sheetId="1" r:id="rId1"\/>/, 'il nome della scheda non ha i caratteri vietati');
+  const sheet = files['xl/worksheets/sheet1.xml'];
+  assert.match(sheet, /<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"\/>/, 'l’intestazione resta ferma');
+  assert.match(sheet, /<c r="A1" t="inlineStr" s="1"><is><t>Data<\/t><\/is><\/c>/);
+  assert.match(sheet, new RegExp(`<c r="A2" s="2"><v>${dateSerial('2027-01-05')}</v></c>`), 'una data è un numero con lo stile «data»');
+  assert.match(sheet, /<c r="C2" s="3"><v>56\.00<\/v><\/c>/, 'un importo è un numero, in euro');
+  assert.match(sheet, /<c r="C4" s="3"><v>-12\.34<\/v><\/c>/);
+  assert.match(sheet, /<c r="B2" t="inlineStr"><is><t xml:space="preserve">Gruppo &quot;Rossi&quot; &amp; C\. &lt;ok&gt; <\/t><\/is><\/c>/, 'simboli XML in entità, caratteri di controllo tolti');
+  assert.match(sheet, /<c r="A3" t="inlineStr"><is><t>non una data<\/t><\/is><\/c>/, 'un valore che non è una data resta com’è, leggibile');
+  assert.ok(!/<c r="C3"/.test(sheet) && !/<c r="A4"/.test(sheet), 'le celle vuote non ci sono');
+  const widths = [...sheet.matchAll(/<col min="(\d)" max="\d" width="(\d+)" customWidth="1"\/>/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  assert.equal(widths.length, 3);
+  assert.ok(widths[0][1] >= 13 && widths[2][1] >= 14, 'date e importi hanno sempre posto: niente «####»');
+  assert.ok(widths[1][1] >= 'Un testo molto più lungo di tutti gli altri nella stessa colonna'.length, 'il testo più lungo ci sta');
+  assert.match(files['xl/styles.xml'], /<xf numFmtId="14"[^>]*applyNumberFormat="1"\/>/, 'le date nel formato del foglio di chi le apre');
+});
+
+test('Excel dell’estratto conto: stesse righe del CSV, con data e scadenza vere e importi in euro', async () => {
+  const { app, acct } = world();
+  const inv = invoice(app, acct, [booking(app, acct, { pax: 2 })], { date: '2027-01-05', due: '2027-02-04' });
+  restyle(app, inv.id, { paid: '2027-01-20' });
+  const st = statementOf(app, acct.id, '2027-01', TODAY);
+  const reg = { opening: 'Saldo iniziale', closing: 'Saldo finale', label: (m) => [m.kind === 'invoice' ? `Fattura ${m.invoice.number}` : `=Incasso ${m.invoice.number}`, m.kind === 'payment' ? 'bonifico; "grazie"' : ''] };
+  const head = ['Data', 'Documento', 'Dettaglio', 'Scadenza', 'Importo', 'Saldo'];
+  const files = await sheetFiles(await statementXlsx(st, { ...reg, head, sheet: 'Estratto conto 2027-01' }));
+  const sheet = files['xl/worksheets/sheet1.xml'];
+  const row = (n) => sheet.match(new RegExp(`<row r="${n}">[^]*?</row>`))[0];
+  assert.match(row(1), /Data<\/t>[^]*Documento<\/t>[^]*Dettaglio<\/t>[^]*Scadenza<\/t>[^]*Importo<\/t>[^]*Saldo<\/t>/);
+  assert.match(row(2), new RegExp(`<c r="A2" s="2"><v>${dateSerial('2027-01-01')}</v></c><c r="B2" t="inlineStr"><is><t xml:space="preserve">Saldo iniziale</t></is></c><c r="F2" s="3"><v>0\\.00</v></c>`), 'saldo iniziale: senza importo');
+  assert.match(row(3), new RegExp(`<c r="A3" s="2"><v>${dateSerial('2027-01-05')}</v></c>[^]*Fattura ${inv.number.replace('/', '\\/')}[^]*<c r="D3" s="2"><v>${dateSerial('2027-02-04')}</v></c><c r="E3" s="3"><v>56\\.00</v></c><c r="F3" s="3"><v>56\\.00</v></c>`), 'la fattura con la sua scadenza');
+  assert.match(row(4), /=Incasso [^<]*<\/t><\/is><\/c><c r="C4" t="inlineStr"><is><t xml:space="preserve">bonifico; &quot;grazie&quot;<\/t>[^]*<c r="E4" s="3"><v>-56\.00<\/v><\/c><c r="F4" s="3"><v>0\.00<\/v><\/c>/, 'un testo che comincia con «=» resta testo: in questo file non si calcola nulla');
+  assert.match(row(5), new RegExp(`<c r="A5" s="2"><v>${dateSerial('2027-01-31')}</v></c>[^]*Saldo finale`));
   app.cleanup();
 });

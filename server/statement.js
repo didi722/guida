@@ -7,6 +7,7 @@
 //  · incasso: meno. Un saldo negativo è un credito dell'agenzia (ha pagato più di quanto doveva, o una nota di credito è arrivata dopo l'incasso).
 import { CREDITABLE_STATUS, creditableCents, invoiceForSource, settingsOf } from './invoices.js';
 import { dueDateOf, openPartsCents } from './invoicePayments.js';
+import { xlsxBuffer } from './xlsx.js';
 import { addDays, addMonths, isMonth, nowRome } from './time.js';
 
 const DAY = 86_400_000;
@@ -188,16 +189,30 @@ const cell = (v) => {
  * saldo iniziale, un movimento per riga con il saldo progressivo, saldo finale.
  * `label(m)` dà il testo del documento e del dettaglio di un movimento: [documento, dettaglio].
  */
-export function statementCsv(st, { head, opening, closing, label }) {
-  const rows = [
-    [st.from, opening, '', '', '', money(st.opening)],
+/** Le righe del registro, per CSV e per Excel: [data, documento, dettaglio, scadenza, importo in centesimi, saldo in centesimi] (importo vuoto sulle righe dei saldi). */
+export function statementRows(st, { opening, closing, label }) {
+  return [
+    [st.from, opening, '', '', null, st.opening],
     ...st.movements.map((m) => {
       const [doc, detail] = label(m);
       const due = m.kind === 'invoice' ? (dueDateOf(m.invoice) ?? '') : '';
-      return [m.date, doc, due ? '' : detail, due, money(m.cents), money(m.balance)]; // la scadenza ha la sua colonna: non si ripete nel dettaglio
+      return [m.date, doc, due ? '' : detail, due, m.cents, m.balance]; // la scadenza ha la sua colonna: non si ripete nel dettaglio
     }),
-    [st.to, closing, '', '', '', money(st.closing)],
+    [st.to, closing, '', '', null, st.closing],
   ];
+}
+
+export function statementCsv(st, { head, opening, closing, label }) {
+  const rows = statementRows(st, { opening, closing, label }).map((r) => [r[0], r[1], r[2], r[3], r[4] === null ? '' : money(r[4]), money(r[5])]);
   // gli importi (ultime due colonne) sono già testo numerico con il segno: vanno scritti così; i testi liberi invece si proteggono
   return `﻿${[head.join(';'), ...rows.map((r) => r.map((v, i) => (i >= 4 ? v : cell(v))).join(';'))].join('\r\n')}\r\n`;
+}
+
+/** Lo stesso registro come foglio di calcolo .xlsx (date e importi veri, colonne larghe quanto serve): in un CSV le date si possono vedere come «####». */
+export function statementXlsx(st, { head, opening, closing, label, sheet }) {
+  return xlsxBuffer({
+    sheet,
+    columns: [{ title: head[0], type: 'date' }, { title: head[1] }, { title: head[2] }, { title: head[3], type: 'date' }, { title: head[4], type: 'money' }, { title: head[5], type: 'money' }],
+    rows: statementRows(st, { opening, closing, label }),
+  });
 }

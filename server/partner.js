@@ -3,6 +3,7 @@
 import { addDays, addMonths, dayOfWeek, isDate, isMonth, localToInstant, monthDates, nowRome } from './time.js';
 import { CREDITABLE_STATUS } from './invoices.js';
 import { ensurePayRef, invoiceDue, isPayable, overdueInvoices } from './invoicePayments.js';
+import { xlsxBuffer } from './xlsx.js';
 
 /** Le schede dell'elenco, nell'ordine in cui si mostrano. */
 export const PARTNER_VIEWS = ['upcoming', 'options', 'past', 'cancelled', 'all'];
@@ -221,6 +222,11 @@ export const isDone = (b, nowMs = Date.now()) => b.status === 'confirmed' && loc
 
 export const isEditable = (b, nowMs = Date.now()) => ['confirmed', 'held', 'option'].includes(b.status) && localToInstant(b.date, b.start_time) > nowMs;
 
+/** Le righe dell'elenco per CSV ed Excel: [pratica, riferimento, nominativo, servizio, data, ora, persone, bambini, infanti, stato, prenotata il, totale in centesimi, fattura, prenotata da]. */
+function bookingsRows(rows, { content, statusLabel }) {
+  return rows.map((b) => [b.ref, b.client_ref ?? '', b.name, content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug, b.date, b.start_time, b.participants, b.children ?? 0, b.infants ?? 0, statusLabel(b), b.created_at.slice(0, 10), b.total_cents - (b.gift_cents ?? 0), b.invoice?.number ?? '', b.booked_by_name ?? '']);
+}
+
 /** Esportazione CSV delle righe (Excel italiano: separatore «;», UTF-8 con BOM, importi con la virgola). */
 export function bookingsCsv(rows, { content, statusLabel, head }) {
   const cell = (v) => {
@@ -229,8 +235,12 @@ export function bookingsCsv(rows, { content, statusLabel, head }) {
     return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const money = (c) => (c / 100).toFixed(2).replace('.', ',');
-  const lines = rows.map((b) =>
-    [b.ref, b.client_ref, b.name, content.tour(b.tour_slug)?.i18n.it.title ?? b.tour_slug, b.date, b.start_time, b.participants, b.children ?? 0, b.infants ?? 0, statusLabel(b), b.created_at.slice(0, 10), money(b.total_cents - (b.gift_cents ?? 0)), b.invoice?.number ?? '', b.booked_by_name ?? ''].map(cell).join(';'),
-  );
+  const lines = bookingsRows(rows, { content, statusLabel }).map((r) => r.map((v, i) => cell(i === 11 ? money(v) : v)).join(';'));
   return `﻿${[head.join(';'), ...lines].join('\r\n')}\r\n`;
+}
+
+/** Lo stesso elenco come foglio di calcolo .xlsx (date e importi veri, colonne larghe quanto serve): in un CSV le date si possono vedere come «####». */
+export function bookingsXlsx(rows, { content, statusLabel, head, sheet }) {
+  const types = ['text', 'text', 'text', 'text', 'date', 'text', 'int', 'int', 'int', 'text', 'date', 'money', 'text', 'text'];
+  return xlsxBuffer({ sheet, columns: head.map((title, i) => ({ title, type: types[i] })), rows: bookingsRows(rows, { content, statusLabel }) });
 }

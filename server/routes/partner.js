@@ -9,8 +9,9 @@ import { feedUrl } from '../agencyFeed.js';
 import { notifyGuideBookingEdited } from '../emails.js';
 import { getPackage } from '../packages.js';
 import { send, sendPdf } from '../http.js';
-import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerPrograms, partnerSummary, partnerTodo } from '../partner.js';
+import { bookingsCsv, bookingsXlsx, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerPrograms, partnerSummary, partnerTodo } from '../partner.js';
 import { renderInvoicePdf } from '../pdf-invoice.js';
+import { XLSX_TYPE } from '../xlsx.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { refCodeOf, referralUrl, referralsOf } from '../referral.js';
 import { teamSize } from '../team.js';
@@ -31,7 +32,7 @@ export function partnerRouter(app) {
   const form = express.urlencoded({ extended: false, limit: '50kb' });
 
   // dati personali e fiscali: mai in cache del browser o di proxy
-  r.use(['/b2b/account', '/b2b/agency', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/programs', '/b2b/help'], (req, res, next) => {
+  r.use(['/b2b/account', '/b2b/agency', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/bookings.xlsx', '/b2b/programs', '/b2b/help'], (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
   });
@@ -87,15 +88,24 @@ export function partnerRouter(app) {
     }));
   });
 
-  // elenco filtrato in un foglio di calcolo (per la contabilità dell'agenzia)
-  r.get('/b2b/bookings.csv', needPartner, (req, res) => {
+  // elenco filtrato in un foglio di calcolo (per la contabilità dell'agenzia): CSV, oppure Excel (.xlsx) dove le date si vedono sempre
+  const exportOf = (req, res) => {
     const { t } = res.locals.ctx;
     const { rows } = partnerBookings(app, req.acct.id, { ...parseFilters(req.query), actorId: req.actor?.userId ?? null }, { limit: null });
     const head = [t('s.ref'), t('f.clientRef'), t('partner.edit.name'), t('s.service'), t('s.date'), t('s.time'), t('s.guests'), t('party.children'), t('party.infants'), t('b2b.state'), t('partner.col.booked'), t('s.total'), t('partner.col.invoice'), t('partner.col.by')];
+    return { t, rows, head, statusLabel: (b) => bookingStatusText(t, b) };
+  };
+  r.get('/b2b/bookings.csv', needPartner, (req, res) => {
+    const { rows, head, statusLabel } = exportOf(req, res);
     res
       .type('text/csv; charset=utf-8')
       .set({ 'Content-Disposition': 'attachment; filename="prenotazioni.csv"', 'Cache-Control': 'private, no-store' })
-      .send(bookingsCsv(rows, { content: app.content, statusLabel: (b) => bookingStatusText(t, b), head }));
+      .send(bookingsCsv(rows, { content: app.content, statusLabel, head }));
+  });
+  r.get('/b2b/bookings.xlsx', needPartner, async (req, res) => {
+    const { t, rows, head, statusLabel } = exportOf(req, res);
+    const file = await bookingsXlsx(rows, { content: app.content, statusLabel, head, sheet: t('partner.nav.bookings') });
+    res.type(XLSX_TYPE).set({ 'Content-Disposition': 'attachment; filename="prenotazioni.xlsx"', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }).send(file);
   });
 
   // scheda di una pratica: la stessa pagina del link nell'email, ma dentro l'area dell'agenzia (con fattura e modifica del nominativo)

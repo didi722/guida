@@ -468,7 +468,7 @@ export function bookingsPage(ctx, { acct, team = false, filters, list, summary, 
     <div class="tabs" role="tablist" aria-label="${t('b2b.myBookings')}">
       ${PARTNER_VIEWS.map((v) => html`<a class="tab" role="tab" href="${base}${qs({ view: v, page: '' })}" aria-selected="${v === filters.view ? 'true' : 'false'}" ${v === filters.view ? raw('aria-current="page"') : ''}>${t(`partner.tab.${v}`)} <span class="tab-n">${list.counts[v]}</span></a>`)}
     </div>
-    ${list.total ? html`<a class="tabs-export small" href="${u('/b2b/bookings.csv')}${qs({ page: '' })}">${t('partner.export')}</a>` : ''}
+    ${list.total ? html`<span class="tabs-export small"><a href="${u('/b2b/bookings.xlsx')}${qs({ page: '' })}">${t('partner.exportXlsx')}</a> · <a href="${u('/b2b/bookings.csv')}${qs({ page: '' })}">${t('partner.export')}</a></span>` : ''}
   </div>
 
   <form class="filters" method="get" action="${base}">
