@@ -208,6 +208,11 @@ export function createDemo(app, createApp) {
       return fresh;
     },
     ensure,
+    /** Chi apre il collegamento dopo una pausa trova una demo nuova (date di oggi, niente avanzi della volta scorsa); se la si sta già usando, resta com'è. */
+    async freshIfIdle(minutes = 10) {
+      if (current && Date.now() - current.usedAt > minutes * 60_000) dispose();
+      return ensure();
+    },
     /** Cancella la demo in corso: alla prossima richiesta riparte da capo. */
     async reset() {
       dispose();
@@ -264,6 +269,7 @@ export function mountDemo(server, app) {
         const k = String(req.query.k ?? '');
         const real = demo.peekKey();
         if (!((k && real && safeEqual(k, real)) || flag(req))) return next(); // senza la chiave la pagina non esiste
+        if (k && real && safeEqual(k, real)) await demo.freshIfIdle(); // dal collegamento: una demo con le date di oggi, a meno che qualcuno la stia già usando
         return await enter(req, res, langOf(req));
       }
       if (path === '/demo/exit' && req.method === 'GET') {

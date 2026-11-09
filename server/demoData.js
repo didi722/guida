@@ -216,10 +216,14 @@ export async function seedDemoData(app, { nowMs = Date.now() } = {}) {
     }
     if (!added) throw new Error('nessun servizio da mettere nel pacchetto');
     // uno già mandato e aperto dal cliente, uno accettato: l'elenco mostra tutti gli stati
-    const sent = createQuote(app, account, byOwner, { client: 'Famiglia Wilson', email: 'wilson@example.com', clientRef: 'Viaggio di nozze, ottobre', markup: 20, round: 5 }, nowMs - 2 * DAY);
+    // (si creano con la data di oggi, così la validità cade sempre nel futuro; poi si retrodata solo il giorno di creazione)
+    const back = (q, days) => db.prepare('UPDATE quotes SET created_at = ? WHERE id = ?').run(new Date(nowMs - days * DAY).toISOString(), q.id);
+    const sent = createQuote(app, account, byOwner, { client: 'Famiglia Wilson', email: 'wilson@example.com', clientRef: 'Viaggio di nozze, ottobre', markup: 20, round: 5 }, nowMs);
+    back(sent, 2);
     recordSent(db, sent.id, 'wilson@example.com', nowMs - 2 * DAY);
     markViewed(db, sent.id, nowMs - DAY);
-    const accepted = createQuote(app, account, byOwner, { client: 'Gruppo Schneider', email: 'schneider@example.com', clientRef: 'Gita aziendale', markup: 12, round: 5 }, nowMs - 5 * DAY);
+    const accepted = createQuote(app, account, byOwner, { client: 'Gruppo Schneider', email: 'schneider@example.com', clientRef: 'Gita aziendale', markup: 12, round: 5 }, nowMs);
+    back(accepted, 5);
     recordSent(db, accepted.id, 'schneider@example.com', nowMs - 5 * DAY);
     markViewed(db, accepted.id, nowMs - 4 * DAY);
     decide(db, accepted.id, 'approved', 'Perfetto, procediamo!', nowMs - 3 * DAY);
