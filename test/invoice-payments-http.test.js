@@ -12,6 +12,7 @@ import { openDb } from '../server/db.js';
 import { createDrafts, getInvoice, invoiceDetail, issueInvoice, saveDraft } from '../server/invoices.js';
 import { createPackage, resolveLine } from '../server/packages.js';
 import { addDays, nowRome } from '../server/time.js';
+import { formatMoney } from '../server/util.js';
 import { addAccount } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
@@ -92,8 +93,10 @@ test('area agenzia: la fattura mostra stato e scadenza, «Paga ora», e la sched
     assert.match(page, new RegExp(inv.number.replace('/', '\\/')));
     assert.match(page, /Da pagare entro il/);
     assert.match(page, /\/it\/invoices\/IN-[A-Z0-9]{6}\?t=/);
-    assert.match(page, />Paga ora</, 'con i pagamenti attivi si paga subito con carta');
-    assert.ok(!page.includes('fatture scadute'));
+    // con i pagamenti attivi «Paga con carta» porta subito alla carta (senza passare dalla pagina della fattura) e il bonifico resta un collegamento a parte
+    const row0 = getInvoice(app.db, inv.id);
+    assert.match(page, new RegExp(`<a class="btn btn-outline btn-sm" href="/pay/resume/${row0.pay_ref}\\?t=${row0.pay_token}&amp;lang=it">Paga con carta</a><a class="btn-text" href="/it/invoices/${row0.pay_ref}\\?t=${row0.pay_token}">Dati del bonifico</a>`));
+    assert.ok(!page.includes('fatture scadute') && !page.includes('Paga tutto lo scaduto'));
     const card = await text(await partner(`/it/b2b/bookings/${b.ref}`));
     assert.match(card, /Fattura [\d/]+: [\d.,]+ €\./);
     assert.match(card, /Come pagare la fattura/);
@@ -153,6 +156,121 @@ test('pagina di pagamento con il link: importo, scadenza, IBAN e causale, PDF; s
     assert.equal(getInvoice(app.db, inv.id).paid_method, 'card');
     assert.equal(loc(await anon(`/pay/resume/${row.pay_ref}?t=${row.pay_token}&lang=it`)), `/it/invoices/${row.pay_ref}?t=${row.pay_token}`, 'già pagata: si torna alla pagina');
     assert.match(await text(await partner('/it/b2b/invoices')), /Pagata il .* con carta/);
+  } finally {
+    s.close();
+  }
+});
+
+/** Due fatture scadute dell'agenzia (e una terza, ancora da scadere). */
+function twoOverdue(s) {
+  const one = invoiced(s, { date: day(10), time: '10:00' });
+  const two = invoiced(s, { date: day(12), time: '15:00', pax: 2 });
+  const fresh = invoiced(s, { date: day(14), time: '10:00', pax: 3 });
+  for (const x of [one, two]) setDue(s.app, getInvoice(s.app.db, x.inv.id), day(-4));
+  return { one: one.inv, two: two.inv, fresh: fresh.inv };
+}
+
+test('«Paga tutto lo scaduto»: un solo pagamento con carta per le fatture scadute; ognuna risulta pagata con la sua ricevuta; ripetuto non paga due volte', async () => {
+  const s = await start();
+  try {
+    const { partner, anon, app } = s;
+    const { one, two, fresh } = twoOverdue(s);
+    const page = await text(await partner('/it/b2b/invoices'));
+    // l'avviso dice quante sono e quanto, e c'è il pulsante per pagarle tutte insieme (non la terza, che non è scaduta)
+    assert.match(page, /Fatture scadute da pagare: 2 \(in tutto [\d.,]+ €\)\. Paga con carta dalla riga della fattura o tutte insieme con «Paga tutto lo scaduto»/);
+    const total = getInvoice(app.db, one.id).total_cents + getInvoice(app.db, two.id).total_cents;
+    assert.match(page, /<form method="post" action="\/it\/b2b\/invoices\/pay-all"><button class="btn btn-gold" type="submit">Paga tutto lo scaduto · [\d.,]+ €<\/button><\/form>/);
+    assert.equal(app.invoices.overdueToPay(s.agency.id).reduce((a, x) => a + x.dueCents, 0), total);
+
+    // un clic: si crea il pagamento (SD-…) e si va alla carta
+    const start1 = await partner('/it/b2b/invoices/pay-all', form({}));
+    assert.equal(start1.status, 303);
+    const m = loc(start1).match(/^\/pay\/resume\/(SD-[A-Z0-9]{6})\?t=([\w-]+)&lang=it$/);
+    assert.ok(m, loc(start1));
+    const [, ref, token] = m;
+    const batch = app.db.prepare('SELECT * FROM invoice_batches WHERE ref = ?').get(ref);
+    assert.equal(batch.amount_cents, total);
+    assert.deepEqual(JSON.parse(batch.lines_json).map((l) => l.id), [one.id, two.id], 'la vecchia prima; non la fattura ancora da scadere');
+    // un secondo clic con le stesse fatture riusa lo stesso pagamento
+    assert.equal(loc(await partner('/it/b2b/invoices/pay-all', form({}))), loc(start1));
+    assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM invoice_batches').get().n, 1);
+
+    const go = await anon(loc(start1));
+    assert.equal(go.status, 303);
+    assert.match(loc(go), new RegExp(`/pay/demo/${ref}\\?t=${token}`));
+    const demo = await text(await anon(rel(loc(go))));
+    assert.match(demo, /Fatture scadute \(2\)/);
+    assert.ok(demo.includes(formatMoney(total, 'it').replace(/\u00a0/g, ' ')), 'l’importo è la somma');
+
+    // a pagamento fatto: tutte e due pagate con carta, una ricevuta ciascuna, la guida avvisata
+    const done = await anon(`/pay/demo/${ref}/complete`, form({ t: token, lang: 'it' }));
+    assert.equal(done.status, 303);
+    assert.equal(loc(done), `/it/b2b/invoices?batch=${ref}&paid=1`);
+    for (const inv of [one, two]) {
+      const row = getInvoice(app.db, inv.id);
+      assert.equal(row.paid_method, 'card', inv.number);
+      assert.ok(row.paid_at);
+      assert.ok(app.mail.sent.some((x) => x.to === s.agency.email && x.subject === `Pagamento ricevuto — fattura ${inv.number}`), `ricevuta ${inv.number}`);
+    }
+    assert.equal(getInvoice(app.db, fresh.id).paid_at, null, 'la fattura non scaduta resta com’era');
+    assert.equal(app.db.prepare("SELECT status FROM invoice_batches WHERE ref = ?").get(ref).status, 'paid');
+    assert.equal(app.mail.sent.filter((x) => x.to === 'guida@example.com' && /Fattura pagata con carta/.test(x.subject)).length, 2);
+    // chi torna dal pagamento vede l'esito e nient'altro da pagare tra le scadute
+    const after = await text(await partner(loc(done)));
+    assert.match(after, /Pagamento ricevuto: grazie! Le fatture risultano pagate e ti abbiamo mandato una ricevuta per ciascuna\./);
+    assert.doesNotMatch(after, /Fatture scadute da pagare|Paga tutto lo scaduto/);
+    // lo stesso pagamento ricevuto due volte (webhook e ritorno) non cambia nulla né manda altre email
+    const mails = app.mail.sent.length;
+    await anon(`/pay/demo/${ref}/complete`, form({ t: token, lang: 'it' }));
+    assert.equal(app.mail.sent.length, mails);
+    // un pagamento già chiuso non si riapre
+    assert.equal(loc(await anon(`/pay/resume/${ref}?t=${token}&lang=it`)), `/it/b2b/invoices?batch=${ref}`);
+    // senza il codice giusto non si apre
+    assert.equal((await anon(`/pay/resume/${ref}?t=sbagliato&lang=it`)).status, 404);
+  } finally {
+    s.close();
+  }
+});
+
+test('«Paga tutto lo scaduto»: se una fattura cambia nel frattempo il pagamento non parte, e se era già in corso la quota di quella fattura si rimborsa; nulla da pagare → messaggio', async () => {
+  const s = await start();
+  try {
+    const { partner, anon, app } = s;
+    // niente di scaduto: il pulsante non c'è e l'invio dice che non c'è nulla da pagare
+    invoiced(s);
+    assert.doesNotMatch(await text(await partner('/it/b2b/invoices')), /Paga tutto lo scaduto/);
+    const none = await partner('/it/b2b/invoices/pay-all', form({}));
+    assert.equal(loc(none), '/it/b2b/invoices?flash=nothing');
+    assert.match(await text(await partner(loc(none))), /Non c’è nulla da pagare con la carta adesso/);
+    assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM invoice_batches').get().n, 0);
+    assert.equal((await s.anon('/it/b2b/invoices/pay-all', form({}))).status, 302, 'serve l’accesso');
+
+    const { one, two } = twoOverdue(s);
+    const first = loc(await partner('/it/b2b/invoices/pay-all', form({})));
+    const ref = first.match(/SD-[A-Z0-9]{6}/)[0];
+    const token = first.match(/t=([\w-]+)/)[1];
+    // la guida registra il bonifico di una fattura prima che l'agenzia paghi: il pagamento non parte e si torna all'elenco
+    await s.admin(`/admin/invoices/${one.id}/paid`, form({ date: day(-1), method: 'bank' }));
+    assert.equal(loc(await anon(first)), `/it/b2b/invoices?batch=${ref}`, 'le fatture non sono più quelle');
+    // un nuovo clic crea un pagamento nuovo, solo per la fattura rimasta, e chiude il vecchio
+    const second = loc(await partner('/it/b2b/invoices/pay-all', form({})));
+    const ref2 = second.match(/SD-[A-Z0-9]{6}/)[0];
+    assert.notEqual(ref2, ref);
+    assert.equal(app.db.prepare('SELECT status FROM invoice_batches WHERE ref = ?').get(ref).status, 'expired');
+    assert.deepEqual(JSON.parse(app.db.prepare('SELECT lines_json FROM invoice_batches WHERE ref = ?').get(ref2).lines_json).map((l) => l.id), [two.id]);
+
+    // pagamento già avviato col vecchio importo e arrivato dopo il bonifico: la fattura già saldata non si paga due volte, la sua quota si rimborsa
+    const refunds = [];
+    app.payments.refund = async (r) => { refunds.push(r); return { id: 'demo_refund', demo: true }; };
+    const old = app.db.prepare('SELECT * FROM invoice_batches WHERE ref = ?').get(ref);
+    app.db.prepare("UPDATE invoice_batches SET status = 'open' WHERE ref = ?").run(ref); // com'era quando il pagamento è partito
+    await anon(`/pay/demo/${ref}/complete`, form({ t: old.token, lang: 'it' }));
+    assert.equal(getInvoice(app.db, one.id).paid_method, 'bank', 'resta saldata col bonifico');
+    assert.equal(getInvoice(app.db, two.id).paid_method, 'card');
+    assert.equal(refunds.length, 1);
+    assert.equal(refunds[0].cents, JSON.parse(old.lines_json).find((l) => l.id === one.id).cents);
+    assert.equal(refunds[0].paymentIntent, `demo_pi_${ref}`);
+    assert.equal(refunds[0].ref, `${ref}-${one.id}`);
   } finally {
     s.close();
   }

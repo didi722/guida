@@ -8706,10 +8706,10 @@
   "お支払い"
  ],
  "partner.inv.payNow": [
-  "Paga ora",
-  "Pay now",
-  "Pagar ahora",
-  "今すぐ支払う"
+  "Paga con carta",
+  "Pay by card",
+  "Pagar con tarjeta",
+  "カードで支払う"
  ],
  "partner.inv.howToPay": [
   "Come pagare",
@@ -8717,11 +8717,59 @@
   "Cómo pagar",
   "お支払い方法"
  ],
+ "partner.inv.transfer": [
+  "Dati del bonifico",
+  "Bank transfer details",
+  "Datos de la transferencia",
+  "銀行振込の情報"
+ ],
+ "partner.inv.payAll": [
+  "Paga tutto lo scaduto",
+  "Pay everything overdue",
+  "Pagar todo lo vencido",
+  "期限切れをまとめて支払う"
+ ],
+ "partner.inv.flash.paid": [
+  "Pagamento ricevuto: grazie! Le fatture risultano pagate e ti abbiamo mandato una ricevuta per ciascuna.",
+  "Payment received: thank you! The invoices are marked as paid and we emailed you a receipt for each.",
+  "Pago recibido: ¡gracias! Las facturas figuran como pagadas y te hemos enviado un recibo de cada una.",
+  "お支払いを確認しました。ありがとうございます。請求書は支払い済みとなり、それぞれの領収メールをお送りしました。"
+ ],
+ "partner.inv.flash.canceled": [
+  "Pagamento annullato: puoi riprovare quando vuoi.",
+  "Payment cancelled: you can try again whenever you like.",
+  "Pago cancelado: puedes volver a intentarlo cuando quieras.",
+  "お支払いはキャンセルされました。いつでもやり直せます。"
+ ],
+ "partner.inv.flash.nothing": [
+  "Non c’è nulla da pagare con la carta adesso: le fatture risultano già saldate.",
+  "There is nothing to pay by card right now: the invoices are already settled.",
+  "No hay nada que pagar con tarjeta ahora: las facturas ya figuran saldadas.",
+  "現在カードで支払う請求書はありません。すでに精算済みです。"
+ ],
+ "invpay.batch.title": [
+  "Fatture scadute ({n})",
+  "Overdue invoices ({n})",
+  "Facturas vencidas ({n})",
+  "期限切れの請求書（{n}件）"
+ ],
  "partner.inv.overdue": [
-  "Fatture scadute da pagare: {n} (in tutto {amount}). Apri «Paga ora» o «Come pagare» nella riga della fattura.",
-  "Overdue invoices to pay: {n} ({amount} in total). Open “Pay now” or “How to pay” on the invoice row.",
-  "Facturas vencidas por pagar: {n} ({amount} en total). Abre «Pagar ahora» o «Cómo pagar» en la fila de la factura.",
-  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の「今すぐ支払う」または「お支払い方法」を開いてください。"
+  "Fatture scadute da pagare: {n} (in tutto {amount}). Apri «Come pagare» nella riga della fattura.",
+  "Overdue invoices to pay: {n} ({amount} in total). Open “How to pay” on the invoice row.",
+  "Facturas vencidas por pagar: {n} ({amount} en total). Abre «Cómo pagar» en la fila de la factura.",
+  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の「お支払い方法」を開いてください。"
+ ],
+ "partner.inv.overdueCardAll": [
+  "Fatture scadute da pagare: {n} (in tutto {amount}). Paga con carta dalla riga della fattura o tutte insieme con «Paga tutto lo scaduto»; per il bonifico apri «Dati del bonifico».",
+  "Overdue invoices to pay: {n} ({amount} in total). Pay by card from the invoice row, or all at once with “Pay everything overdue”; for a bank transfer open “Bank transfer details”.",
+  "Facturas vencidas por pagar: {n} ({amount} en total). Paga con tarjeta desde la fila de la factura o todas juntas con «Pagar todo lo vencido»; para la transferencia abre «Datos de la transferencia».",
+  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の行から、または「期限切れをまとめて支払う」でカード払いができます。銀行振込は「銀行振込の情報」をご覧ください。"
+ ],
+ "partner.inv.overdueCard": [
+  "Fatture scadute da pagare: {n} (in tutto {amount}). Paga con carta dalla riga della fattura; per il bonifico apri «Dati del bonifico».",
+  "Overdue invoices to pay: {n} ({amount} in total). Pay by card from the invoice row; for a bank transfer open “Bank transfer details”.",
+  "Facturas vencidas por pagar: {n} ({amount} en total). Paga con tarjeta desde la fila de la factura; para la transferencia abre «Datos de la transferencia».",
+  "支払期限を過ぎた請求書：{n}件（合計{amount}）。各請求書の行からカードで支払えます。銀行振込は「銀行振込の情報」をご覧ください。"
  ],
  "partner.kpi.dueOverdue": [
   "di cui scaduti {amount}",

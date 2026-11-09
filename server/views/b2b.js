@@ -482,11 +482,12 @@ export function ratesPage(ctx, { acct }) {
 }
 
 /** Fatture e note di credito emesse all'agenzia, con la copia in PDF, lo stato del pagamento e come pagare. */
-export function invoicesPage(ctx, { acct, invoices, due }) {
+export function invoicesPage(ctx, { acct, invoices, due, flash = '' }) {
   const { t, lang, u, app } = ctx;
   const today = nowRome().date;
   const states = new Map(invoices.map((i) => [i.id, payState(i, today)]));
   const late = [...states.values()].filter((x) => x.state === 'overdue');
+  const lateByCard = invoices.filter((i) => states.get(i.id).state === 'overdue' && app.invoices.canPayByCard(i)); // quelle che il pagamento unico può saldare
   const body = html`
 <section class="page-head"><div class="wrap">
   ${breadcrumbs(ctx, [homeCrumb(ctx), [t('partner.nav.invoices')]])}
@@ -494,7 +495,11 @@ export function invoicesPage(ctx, { acct, invoices, due }) {
     <div class="btn-row"><a class="btn btn-outline" href="${u('/b2b/statement')}">${t('stmt.title')}</a></div></div>
 </div></section>
 <section class="section tight"><div class="wrap">
-  ${late.length ? html`<div class="notice notice-err" role="alert">${t('partner.inv.overdue', { n: late.length, amount: formatMoney(late.reduce((a, x) => a + x.dueCents, 0), lang) })}</div>` : ''}
+  ${['paid', 'canceled', 'nothing'].includes(flash) ? html`<div class="notice notice-${flash === 'paid' ? 'ok' : 'info'}" role="status">${t(`partner.inv.flash.${flash}`)}</div>` : ''}
+  ${late.length
+    ? html`<div class="notice notice-err overdue-note" role="alert"><p>${t(lateByCard.length ? (lateByCard.length > 1 ? 'partner.inv.overdueCardAll' : 'partner.inv.overdueCard') : 'partner.inv.overdue', { n: late.length, amount: formatMoney(late.reduce((a, x) => a + x.dueCents, 0), lang) })}</p>
+      ${lateByCard.length > 1 ? html`<form method="post" action="${u('/b2b/invoices/pay-all')}"><button class="btn btn-gold" type="submit">${t('partner.inv.payAll')} · ${formatMoney(lateByCard.reduce((a, i) => a + states.get(i.id).dueCents, 0), lang)}</button></form>` : ''}</div>`
+    : ''}
   ${due.cents ? html`<div class="notice notice-info" role="note">${t('partner.inv.due', { amount: formatMoney(due.cents, lang) })}</div>` : ''}
   ${invoices.length
     ? html`<div class="table-wrap card"><table class="table table-stack partner-table"><thead><tr><th>${t('partner.inv.number')}</th><th>${t('s.date')}</th><th>${t('partner.inv.type')}</th><th>${t('partner.inv.payment')}</th><th class="num">${t('s.total')}</th><th><span class="sr-only">PDF</span></th></tr></thead><tbody>
@@ -507,7 +512,11 @@ export function invoicesPage(ctx, { acct, invoices, due }) {
         <td data-label="${t('partner.inv.type')}">${i.doc_type === 'TD04' ? t('partner.inv.td04') : t('partner.inv.td01')}</td>
         <td data-label="${t('partner.inv.payment')}">${i.doc_type === 'TD04' ? '—' : html`<span class="chip ${{ paid: 'chip-ok', settled: 'chip-ok', credited: '', open: 'chip-warn', overdue: 'chip-err' }[st.state]}">${stateText(t, lang, i, st)}</span>${pending && st.dueCents !== i.total_cents ? html`<small class="muted">${t('invpay.toPay')}: ${formatMoney(st.dueCents, lang, i.currency)}</small>` : ''}`}</td>
         <td class="num" data-label="${t('s.total')}">${formatMoney(i.total_cents, lang, i.currency)}</td>
-        <td class="pb-actions"><div class="pb-actions-in">${pending && i.pay_ref ? html`<a class="btn ${st.state === 'overdue' ? 'btn-gold' : 'btn-outline'} btn-sm" href="/${lang}/invoices/${i.pay_ref}?t=${i.pay_token}">${app.invoices.canPayByCard(i) ? t('partner.inv.payNow') : t('partner.inv.howToPay')}</a>` : ''}<a class="btn btn-outline btn-sm" href="${u(`/b2b/invoices/${i.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.inv.pdf')}</a></div></td></tr>`;
+        <td class="pb-actions"><div class="pb-actions-in">${pending && i.pay_ref
+          ? (app.invoices.canPayByCard(i)
+            ? html`<a class="btn ${st.state === 'overdue' ? 'btn-gold' : 'btn-outline'} btn-sm" href="/pay/resume/${i.pay_ref}?t=${i.pay_token}&amp;lang=${lang}">${t('partner.inv.payNow')}</a><a class="btn-text" href="/${lang}/invoices/${i.pay_ref}?t=${i.pay_token}">${t('partner.inv.transfer')}</a>`
+            : html`<a class="btn btn-outline btn-sm" href="/${lang}/invoices/${i.pay_ref}?t=${i.pay_token}">${t('partner.inv.howToPay')}</a>`)
+          : ''}<a class="btn btn-outline btn-sm" href="${u(`/b2b/invoices/${i.id}/pdf`)}" target="_blank" rel="noopener">${t('partner.inv.pdf')}</a></div></td></tr>`;
       })}
     </tbody></table></div>`
     : html`<div class="card pad center empty-state"><p>${t('partner.inv.none')}</p></div>`}

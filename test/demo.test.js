@@ -10,6 +10,7 @@ import { createConfig, ROOT } from '../server/config.js';
 import { getSetting, openDb, setSetting } from '../server/db.js';
 import { DEMO_COPIED_SETTINGS, DEMO_COPIED_TABLES, DEMO_SKIPPED_TABLES, copyCatalog, demoConfig, demoLink } from '../server/demo.js';
 import { nowRome } from '../server/time.js';
+import { formatMoney } from '../server/util.js';
 import { addAccount } from './helpers.js';
 
 process.env.GUIDA_QUIET = '1';
@@ -146,18 +147,19 @@ test('dati d’esempio: agenzia approvata con prenotazioni in tutti gli stati e 
 
     const today = nowRome().date;
     const invs = db.prepare("SELECT * FROM invoices ORDER BY seq").all();
-    assert.equal(invs.length, 5);
-    assert.deepEqual(invs.map((i) => i.number.split('/')[0]), ['1', '2', '3', '4', '5'], 'numerate senza buchi, nell’ordine delle date');
-    assert.deepEqual(invs.map((i) => i.doc_type), ['TD01', 'TD01', 'TD01', 'TD04', 'TD01'], 'la quarta è una nota di credito');
+    assert.equal(invs.length, 6);
+    assert.deepEqual(invs.map((i) => i.number.split('/')[0]), ['1', '2', '3', '4', '5', '6'], 'numerate senza buchi, nell’ordine delle date');
+    assert.deepEqual(invs.map((i) => i.doc_type), ['TD01', 'TD01', 'TD01', 'TD01', 'TD04', 'TD01'], 'la quinta è una nota di credito');
     const { payState } = await import('../server/invoicePayments.js');
-    assert.deepEqual([invs[0], invs[1], invs[2], invs[4]].map((i) => payState(i, today).state), ['paid', 'overdue', 'credited', 'open']);
-    assert.equal(invs[3].related_id, invs[2].id, 'la nota di credito storna la terza fattura');
-    // tutte le date partono da oggi: la scaduta lo è da pochi giorni, quella da pagare scade tra qualche settimana, i preventivi sono validi
+    assert.deepEqual([invs[0], invs[1], invs[2], invs[3], invs[5]].map((i) => payState(i, today).state), ['paid', 'overdue', 'overdue', 'credited', 'open'], 'due scadute: si prova «Paga tutto lo scaduto»');
+    assert.equal(invs[4].related_id, invs[3].id, 'la nota di credito storna la quarta fattura');
+    // tutte le date partono da oggi: le scadute lo sono da pochi giorni, quella da pagare scade tra qualche settimana, i preventivi sono validi
     const { dueDateOf } = await import('../server/invoicePayments.js');
     const days = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
-    assert.equal(days(dueDateOf(invs[1]), today), 4, 'scaduta da 4 giorni');
-    assert.equal(days(today, dueDateOf(invs[4])), 22, 'l’ultima scade tra 22 giorni');
-    assert.equal(days(invs[4].issue_date, today), 8);
+    assert.equal(days(dueDateOf(invs[1]), today), 8, 'scaduta da 8 giorni');
+    assert.equal(days(dueDateOf(invs[2]), today), 4, 'scaduta da 4 giorni');
+    assert.equal(days(today, dueDateOf(invs[5])), 22, 'l’ultima scade tra 22 giorni');
+    assert.equal(days(invs[5].issue_date, today), 8);
     assert.ok(db.prepare('SELECT valid_until FROM quotes').all().every((q) => q.valid_until >= today), 'nessun preventivo scaduto');
     // dati fiscali finti, dicitura di prova, e nessun dato fiscale vero in nessun documento
     for (const i of invs) {
@@ -397,7 +399,12 @@ test('panoramica dell’agenzia: tre schede (prenotare, prenotazioni, fatture) c
     assert.match(page, /<h2>Fatture e pagamenti<\/h2>/);
     assert.match(page, /In arrivo: \d+/);
     assert.match(page, /Opzioni aperte: 3/, 'due opzioni singole e un pacchetto in opzione');
-    assert.match(page, /Scaduto da pagare: 422/, 'la fattura scaduta di 422 € si vede subito, senza aprire le fatture');
+    // le due fatture scadute (somma di quanto resta da pagare) si vedono subito, senza aprire le fatture
+    const inst = await s.app.demo.ensure();
+    const { overdueOf } = await import('../server/invoicePayments.js');
+    const late = overdueOf(inst.app.db, inst.account.id);
+    assert.equal(late.length, 2);
+    assert.ok(page.replace(/\u00a0/g, ' ').includes(`Scaduto da pagare: ${formatMoney(late.reduce((a, x) => a + x.dueCents, 0), 'it').replace(/\u00a0/g, ' ')}`), 'le fatture scadute si vedono subito');
     assert.match(page, /class="btn btn-gold" href="\/it\/b2b\/invoices"/, 'con una fattura scaduta il pulsante delle fatture è quello in evidenza');
     for (const sparito of ['b2b/availability', 'b2b/team', 'b2b/billing', 'b2b/documents']) assert.doesNotMatch(page, new RegExp(sparito), `${sparito} non è più un pulsante della panoramica`);
     for (const rimasto of ['/it/book', '/it/b2b/bookings', '/it/b2b/invoices', '/it/b2b/quotes', '/it/b2b/agency', '/it/b2b/help']) assert.ok(page.includes(`href="${rimasto}"`), rimasto);

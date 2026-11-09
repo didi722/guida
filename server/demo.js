@@ -32,7 +32,7 @@ export const DEMO_COPIED_SETTINGS = ['rate_card', 'site_images', 'weekly', 'cont
 /** Tutte le altre tabelle: dati di persone, di clienti o dell'attività. Non si copiano mai. (Il test controlla che ogni tabella del database sia in uno dei due elenchi.) */
 export const DEMO_SKIPPED_TABLES = [
   'settings', 'day_overrides', 'blocks', 'accounts', 'bookings', 'promo_codes', 'gift_cards', 'gift_card_ledger', 'feedback', 'feedback_translations', 'calendar_sources', 'external_busy',
-  'programs', 'program_days', 'invoices', 'invoice_lines', 'invites', 'booking_groups', 'cart_items', 'booking_changes', 'extension_requests', 'waitlist', 'account_logos',
+  'programs', 'program_days', 'invoices', 'invoice_lines', 'invoice_batches', 'invites', 'booking_groups', 'cart_items', 'booking_changes', 'extension_requests', 'waitlist', 'account_logos',
   'statement_sends', 'partner_invites', 'account_users', 'quotes', 'leads', 'lead_contacts', 'lead_activities', 'lead_appointments', 'lead_emails', 'email_optouts',
 ];
 /** Le scelte del pannello (`config_overrides`) che NON passano alla demo: dati fiscali, posta, copie di sicurezza, solleciti e tutto ciò che riguarda persone vere. */

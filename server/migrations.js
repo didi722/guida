@@ -834,6 +834,26 @@ CREATE TABLE email_optouts (
 ALTER TABLE partner_invites ADD COLUMN lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL;
 `;
 
+const V39_INVOICE_BATCHES = `
+-- «Paga tutto lo scaduto»: un solo pagamento con carta per più fatture dell'agenzia. Ogni riga ricorda quanto si chiedeva per fattura,
+-- così, se nel frattempo una è stata saldata in un altro modo, la sua quota si rimborsa.
+CREATE TABLE invoice_batches (
+  id                    INTEGER PRIMARY KEY,
+  ref                   TEXT NOT NULL UNIQUE,            -- SD-XXXXXX
+  token                 TEXT NOT NULL,
+  account_id            INTEGER NOT NULL REFERENCES accounts(id),
+  lines_json            TEXT NOT NULL,                   -- [{ id: fattura, cents: quanto resta da pagare }]
+  amount_cents          INTEGER NOT NULL,
+  currency              TEXT NOT NULL DEFAULT 'EUR',
+  status                TEXT NOT NULL DEFAULT 'open',    -- open | paid | expired
+  stripe_session_id     TEXT,
+  stripe_payment_intent TEXT,
+  created_at            TEXT NOT NULL,
+  paid_at               TEXT
+);
+CREATE INDEX invoice_batches_account ON invoice_batches(account_id);
+`;
+
 export const MIGRATIONS = [
   // v1 — schema iniziale (prenotazioni, partner, orari, blocchi)
   BASE_SCHEMA,
@@ -907,6 +927,8 @@ export const MIGRATIONS = [
   V37_REFERRAL,
   // v38 — Commerciale: contatti con agenzie, referenti, registro, appuntamenti, coda delle email
   V38_LEADS,
+  // v39 — pagamento con carta di più fatture insieme («Paga tutto lo scaduto»)
+  V39_INVOICE_BATCHES,
 ];
 
 export function migrate(db) {

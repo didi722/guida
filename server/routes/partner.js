@@ -4,6 +4,7 @@
 import express from 'express';
 import { parseCookies, setCookie } from '../auth.js';
 import { getBookingByRef } from '../bookings.js';
+import { getBatchByRef } from '../invoicePayments.js';
 import { feedUrl } from '../agencyFeed.js';
 import { notifyGuideBookingEdited } from '../emails.js';
 import { getPackage } from '../packages.js';
@@ -122,7 +123,13 @@ export function partnerRouter(app) {
 
   r.get('/b2b/rates', needPartner, (req, res) => send(res, ratesPage(res.locals.ctx, { acct: req.acct })));
 
-  r.get('/b2b/invoices', needPartner, (req, res) => send(res, invoicesPage(res.locals.ctx, { acct: req.acct, invoices: partnerInvoices(db, req.acct.id), due: partnerSummary(app, req.acct.id).due })));
+  r.get('/b2b/invoices', needPartner, async (req, res) => {
+    // tornata dal pagamento unico prima del webhook: lo stato si verifica subito (solo per un pagamento dell'agenzia stessa)
+    const batch = req.query.paid ? getBatchByRef(db, String(req.query.batch ?? '')) : null;
+    if (batch && batch.account_id === req.acct.id && batch.status === 'open') await app.payables.sync(batch.ref);
+    const flash = req.query.paid ? 'paid' : req.query.canceled ? 'canceled' : req.query.flash === 'nothing' ? 'nothing' : '';
+    send(res, invoicesPage(res.locals.ctx, { acct: req.acct, invoices: partnerInvoices(db, req.acct.id), due: partnerSummary(app, req.acct.id).due, flash }));
+  });
   r.get('/b2b/invoices/:id/pdf', needPartner, async (req, res, next) => {
     const id = Number(req.params.id);
     const inv = Number.isInteger(id) ? partnerInvoice(db, req.acct.id, id) : null;

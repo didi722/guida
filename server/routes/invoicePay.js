@@ -6,10 +6,12 @@ import { getInvoiceByPayRef, isPayable } from '../invoicePayments.js';
 import { renderInvoicePdf } from '../pdf-invoice.js';
 import { safeEqual } from '../util.js';
 import { invoicePayPage } from '../views/invoicePay.js';
+import { needPartner } from './guards.js';
 
 export function invoicePayRouter(app) {
   const r = express.Router();
   const { db } = app;
+  const form = express.urlencoded({ extended: false, limit: '10kb' });
 
   r.use('/invoices', (req, res, next) => {
     res.set('Cache-Control', 'no-store');
@@ -38,6 +40,13 @@ export function invoicePayRouter(app) {
     const inv = byToken(req);
     if (!inv) return next();
     sendPdf(res, await renderInvoicePdf(app, inv), `${inv.doc_type === 'TD04' ? 'nota-di-credito' : 'fattura'}-${String(inv.number).replace('/', '-')}.pdf`);
+  });
+
+  // «Paga tutto lo scaduto»: un solo pagamento con carta per le fatture scadute dell'agenzia (si apre subito la pagina della carta)
+  r.post('/b2b/invoices/pay-all', needPartner, form, (req, res) => {
+    const batch = app.invoices.payOverdue(req.acct.id);
+    if (!batch) return res.redirect(303, `/${req.lang}/b2b/invoices?flash=nothing`);
+    res.redirect(303, `/pay/resume/${batch.ref}?t=${batch.token}&lang=${req.lang}`);
   });
 
   return r;

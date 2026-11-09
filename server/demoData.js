@@ -157,7 +157,7 @@ export async function seedDemoData(app, { nowMs = Date.now() } = {}) {
   const penalty = book('Annullata dentro i giorni di penale (a fattura)', { tour: take(fixed, tours), day: 4, pax: 6, pay: 'invoice', client: 'Gruppo Bellini', ago: 5, late: true });
   if (penalty) cancelBooking(app, penalty.id, { by: 'customer', refund: 'auto' }, nowMs - 3600_000);
 
-  // ───── fatture: una pagata, una scaduta, una ancora da pagare ─────
+  // ───── fatture: una pagata, due scadute (così si prova «Paga tutto lo scaduto»), una stornata, una ancora da pagare ─────
   const old = (label, day, spec) => book(label, { day, lead: 20, by: byOwner, ...spec });
   const t1 = take(fixed, tours);
   const t2 = take(perPerson.slice(1), perPerson, fixed);
@@ -168,6 +168,7 @@ export async function seedDemoData(app, { nowMs = Date.now() } = {}) {
   const h5 = old('Storico: servizio di cinque settimane fa, a fattura', -37, { tour: t2, pax: 9, pay: 'invoice', client: 'Gruppo Pellegrini' });
   const h6 = old('Storico: servizio di due settimane fa, a fattura', -13, { tour: t1, pax: 6, pay: 'invoice', client: 'Gruppo Fontana' });
   const h7 = old('Storico: servizio con carta di due settimane fa', -11, { tour: t2, pax: 4, pay: 'card', client: 'Coppia Walker' });
+  const h9 = old('Storico: servizio di sei settimane fa, a fattura', -52, { tour: take(fixed, tours), pax: 4, pay: 'invoice', client: 'Famiglia Ricci' });
 
   const invoice = async (label, items, issuedDaysAgo, { paidDaysAgo = null, creditedDaysAgo = null } = {}) => {
     const keys = items.filter(Boolean).map((b) => `booking:${b.id}`);
@@ -186,6 +187,7 @@ export async function seedDemoData(app, { nowMs = Date.now() } = {}) {
     });
   };
   await invoice('Fattura pagata (bonifico arrivato)', [h1, h2, h3], 60, { paidDaysAgo: 44 });
+  await invoice('Fattura scaduta da più tempo, ancora da pagare', [h9], 38);
   await invoice('Fattura scaduta, ancora da pagare', [h4, h5], 34);
   const h8 = old('Storico: servizio di tre settimane fa, a fattura (poi stornato)', -21, { tour: take(fixed, tours), pax: 5, pay: 'invoice', client: 'Gruppo Romano' });
   await invoice('Fattura stornata per intero da una nota di credito', [h8], 18, { creditedDaysAgo: 10 });
