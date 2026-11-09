@@ -98,7 +98,7 @@ test('referenti: il primo è il principale, si può cambiare, se si toglie il pr
   assert.deepEqual(L.recipients(db, L.getLead(db, lead.id)).map((r) => [r.name, r.email]), [['Anna Rossi', 'anna@lagoon.it'], ['Roberto', 'bob@lagoon.it'], ['', 'info@lagoon.it']]);
 });
 
-test('il registro: un contatto vero porta lo stato avanti (mai indietro), aggiorna l’ultimo contatto e chiude il richiamo scaduto', (t) => {
+test('il registro: un contatto vero porta lo stato avanti (mai indietro), aggiorna l’ultimo contatto e chiude il richiamo (scaduto, o qualunque se c’è stato uno scambio)', (t) => {
   const { db, cleanup } = makeApp();
   t.after(cleanup);
   const lead = mk(db, { contact: { name: 'Anna' } });
@@ -123,8 +123,15 @@ test('il registro: un contatto vero porta lo stato avanti (mai indietro), aggior
   L.logActivity(db, lead.id, { kind: 'call', nowMs: NOW });
   assert.equal(L.getLead(db, lead.id).next_action_on, null);
   L.setNextAction(db, lead.id, { on: '2027-02-01', text: 'Scrivere a febbraio' }, NOW);
+  L.logActivity(db, lead.id, { kind: 'email_out', nowMs: NOW });
+  L.logActivity(db, lead.id, { kind: 'no_answer', nowMs: NOW });
+  assert.equal(L.getLead(db, lead.id).next_action_on, '2027-02-01', 'scrivere o non trovarlo non cancella un richiamo futuro');
+  L.logActivity(db, lead.id, { kind: 'reply', title: 'Mi hanno risposto', nowMs: NOW });
+  assert.deepEqual([L.getLead(db, lead.id).next_action_on, L.getLead(db, lead.id).next_action], [null, null], 'se hanno risposto il vecchio richiamo non serve più, anche se era fissato più avanti');
+  L.setNextAction(db, lead.id, { on: '2027-02-01', text: 'Scrivere a febbraio' }, NOW);
   L.logActivity(db, lead.id, { kind: 'call', nowMs: NOW });
-  assert.equal(L.getLead(db, lead.id).next_action_on, '2027-02-01', 'un richiamo futuro non si cancella');
+  assert.equal(L.getLead(db, lead.id).next_action_on, null, 'vale anche per una telefonata');
+  L.setNextAction(db, lead.id, { on: '2027-02-01', text: 'Scrivere a febbraio' }, NOW);
   L.logActivity(db, lead.id, { kind: 'call', nextOn: '2027-01-20', nextAction: 'Mandare il listino', nowMs: NOW });
   assert.deepEqual([L.getLead(db, lead.id).next_action_on, L.getLead(db, lead.id).next_action], ['2027-01-20', 'Mandare il listino']);
   assert.equal(code(() => L.setNextAction(db, lead.id, { on: 'domani' }, NOW)), 'date');
@@ -370,4 +377,41 @@ test('indirizzi email copiati da un sito o da un PDF: caratteri invisibili, «ma
     assert.equal(L.cleanContact({ name: 'Ufficio', email: raw }).value.email, 'management@bassanigroup.com');
   }
   assert.throws(() => L.cleanLead({ company: 'X', email: 'non-una-email' }), (e) => e.code === 'email');
+});
+
+test('appuntamenti e richiamo: il richiamo segue il primo appuntamento; spostando, annullando o chiudendo si aggiorna; un richiamo scritto a mano non si perde', (t) => {
+  const { db, cleanup } = makeApp();
+  t.after(cleanup);
+  const lead = mk(db, {});
+  const next = () => [L.getLead(db, lead.id).next_action_on, L.getLead(db, lead.id).next_action];
+  L.setNextAction(db, lead.id, { on: '2027-01-07', text: 'Richiamare tra tre giorni' }, NOW);
+  const visit = L.addAppointment(db, lead.id, { kind: 'visit', date: '2027-01-12', start: '15:00', end: '16:00' }, NOW);
+  assert.equal(next()[0], '2027-01-12', 'fissato un appuntamento, il vecchio richiamo passa all’appuntamento');
+  assert.match(next()[1], /^Visita in azienda, .* alle 15:00$/);
+  // un secondo, più lontano: il richiamo resta sul primo
+  const video = L.addAppointment(db, lead.id, { kind: 'video', date: '2027-01-20', start: '10:00', end: '10:30' }, NOW);
+  assert.equal(next()[0], '2027-01-12');
+  // spostato: il richiamo lo segue
+  L.updateAppointment(db, visit.id, { kind: 'visit', date: '2027-01-14', start: '11:00', end: '12:00' }, NOW);
+  assert.equal(next()[0], '2027-01-14');
+  assert.match(next()[1], /alle 11:00$/);
+  // annullato: passa al successivo
+  assert.equal(L.cancelAppointment(db, visit.id, NOW), true);
+  assert.equal(next()[0], '2027-01-20');
+  // fatto senza un nuovo richiamo: non resta nulla; con un nuovo richiamo vale quello
+  L.completeAppointment(db, video.id, { outcome: 'Ci mandano le date' }, NOW);
+  assert.deepEqual(next(), [null, null]);
+  const call = L.addAppointment(db, lead.id, { kind: 'call', date: '2027-01-25', start: '09:00', end: '09:15', blocks: false }, NOW);
+  L.completeAppointment(db, call.id, { outcome: 'Da risentire', nextOn: '2027-02-10', nextAction: 'Mandare il listino' }, NOW);
+  assert.deepEqual(next(), ['2027-02-10', 'Mandare il listino']);
+  // un richiamo scritto a mano non si tocca quando un appuntamento si sposta o si annulla
+  const other = L.addAppointment(db, lead.id, { kind: 'visit', date: '2027-03-01', start: '15:00', end: '16:00' }, NOW);
+  L.setNextAction(db, lead.id, { on: '2027-02-20', text: 'Mandare il contratto' }, NOW);
+  L.updateAppointment(db, other.id, { kind: 'visit', date: '2027-03-02', start: '15:00', end: '16:00' }, NOW);
+  L.cancelAppointment(db, other.id, NOW);
+  assert.deepEqual(next(), ['2027-02-20', 'Mandare il contratto']);
+  // un appuntamento già passato non diventa un richiamo
+  const lead2 = mk(db, { company: 'Altra Agenzia', email: 'info@altra.it' });
+  L.addAppointment(db, lead2.id, { kind: 'visit', date: '2027-01-02', start: '15:00', end: '16:00' }, NOW);
+  assert.equal(L.getLead(db, lead2.id).next_action_on, null);
 });

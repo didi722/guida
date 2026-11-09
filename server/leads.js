@@ -325,7 +325,8 @@ export function removeContact(db, leadId, id) {
 // ───────────── registro, stato e prossima azione ─────────────
 /**
  * Scrive una riga nel registro. Se è un contatto vero («ci siamo sentiti») aggiorna l'ultimo contatto, porta l'agenzia allo stato giusto
- * (mai indietro) e chiude il richiamo che era già scaduto, a meno che non se ne indichi uno nuovo con `nextOn`.
+ * (mai indietro) e chiude il richiamo: quello già scaduto, e qualunque richiamo se c'è stato uno scambio (risposta, telefonata, incontro, videochiamata),
+ * a meno che non se ne indichi uno nuovo con `nextOn`.
  * @returns {object} la riga del registro
  */
 export function logActivity(db, leadId, { kind, contactId = null, title = '', body = '', at = null, nextOn = '', nextAction = '', nowMs = Date.now() } = {}) {
@@ -356,8 +357,8 @@ export function logActivity(db, leadId, { kind, contactId = null, title = '', bo
       if (on && isDate(on)) {
         sets.push('next_action_on = ?', 'next_action = ?');
         args.push(on, cleanText(nextAction, 160) || null);
-      } else if (lead.next_action_on && lead.next_action_on <= today) {
-        sets.push('next_action_on = NULL', 'next_action = NULL'); // il richiamo scaduto è stato fatto
+      } else if (lead.next_action_on && (CONVERSATION.has(kind) || lead.next_action_on <= today)) {
+        sets.push('next_action_on = NULL', 'next_action = NULL'); // il richiamo scaduto è stato fatto; e se c'è stato uno scambio («mi hanno risposto», una telefonata, un incontro) il vecchio richiamo non serve più
       }
     } else if (nextOn && isDate(cleanText(nextOn, 10))) {
       sets.push('next_action_on = ?', 'next_action = ?');
@@ -616,6 +617,22 @@ function readAppointment(db, leadId, input) {
 
 const apptTitle = (a) => `${APPT_LABEL[a.kind]}, ${fmtDate(a.date, 'it', 'weekday')}${a.start_time === '00:00' && a.end_time === '23:59' ? ' (tutto il giorno)' : ` alle ${a.start_time}`}`;
 
+/**
+ * Il richiamo segue gli appuntamenti: «Visita, lunedì alle 15:00» è la prossima cosa da fare. Si mette sul primo appuntamento ancora da fare (da oggi in poi) se `force`,
+ * se il richiamo era proprio quell'appuntamento (`was`: prima che fosse spostato, annullato o fatto) o se non c'è nessun richiamo; non tocca un richiamo scritto a mano.
+ * Se `was` era il richiamo e non resta nessun appuntamento, il richiamo si toglie.
+ */
+function followAppointments(db, leadId, nowMs, { was = null, force = false } = {}) {
+  const lead = getLead(db, leadId);
+  if (!lead) return;
+  const mine = !!was && lead.next_action_on === was.date && lead.next_action === apptTitle(was);
+  if (!(force || mine || !lead.next_action_on)) return;
+  const next = db.prepare("SELECT * FROM lead_appointments WHERE lead_id = ? AND status = 'planned' AND date >= ? ORDER BY date, start_time, id LIMIT 1").get(leadId, nowRome(nowMs).date);
+  if (next) setNextAction(db, leadId, { on: next.date, text: apptTitle(next) }, nowMs);
+  else if (mine) setNextAction(db, leadId, {}, nowMs);
+}
+
+
 /** Fissa un appuntamento (visita in azienda, videochiamata, telefonata…). @throws {LeadError} 'date' | 'time' | 'notfound' */
 export function addAppointment(db, leadId, input, nowMs = Date.now()) {
   return tx(db, () => {
@@ -626,6 +643,7 @@ export function addAppointment(db, leadId, input, nowMs = Date.now()) {
       .run(leadId, v.contactId, v.kind, v.date, v.start, v.end, v.place, v.notes, v.blocks, iso(nowMs));
     const appt = getAppointment(db, Number(row.lastInsertRowid));
     logActivity(db, leadId, { kind: 'appointment', contactId: v.contactId, title: `Fissato: ${apptTitle(appt)}`, body: [appt.place, appt.notes].filter(Boolean).join('\n'), nowMs });
+    followAppointments(db, leadId, nowMs, { force: true }); // ha un appuntamento: il vecchio richiamo non serve più
     return appt;
   });
 }
@@ -639,6 +657,7 @@ export function updateAppointment(db, id, input, nowMs = Date.now()) {
     db.prepare('UPDATE lead_appointments SET contact_id = ?, kind = ?, date = ?, start_time = ?, end_time = ?, place = ?, notes = ?, blocks = ? WHERE id = ?').run(v.contactId, v.kind, v.date, v.start, v.end, v.place, v.notes, v.blocks, id);
     const next = getAppointment(db, id);
     if (cur.date !== next.date || cur.start_time !== next.start_time) logActivity(db, cur.lead_id, { kind: 'appointment', contactId: v.contactId, title: `Spostato: ${apptTitle(next)}`, nowMs });
+    followAppointments(db, cur.lead_id, nowMs, { was: cur });
     return next;
   });
 }
@@ -651,6 +670,7 @@ export function completeAppointment(db, id, { outcome = '', nextOn = '', nextAct
     db.prepare("UPDATE lead_appointments SET status = 'done', outcome = ? WHERE id = ?").run(cleanText(outcome, 2000) || null, id);
     const at = Math.min(nowMs, localToInstant(a.date, a.start_time));
     logActivity(db, a.lead_id, { kind: a.kind === 'video' ? 'video' : a.kind === 'call' ? 'call' : 'meeting', contactId: a.contact_id, title: `${APPT_LABEL[a.kind]} fatta`, body: outcome, at: new Date(at).toISOString(), nextOn, nextAction, nowMs });
+    followAppointments(db, a.lead_id, nowMs, { was: a }); // senza un nuovo richiamo, resta il prossimo appuntamento (se c'è)
     return true;
   });
 }
@@ -661,6 +681,7 @@ export function cancelAppointment(db, id, nowMs = Date.now()) {
     if (!a || a.status !== 'planned') return false;
     db.prepare("UPDATE lead_appointments SET status = 'cancelled' WHERE id = ?").run(id);
     logActivity(db, a.lead_id, { kind: 'appointment', contactId: a.contact_id, title: `Annullato: ${apptTitle(a)}`, nowMs });
+    followAppointments(db, a.lead_id, nowMs, { was: a });
     return true;
   });
 }
