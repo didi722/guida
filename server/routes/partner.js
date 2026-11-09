@@ -9,7 +9,7 @@ import { feedUrl } from '../agencyFeed.js';
 import { notifyGuideBookingEdited } from '../emails.js';
 import { getPackage } from '../packages.js';
 import { send, sendPdf } from '../http.js';
-import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerSummary } from '../partner.js';
+import { bookingsCsv, invoiceOfBooking, isEditable, parseFilters, partnerBookings, partnerCalendar, partnerInvoice, partnerInvoices, partnerPrograms, partnerSummary, partnerTodo } from '../partner.js';
 import { renderInvoicePdf } from '../pdf-invoice.js';
 import { renderVoucherPdf } from '../pdf.js';
 import { refCodeOf, referralUrl, referralsOf } from '../referral.js';
@@ -21,6 +21,7 @@ import { LANGS } from '../langs.js';
 import { needPartner, safeNext, toLogin } from './guards.js';
 import { accountPage, bookingStatusText, bookingsPage, invoicesPage, ratesPage } from '../views/b2b.js';
 import { agencyHubPage } from '../views/agencyHub.js';
+import { agencyProgramsPage } from '../views/programs.js';
 import { bookingPage } from '../views/booking.js';
 import { helpPage } from '../views/tutorial.js';
 
@@ -30,7 +31,7 @@ export function partnerRouter(app) {
   const form = express.urlencoded({ extended: false, limit: '50kb' });
 
   // dati personali e fiscali: mai in cache del browser o di proxy
-  r.use(['/b2b/account', '/b2b/agency', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/help'], (req, res, next) => {
+  r.use(['/b2b/account', '/b2b/agency', '/b2b/rates', '/b2b/invoices', '/b2b/bookings', '/b2b/bookings.csv', '/b2b/programs', '/b2b/help'], (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
   });
@@ -51,11 +52,15 @@ export function partnerRouter(app) {
     if (req.acct.status === 'approved' && ['q', 'from', 'to', 'bfrom', 'bto', 'view', 'page', 'v', 'm', 'd'].some((k) => req.query[k] !== undefined)) return res.redirect(302, `/${req.lang}/b2b/bookings?${new URLSearchParams(req.query)}`);
     const share = req.acct.status === 'approved' ? { url: referralUrl(app.cfg, req.lang, refCodeOf(db, req.acct)), count: referralsOf(db, req.acct.id).length } : null; // «Segnala un'agenzia collega»
     const summary = req.acct.status === 'approved' ? partnerSummary(app, req.acct.id) : null; // le tre schede: prenotare, prenotazioni, fatture
-    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor), share, summary }));
+    const todo = req.acct.status === 'approved' ? partnerTodo(app, req.acct.id) : []; // «Da fare»
+    send(res, accountPage(ctx, { acct: req.acct, flash: String(req.query.flash ?? ''), tutorial: tutorialDue(db, req.acct, req.actor), share, summary, todo }));
   });
 
   // «La tua agenzia»: team, logo e documenti, dati di fatturazione
   r.get('/b2b/agency', needPartner, (req, res) => send(res, agencyHubPage(res.locals.ctx, { acct: req.acct, team: teamSize(db, req.acct.id) })));
+
+  // «Programmi di più giorni»: le richieste dell'agenzia con il loro stato (la richiesta si fa dal modulo di /programs, dentro la stessa area)
+  r.get('/b2b/programs', needPartner, (req, res) => send(res, agencyProgramsPage(res.locals.ctx, { programs: partnerPrograms(db, req.acct.id) })));
 
   // «Guida e FAQ»: i passi del giro scritti per intero, il pulsante per rivederlo e le domande frequenti
   r.get('/b2b/help', needPartner, (req, res) => send(res, helpPage(res.locals.ctx, { due: tutorialDue(db, req.acct, req.actor) })));
@@ -97,7 +102,7 @@ export function partnerRouter(app) {
   r.get('/b2b/bookings/:ref', needPartner, (req, res, next) => {
     const b = own(req);
     if (!b) return next();
-    send(res, bookingPage(res.locals.ctx, b, { flash: String(req.query.flash ?? ''), payLater: app.services.payableLater(b), nextUrl: `/${req.lang}/b2b/bookings/${b.ref}`, owner: true, invoice: invoiceOfBooking(db, b.id), group: b.group_id ? getPackage(db, b.group_id) : null }));
+    send(res, bookingPage(res.locals.ctx, b, { flash: String(req.query.flash ?? ''), payLater: app.services.payableLater(b), nextUrl: `/${req.lang}/b2b/bookings/${b.ref}`, owner: true, invoice: invoiceOfBooking(db, b.id), group: b.group_id ? getPackage(db, b.group_id) : null, openEdit: req.query.open === 'edit' }));
   });
   r.get('/b2b/bookings/:ref/voucher.pdf', needPartner, async (req, res, next) => {
     const b = own(req);

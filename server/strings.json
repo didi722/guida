@@ -2363,6 +2363,90 @@
   "Tu agencia",
   "貴社の設定"
  ],
+ "home.todo.title": [
+  "Da fare",
+  "To do",
+  "Por hacer",
+  "対応が必要なこと"
+ ],
+ "home.todo.option": [
+  "Opzione in scadenza",
+  "Option about to expire",
+  "Opción a punto de vencer",
+  "まもなく期限の仮押さえ"
+ ],
+ "home.todo.optionText": [
+  "{who} · {tour}, {date} · scade tra {left}",
+  "{who} · {tour}, {date} · expires in {left}",
+  "{who} · {tour}, {date} · vence en {left}",
+  "{who}・{tour}、{date}・あと{left}で期限"
+ ],
+ "home.todo.optionCta": [
+  "Conferma o rilascia",
+  "Confirm or release",
+  "Confirmar o liberar",
+  "確定または解除"
+ ],
+ "home.todo.phone": [
+  "Manca il telefono del referente",
+  "The contact’s phone number is missing",
+  "Falta el teléfono de la persona de contacto",
+  "担当者の電話番号がありません"
+ ],
+ "home.todo.phoneText": [
+  "{who} · {tour}, {date}: alla guida serve per trovare il gruppo",
+  "{who} · {tour}, {date}: the guide needs it to find the group",
+  "{who} · {tour}, {date}: la guía lo necesita para encontrar al grupo",
+  "{who}・{tour}、{date}：ガイドがグループを見つけるために必要です"
+ ],
+ "home.todo.phoneCta": [
+  "Aggiungi",
+  "Add",
+  "Añadir",
+  "追加"
+ ],
+ "home.todo.wait": [
+  "Si è liberata una data",
+  "A date has freed up",
+  "Se ha liberado una fecha",
+  "日程が空きました"
+ ],
+ "home.todo.program": [
+  "Proposta di programma pronta",
+  "Programme proposal ready",
+  "Propuesta de programa lista",
+  "プログラムの提案が届いています"
+ ],
+ "home.todo.programCta": [
+  "Apri la proposta",
+  "Open the proposal",
+  "Abrir la propuesta",
+  "提案を開く"
+ ],
+ "pg.agency.lead": [
+  "Un soggiorno di più giorni per un tuo gruppo? Chiedi un programma su misura: ricevi una proposta con giorni, orari e prezzo, che puoi accettare da qui.",
+  "A stay of several days for one of your groups? Ask for a tailor-made programme: you get a proposal with days, times and price, which you can accept from here.",
+  "¿Una estancia de varios días para uno de tus grupos? Pide un programa a medida: recibes una propuesta con días, horarios y precio, que puedes aceptar desde aquí.",
+  "お客様のグループの数日間の滞在をご計画ですか？オーダーメイドのプログラムを依頼すると、日程・時間・料金の入った提案が届き、ここから承諾できます。"
+ ],
+ "pg.agency.new": [
+  "Richiedi un programma",
+  "Request a programme",
+  "Pedir un programa",
+  "プログラムを依頼する"
+ ],
+ "pg.agency.empty": [
+  "Non hai ancora chiesto programmi di più giorni.",
+  "You have not requested any multi-day programmes yet.",
+  "Todavía no has pedido programas de varios días.",
+  "複数日プログラムの依頼はまだありません。"
+ ],
+ "pg.agency.back": [
+  "I tuoi programmi",
+  "Your programmes",
+  "Tus programas",
+  "プログラム一覧"
+ ],
  "agency.lead": [
   "Chi lavora con te, il tuo logo e i dati per le fatture, tutto in un posto.",
   "Who works with you, your logo and your billing details, all in one place.",

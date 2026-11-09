@@ -166,6 +166,35 @@ export function partnerSummary(app, accountId, nowMs = Date.now()) {
   };
 }
 
+/**
+ * «Da fare»: le cose che aspettano una mossa dell'agenzia, dalla più urgente.
+ *  - option: un'opzione (o un pacchetto in opzione) che scade entro 48 ore;
+ *  - phone: un servizio confermato dei prossimi due giorni senza il telefono del referente (alla guida serve per trovare il gruppo);
+ *  - wait: una data della lista d'attesa che si è liberata;
+ *  - program: una proposta di programma di più giorni pronta e non scaduta.
+ * @returns {{kind: 'option'|'phone'|'wait'|'program', booking?: object, groupRef?: string|null, untilMs?: number, entry?: object, program?: object}[]}
+ */
+export function partnerTodo(app, accountId, nowMs = Date.now()) {
+  const { db } = app;
+  const today = nowRome(nowMs).date;
+  const iso = (ms) => new Date(ms).toISOString();
+  const out = [];
+  const seen = new Set();
+  for (const b of db.prepare(`SELECT * FROM bookings WHERE account_id = ? AND status = 'option' AND option_expires_at > ? AND option_expires_at <= ? ORDER BY option_expires_at, id`).all(accountId, iso(nowMs), iso(nowMs + 48 * 3600_000))) {
+    const key = b.group_id ? `g${b.group_id}` : `b${b.id}`; // un pacchetto scade tutto insieme: una voce sola
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ kind: 'option', booking: b, groupRef: b.group_id ? (db.prepare('SELECT ref FROM booking_groups WHERE id = ?').get(b.group_id)?.ref ?? null) : null, untilMs: Date.parse(b.option_expires_at) });
+  }
+  for (const b of db.prepare(`SELECT * FROM bookings WHERE account_id = ? AND status = 'confirmed' AND date >= ? AND date <= ? AND (phone IS NULL OR TRIM(phone) = '') ORDER BY date, start_time`).all(accountId, today, addDays(today, 2))) out.push({ kind: 'phone', booking: b });
+  for (const e of db.prepare(`SELECT * FROM waitlist WHERE account_id = ? AND status = 'notified' AND date >= ? ORDER BY date, id`).all(accountId, today)) out.push({ kind: 'wait', entry: e });
+  for (const p of db.prepare(`SELECT * FROM programs WHERE account_id = ? AND status = 'quoted' ORDER BY created_at DESC, id DESC`).all(accountId)) if (!p.valid_until || p.valid_until >= today) out.push({ kind: 'program', program: p });
+  return out;
+}
+
+/** Le richieste di programma di più giorni dell'agenzia, dalla più recente. */
+export const partnerPrograms = (db, accountId) => db.prepare('SELECT * FROM programs WHERE account_id = ? ORDER BY created_at DESC, id DESC').all(accountId);
+
 /** Fatture e note di credito emesse all'agenzia, dalla più recente. */
 export function partnerInvoices(db, accountId) {
   return db

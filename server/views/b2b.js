@@ -291,6 +291,37 @@ function shareCard(ctx, { url, count }) {
 }
 
 /**
+ * «Da fare»: le cose che aspettano una mossa dell'agenzia (opzioni che scadono, telefono mancante, date liberate, proposte di programma pronte),
+ * ognuna con il pulsante che la risolve. Senza nulla da fare il riquadro non c'è.
+ * items: vedi partnerTodo.
+ */
+function todoBox(ctx, items) {
+  const { t, lang, u, app } = ctx;
+  if (!items?.length) return '';
+  const tourTitle = (slug) => app.content.tour(slug)?.i18n[lang]?.title ?? slug;
+  const who = (b) => b.client_ref || b.name;
+  const row = (title, text, href, cta, gold = false) => html`<li class="ag-todo-item"><span class="ag-todo-text"><strong>${title}</strong><small>${text}</small></span><a class="btn ${gold ? 'btn-gold' : 'btn-outline'} btn-sm" href="${href}">${cta}</a></li>`;
+  const rows = items.slice(0, 6).map((x) => {
+    if (x.kind === 'option') {
+      const b = x.booking;
+      return row(t('home.todo.option'), t('home.todo.optionText', { who: who(b), tour: tourTitle(b.tour_slug), date: fmtDate(b.date, lang, 'short'), left: timeLeft(t, Math.max(0, x.untilMs - Date.now())) }), `${x.groupRef ? u(`/b2b/packages/${x.groupRef}`) : u(`/b2b/bookings/${b.ref}`)}#option`, t('home.todo.optionCta'), true);
+    }
+    if (x.kind === 'phone') {
+      const b = x.booking;
+      return row(t('home.todo.phone'), t('home.todo.phoneText', { who: who(b), tour: tourTitle(b.tour_slug), date: fmtDate(b.date, lang, 'short') }), `${u(`/b2b/bookings/${b.ref}`)}?open=edit#edit`, t('home.todo.phoneCta'));
+    }
+    if (x.kind === 'wait') {
+      const e = x.entry;
+      const tour = app.content.tour(e.tour_slug);
+      return row(t('home.todo.wait'), `${tourTitle(e.tour_slug)}, ${fmtDate(e.date, lang, 'short')} · ${t('avail.pax', { n: e.pax })}`, `${u('/book')}?d=${e.date}&pax=${e.pax}&tour=${encodeURIComponent(e.tour_slug)}${e.hours != null && tour?.chooseHours ? `&hours=${e.hours}` : ''}#giorno`, t('wl.book'), true);
+    }
+    const p = x.program;
+    return row(t('home.todo.program'), `${p.client_ref ? `${p.client_ref} · ` : ''}${p.ref}${p.valid_until ? ` · ${t('pg.validUntil', { date: fmtDate(p.valid_until, lang, 'date') })}` : ''}`, `/${lang}/programs/${p.ref}?t=${p.token}`, t('home.todo.programCta'));
+  });
+  return html`<section class="card pad ag-todo" aria-labelledby="ag-todo-title"><h2 id="ag-todo-title">${t('home.todo.title')} <span class="chip chip-warn">${items.length}</span></h2><ul class="ag-todo-list">${rows}</ul></section>`;
+}
+
+/**
  * Le tre cose che un'agenzia fa qui, una per scheda: prenotare (o opzionare), vedere le prenotazioni, pagare le fatture.
  * Sotto, tre collegamenti piccoli: i preventivi per i suoi clienti, la pagina con team, logo e dati di fatturazione, e la guida.
  * summary: vedi partnerSummary (se manca, le schede mostrano solo i pulsanti).
@@ -308,14 +339,14 @@ function homeActions(ctx, summary) {
     <article class="card pad home-card"><h2>${t('home.bookings.title')}</h2>${bookingsLine ? html`<p>${bookingsLine}</p>` : ''}<a class="btn btn-outline" href="${u('/b2b/bookings')}">${t('home.bookings.cta')}</a></article>
     <article class="card pad home-card"><h2>${t('home.pay.title')}</h2>${payLine ? html`<p>${payLine}</p>` : ''}<a class="btn ${late ? 'btn-gold' : 'btn-outline'}" href="${u('/b2b/invoices')}">${t('home.pay.cta')}</a></article>
   </div>
-  <p class="home-more"><a href="${u('/b2b/quotes')}">${t('quotes.nav')}</a><a href="${u('/b2b/agency')}">${t('home.agency')}</a><a href="${u('/b2b/help')}">${t('partner.nav.help')}</a></p>`;
+  <p class="home-more"><a href="${u('/b2b/quotes')}">${t('quotes.nav')}</a><a href="${u('/b2b/programs')}">${t('pg.title')}</a><a href="${u('/b2b/agency')}">${t('home.agency')}</a><a href="${u('/b2b/help')}">${t('partner.nav.help')}</a></p>`;
 }
 
 /**
  * La prima pagina dell'area agenzie: tariffe e condizioni dell'agenzia, con i pulsanti per prenotare e per andare alle prenotazioni.
  * Per un account non ancora approvato mostra la pagina di stato.
  */
-export function accountPage(ctx, { acct, flash = '', tutorial = false, share = null, summary = null }) {
+export function accountPage(ctx, { acct, flash = '', tutorial = false, share = null, summary = null, todo = [] }) {
   if (acct.status !== 'approved') return pendingPage(ctx, acct);
   const { t, u } = ctx;
   const body = html`
@@ -328,6 +359,7 @@ export function accountPage(ctx, { acct, flash = '', tutorial = false, share = n
   ${flash === 'welcome' ? html`<div class="notice notice-ok" role="status">${t('b2b.flash.welcome')}</div>` : ''}
   ${tutorial ? tutorialBanner(ctx) : ''}
   ${whoOf(ctx).owner && billingGaps(acct).length ? html`<div class="notice notice-info" role="note">${t('billing.missing', { list: gapWords(t, acct) })} <a href="${u('/b2b/billing')}">${t('billing.complete')} →</a></div>` : ''}
+  ${todoBox(ctx, todo)}
   ${homeActions(ctx, summary)}
   ${tariffario(ctx, acct)}
   <details class="terms-strip card spaced"><summary>${t('partner.terms.title')} <span class="muted">· ${acct.discount_percent ? `−${acct.discount_percent}%` : t('b2b.baseRate')} · ${acct.allow_invoice ? t('b2b.payInvoiceCard') : t('b2b.payCardOnly')}</span></summary>

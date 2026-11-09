@@ -11,6 +11,7 @@ import { cancelBooking, confirmPaid, createBooking } from '../server/bookings.js
 import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { createDrafts, invoiceDetail, issueInvoice, saveDraft } from '../server/invoices.js';
+import { createProgramRequest, markQuoted, saveProposal } from '../server/programs.js';
 import { addDays, nowRome } from '../server/time.js';
 import { addAccount, isPdf } from './helpers.js';
 
@@ -523,7 +524,7 @@ test('conferma per le agenzie: pratica, lingua del tour e note in vista; il refe
     assert.ok(at('name="clientRef"') < at('name="tourLang"') && at('name="tourLang"') < at('name="notes"') && at('name="notes"') < at('<h2>Pagamento</h2>'));
     assert.doesNotMatch(page, /La lingua in cui si svolge il tour\./, 'ai privati serve il suggerimento, alle agenzie no');
     // il referente è già compilato: una riga chiusa (nome, email, telefono, lingua della conferma) con «Modifica»; i campi restano nel modulo e partono con esso
-    assert.match(page, /<details class="ref-box" >\s*<summary><span class="ref-line"><strong>Referente per questo servizio<\/strong> · Giulia Bianchi · giulia@lagoon\.example · [^<]*conferma in Italiano<\/span> <span class="ref-change">Modifica<\/span><\/summary>/);
+    assert.match(page, /<details class="ref-box" >\s*<summary><span class="ref-summary"><strong>Referente per questo servizio<\/strong> · Giulia Bianchi · giulia@lagoon\.example · [^<]*conferma in Italiano<\/span> <span class="ref-change">Modifica<\/span><\/summary>/);
     const box = page.match(/<details class="ref-box"[^]*?<\/details>/)[0];
     for (const field of ['name="name"', 'name="email"', 'name="phone"', 'name="lang"']) assert.ok(box.includes(field), `${field} dentro «Referente»`);
     assert.ok(at('name="notes"') < at('<details class="ref-box"') && at('<details class="ref-box"') < at('<h2>Pagamento</h2>'));
@@ -602,6 +603,129 @@ test('«Prenota di nuovo»: dalla scheda e dall’elenco porta alla pagina di pr
     assert.match(rebook, /<a class="acal-cell is-free[^"]*" href="[^"]*&amp;cr=Gita\+%22scolastica%22/, 'anche i giorni del calendario');
     // fino al pagamento: il riferimento è già scritto
     assert.match(nb(await (await f(slot)).text()), /name="clientRef" maxlength="120" value="Gita &quot;scolastica&quot;"/);
+  } finally {
+    s.close();
+  }
+});
+
+test('«Da fare» in panoramica: opzioni che scadono, telefono mancante, date liberate e proposte pronte, ognuna col suo pulsante; senza nulla il riquadro non c’è', async () => {
+  const s = await start();
+  try {
+    const { app, lagoon, blue } = s;
+    const f = await s.login('giulia@lagoon.example');
+    const home = async () => nb(await (await f('/it/b2b/account')).text());
+    assert.doesNotMatch(await home(), /ag-todo/, 'niente da fare: nessun riquadro');
+
+    // un'opzione che scade fra 30 ore (conta), una che scade fra 5 giorni (non ancora)
+    const near = book(app, lagoon, { ref: 'Gruppo Rossi', date: day(20), kind: 'option' });
+    app.db.prepare('UPDATE bookings SET option_expires_at = ? WHERE id = ?').run(new Date(Date.now() + 30 * 3600_000).toISOString(), near.id);
+    book(app, lagoon, { ref: 'Gruppo Verdi', date: day(25), time: '15:00', kind: 'option' });
+    // un servizio di domani senza telefono (conta) e uno di fra due settimane senza telefono (non ancora)
+    const soon = book(app, lagoon, { ref: 'Gruppo Neri', date: day(12) });
+    app.db.prepare("UPDATE bookings SET date = ?, phone = '' WHERE id = ?").run(day(1), soon.id);
+    const later = book(app, lagoon, { ref: 'Gruppo Blu', date: day(14), time: '15:00' });
+    app.db.prepare('UPDATE bookings SET phone = NULL WHERE id = ?').run(later.id);
+    // una data liberata (avviso inviato) e, di un'altra agenzia, una che non è sua
+    const at = new Date().toISOString();
+    const wait = (acct, status) => app.db.prepare("INSERT INTO waitlist (account_id, tour_slug, date, time, pax, hours, tour_lang, status, created_at, queued_at, notified_at) VALUES (?, 'cannaregio-ghetto-agenzie', ?, NULL, 4, NULL, NULL, ?, ?, ?, ?)").run(acct.id, day(30), status, at, at, status === 'notified' ? at : null);
+    wait(lagoon, 'notified');
+    wait(lagoon, 'waiting');
+    wait(blue, 'notified');
+    // una proposta di programma pronta (e una scaduta, che non conta)
+    const proposal = (validUntil) => ({ title: 'Venezia in tre giorni', intro: '', notes: '', depositPercent: 30, validUntil, holdDates: false, totalCents: null, days: [{ date: day(40), start: '09:30', end: '13:00', title: 'San Marco e Rialto', priceCents: 15000 }] });
+    const quoted = createProgramRequest(app, { channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, participants: 6, dateFrom: day(40), dateTo: day(42), clientRef: 'Gruppo Hoffmann', lang: 'it' });
+    saveProposal(app, quoted.id, proposal(day(10)), { strict: true });
+    markQuoted(app, quoted.id);
+    const old = createProgramRequest(app, { channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, participants: 3, dateFrom: day(50), dateTo: day(51), lang: 'it' });
+    saveProposal(app, old.id, proposal(day(10)), { strict: true });
+    markQuoted(app, old.id);
+    app.db.prepare('UPDATE programs SET valid_until = ? WHERE id = ?').run(day(-2), old.id);
+
+    const page = await home();
+    const box = page.match(/<section class="card pad ag-todo"[^]*?<\/section>/)[0];
+    assert.match(box, /<h2 id="ag-todo-title">Da fare <span class="chip chip-warn">4<\/span><\/h2>/, 'quattro cose: opzione, telefono, data liberata, proposta');
+    assert.equal((box.match(/<li class="ag-todo-item">/g) ?? []).length, 4);
+    // ognuna col suo pulsante
+    assert.match(box, new RegExp(`Opzione in scadenza</strong><small>Gruppo Rossi · Cannaregio e il Ghetto, [^<]* · scade tra [^<]*</small></span><a class="btn btn-gold btn-sm" href="/it/b2b/bookings/${near.ref}#option">Conferma o rilascia</a>`));
+    assert.match(box, new RegExp(`Manca il telefono del referente</strong><small>Gruppo Neri · [^<]*: alla guida serve per trovare il gruppo</small></span><a class="btn btn-outline btn-sm" href="/it/b2b/bookings/${soon.ref}\\?open=edit#edit">Aggiungi</a>`));
+    assert.match(box, new RegExp(`Si è liberata una data</strong><small>Cannaregio e il Ghetto, [^<]* · Persone: 4</small></span><a class="btn btn-gold btn-sm" href="/it/book\\?d=${day(30)}&amp;pax=4&amp;tour=cannaregio-ghetto-agenzie#giorno">Vedi gli orari</a>`));
+    assert.match(box, new RegExp(`Proposta di programma pronta</strong><small>Gruppo Hoffmann · ${quoted.ref} · Proposta valida fino al [^<]*</small></span><a class="btn btn-outline btn-sm" href="/it/programs/${quoted.ref}\\?t=${quoted.token}">Apri la proposta</a>`));
+    assert.ok(!box.includes(old.ref) && !box.includes('Gruppo Verdi') && !box.includes('Gruppo Blu'), 'né la proposta scaduta, né l’opzione lontana, né il servizio lontano');
+    assert.ok(page.indexOf('ag-todo') < page.indexOf('class="home-actions"'), 'il riquadro sta sopra le tre schede');
+    // dal pulsante del telefono la scheda si apre già sul modulo
+    assert.match(nb(await (await f(`/it/b2b/bookings/${soon.ref}?open=edit`)).text()), /<details class="card fold" id="edit" open>/);
+    assert.doesNotMatch(nb(await (await f(`/it/b2b/bookings/${soon.ref}`)).text()), /id="edit" open/);
+    // l'opzione scaduta o già confermata e il telefono aggiunto tolgono la voce
+    app.db.prepare("UPDATE bookings SET phone = '+39 333 1111111' WHERE id = ?").run(soon.id);
+    assert.doesNotMatch(await home(), /Manca il telefono/);
+    app.db.prepare("UPDATE waitlist SET status = 'waiting'").run();
+    assert.doesNotMatch(await home(), /Si è liberata una data/);
+    // il collegamento ai programmi è tra quelli piccoli, non nella barra
+    assert.match(await home(), /<p class="home-more">[^]*<a href="\/it\/b2b\/programs">Programmi di più giorni<\/a>/);
+    assert.ok(!navOf(await (await f('/it/b2b/account')).text()).includes('/b2b/programs'));
+  } finally {
+    s.close();
+  }
+});
+
+test('programmi di più giorni nell’area agenzie: elenco con lo stato, richiesta e pagina della proposta dentro l’area; ognuna vede solo i suoi', async () => {
+  const s = await start();
+  try {
+    const { app, lagoon, blue } = s;
+    const f = await s.login('giulia@lagoon.example');
+    // senza accesso si va al modulo; senza richieste c'è il pulsante per farla
+    assert.equal(loc(await s.anon('/it/b2b/programs')), `/it/b2b/login?next=${encodeURIComponent('/it/b2b/programs')}`);
+    const empty = nb(await (await f('/it/b2b/programs')).text());
+    assert.match(empty, /<body class="[^"]*partner-area/);
+    assert.match(empty, /Non hai ancora chiesto programmi di più giorni\./);
+    assert.match(empty, /href="\/it\/programs">Richiedi un programma<\/a>/);
+
+    // il modulo, dentro la stessa area, già compilato e senza le idee per i privati
+    const form = nb(await (await f('/it/programs')).text());
+    assert.match(form, /<body class="[^"]*partner-area/);
+    assert.match(form, /<h1>Richiedi un programma<\/h1>/);
+    assert.match(form, /← |I tuoi programmi/);
+    assert.match(form, /name="company" maxlength="160" value="Lagoon DMC"/);
+    assert.match(form, /name="clientRef"/);
+    assert.doesNotMatch(form, /class="grid grid-2 ideas"/);
+    const pub = nb(await (await s.anon('/it/programs')).text());
+    assert.match(pub, /class="grid grid-2 ideas"/);
+    assert.doesNotMatch(pub, /partner-area|name="clientRef"/);
+
+    // la richiesta si invia da lì e porta alla pagina di stato, dentro l'area, con il ritorno all'elenco
+    const sent = await f('/it/programs', post({ name: 'Giulia Bianchi', email: 'giulia@lagoon.example', company: 'Lagoon DMC', clientRef: 'Gruppo Hoffmann', dateFrom: day(40), dateTo: day(42), participants: '12', groupType: 'agency', interests: 'art', consent: '1' }));
+    assert.equal(sent.status, 303);
+    const status = nb(await (await f(loc(sent))).text());
+    assert.match(status, /<body class="[^"]*partner-area/);
+    assert.match(status, /<a href="\/it\/b2b\/programs">← I tuoi programmi<\/a>/);
+    assert.match(status, /Richiesta ricevuta/);
+
+    // più richieste: l'elenco mostra stato, date, persone e il pulsante giusto (la proposta pronta in evidenza)
+    const mine = app.db.prepare('SELECT * FROM programs WHERE account_id = ?').get(lagoon.id);
+    assert.equal(mine.client_ref, 'Gruppo Hoffmann');
+    const quoted = createProgramRequest(app, { channel: 'b2b', account: lagoon, name: 'Giulia Bianchi', email: lagoon.email, participants: 6, dateFrom: day(60), dateTo: day(62), clientRef: 'Gruppo Weber', lang: 'it' });
+    saveProposal(app, quoted.id, { title: 'Venezia in tre giorni', intro: '', notes: '', depositPercent: 30, validUntil: day(10), holdDates: false, totalCents: null, days: [{ date: day(60), start: '09:30', end: '13:00', title: 'San Marco e Rialto', priceCents: 150000 }] }, { strict: true });
+    markQuoted(app, quoted.id);
+    const theirs = createProgramRequest(app, { channel: 'b2b', account: blue, name: 'Luca Neri', email: blue.email, participants: 8, dateFrom: day(70), dateTo: day(71), clientRef: 'Gruppo Segreto', lang: 'it' });
+    const list = nb(await (await f('/it/b2b/programs')).text());
+    assert.match(list, /<table class="table table-stack partner-table">/);
+    const rows = list.split('<tr>').slice(2);
+    assert.equal(rows.length, 2, 'le due dell’agenzia, non quella di un’altra');
+    assert.ok(!list.includes(theirs.ref) && !list.includes('Gruppo Segreto'));
+    const rowOf = (p) => rows.find((r) => r.includes(p.ref));
+    assert.match(rowOf(quoted), /Gruppo Weber<\/a><small class="muted">PR-[A-Z0-9]{6} · [^<]*<\/small>/);
+    assert.match(rowOf(quoted), /<span class="chip chip-ok">Proposta pronta<\/span><small class="muted">Proposta valida fino al [^<]*<\/small>/);
+    assert.match(rowOf(quoted), /1500 €/);
+    assert.match(rowOf(quoted), new RegExp(`<a class="btn btn-gold btn-sm" href="/it/programs/${quoted.ref}\\?t=${quoted.token}">Apri la proposta</a>`));
+    assert.match(rowOf(mine), /<span class="chip chip-warn">Richiesta ricevuta<\/span>/);
+    assert.match(rowOf(mine), />12<\/td>/);
+    assert.match(rowOf(mine), new RegExp(`<a class="btn btn-outline btn-sm" href="/it/programs/${mine.ref}\\?t=${mine.token}">Apri</a>`));
+    assert.ok(list.indexOf(quoted.ref) < list.indexOf(mine.ref), 'dalla più recente');
+    // le proposte scadute si dicono tali e non invitano ad aprirle come pronte
+    app.db.prepare('UPDATE programs SET valid_until = ? WHERE id = ?').run(day(-1), quoted.id);
+    const expired = nb(await (await f('/it/b2b/programs')).text());
+    assert.match(expired, /Questa proposta è scaduta/);
+    assert.doesNotMatch(expired, /btn-gold btn-sm" href="\/it\/programs\//);
   } finally {
     s.close();
   }

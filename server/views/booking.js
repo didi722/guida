@@ -158,7 +158,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pa
         ${themesBox}
         ${notesField}
         <details class="ref-box" ${refOpen ? raw('open') : ''}>
-          <summary><span class="ref-line"><strong>${t('checkout.contactB2b')}</strong> · ${refLine}</span> <span class="ref-change">${t('checkout.change')}</span></summary>
+          <summary><span class="ref-summary"><strong>${t('checkout.contactB2b')}</strong> · ${refLine}</span> <span class="ref-change">${t('checkout.change')}</span></summary>
           <div class="form-grid">${nameField}${emailField}${phoneInput}${langField}</div>
         </details>`
       : html`<h2>${t('checkout.contact')}</h2>
@@ -296,7 +296,7 @@ export function optionActions(ctx, b, { st, nextUrl = '', group = null }) {
  * owner: chi guarda è l'agenzia che ha fatto la prenotazione (con il suo accesso): vede la scheda nella sua area, con fattura e modifica del nominativo.
  * invoice: la fattura emessa che contiene la prenotazione, se c'è.
  */
-export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = '', owner = false, invoice = null, invite = null, group = null } = {}) {
+export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = '', owner = false, invoice = null, invite = null, group = null, openEdit = false } = {}) {
   const { t, lang, u, app } = ctx;
   const { cfg } = app;
   const tour = app.content.tour(b.tour_slug);
@@ -402,7 +402,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   ${owner ? changeBox(ctx, b) : ''}
   ${owner && b.channel === 'b2b' ? documentsBox(ctx, { ref: b.ref, bookings: [b] }) : ''}
   ${owner && isEditable(b)
-    ? html`<details class="card fold" id="edit" ${/^edit-/.test(flash) ? raw('open') : ''}><summary><h2>${t('partner.edit.title')}</h2></summary>
+    ? html`<details class="card fold" id="edit" ${/^edit-/.test(flash) || openEdit ? raw('open') : ''}><summary><h2>${t('partner.edit.title')}</h2></summary>
     <form class="pad form edit-card" method="post" action="${u(`/b2b/bookings/${b.ref}/edit`)}">
     <p class="small muted">${t('partner.edit.hint')}</p>
     <div class="form-grid">
