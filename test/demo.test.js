@@ -150,6 +150,13 @@ test('dati d’esempio: agenzia approvata con prenotazioni in tutti gli stati e 
     const { payState } = await import('../server/invoicePayments.js');
     assert.deepEqual([invs[0], invs[1], invs[2], invs[4]].map((i) => payState(i, today).state), ['paid', 'overdue', 'credited', 'open']);
     assert.equal(invs[3].related_id, invs[2].id, 'la nota di credito storna la terza fattura');
+    // tutte le date partono da oggi: la scaduta lo è da pochi giorni, quella da pagare scade tra qualche settimana, i preventivi sono validi
+    const { dueDateOf } = await import('../server/invoicePayments.js');
+    const days = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
+    assert.equal(days(dueDateOf(invs[1]), today), 4, 'scaduta da 4 giorni');
+    assert.equal(days(today, dueDateOf(invs[4])), 22, 'l’ultima scade tra 22 giorni');
+    assert.equal(days(invs[4].issue_date, today), 8);
+    assert.ok(db.prepare('SELECT valid_until FROM quotes').all().every((q) => q.valid_until >= today), 'nessun preventivo scaduto');
     // dati fiscali finti, dicitura di prova, e nessun dato fiscale vero in nessun documento
     for (const i of invs) {
       assert.match(i.xml, /DOCUMENTO DIMOSTRATIVO/);
@@ -313,6 +320,8 @@ test('«Ricomincia» rifà la demo da capo (solo da dentro e dallo stesso sito),
     assert.equal(loc(res), '/ja/b2b/account');
     const fresh = await s.app.demo.ensure();
     assert.notEqual(fresh, inst, 'è un’applicazione nuova');
+    assert.equal(await s.app.demo.freshIfIdle(10), fresh, 'se la si sta usando, il collegamento non la azzera');
+    assert.notEqual(await s.app.demo.freshIfIdle(-1), fresh, 'dopo una pausa il collegamento la rifà con le date di oggi');
     assert.equal(fresh.app.db.prepare('SELECT COUNT(*) AS n FROM bookings').get().n, total);
     assert.equal(fresh.app.db.prepare("SELECT COUNT(*) AS n FROM settings WHERE key = 'provato'").get().n, 0);
     assert.equal((await demo('/ja/b2b/account')).status, 200, 'si rientra come l’agenzia');
