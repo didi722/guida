@@ -20,6 +20,7 @@ import { adminBankRouter } from './admin-bank.js';
 import { adminBookingEditRouter } from './admin-booking-edit.js';
 import { adminInvitesRouter } from './admin-invites.js';
 import { adminLeadsRouter } from './admin-leads.js';
+import { adminDemoRouter } from './admin-demo.js';
 import { adminLeadsMailRouter } from './admin-leads-mail.js';
 import { adminPartnersRouter } from './admin-partners.js';
 import { adminStatementRouter } from './admin-statement.js';
@@ -177,6 +178,7 @@ export function adminRouter(app) {
   r.use(adminTodayRouter(app));
   r.use(adminMailRouter(app));
   r.use(adminInvitesRouter(app));
+  r.use(adminDemoRouter(app)); // (prima delle schede dei contatti, come l'Email)
   r.use(adminLeadsMailRouter(app)); // (prima del resto: /leads/mail e /leads/templates non sono la scheda di un contatto)
   r.use(adminLeadsRouter(app));
   r.use(adminPartnersRouter(app));

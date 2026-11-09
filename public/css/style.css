@@ -647,6 +647,18 @@ body.admin { --header-h: 64px; }
 /* Istanza di prova (pagamenti simulati) */
 .site-header .demo-note { position: absolute; top: 100%; left: 0; right: 0; background: #1c1c1c; color: #d6bb51; text-align: center; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.05em; padding: 4px 12px; pointer-events: none; }
 
+/* Demo per le agenzie: la fascia in alto ha anche i tasti «Ricomincia» e «Esci» */
+.site-header .demo-note.demo-bar { pointer-events: auto; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 2px 18px; }
+.demo-bar form { margin: 0; display: inline; }
+.demo-bar button, .demo-bar a { background: none; border: 0; padding: 0; font: inherit; letter-spacing: inherit; color: #fff; text-decoration: underline; cursor: pointer; }
+.demo-bar button:hover, .demo-bar a:hover { color: #d6bb51; }
+.demo-bar .demo-short { display: none; }
+@media (max-width: 640px) { /* sul telefono la fascia sta su una riga sola */
+  .site-header .demo-note.demo-bar { font-size: 0.68rem; letter-spacing: 0.02em; gap: 2px 12px; padding: 4px 8px; }
+  .demo-bar .demo-long { display: none; }
+  .demo-bar .demo-short { display: inline; }
+}
+
 /* Admin: registro delle email */
 .mail-list details { margin-bottom: 10px; }
 .mail-list summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
