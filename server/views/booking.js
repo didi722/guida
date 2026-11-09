@@ -105,7 +105,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pa
     ? html`<div class="option-box ${firm.applied ? 'is-recommended' : ''}">${firm.applied ? html`<span class="chip chip-accent">${t('firm.recommended')}</span>` : ''}<h3>${t('option.title')}</h3>
           <p>${t('option.text', { until: fmtInstant(option.expiresMs, lang), days: timeLeft(t, option.expiresMs - Date.now()) })}</p>
           ${option.period ? html`<p class="small muted option-note">${t('option.period.short')}</p>` : ''}
-          <button class="btn ${firm.applied ? 'btn-gold' : 'btn-outline'} btn-block" type="submit" name="action" value="option" id="option-submit">${t('option.btn')}</button></div>`
+          <button class="btn ${firm.applied ? 'btn-gold' : 'btn-outline'} btn-block" type="submit" name="action" value="option" id="option-submit" data-books>${t('option.btn')}</button></div>`
     : '';
   // lingua del tour: tra quelle offerte; se la partenza condivisa ha già qualcuno, vale la lingua di chi ha prenotato per primo
   const offered = tour.languages;
@@ -203,10 +203,10 @@ export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pa
       ? html`<div class="notice notice-info firm-note" role="note"><strong>${t('firm.title')}</strong> ${t(firm.more ? 'firm.textMore' : firm.refundPercent > 0 ? 'firm.text' : 'firm.text0', { grace: fmtInstant(firm.graceUntilMs, lang), percent: firm.refundPercent, normal: fmtInstant(firm.normalUntilMs, lang) })}${option?.ok ? html` <strong>${t('firm.advice')}</strong>` : ''}</div>`
       : ''}
     ${option?.ok && firm.applied ? optionBox : ''}
-    <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" ${method || nothingToPay ? '' : raw('disabled')}>${nothingToPay ? t('pay.none.cta') : method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
+    <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" data-books ${method || nothingToPay ? '' : raw('disabled')}>${nothingToPay ? t('pay.none.cta') : method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
     ${option?.ok && !firm.applied ? optionBox : option && !option.ok ? html`<p class="small muted option-note">${t(`option.err.${option.reason}`)}</p>` : ''}
     ${isB2b
-      ? html`<div class="package-add"><button class="btn btn-outline btn-block" type="submit" formaction="${u('/b2b/package/add')}" formnovalidate name="action" value="package" id="package-add">${t('pkg.add')}</button><p class="small muted">${t('pkg.addHint')}</p></div>`
+      ? html`<div class="package-add"><button class="btn btn-outline btn-block" type="submit" formaction="${u('/b2b/package/add')}" formnovalidate name="action" value="package" id="package-add" data-books>${t('pkg.add')}</button><p class="small muted">${t('pkg.addHint')}</p></div>`
       : ''}
   </form>
 
@@ -281,7 +281,7 @@ export function optionActions(ctx, b, { st, nextUrl = '', group = null }) {
     <form method="post" action="${base}/option/confirm" class="form option-confirm" data-confirm="${late ? t('booking.optionConfirmAskLate') : t('booking.optionConfirmAsk')}">
       <input type="hidden" name="t" value="${b.token}">${nextUrl ? html`<input type="hidden" name="next" value="${nextUrl}">` : ''}
       ${methods.length > 1 ? html`<label class="field"><span class="label">${t('booking.optionPayWith')}</span><select name="method">${methods.map((m) => html`<option value="${m}">${t(`pay.${m}.title`)}</option>`)}</select></label>` : methods.length ? html`<input type="hidden" name="method" value="${methods[0]}">` : ''}
-      <button class="btn btn-gold" type="submit" ${methods.length ? '' : raw('disabled')}>${t('booking.optionConfirm')}</button>
+      <button class="btn btn-gold" type="submit" data-books ${methods.length ? '' : raw('disabled')}>${t('booking.optionConfirm')}</button>
     </form>
     <form method="post" action="${base}/option/release" class="option-release" data-confirm="${t('booking.optionReleaseAsk')}">
       <input type="hidden" name="t" value="${b.token}">${nextUrl ? html`<input type="hidden" name="next" value="${nextUrl}">` : ''}

@@ -80,7 +80,7 @@
       spot.style.top = (r.top - 6) + 'px'; spot.style.left = (r.left - 6) + 'px';
       spot.style.width = (r.width + 12) + 'px'; spot.style.height = (r.height + 12) + 'px';
     }
-    if (narrow) { tip.style.top = ''; tip.style.left = ''; return; }
+    if (narrow || tip.classList.contains('is-resume')) { tip.style.top = ''; tip.style.left = ''; return; } // il riquadro «Riprendi» sta in basso a destra (CSS), non va centrato
     var th = tip.offsetHeight, tw = tip.offsetWidth;
     if (!r) { tip.style.top = Math.max(8, (window.innerHeight - th) / 2) + 'px'; tip.style.left = Math.max(8, (window.innerWidth - tw) / 2) + 'px'; return; }
     var below = r.bottom + 18;
@@ -106,10 +106,35 @@
   }
   function done() { post(); var b = document.querySelector('[data-tut-banner]'); if (b) b.remove(); }
 
+  // Finché il giro è in corso i pulsanti che prenotano o opzionano (data-books) sono grigi e non si premono: durante la prova non si prenota nulla.
+  // Il giro li lascia com'erano appena finisce o lo si abbandona. Anche un invio del modulo da tastiera o da script viene fermato.
+  function lock() {
+    [].slice.call(document.querySelectorAll('[data-books]')).forEach(function (el) {
+      if (el.hasAttribute('data-tour-locked')) return;
+      el.setAttribute('data-tour-locked', el.disabled ? 'was-disabled' : '1');
+      el.setAttribute('aria-disabled', 'true');
+      el.setAttribute('title', T.locked);
+      if ('disabled' in el) el.disabled = true; else el.setAttribute('tabindex', '-1');
+    });
+  }
+  function unlock() {
+    [].slice.call(document.querySelectorAll('[data-tour-locked]')).forEach(function (el) {
+      var was = el.getAttribute('data-tour-locked') === 'was-disabled';
+      el.removeAttribute('data-tour-locked');
+      el.removeAttribute('aria-disabled');
+      el.removeAttribute('title');
+      if ('disabled' in el) el.disabled = was; else el.removeAttribute('tabindex');
+    });
+  }
+  document.addEventListener('submit', function (e) {
+    if (load() && e.submitter && e.submitter.hasAttribute('data-books')) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
+
   function finish() {
     var s = load();
     if (s && s.mark) done();
     clear();
+    unlock();
     teardown();
   }
 
@@ -176,6 +201,7 @@
     teardown();
     var s = load();
     if (!s) return;
+    lock();
     var stop = STOPS[s.i];
     if (!stop) { finish(); return; }
     if (!stop.path.test(P)) { showResume(s, stop); return; }

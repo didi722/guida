@@ -1085,6 +1085,12 @@
   "Haz clic en el punto resaltado.",
   "ハイライトされた場所をクリックしてください。"
  ],
+ "tour.locked": [
+  "Durante il giro guidato non si prenota: finito o interrotto il giro, il pulsante torna attivo.",
+  "You cannot book during the guided tour: once it is finished or stopped, the button works again.",
+  "Durante el recorrido guiado no se reserva: al terminarlo o interrumpirlo, el botón vuelve a funcionar.",
+  "ガイドツアー中は予約できません。ツアーを終了または中断すると、ボタンが使えるようになります。"
+ ],
  "tour.finish": [
   "Fine del giro",
   "End of the tour",

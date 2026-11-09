@@ -39,7 +39,7 @@ export function packageCartPage(ctx, { acct, summary, values = {}, error = '', f
     ? html`<div class="option-box ${firm.applied ? 'is-recommended' : ''}">${firm.applied ? html`<span class="chip chip-accent">${t('firm.recommended')}</span>` : ''}<h3>${t('option.title')}</h3>
         <p>${t('pkg.option.text', { until: fmtInstant(option.expiresMs, lang), days: timeLeft(t, option.expiresMs - Date.now()) })}</p>
         ${option.period ? html`<p class="small muted option-note">${t('option.period.short')}</p>` : ''}
-        <button class="btn ${firm.applied ? 'btn-gold' : 'btn-outline'} btn-block" type="submit" name="action" value="option" id="option-submit" ${ready ? '' : raw('disabled')}>${t('pkg.option.btn')}</button></div>`
+        <button class="btn ${firm.applied ? 'btn-gold' : 'btn-outline'} btn-block" type="submit" name="action" value="option" id="option-submit" data-books ${ready ? '' : raw('disabled')}>${t('pkg.option.btn')}</button></div>`
     : '';
 
   const rows = lines.map(
@@ -85,7 +85,7 @@ export function packageCartPage(ctx, { acct, summary, values = {}, error = '', f
         <label class="check consent"><input type="checkbox" name="consent" value="1" required> <span>${t('f.consent')} <a href="${u('/terms')}" target="_blank">${t('footer.terms')}</a> · <a href="${u('/privacy')}" target="_blank">${t('footer.privacy')}</a></span></label>
         ${firm.applied ? html`<div class="notice notice-info firm-note" role="note"><strong>${t('firm.title')}</strong> ${t('pkg.firm', { grace: fmtInstant(firm.graceUntilMs, lang), percent: firm.refundPercent })}${option?.ok ? html` <strong>${t('firm.advice')}</strong>` : ''}</div>` : ''}
         ${option?.ok && firm.applied ? optionBox : ''}
-        <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" ${method && ready ? '' : raw('disabled')}>${method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
+        <button class="btn btn-gold btn-block btn-lg" type="submit" id="checkout-submit" data-books ${method && ready ? '' : raw('disabled')}>${method ? t(`pay.${method}.cta`) : t('checkout.title')}</button>
         ${option?.ok && !firm.applied ? optionBox : option && !option.ok ? html`<p class="small muted option-note">${t(`option.err.${option.reason}`)}</p>` : ''}
       </form>`
     : html`<div class="card pad center empty-state"><p><strong>${t('pkg.empty')}</strong></p><p class="muted">${t('pkg.emptyHelp')}</p>
@@ -168,7 +168,7 @@ export function packagePage(ctx, group, bookings, { flash = '', owner = false } 
         <form method="post" action="${base}/confirm" class="form option-confirm" data-confirm="${late ? t('pkg.confirmAskLate') : t('pkg.confirmAsk')}">
           ${hidden}
           ${methods.length > 1 ? html`<label class="field"><span class="label">${t('booking.optionPayWith')}</span><select name="method">${methods.map((m) => html`<option value="${m}">${t(`pay.${m}.title`)}</option>`)}</select></label>` : methods.length ? html`<input type="hidden" name="method" value="${methods[0]}">` : ''}
-          <button class="btn btn-gold" type="submit" ${methods.length ? '' : raw('disabled')}>${t('pkg.confirm')}</button>
+          <button class="btn btn-gold" type="submit" data-books ${methods.length ? '' : raw('disabled')}>${t('pkg.confirm')}</button>
         </form>
         <form method="post" action="${base}/release" class="option-release" data-confirm="${t('pkg.releaseAsk')}">${hidden}<button class="btn btn-outline" type="submit">${t('pkg.release')}</button></form>
         ${extensionBox(ctx, { action: `${base}/extend-request`, hidden, pending: pendingExtension(app.db, optionLines[0]), untilMs })}

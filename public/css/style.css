@@ -166,6 +166,9 @@ ul.plain, ol.plain { list-style: none; margin: 0; padding: 0; }
 .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(175, 145, 104, 0.25); }
 .btn:active { transform: translateY(0); }
 .btn[disabled], .btn[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
+/* durante il giro guidato i pulsanti che prenotano o opzionano sono grigi, e il suggerimento (title) dice perché */
+.btn[data-tour-locked] { background: var(--line) !important; border-color: var(--line) !important; color: var(--muted) !important; opacity: 1; pointer-events: auto; cursor: not-allowed; }
+.btn[data-tour-locked]:hover { transform: none; box-shadow: none; }
 .btn-gold { background: var(--gold); color: var(--ink); border-color: var(--gold); }
 .btn-gold:hover { background: #e2ca66; color: var(--ink); }
 .btn-dark { background: var(--ink); color: var(--gold); border-color: var(--ink); }

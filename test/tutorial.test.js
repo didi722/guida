@@ -10,6 +10,7 @@ import { createConfig, ROOT } from '../server/config.js';
 import { openDb } from '../server/db.js';
 import { makeT } from '../server/i18n.js';
 import { actorOf } from '../server/team.js';
+import { addDays, nowRome } from '../server/time.js';
 import { FAQ_GROUPS, TUTORIAL_STEPS, markTutorialDone, tutorialDue } from '../server/tutorial.js';
 import { addAccount, makeApp } from './helpers.js';
 
@@ -60,7 +61,7 @@ test('testi completi: ogni passo e ogni domanda c’è in italiano, inglese, spa
   const keys = [
     'tut.title', 'tut.intro', 'tut.start', 'tut.skip', 'tut.banner', 'tut.banner.start', 'tut.banner.skip', 'tut.replay',
     'partner.nav.help', 'help.title', 'help.lead', 'help.steps', 'help.faq',
-    'tour.exit', 'tour.skipStop', 'tour.hint', 'tour.finish', 'tour.resume', 'tour.resumeBtn',
+    'tour.exit', 'tour.skipStop', 'tour.hint', 'tour.locked', 'tour.finish', 'tour.resume', 'tour.resumeBtn',
     ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `tour.s${n}`), 'tour.s3m', 'tut.next', 'tut.step',
     ...TUTORIAL_STEPS.flatMap((n) => [`tut.${n}.title`, `tut.${n}.text`]),
     ...FAQ_GROUPS.flatMap(([group, ids]) => [group, ...ids.flatMap((n) => [`faq.${n}.q`, `faq.${n}.a`])]),
@@ -133,6 +134,7 @@ test('primo accesso: la prima pagina porta il giro (finestra che si apre da sola
     assert.equal(cfg.done, '/it/b2b/tutorial/done');
     assert.deepEqual(cfg.urls, { home: '/it/b2b/account', book: '/it/book', invoices: '/it/b2b/invoices' });
     assert.equal(Object.keys(cfg.t.stops).length, 10);
+    assert.match(cfg.t.locked, /Durante il giro guidato non si prenota/, 'il suggerimento sui pulsanti grigi');
     assert.match(cfg.t.stops.s1, /Nuova prenotazione/);
     assert.match(home, /src="\/js\/tour\.js\?v=[^"]*" defer/);
     assert.match(home, /data-tour="new"/, 'il punto del primo passo');
@@ -242,6 +244,33 @@ test('Guida e FAQ: i passi per intero, le domande per gruppo, il pulsante per ri
     assert.match(enHome, /A quick tour of the agency area/);
     assert.match(enHome, /data-tut-go>Start the tour<\/button>/);
     assert.match(enHome, /First time here\? A one-minute tour to find your way around\./);
+  } finally {
+    s.close();
+  }
+});
+
+test('durante il giro i pulsanti che prenotano o opzionano si possono bloccare: quelli giusti portano data-books, la navigazione no', async () => {
+  const s = await start();
+  try {
+    const { app, owner } = s;
+    app.db.prepare("UPDATE accounts SET discount_percent = 0 WHERE id = ?").run(owner.id);
+    const f = await s.login('owner', owner.email);
+    const date = addDays(nowRome().date, 40);
+    // il pagamento di un servizio: conferma, opzione e «Aggiungi al pacchetto» (ma non i pulsanti di sola navigazione né il cambio delle persone)
+    const checkout = await text(await f(`/it/book/checkout?tour=cannaregio-ghetto-agenzie&date=${date}&time=10:00&pax=2`));
+    for (const id of ['checkout-submit', 'option-submit', 'package-add']) assert.match(checkout, new RegExp(`<button[^>]*id="${id}"[^>]*data-books`), `${id} è un pulsante che prenota`);
+    assert.equal((checkout.match(/data-books/g) ?? []).length, 3, 'solo quei tre');
+    assert.doesNotMatch(checkout, /id="pax-apply"[^>]*data-books/, 'il cambio delle persone resta possibile (il passo del giro lo fa provare)');
+    // la pagina per cercare: gli orari sono collegamenti di navigazione (servono al giro) e restano attivi
+    const book = await text(await f(`/it/book?tour=cannaregio-ghetto-agenzie&d=${date}&pax=2`));
+    assert.doesNotMatch(book, /data-books/);
+    assert.match(book, /class="slot"/);
+    // il giro sa cosa scrivere sul pulsante grigio e lo toglie da sé alla fine: il codice del blocco sta nello script del giro
+    const script = fs.readFileSync(path.join(ROOT, 'public', 'js', 'tour.js'), 'utf8');
+    assert.match(script, /querySelectorAll\('\[data-books\]'\)/);
+    assert.match(script, /function unlock\(\)/);
+    assert.match(script, /clear\(\);\s*unlock\(\);/, 'finito o abbandonato il giro, i pulsanti tornano normali');
+    assert.match(script, /document\.addEventListener\('submit'/, 'anche un invio da tastiera o da script viene fermato');
   } finally {
     s.close();
   }
