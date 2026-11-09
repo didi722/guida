@@ -19,7 +19,7 @@ import { formalSummary } from '../vat.js';
 import { tx } from '../db.js';
 import { applePass, googleSaveUrl, walletOptions } from '../wallet.js';
 import { renderVoucherPdf } from '../pdf.js';
-import { forgotPage, inviteStatePage, loginPage, registerPage, resetPage } from '../views/b2b.js';
+import { approvePage, forgotPage, inviteStatePage, loginPage, registerPage, resetPage } from '../views/b2b.js';
 import { readSignup } from '../signup.js';
 import { optionalPhone } from '../countries.js';
 import { bookPage, bookingPage, checkoutPage, slotGonePage } from '../views/booking.js';
@@ -29,6 +29,7 @@ import { b2bLandingPage, blogPage, contactPage, homePage, minBookableDate, postP
 import { LANGS, LANG_META, normLang, pick } from '../langs.js';
 import { featuredQuotes, feedbackStats } from '../reviews.js';
 import { findReferrer } from '../referral.js';
+import { approveLink, readApproveToken } from '../partnerApproval.js';
 
 const clampInt = (v, min, max, d) => {
   const n = Number.parseInt(v, 10);
@@ -45,7 +46,7 @@ export function publicRouter(app) {
   const ip = (req) => req.ip ?? 'ip';
 
   // pagine con dati personali: mai in cache del browser o di proxy
-  r.use(['/booking', '/book/checkout', '/b2b/account', '/b2b/login', '/b2b/register', '/b2b/forgot', '/b2b/reset'], (req, res, next) => {
+  r.use(['/booking', '/book/checkout', '/b2b/account', '/b2b/login', '/b2b/register', '/b2b/forgot', '/b2b/reset', '/b2b/approve'], (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
   });
@@ -415,9 +416,26 @@ export function publicRouter(app) {
       .run(v.email, hashed, v.company, sign.vatId, v.sdi_code || null, v.pec || null, v.country, v.address, v.zip, v.city, v.province || null, v.tax_code || null, v.contact_name, sign.phone, v.website || null, v.message || null, req.lang, new Date().toISOString());
     if (referrer) db.prepare('UPDATE accounts SET referred_by = ? WHERE id = ?').run(referrer.id, Number(info.lastInsertRowid));
     const acct = db.prepare('SELECT * FROM accounts WHERE id = ?').get(Number(info.lastInsertRowid));
-    await sendPartnerRegistered(app, acct, { vat: formalSummary(sign.vat), referrer });
+    await sendPartnerRegistered(app, acct, { vat: formalSummary(sign.vat), referrer, approveUrl: approveLink(app, acct) });
     loginPartner(res, cfg, acct.id);
     send(res, registerPage(ctx, { done: true }));
+  });
+
+  // ───── approvazione con un clic: il collegamento che la guida riceve per email a ogni nuova richiesta (firmato, vale 30 giorni) ─────
+  // si apre una pagina con i dati e un pulsante: il clic che approva è un POST, così un programma antivirus o un'anteprima dell'email non approvano nulla da soli
+  r.get('/b2b/approve/:token', (req, res) => {
+    const acct = readApproveToken(app, req.params.token);
+    if (!acct) return send(res, approvePage(res.locals.ctx, { state: 'invalid' }), 400);
+    send(res, approvePage(res.locals.ctx, { account: acct, vat: app.vat.summary(acct), state: acct.status === 'pending' ? 'ask' : acct.status === 'approved' ? 'already' : 'gone', token: req.params.token }));
+  });
+  r.post('/b2b/approve/:token', form, async (req, res) => {
+    const ctx = res.locals.ctx;
+    const acct = readApproveToken(app, req.params.token);
+    if (!acct) return send(res, approvePage(ctx, { state: 'invalid' }), 400);
+    if (acct.status !== 'pending') return send(res, approvePage(ctx, { account: acct, vat: app.vat.summary(acct), state: acct.status === 'approved' ? 'already' : 'gone' }));
+    await app.approvals.approve(acct.id, { invoice: !!req.body.invoice, discount: req.body.discount });
+    const fresh = db.prepare('SELECT * FROM accounts WHERE id = ?').get(acct.id);
+    send(res, approvePage(ctx, { account: fresh, vat: app.vat.summary(fresh), state: 'done' }));
   });
 
   // ───── invito di un'agenzia: il collegamento personale apre la registrazione con l'account già approvato ─────

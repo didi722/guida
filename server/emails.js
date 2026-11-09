@@ -559,7 +559,7 @@ const vatLine = (v) => {
  * Una nuova agenzia si è registrata: conferma di ricezione all'agenzia e avviso alla guida, con l'esito della verifica della partita IVA.
  * `invited`: arriva da un invito (l'account è già approvato): all'agenzia non si scrive «aspetta l'approvazione».
  */
-export async function sendPartnerRegistered(app, a, { vat = null, invited = false, referrer = null } = {}) {
+export async function sendPartnerRegistered(app, a, { vat = null, invited = false, referrer = null, approveUrl = '' } = {}) {
   const tr = P[normLang(a.lang)];
   if (!invited) await app.mail.send({ to: a.email, subject: tr.receivedSubject, text: `${tr.receivedBody(a.contact_name)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
   const to = app.cfg.mail.notifyTo;
@@ -567,7 +567,7 @@ export async function sendPartnerRegistered(app, a, { vat = null, invited = fals
     await app.mail.send({
       to,
       subject: invited ? `Agenzia invitata registrata: ${a.company}` : `Nuova richiesta partner: ${a.company}`,
-      text: [`${a.company} (${vatLabel(a)})`, vatLine(vat), `${a.contact_name} <${a.email}>${a.phone ? ' · ' + a.phone : ''}`, a.website ?? '', a.message ? `Messaggio: ${a.message}` : '', referrer ? `Segnalata da: ${referrer.company} <${referrer.email}>` : '', '', invited ? `Si è registrata dal tuo invito: l'account è già approvato. ${app.cfg.baseUrl}/admin/partners/${a.id}` : `Approva o rifiuta: ${app.cfg.baseUrl}/admin/partners/${a.id}`].filter(Boolean).join('\n'),
+      text: [`${a.company} (${vatLabel(a)})`, vatLine(vat), `${a.contact_name} <${a.email}>${a.phone ? ' · ' + a.phone : ''}`, a.website ?? '', a.message ? `Messaggio: ${a.message}` : '', referrer ? `Segnalata da: ${referrer.company} <${referrer.email}>` : '', '', ...(invited ? [`Si è registrata dal tuo invito: l'account è già approvato. ${app.cfg.baseUrl}/admin/partners/${a.id}`] : [approveUrl ? `Approva con un clic: ${approveUrl}` : '', app.cfg.partners?.autoApprove ? 'Approvazione automatica accesa: se la partita IVA risulta valida su VIES e il nome coincide, entra da sola (con la carta e senza sconto) e ti avviso.' : '', `Approva o rifiuta dal pannello: ${app.cfg.baseUrl}/admin/partners/${a.id}`])].filter(Boolean).join('\n'),
     });
 }
 
@@ -720,6 +720,17 @@ export async function notifyGuideQuote(app, q) {
 export async function sendPartnerPasswordReset(app, a, url) {
   const tr = P[normLang(a.lang)];
   await app.mail.send({ to: a.email, subject: tr.resetSubject, text: `${tr.resetBody(a.contact_name, url)}\n${tr.sign} ${app.cfg.site.name}`, replyTo: app.cfg.mail.notifyTo || undefined });
+}
+
+/** Alla guida: un'agenzia è entrata da sola perché la partita IVA risulta valida su VIES. */
+export async function notifyGuideAutoApproved(app, a) {
+  const to = app.cfg.mail.notifyTo;
+  if (!to) return;
+  await app.mail.send({
+    to,
+    subject: `Agenzia approvata in automatico: ${a.company}`,
+    text: [`${a.company} (${vatLabel(a)})`, `La partita IVA risulta valida su VIES${a.vat_name ? ` (registro: ${a.vat_name})` : ''}: l'agenzia è entrata da sola.`, `${a.contact_name} <${a.email}>${a.phone ? ' · ' + a.phone : ''}`, '', 'Può prenotare pagando con la carta, senza sconto: il pagamento a fattura e lo sconto restano spenti finché non li accendi tu dalla sua scheda.', `${app.cfg.baseUrl}/admin/partners/${a.id}`].join('\n'),
+  });
 }
 
 export async function sendPartnerApproved(app, a) {

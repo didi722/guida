@@ -218,6 +218,14 @@ export const SECTIONS = [
     ],
   },
   {
+    id: 'partners',
+    title: 'Nuove agenzie',
+    intro: 'Quando un’agenzia si registra, il sito controlla la sua partita IVA sul registro europeo (VIES). Con l’approvazione automatica, se la partita IVA risulta valida e il nome coincide con quello del registro, l’agenzia entra subito: vede le tariffe base e prenota pagando con la carta. Il pagamento a fattura e lo sconto restano spenti finché non li accendi tu, dalla sua scheda in Clienti › Partner. Le agenzie fuori dall’UE, con la partita IVA non valida, non verificata o con un nome diverso restano da approvare a mano (puoi farlo con un clic dall’email che ricevi a ogni richiesta).',
+    fields: [
+      { key: 'partners.autoApprove', type: 'bool', label: 'Approva da sola le agenzie con partita IVA verificata', hint: 'spenta, ogni nuova agenzia aspetta la tua approvazione' },
+    ],
+  },
+  {
     id: 'waitlist',
     title: 'Lista d’attesa delle agenzie',
     intro: 'Un’agenzia che trova una data occupata può chiedere di essere avvisata se si libera. Se in lista sono in più d’una, vengono avvisate nell’ordine in cui si sono iscritte: la prima ha qualche ora di vantaggio, poi l’avviso passa alla successiva. La data non viene bloccata per nessuno: se qualcuno la prenota prima, è sua.',

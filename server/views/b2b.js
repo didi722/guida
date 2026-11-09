@@ -234,8 +234,49 @@ function agencyCalendar(ctx, cal) {
     : html`<p class="muted">${t('partner.cal.none')}</p>`}</section>`;
 }
 
+/**
+ * Il collegamento «Approva con un clic» dell'email che la guida riceve a ogni richiesta: i dati dell'agenzia e il pulsante (solo italiano, come il pannello).
+ * state: ask (da approvare) | done (appena approvata) | already | gone (rifiutata o sospesa) | invalid (collegamento sbagliato o scaduto).
+ */
+export function approvePage(ctx, { account = null, vat = null, state, token = '' }) {
+  const { lang, u } = ctx;
+  const title = { ask: 'Approvare questa agenzia?', done: 'Agenzia approvata', already: 'Agenzia già approvata', gone: 'Richiesta non più in attesa', invalid: 'Collegamento non valido' }[state];
+  const body = html`
+<section class="page-head"><div class="wrap narrow"><h1>${title}</h1></div></section>
+<section class="section tight"><div class="wrap narrow">
+  ${state === 'invalid'
+    ? html`<div class="card pad"><p>Il collegamento non è valido o è scaduto (dura 30 giorni). Apri <strong>Clienti › Partner</strong> nel pannello per approvare l’agenzia.</p><p class="btn-row"><a class="btn btn-outline" href="/admin/partners">Apri il pannello</a></p></div>`
+    : html`<div class="card pad">
+    <dl class="summary-list">
+      <div><dt>Agenzia</dt><dd><strong>${account.company}</strong></dd></div>
+      <div><dt>Referente</dt><dd>${account.contact_name} · ${account.email}${account.phone ? ` · ${account.phone}` : ''}</dd></div>
+      <div><dt>Partita IVA</dt><dd>${account.vat || '—'} · ${vat.label}${vat.name ? ` (registro: ${vat.name})` : ''}${vat.sameName === false ? ' — il nome sembra diverso da quello scritto' : ''}</dd></div>
+      <div><dt>Dove</dt><dd>${[account.city, account.country].filter(Boolean).join(' · ')}</dd></div>
+      ${account.website ? html`<div><dt>Sito</dt><dd>${account.website}</dd></div>` : ''}
+      ${account.message ? html`<div><dt>Messaggio</dt><dd>${account.message}</dd></div>` : ''}
+    </dl>
+    ${state === 'ask'
+      ? html`<form method="post" action="${u(`/b2b/approve/${token}`)}" class="form">
+      <label class="check"><input type="checkbox" name="invoice" value="1"> Consenti il pagamento a fattura e bonifico</label>
+      <p class="small muted">Di partenza l’agenzia paga solo con la carta: accendilo se la conosci.</p>
+      <label class="field"><span class="label">Sconto sulle tariffe (%)</span><input type="number" name="discount" min="0" max="60" step="0.5" value="0" inputmode="decimal"></label>
+      <p class="small muted">Approvando, l’agenzia riceve subito l’email e può prenotare.</p>
+      <button class="btn btn-gold btn-lg" type="submit">Approva l’agenzia</button>
+    </form>`
+      : state === 'done'
+        ? html`<p class="notice notice-ok" role="status">Fatto: ${account.company} è approvata e le ho scritto. Pagamento a fattura: ${account.allow_invoice ? 'sì' : 'no (solo carta)'} · sconto: ${account.discount_percent || 0}%.</p>`
+        : html`<p class="muted">${state === 'already' ? 'Questa agenzia è già stata approvata.' : 'Questa richiesta non è più in attesa (è stata rifiutata o sospesa).'}</p>`}
+    <p class="btn-row"><a class="btn btn-outline" href="/admin/partners/${account.id}">Apri la scheda dell’agenzia</a></p>
+  </div>`}
+</div></section>`;
+  return page(ctx, { title, path: `/${lang}/b2b/approve`, body, noindex: true });
+}
+
 function pendingPage(ctx, acct) {
-  const { t, lang, u } = ctx;
+  const { t, lang, u, app } = ctx;
+  // le tariffe base, in sola lettura: chi aspetta l'approvazione sa già quanto costa (si prenota dopo, con le condizioni che le saranno riservate)
+  const rateServices = acct.status === 'pending' ? SERVICES.filter((s) => app.rates.has(s, 'b2b')) : [];
+  const fixedTours = acct.status === 'pending' ? app.content.tours.filter((x) => x.active && x.pricing !== 'hourly' && openTo(app.rates.get(), x, 'b2b')) : [];
   const chip = { pending: 'chip-warn', rejected: 'chip-err', suspended: 'chip-err' }[acct.status];
   const body = html`
 <section class="page-head"><div class="wrap narrow">
@@ -248,7 +289,14 @@ function pendingPage(ctx, acct) {
     <p class="muted">${t(`b2b.st.${acct.status}.text`)}</p>
     <div class="btn-row"><a class="btn btn-outline" href="${u('/contact')}">${t('nav.contact')}</a><form method="post" action="${u('/b2b/logout')}"><button class="btn btn-outline" type="submit">${t('b2b.logout')}</button></form></div>
   </div>
-</div></section>`;
+</div></section>
+${acct.status === 'pending' && (rateServices.length || fixedTours.length)
+    ? html`<section class="section tight"><div class="wrap">
+  <h2 class="h-sub">${t('b2b.pending.rates')}</h2><p class="muted sub-lead">${t('b2b.pending.ratesLead')}</p>
+  ${rateServices.length ? ratesBlock(ctx, { channel: 'b2b', services: rateServices, discountPercent: 0 }) : ''}
+  ${fixedTours.length ? html`<h3 class="h-sub spaced">${t('partner.rates.fixed')}</h3>${fixedRatesTable(ctx, acct, fixedTours)}` : ''}
+</div></section>`
+    : ''}`;
   return page(ctx, { title: t('nav.agencyArea'), path: `/${lang}/b2b/account`, body, noindex: true, activeNav: 'b2b-account' });
 }
 
@@ -503,14 +551,17 @@ export function ratesPage(ctx, { acct }) {
     ? html`<h2 class="h-sub spaced">${t('hourly.ratesYours')}</h2><p class="muted sub-lead">${t('b2b.ratesPartnerLead')}</p>
     ${ratesBlock(ctx, { channel: 'b2b', services: rateServices, discountPercent: acct.discount_percent ?? 0 })}`
     : ''}
-  ${fixedTours.length
-    ? html`<h2 class="h-sub spaced">${t('partner.rates.fixed')}</h2>
-    <div class="table-wrap card"><table class="table"><thead><tr><th>${t('s.service')}</th><th class="num">${t('b2b.yours')}</th></tr></thead><tbody>
-      ${fixedTours.map((x) => html`<tr><td>${x.i18n[lang].title}<br><small class="muted">${fmtDuration(x.durationMin, lang)} · ${x.model === 'person' ? t('price.perPerson') : t('price.perGroup')}</small></td><td class="num"><strong>${formatMoney(unitPriceFor(x, 'b2b', acct), lang)}</strong></td></tr>`)}
-    </tbody></table></div>`
-    : ''}
+  ${fixedTours.length ? html`<h2 class="h-sub spaced">${t('partner.rates.fixed')}</h2>${fixedRatesTable(ctx, acct, fixedTours)}` : ''}
 </div></section>`;
   return page(ctx, { title: t('partner.nav.rates'), path: `/${lang}/b2b/rates`, body, noindex: true, activeNav: 'b2b-rates', area: 'partner' });
+}
+
+/** I tour a prezzo fisso con il prezzo che paga l'agenzia (nelle sue condizioni: per chi è in attesa, quelle base). */
+function fixedRatesTable(ctx, acct, tours) {
+  const { t, lang } = ctx;
+  return html`<div class="table-wrap card"><table class="table"><thead><tr><th>${t('s.service')}</th><th class="num">${t('b2b.yours')}</th></tr></thead><tbody>
+      ${tours.map((x) => html`<tr><td>${x.i18n[lang].title}<br><small class="muted">${fmtDuration(x.durationMin, lang)} · ${x.model === 'person' ? t('price.perPerson') : t('price.perGroup')}</small></td><td class="num"><strong>${formatMoney(unitPriceFor(x, 'b2b', acct), lang)}</strong></td></tr>`)}
+    </tbody></table></div>`;
 }
 
 /** Fatture e note di credito emesse all'agenzia, con la copia in PDF, lo stato del pagamento e come pagare. */

@@ -4109,6 +4109,18 @@
   "Estado de la cuenta",
   "アカウントの状態"
  ],
+ "b2b.pending.rates": [
+  "Le tariffe per le agenzie",
+  "Rates for agencies",
+  "Tarifas para agencias",
+  "旅行会社向け料金"
+ ],
+ "b2b.pending.ratesLead": [
+  "Sono le tariffe base, solo da guardare: appena il tuo account è approvato potrai prenotare e vedrai le condizioni riservate a te.",
+  "These are the base rates, for viewing only: as soon as your account is approved you can book and you will see the terms reserved for you.",
+  "Son las tarifas base, solo para consultar: en cuanto tu cuenta esté aprobada podrás reservar y verás las condiciones reservadas para ti.",
+  "基本料金の閲覧のみです。アカウントが承認されると予約でき、あなた専用の条件が表示されます。"
+ ],
  "b2b.st.pending": [
   "In attesa di approvazione",
   "Awaiting approval",

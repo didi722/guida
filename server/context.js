@@ -22,6 +22,7 @@ import { createReminderServices } from './reminders.js';
 import { createRestoreServices } from './restore.js';
 import { createRates } from './rates.js';
 import { createReviewServices } from './reviews.js';
+import { createApprovals } from './partnerApproval.js';
 import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
 import { createServices } from './services.js';
@@ -67,6 +68,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.restore = createRestoreServices(app);
   app.autoBackup = createAutoBackup(app, { fetchImpl: fetchImpl ?? fetch }); // copia automatica fuori dal server (lavoro periodico)
   app.vat = createVat(app, { fetchImpl: fetchImpl ?? fetch }); // verifica della partita IVA delle agenzie (VIES, lavoro periodico)
+  app.approvals = createApprovals(app); // approvazione delle agenzie (con un clic dall'email, o da sola con la partita IVA verificata)
   app.leads = createLeadServices(app); // Commerciale: email di presentazione (coda con tetto giornaliero), inviti e profili B2B dai contatti
   return app;
 }
