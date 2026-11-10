@@ -284,7 +284,7 @@ Passo per passo, con i percorsi del pannello, nella [guida](docs/GUIDA.md#20-da-
 - [ ] **Pagine legali** (privacy, condizioni, cookie): sono bozze, **falle rivedere da commercialista/consulente**. In particolare buoni regalo (validità, recesso), acconti dei programmi, recensioni, conservazione delle fatture.
 - [ ] **Foto vere** (tour, ritratto, home, anteprima social) al posto delle illustrazioni (Sito › Immagini).
 - [ ] **Stripe in modalità live**, webhook configurato, **SMTP** funzionante (fai una prenotazione di prova e un rimborso).
-- [ ] **Google Business Profile** con link di recensione (Impostazioni › Buoni regalo, programmi e recensioni); calendario personale collegato (Agenda › Disponibilità).
+- [ ] **Google Business Profile** con link di recensione e, per mostrare le sue recensioni nella home, **Place ID** (Impostazioni › Buoni regalo, programmi e recensioni) e `GOOGLE_PLACES_API_KEY` sul server (Clienti › Feedback › *Aggiorna adesso* per provare); calendario personale collegato (Agenda › Disponibilità).
 - [ ] **Dominio + HTTPS**, `BASE_URL` corretto, **disco persistente** per `DATA_DIR`, primo **backup** (Aiuto › Backup).
 - [ ] Orari di lavoro e giorni di chiusura inseriti dal pannello `/admin`.
 - [ ] **Sicurezza e copie**: accesso a **due passaggi** del pannello con i codici di emergenza stampati (Aiuto › Sicurezza) e **copia giornaliera fuori dal server** con «Prova la connessione» (Aiuto › Backup).

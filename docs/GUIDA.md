@@ -418,12 +418,29 @@ Il **cliente privato** può annullare da solo con il link nell'email **finché c
 Il giorno dopo il tour i clienti privati ricevono **una sola email**: i link per recensire su Google e Tripadvisor (uguali per tutti, mai solo per chi è soddisfatto) e un link per lasciare **un voto e un commento privati**. Quelli privati li leggi in **Clienti › Feedback** (con voto medio, numero di feedback e richieste inviate).
 
 **Mostrare un commento sul sito.** Un cliente può spuntare «Puoi citare le mie parole sul sito, con il mio nome di battesimo (senza cognome)». Solo per quei commenti, in **Clienti › Feedback**, trovi il pulsante **Mostra sul sito** (e **Togli**). Il commento compare **così com'è scritto**, con il solo nome di battesimo, il tour e il mese:
-- in **home**, nella sezione *Cosa dicono i clienti* (gli ultimi tre scelti);
+- in **home**, nella sezione *Cosa dicono i clienti*, una fila che scorre (gli ultimi **otto** scelti; vedi [sotto](#recensioni-di-google-nella-home) per quelle di Google);
 - nella **pagina del tour** a cui si riferisce (*Dicono di questo tour*).
 
 Se non scegli nulla, la sezione non compare. Se hai almeno **5 feedback**, sotto i commenti compare anche la **media di tutti i voti** ricevuti (non solo di quelli mostrati): è una scelta di correttezza, tienila così. Non scegliere solo i commenti da cinque stelle: sono commenti veri di clienti veri, anche quelli sinceri e misurati. Se vuoi rimandare alle recensioni pubbliche, metti l'indirizzo del tuo profilo Google o Tripadvisor in **Sito › Impostazioni › Buoni regalo, programmi e recensioni › Pagina con tutte le recensioni**: compare come *Leggi tutte le recensioni*. **Tradotti nella lingua di chi guarda.** Se hai attivato la traduzione automatica ([sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)), chi guarda il sito in inglese, spagnolo, giapponese o italiano legge ogni commento **nella sua lingua**, con la dicitura *Tradotto automaticamente* e il pulsante **Vedi originale**, che mostra il testo come l'ha scritto il cliente. La traduzione parte da sola, una volta per commento, **solo per i commenti che hai scelto di mostrare** (il feedback privato non esce mai dal sito); se il cliente cambia il commento, si rifà. In **Clienti › Feedback** una riga ti dice se la traduzione è attiva e l'eventuale ultimo errore. Senza chiave il sito mostra i commenti com'erano.
 
 In Europa chi mostra recensioni deve poter dire che vengono da clienti reali: il sito lo dichiara (*commenti di clienti che hanno fatto il tour, pubblicati con il loro permesso*); per il resto chiedi al tuo consulente.
+
+### Recensioni di Google nella home
+Nella fila *Cosa dicono i clienti* della home possono comparire, **alternate ai commenti dei clienti del sito**, anche le **recensioni di Google** del tuo profilo (Google Maps). Ogni scheda dice da dove viene (*Google* oppure *Ha fatto il tour*); quelle di Google hanno il nome dell'autore con il suo profilo, il mese e **Leggi su Google**, e sotto la fila compare la **valutazione di tutto il profilo** («4,9 su Google · 37 recensioni», con il collegamento al profilo).
+
+**Cosa serve (una volta sola)**
+1. Il **codice del profilo** (Place ID): in *Sito › Impostazioni › Buoni regalo, programmi e recensioni › Codice del profilo Google*. Si trova con lo strumento «Place ID Finder» di Google (cerca il nome della tua attività; il codice comincia con *ChIJ…*).
+2. Una **chiave della Places API** di Google Cloud, sul server: `GOOGLE_PLACES_API_KEY=…` (vedi [sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)). Nella console di Google Cloud abilita la **Places API (New)**, crea la chiave e limitala a quella sola API.
+
+**Come funziona**
+- Il sito chiede a Google le recensioni **una volta al giorno**, una per ciascuna delle quattro lingue (**4 richieste al giorno**, circa 120 al mese: di norma dentro la quota gratuita di Google, ma controlla i prezzi attuali). Google risponde **già con il testo tradotto** nella lingua di chi guarda, con il pulsante *Vedi originale* e la dicitura *Tradotto da Google*.
+- **Google ne restituisce al massimo cinque** (le più rilevanti, non necessariamente le ultime): non è l'elenco completo. Le valutazioni senza testo non si mostrano; quelle a una o due stelle **non vengono scartate**.
+- Non c'è nessuna scelta da fare: **non puoi nascondere** una singola recensione di Google dal sito (si gestiscono su Google). Il testo lungo si accorcia con «…» e rimanda a Google.
+- Se Google non risponde, il sito riprova ogni mezz'ora e intanto mostra la copia di ieri; **dopo due giorni senza lettura** le recensioni di Google spariscono dalla home e restano i commenti dei clienti.
+- In **Clienti › Feedback** una scheda dice se le recensioni di Google sono collegate, quando sono state lette l'ultima volta e l'eventuale errore; **Aggiorna adesso** le rilegge subito (utile per provare la chiave).
+- Senza codice o senza chiave non succede nulla: la home mostra solo i commenti dei clienti.
+
+> **Regole di Google.** Le condizioni della Places API chiedono di mostrare l'origine (*Google*) e l'autore, di non modificare i testi e di **non archiviare** i contenuti oltre un breve periodo: per questo la copia si rinnova ogni giorno e dopo due giorni non si mostra più. Fai controllare le condizioni correnti al tuo consulente prima del lancio: sono regole di Google e cambiano.
 
 ### Programmi di più giorni
 **Agenda › Programmi**: richieste di clienti e partner per soggiorni lunghi.
@@ -814,6 +831,7 @@ Qualche accortezza:
 | `BACKUP_DIR`, `BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION`, `BACKUP_S3_ACCESS_KEY`, `BACKUP_S3_SECRET_KEY`, `BACKUP_S3_PREFIX`, `BACKUP_S3_PATH_STYLE` | dove mettere la copia giornaliera fuori dal server ([sezione 17](#copia-giornaliera-fuori-dal-server)); `BACKUP_AUTO`, `BACKUP_HOUR`, `BACKUP_KEEP_DAYS`, `BACKUP_KEEP_MONTHS` sono i valori di partenza di orario e rotazione (si cambiano dal pannello) |
 | `UMAMI_WEBSITE_ID`, `UMAMI_SRC` | statistiche di visita anonime (facoltative) |
 | `TRANSLATE_PROVIDER`, `TRANSLATE_API_KEY` | traduzione automatica dei commenti (`deepl` o `google`): vedi sotto |
+| `GOOGLE_PLACES_API_KEY` (e `GOOGLE_PLACE_ID`, che si può scrivere anche nel pannello) | le recensioni di Google nella home: [sopra](#recensioni-di-google-nella-home) |
 | `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_KEY_FILE` | «Aggiungi a Google Wallet»: vedi sotto |
 | `APPLE_WALLET_PASS_TYPE_ID`, `APPLE_WALLET_TEAM_ID`, `APPLE_WALLET_CERT_FILE`, `APPLE_WALLET_KEY_FILE`, `APPLE_WALLET_WWDR_FILE` | «Aggiungi ad Apple Wallet»: vedi sotto |
 

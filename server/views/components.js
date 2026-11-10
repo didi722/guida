@@ -120,6 +120,76 @@ export function testimonials(ctx, quotes, { stats = null, readUrl = '' } = {}) {
   </div>`;
 }
 
+/** Un testo lungo accorciato a una parola intera, con i puntini (le recensioni di Google si leggono per intero su Google). */
+const shorten = (text, max) => {
+  if (text.length <= max) return { text, cut: false };
+  const cut = text.slice(0, max).replace(/\s+\S*$/, '');
+  return { text: `${cut}…`, cut: true };
+};
+
+/**
+ * Le recensioni della home, in una fila che scorre: i commenti dei clienti del sito e le recensioni di Google, alternati.
+ * Senza JavaScript è una fila che si fa scorrere con il dito; con JavaScript avanza da sola (si ferma al passaggio del mouse, al tocco,
+ * alla tastiera e con il pulsante di pausa, e non parte con «riduci movimento»): vedi public/js/reviews.js.
+ * @param {object} o
+ * @param {object[]} o.quotes commenti dei clienti (vedi featuredQuotes)
+ * @param {{rating: number|null, count: number|null, uri: string, reviews: object[]}|null} [o.google] le recensioni di Google nella lingua di chi guarda
+ * @param {{count: number, average: number|null}|null} [o.stats] i voti dei feedback del sito (la media compare da 5 voti)
+ */
+export function reviewsCarousel(ctx, { quotes, google = null, stats = null, readUrl = '' }) {
+  const { t, lang, app } = ctx;
+  const fmtNum = new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 1 });
+  const siteCards = quotes.map((q) => ({ kind: 'site', q }));
+  const googleCards = (google?.reviews ?? []).map((r) => ({ kind: 'google', r }));
+  // alternate, cominciando da Google; quando una delle due finisce, seguono le altre
+  const cards = [];
+  for (let i = 0; i < Math.max(siteCards.length, googleCards.length); i++) {
+    if (googleCards[i]) cards.push(googleCards[i]);
+    if (siteCards[i]) cards.push(siteCards[i]);
+  }
+  if (!cards.length) return '';
+  const stars = (n) => html`<div class="quote-stars" role="img" aria-label="${t('fb.star', { n })}">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</div>`;
+  const card = (c) => {
+    if (c.kind === 'google') {
+      const r = c.r;
+      const body = shorten(r.text, 420);
+      const translated = r.original && r.originalLang && r.originalLang !== r.lang.slice(0, 2);
+      return html`<figure class="quote rv-card rv-google" role="group" aria-roledescription="slide">
+      <div class="rv-top">${stars(r.rating)}<span class="rv-src rv-src-google">${t('reviews.src.google')}</span></div>
+      <blockquote lang="${r.lang || lang}"><p>${body.text}</p></blockquote>
+      ${translated
+        ? html`<details class="quote-orig"><summary><span class="q-open-label">${t('reviews.seeOriginal')}</span><span class="q-close-label">${t('reviews.hideOriginal')}</span></summary>
+        <blockquote lang="${r.originalLang}"><p>${r.original}</p></blockquote></details>
+      <p class="quote-auto">${t('reviews.google.translated')}</p>`
+        : ''}
+      <figcaption>${r.authorUrl ? html`<a href="${r.authorUrl}" target="_blank" rel="noopener nofollow"><strong>${r.author}</strong></a>` : html`<strong>${r.author}</strong>`}${r.when ? html`, ${fmtMonth(r.when.slice(0, 7), lang)}` : ''}${r.url ? html` · <a href="${r.url}" target="_blank" rel="noopener nofollow">${t('reviews.google.read')}</a>` : ''}</figcaption>
+    </figure>`;
+    }
+    const q = c.q;
+    return html`<figure class="quote rv-card" role="group" aria-roledescription="slide">
+      <div class="rv-top">${stars(q.rating)}<span class="rv-src">${t('reviews.src.site')}</span></div>
+      ${q.translation
+        ? html`<blockquote lang="${lang}"><p>${q.translation.text}</p></blockquote>
+      <details class="quote-orig"><summary><span class="q-open-label">${t('reviews.seeOriginal')}</span><span class="q-close-label">${t('reviews.hideOriginal')}</span></summary>
+        <blockquote lang="${q.translation.from}"><p>${q.comment}</p></blockquote></details>
+      <p class="quote-auto">${t('reviews.autoTranslated')}</p>`
+        : html`<blockquote lang="${q.lang}"><p>${q.comment}</p></blockquote>`}
+      <figcaption>${q.firstName ? html`<strong>${q.firstName}</strong> · ` : ''}${app.content.tour(q.tourSlug)?.i18n[lang].title ?? ''}, ${fmtMonth(q.date.slice(0, 7), lang)}</figcaption>
+    </figure>`;
+  };
+  const siteAvg = stats && stats.count >= 5 && stats.average != null ? fmtNum.format(stats.average) : null;
+  const googleAvg = google?.rating && google?.count ? t('reviews.google.avg', { avg: fmtNum.format(google.rating), n: google.count }) : '';
+  return html`<div class="rv" data-reviews role="region" aria-roledescription="carousel" aria-label="${t('reviews.carousel')}">
+    <div class="rv-track" data-reviews-track>${cards.map(card)}</div>
+    <div class="rv-nav" data-reviews-nav hidden>
+      <button type="button" class="rv-btn" data-rv="prev" aria-label="${t('reviews.prev')}">‹</button>
+      <button type="button" class="rv-btn rv-pause" data-rv="pause" aria-label="${t('reviews.pause')}" data-label-pause="${t('reviews.pause')}" data-label-play="${t('reviews.play')}"><span class="rv-i-pause" aria-hidden="true">❚❚</span><span class="rv-i-play" aria-hidden="true">▶</span></button>
+      <button type="button" class="rv-btn" data-rv="next" aria-label="${t('reviews.next')}">›</button>
+    </div>
+    <p class="quotes-note">${googleAvg ? html`<strong>★ ${google.uri ? html`<a href="${google.uri}" target="_blank" rel="noopener nofollow">${googleAvg}</a>` : googleAvg}</strong><br>` : ''}${siteAvg ? html`<strong>★ ${t('reviews.avg', { avg: siteAvg, n: stats.count })}</strong><br>` : ''}${t('reviews.note')}${googleCards.length ? html` ${t('reviews.googleNote')}` : ''}${readUrl ? html` <a href="${readUrl}" target="_blank" rel="noopener">${t('reviews.readAll')}</a>` : ''}</p>
+  </div>`;
+}
+
 /**
  * «Prenota di nuovo»: la pagina di prenotazione con servizio, persone, durata e lingua di questa pratica già scelti
  * e il suo riferimento pratica, che arriva fino alla conferma (così un gruppo che torna si prenota in due tocchi).

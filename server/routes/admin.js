@@ -65,6 +65,8 @@ const FLASH = {
   refunded: 'Rimborso segnato come fatto.',
   review: 'Richiesta di recensione aggiornata.',
   featured: 'Fatto: la modifica è già visibile sul sito.',
+  'google-ok': 'Recensioni di Google aggiornate: compaiono nella home.',
+  'google-fail': 'Non sono riuscito a leggere le recensioni di Google: il motivo è qui sotto.',
   reminder: 'Promemoria aggiornato.',
   extended: 'Opzione prorogata: l’agenzia è stata avvisata.',
   'extension-denied': 'Proroga non concessa: l’agenzia è stata avvisata.',
@@ -203,6 +205,16 @@ export function adminRouter(app) {
     send(res, feedbackAdminPage(ctxOf(req), { items, stats: { ...feedbackStats(db), requested }, flash: flash(req) }));
   });
 
+  // rilegge subito le recensioni di Google (di solito lo fa da sola una volta al giorno)
+  r.post('/feedback/google/refresh', form, async (req, res, next) => {
+    if (!app.googleReviews.enabled) return next();
+    try {
+      await app.googleReviews.sweep(Date.now(), { force: true });
+      res.redirect(303, '/admin/feedback?ok=google-ok');
+    } catch {
+      res.redirect(303, '/admin/feedback?ok=google-fail');
+    }
+  });
   r.post('/feedback/:id/featured', form, (req, res, next) => {
     if (!db.prepare('SELECT 1 FROM feedback WHERE id = ?').get(Number(req.params.id))) return next();
     setFeatured(db, Number(req.params.id), req.body.on === '1');

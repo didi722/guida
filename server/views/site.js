@@ -10,7 +10,7 @@ import { hoursLabel } from './components.js';
 import { DEFAULT_MEETING } from '../choices.js';
 import { invitePercentFor } from '../invites.js';
 import { durationText, startHours } from './components.js';
-import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
+import { breadcrumbs, cancellationLine, checkIcon, crossIcon, fmtDuration, fmtHours, hasHourlyProducts, languagesBadge, mediaImg, mediaUrl, postCard, priceParts, reviewsCarousel, sectionHead, siteArt, testimonials, tourCard, tourMedia } from './components.js';
 import { LANGS, LANG_META, pick } from '../langs.js';
 import { hourOptions, minHours, openTo, rateRows } from '../rates.js';
 import { formatMoney } from '../util.js';
@@ -33,13 +33,12 @@ function faqItems(ctx, keys) {
 }
 
 // ───────────────────────── Home ─────────────────────────
-export function homePage(ctx, { quotes = [], reviewStats = null } = {}) {
+export function homePage(ctx, { quotes = [], reviewStats = null, google = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { content, cfg } = app;
   const rates = app.rates.get();
   const channel = ctx.acct?.status === 'approved' ? 'b2b' : 'b2c';
   const posts = content.postsFor(lang).slice(0, 3);
-  const hours = fmtHours(t, cfg.policy.b2cFreeCancelHours);
 
   // le due categorie: guida privata (a ore) e tour di gruppo a posti liberi
   const shown = content.tours.filter((x) => openTo(rates, x, channel));
@@ -95,15 +94,6 @@ ${privateCover || groupCover ? html`<section class="section tight choose">
   </div>
 </section>` : ''}
 
-<section class="trust">
-  <div class="wrap trust-grid">
-    <p class="reveal">${checkIcon}<span><strong>${t('trust.licensed')}</strong><br>${t('trust.licensedSub')}</span></p>
-    <p class="reveal">${checkIcon}<span><strong>${t('trust.small')}</strong><br>${t('trust.smallSub')}</span></p>
-    <p class="reveal">${checkIcon}<span><strong>${t('trust.cancel', { when: hours })}</strong><br>${t('trust.cancelSub')}</span></p>
-    <p class="reveal">${checkIcon}<span><strong>${t(ctx.app.cfg.policy.allowPayOnSite ? 'trust.pay' : 'trust.payCard')}</strong><br>${t(ctx.app.cfg.policy.allowPayOnSite ? 'trust.paySub' : 'trust.paySubCard')}</span></p>
-  </div>
-</section>
-
 <section class="section section-alt">
   <div class="wrap">
     ${sectionHead(t('why.title'), t('why.lead'))}
@@ -114,21 +104,12 @@ ${privateCover || groupCover ? html`<section class="section tight choose">
   </div>
 </section>
 
-${quotes.length ? html`<section class="section">
+${quotes.length || google?.reviews.length ? html`<section class="section reviews-band">
   <div class="wrap">
     ${sectionHead(t('reviews.title'))}
-    ${testimonials(ctx, quotes, { stats: reviewStats, readUrl: cfg.reviews.readUrl })}
+    ${reviewsCarousel(ctx, { quotes, google, stats: reviewStats, readUrl: cfg.reviews.readUrl })}
   </div>
 </section>` : ''}
-
-<section class="section">
-  <div class="wrap">
-    ${sectionHead(t('how.title'))}
-    <ol class="steps">
-      ${[1, 2, 3].map((n) => html`<li class="reveal"><span class="step-n" aria-hidden="true">${n}</span><div><h3>${t(`how.${n}.t`)}</h3><p>${t(n === 2 && !ctx.app.cfg.policy.allowPayOnSite ? 'how.2.pCard' : `how.${n}.p`)}</p></div></li>`)}
-    </ol>
-  </div>
-</section>
 
 ${giftBand(ctx)}
 
@@ -180,7 +161,7 @@ ${posts.length
     sameAs: [cfg.site.instagram, 'https://davidetomio.it'].filter(Boolean),
     areaServed: 'Venezia',
   };
-  return page(ctx, { path: `/${lang}/`, body, ld, bodyClass: 'home' });
+  return page(ctx, { path: `/${lang}/`, body, ld, bodyClass: 'home', scripts: raw(`<script src="/js/reviews.js?v=${app.assetVersion}" defer></script>`) });
 }
 
 // ───────────────────────── Tour ─────────────────────────

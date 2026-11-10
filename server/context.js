@@ -26,6 +26,7 @@ import { createApprovals } from './partnerApproval.js';
 import { createPayables } from './payables.js';
 import { createPayments } from './payments.js';
 import { createServices } from './services.js';
+import { createGoogleReviews } from './googleReviews.js';
 import { createTranslator } from './translate.js';
 import { createVat } from './vat.js';
 import { createWaitlistServices } from './waitlistServices.js';
@@ -59,6 +60,7 @@ export function createContext({ cfg, db, content, mail, payments, pec, fetchImpl
   app.gifts = createGiftServices(app);
   app.reviews = createReviewServices(app);
   app.translate = createTranslator(app, fetchImpl);
+  app.googleReviews = createGoogleReviews(app, fetchImpl); // recensioni di Google nella home (una lettura al giorno)
   app.reminders = createReminderServices(app);
   app.calendars = createCalendars(app, fetchImpl);
   app.programs = createProgramServices(app);

@@ -24,7 +24,7 @@ test('ogni chiave t(...) usata nel codice esiste nel dizionario', () => {
   // famiglie di chiavi costruite dinamicamente (t(`prefisso.${x}`))
   const families = {
     'faq.{}.q': ['how', 'cancel', 'pay', 'meet', 'rain', 'access'], 'faq.{}.a': ['how', 'cancel', 'pay', 'meet', 'rain', 'access'],
-    'why.{}.t': [1, 2, 3], 'why.{}.p': [1, 2, 3], 'how.{}.t': [1, 2, 3], 'how.{}.p': [1, 2, 3], 'home.b2b.{}': [1, 2, 3, 4],
+    'why.{}.t': [1, 2, 3], 'why.{}.p': [1, 2, 3], 'home.b2b.{}': [1, 2, 3, 4],
     'b2b.b{}.t': [1, 2, 3, 4, 5, 6], 'b2b.b{}.p': [1, 2, 3, 4, 5, 6], 'b2b.s{}.t': [1, 2, 3, 4], 'b2b.s{}.p': [1, 2, 3, 4],
     'b2b.faq{}.q': [1, 2, 3, 4], 'b2b.faq{}.a': [1, 2, 3, 4], 'b2b.st.{}': ['pending', 'approved', 'rejected', 'suspended'], 'b2b.st.{}.text': ['pending', 'approved', 'rejected', 'suspended'],
     'b2b.bst.{}': ['confirmed', 'held', 'cancelled', 'expired', 'option', 'optionExpired'], 'partner.tab.{}': ['upcoming', 'options', 'past', 'cancelled', 'all'], 'option.err.{}': ['disabled', 'tooClose', 'limit'], 'pay.{}.title': ['card', 'onsite', 'invoice'], 'pay.{}.desc': ['card', 'onsite', 'invoice'], 'pay.{}.cta': ['card', 'onsite', 'invoice'],
