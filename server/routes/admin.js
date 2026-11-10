@@ -60,6 +60,8 @@ const FLASH = {
   cancelled: 'Prenotazione annullata e cliente avvisato.',
   notes: 'Note salvate.',
   paid: 'Prenotazione segnata come incassata.',
+  transfer: 'Bonifico segnato come ricevuto: la prenotazione è confermata e l’agenzia ha il voucher.',
+  'transfer-lost': 'Il bonifico era arrivato troppo tardi e il posto era già stato preso: la prenotazione è stata annullata e il bonifico va restituito (lo trovi in «Da fare»).',
   refunded: 'Rimborso segnato come fatto.',
   review: 'Richiesta di recensione aggiornata.',
   featured: 'Fatto: la modifica è già visibile sul sito.',
@@ -354,7 +356,15 @@ export function adminRouter(app) {
     const b = getBooking(db, Number(req.params.id));
     if (!b) return next();
     db.prepare('UPDATE bookings SET refund_cents = refund_cents + refund_pending_cents, refund_pending_cents = 0 WHERE id = ? AND refund_pending_cents > 0').run(b.id);
+    db.prepare("UPDATE bookings SET payment_status = 'refunded' WHERE id = ? AND status = 'cancelled' AND payment_method = 'transfer' AND payment_status = 'paid'").run(b.id); // un bonifico annullato e restituito
     res.redirect(303, `/admin/bookings/${b.id}?ok=refunded`);
+  });
+  // il bonifico anticipato di un'agenzia è arrivato: la prenotazione in attesa diventa definitiva (voucher e conferma partono da sole)
+  r.post('/bookings/:id/transfer-received', form, async (req, res, next) => {
+    const b = getBooking(db, Number(req.params.id));
+    if (!b || b.payment_method !== 'transfer' || !['held', 'expired'].includes(b.status)) return next();
+    const done = await services.transferReceived(b.id);
+    res.redirect(303, `/admin/bookings/${b.id}?ok=${done?.outcome === 'confirmed' ? 'transfer' : 'transfer-lost'}`);
   });
   r.post('/bookings/:id/paid', form, (req, res, next) => {
     const b = getBooking(db, Number(req.params.id));

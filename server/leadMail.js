@@ -450,7 +450,7 @@ export const COLD_TEMPLATES = ['presentation', 'followup'];
 
 /**
  * Mette un'email in coda (o la prepara per partire subito, con `sendAfter` adesso). Non parte da sola finché non è il suo momento.
- * @throws {LeadError} 'notfound' | 'email' | 'blocked' (non vuole email) | 'empty' | 'placeholder' | 'duplicate' (c'è già una uguale in coda)
+ * @throws {LeadError} 'notfound' | 'email' | 'blocked' (non vuole email) | 'empty' | 'placeholder' | 'duplicate' (c'è già una uguale in coda per lo stesso indirizzo: ai colleghi della stessa agenzia si può scrivere)
  */
 export function queueEmail(db, { leadId, contactId = null, to, template = 'custom', lang, subject, body, sendAfter, onlyIfQuiet = false, followupDays = null }, nowMs = Date.now()) {
   const lead = getLead(db, leadId);
@@ -462,7 +462,7 @@ export function queueEmail(db, { leadId, contactId = null, to, template = 'custo
   const b = String(body ?? '').replace(/\r\n/g, '\n').trim().slice(0, 8000);
   if (!s || !b) throw new LeadError('empty');
   if (unknownVariables(`${s} ${b}`).length) throw new LeadError('placeholder');
-  if (COLD_TEMPLATES.includes(template) && db.prepare("SELECT 1 FROM lead_emails WHERE lead_id = ? AND template = ? AND status = 'queued'").get(leadId, template)) throw new LeadError('duplicate');
+  if (COLD_TEMPLATES.includes(template) && db.prepare("SELECT 1 FROM lead_emails WHERE lead_id = ? AND template = ? AND status = 'queued' AND to_email = ?").get(leadId, template, email)) throw new LeadError('duplicate');
   const when = Number.isFinite(sendAfter) ? sendAfter : nowMs;
   const days = Number.isInteger(followupDays) && followupDays >= 2 && followupDays <= 60 ? followupDays : null;
   const row = db

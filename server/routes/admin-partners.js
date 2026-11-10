@@ -32,6 +32,7 @@ const ERR = {
   order: 'Il rimborso non può aumentare avvicinandosi al servizio: più si è vicini, meno si rimborsa.',
   count: `Al massimo ${MAX_TIERS} scaglioni.`,
   copy: 'Scegli il partner da cui copiare.',
+  transfer: 'Giorni di attesa del bonifico: scrivi un numero intero da 1 a 14 oppure lascia vuoto.',
   options: 'Durata e numero di opzioni: scrivi numeri interi (durata da 1 a 90 giorni, opzioni da 0 a 100) oppure lascia vuoto.',
   ...Object.fromEntries(['country', 'address', 'zip', 'city', 'province', 'taxCode', 'pec', 'sdi'].map((k) => [`billing-${k}`, `Dati di fatturazione non salvati: ${makeT('it')(`err.${k}`)}`])),
 };
@@ -74,8 +75,12 @@ export function adminPartnersRouter(app) {
     const status = ['pending', 'approved', 'rejected', 'suspended'].includes(req.body.status) ? req.body.status : a.status;
     const discount = Math.min(60, Math.max(0, Number(String(req.body.discount_percent ?? '').replace(',', '.')) || 0));
     const justApproved = status === 'approved' && a.status !== 'approved';
-    db.prepare(`UPDATE accounts SET status = ?, discount_percent = ?, allow_invoice = ?, admin_notes = ?, approved_at = CASE WHEN ? THEN ? ELSE approved_at END WHERE id = ?`).run(
-      status, discount, req.body.allow_invoice ? 1 : 0, cleanText(req.body.admin_notes, 2000) || null, justApproved ? 1 : 0, new Date().toISOString(), a.id,
+    // attesa del bonifico anticipato: vuoto = quella del sito; altrimenti da 1 a 14 giorni
+    const rawDays = String(req.body.transfer_days ?? '').trim();
+    const transferDays = rawDays === '' ? null : Number(rawDays.replace(',', '.'));
+    if (transferDays !== null && !(Number.isInteger(transferDays) && transferDays >= 1 && transferDays <= 14)) return res.redirect(303, here(a.id, 'err', 'transfer'));
+    db.prepare(`UPDATE accounts SET status = ?, discount_percent = ?, allow_invoice = ?, transfer_enabled = ?, transfer_days = ?, admin_notes = ?, approved_at = CASE WHEN ? THEN ? ELSE approved_at END WHERE id = ?`).run(
+      status, discount, req.body.allow_invoice ? 1 : 0, req.body.transfer_enabled ? 1 : 0, transferDays, cleanText(req.body.admin_notes, 2000) || null, justApproved ? 1 : 0, new Date().toISOString(), a.id,
     );
     if (justApproved) await sendPartnerApproved(app, get(a.id));
     res.redirect(303, here(a.id, 'ok', justApproved ? 'approved' : 'partner'));

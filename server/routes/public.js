@@ -304,7 +304,8 @@ export function publicRouter(app) {
     if (!b) return next();
     const nextUrl = safeNext(req.body?.next); // dalla pagina di un pacchetto si torna lì
     const back = (flash) => res.redirect(303, nextUrl ? `${nextUrl}${nextUrl.includes('?') ? '&' : '?'}flash=${flash === 'cancelled' ? 'line-cancelled' : flash}` : `/${req.lang}/booking/${b.ref}?t=${b.token}&flash=${flash}`);
-    if (b.status !== 'confirmed' || cancellationState(b).percent <= 0) return back('cancel-error'); // senza rimborso si scrive alla guida
+    const waitingTransfer = b.status === 'held' && b.payment_method === 'transfer'; // aspetta un bonifico che non ha ancora pagato: rinunciare libera il posto, senza penali
+    if (!waitingTransfer && (b.status !== 'confirmed' || cancellationState(b).percent <= 0)) return back('cancel-error'); // senza rimborso si scrive alla guida
     await services.cancel(b.id, { by: 'customer' });
     back('cancelled');
   });
@@ -318,12 +319,13 @@ export function publicRouter(app) {
   r.post('/booking/:ref/option/confirm', form, async (req, res, next) => {
     const b = loadBooking(req);
     if (b && b.status === 'confirmed' && b.option_expires_at) return res.redirect(303, optionBack(req, b, 'option-confirmed')); // secondo clic (o invio doppio): è già confermata
+    if (b && b.status === 'held' && b.option_expires_at && b.payment_method === 'transfer') return res.redirect(303, optionBack(req, b, 'option-transfer')); // aspetta il bonifico: secondo clic
     if (b && b.status === 'held' && b.option_expires_at) return res.redirect(303, `/pay/resume/${b.ref}?t=${b.token}&lang=${req.lang}`); // sta già pagando con la carta: si riprende da lì
     if (!b || b.status !== 'option') return next();
     if (b.group_id) return res.redirect(303, `/${req.lang}/packages/${getPackage(db, b.group_id).ref}?t=${getPackage(db, b.group_id).token}`); // le date di un pacchetto si confermano insieme, dalla sua pagina
     const result = await services.confirmOption(b.id, req.lang, { method: String(req.body.method ?? '') });
     if (result.redirect) return res.redirect(303, result.redirect);
-    res.redirect(303, optionBack(req, b, { confirmed: 'option-confirmed', expired: 'option-expired' }[result.outcome] ?? 'option-error'));
+    res.redirect(303, optionBack(req, b, { confirmed: 'option-confirmed', transfer: 'option-transfer', expired: 'option-expired' }[result.outcome] ?? 'option-error'));
   });
   r.post('/booking/:ref/option/release', form, async (req, res, next) => {
     const b = loadBooking(req);

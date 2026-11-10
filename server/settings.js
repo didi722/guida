@@ -303,6 +303,7 @@ export const SECTIONS = [
       { group: 'Pagamenti e tempi', key: 'invoice.iban', type: 'iban', label: 'IBAN per i bonifici', hint: 'compare nelle fatture pagate a bonifico' },
       { key: 'invoice.bank', type: 'text', max: 80, label: 'Banca' },
       { key: 'invoice.b2bDueDays', type: 'int', min: 0, max: 180, unit: 'giorni', label: 'Scadenza delle fatture ai partner' },
+      { key: 'invoice.transferDays', type: 'int', min: 1, max: 14, unit: 'giorni', label: 'Attesa del bonifico anticipato', hint: 'quanto resta trattenuto il posto di un’agenzia che sceglie «Bonifico» alla conferma; senza IBAN qui sopra il bonifico non compare. Si cambia anche per singola agenzia' },
       { key: 'reminders.overdue.enabled', type: 'bool', label: 'Solleciti automatici delle fatture scadute', hint: 'un’email all’agenzia (con IBAN, causale e link per pagare con carta) quando la fattura è scaduta e non risulta incassata; tu ricevi un avviso a ogni sollecito' },
       { key: 'reminders.overdue.firstAfterDays', type: 'int', min: 0, max: 60, unit: 'giorni', label: 'Primo sollecito dopo la scadenza' },
       { key: 'reminders.overdue.everyDays', type: 'int', min: 1, max: 60, unit: 'giorni', label: 'Poi un sollecito ogni' },

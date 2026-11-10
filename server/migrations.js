@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   total_cents           INTEGER NOT NULL,
   currency              TEXT NOT NULL DEFAULT 'EUR',
   status                TEXT NOT NULL,                -- held | confirmed | cancelled | expired
-  payment_method        TEXT NOT NULL,                -- card | onsite | invoice
+  payment_method        TEXT NOT NULL,                -- card | onsite | invoice | transfer (bonifico anticipato) | giftcard | free
   payment_status        TEXT NOT NULL,                -- unpaid | paid | refunded | refund_failed
   stripe_session_id     TEXT,
   stripe_payment_intent TEXT,
@@ -834,6 +834,12 @@ CREATE TABLE email_optouts (
 ALTER TABLE partner_invites ADD COLUMN lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL;
 `;
 
+const V40_TRANSFER = `
+-- Bonifico alla conferma: il posto resta trattenuto qualche giorno e la prenotazione diventa definitiva quando il bonifico arriva.
+ALTER TABLE accounts ADD COLUMN transfer_enabled INTEGER NOT NULL DEFAULT 1;  -- il partner può scegliere il bonifico anticipato
+ALTER TABLE accounts ADD COLUMN transfer_days INTEGER;                          -- giorni di attesa del bonifico per questo partner; NULL = valore del sito
+`;
+
 const V39_INVOICE_BATCHES = `
 -- «Paga tutto lo scaduto»: un solo pagamento con carta per più fatture dell'agenzia. Ogni riga ricorda quanto si chiedeva per fattura,
 -- così, se nel frattempo una è stata saldata in un altro modo, la sua quota si rimborsa.
@@ -929,6 +935,8 @@ export const MIGRATIONS = [
   V38_LEADS,
   // v39 — pagamento con carta di più fatture insieme («Paga tutto lo scaduto»)
   V39_INVOICE_BATCHES,
+  // v40 — bonifico anticipato alla conferma (per agenzia: acceso/spento e giorni di attesa)
+  V40_TRANSFER,
 ];
 
 export function migrate(db) {

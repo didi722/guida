@@ -86,6 +86,7 @@ function serviceState(db, b, today) {
   if (penalty) return { state: 'penalty' };
   if (b.payment_method === 'invoice') return { state: b.date > today ? 'upcoming' : 'toInvoice' };
   if (b.payment_method === 'card') return { state: 'card' };
+  if (b.payment_method === 'transfer') return { state: 'transfer' };
   if (b.payment_method === 'onsite') return { state: 'onsite' };
   return { state: 'other' };
 }

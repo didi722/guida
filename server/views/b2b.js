@@ -131,7 +131,7 @@ export function unsubscribePage(ctx, { state, token = '' }) {
 
 // ───────────────────────── Area riservata dell'agenzia ─────────────────────────
 /** Messaggi che le azioni dell'elenco (rilascia, conferma) possono lasciare al ritorno sulla dashboard. */
-const FLASH = ['option-confirmed', 'option-released', 'option-expired', 'option-error', 'cancelled', 'cancel-error', 'feed'];
+const FLASH = ['option-confirmed', 'option-transfer', 'option-released', 'option-expired', 'option-error', 'cancelled', 'cancel-error', 'feed'];
 /**
  * Lo stato di una prenotazione a parole (anche per l'esportazione): un'opzione scaduta non è una prenotazione «scaduta»,
  * e una confermata il cui servizio è già finito è «servizio effettuato».

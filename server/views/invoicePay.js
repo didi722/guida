@@ -2,8 +2,10 @@
 import { html } from '../html.js';
 import { ensurePayRef, invoiceDue, payInstructions, payState } from '../invoicePayments.js';
 import { getInvoice } from '../invoices.js';
-import { fmtDate, nowRome } from '../time.js';
+import { fmtDate, fmtInstant, nowRome } from '../time.js';
+import { onlinePaymentsOpen } from '../opening.js';
 import { formatMoney } from '../util.js';
+import { transferInstructions } from '../transferPay.js';
 import { page } from './layout.js';
 
 /** Lo stato dell'incasso a parole (la chiave è `invpay.state.<stato>`), con la data. */
@@ -89,4 +91,28 @@ export function bookingPayBlock(ctx, b, invoice) {
   if (inv?.paid_at) return '';
   return html`<div class="pay-block"><h3>${t('invpay.booking.title')}</h3>
     <p class="small muted">${t('invpay.booking.before', { when: days > 0 ? t('invpay.within', { days }) : t('invpay.onInvoiceDate') })}</p></div>`;
+}
+
+/**
+ * Nella scheda di una prenotazione che aspetta il bonifico: quanto, a chi, su quale IBAN, con quale causale ed entro quando (con un tocco si copia),
+ * e la carta per chi preferisce pagare subito.
+ */
+export function transferBox(ctx, b, { q }) {
+  const { t, lang } = ctx;
+  const p = transferInstructions(ctx.app, b);
+  const until = fmtInstant(p.deadlineMs, lang);
+  const canCard = onlinePaymentsOpen(ctx.app);
+  return html`<div class="pay-box transfer-box"><h3>${t('booking.transfer.title')}</h3>
+    <dl class="summary-list">
+      <div><dt>${t('invpay.beneficiary')}</dt><dd>${p.beneficiary}</dd></div>
+      ${p.bank ? html`<div><dt>${t('invpay.bank')}</dt><dd>${p.bank}</dd></div>` : ''}
+      <div><dt>${t('invpay.amount')}</dt><dd><strong>${formatMoney(p.amountCents, lang, b.currency)}</strong></dd></div>
+      <div><dt>${t('invpay.dueBy')}</dt><dd>${until}</dd></div>
+    </dl>
+    ${copyRow(t, 'pay-iban', t('invpay.iban'), p.iban)}
+    ${copyRow(t, 'pay-ref', t('invpay.reference'), p.reference)}
+    <p class="small muted">${t('booking.transfer.hint', { ref: p.reference, until })}</p>
+    ${canCard ? html`<p class="small muted">${t('booking.transfer.orCard')}</p><p class="btn-row"><a class="btn btn-outline" href="/pay/resume/${b.ref}${q}&lang=${lang}">${t('booking.transfer.cardBtn')}</a></p>` : ''}
+    <form method="post" action="/${lang}/booking/${b.ref}/cancel" class="cancel-form" data-confirm="${t('booking.confirmCancel')}"><input type="hidden" name="t" value="${b.token}"><button class="btn btn-link-danger" type="submit">${t('booking.cancelBtn')}</button></form>
+  </div>`;
 }

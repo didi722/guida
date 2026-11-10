@@ -148,6 +148,8 @@ test('la coda: controlli all’inserimento (indirizzo, divieto, testo, segnapost
   const first = queue(app, lead);
   assert.deepEqual([first.status, first.to_email, first.lang, first.send_after], ['queued', 'anna@lagoon.it', 'it', new Date(NOW).toISOString()]);
   assert.equal(err({}), 'duplicate', 'una presentazione in coda alla volta');
+  assert.equal(err({ to: 'ANNA@lagoon.it' }), 'duplicate', 'lo stesso indirizzo, anche scritto in maiuscolo');
+  assert.equal(queue(app, lead, { to: 'luca@lagoon.it' }).to_email, 'luca@lagoon.it', 'a un collega della stessa agenzia si può scrivere lo stesso: è un’altra persona');
   assert.equal(queue(app, lead, { template: 'custom' }).template, 'custom', 'le email scritte a mano non hanno questo limite');
   assert.equal(queue(app, lead, { template: 'thanks' }).template, 'thanks');
   assert.equal(queue(app, lead, { template: 'inventato' }).template, 'custom');
@@ -162,7 +164,7 @@ test('la coda: controlli all’inserimento (indirizzo, divieto, testo, segnapost
   assert.equal(M.queuedEmails(db).length, 0);
   const history = M.recentEmails(db);
   assert.ok(history.every((e) => e.status === 'cancelled'));
-  assert.equal(history.filter((e) => e.note === 'Non vuole più ricevere email').length, 5, 'le cinque ancora in coda sono state annullate dal divieto');
+  assert.equal(history.filter((e) => e.note === 'Non vuole più ricevere email').length, 6, 'le sei ancora in coda sono state annullate dal divieto');
 });
 
 test('scrivere subito: parte, finisce nel registro, porta in «Contattata», fissa il richiamo e mette in coda il sollecito', async (t) => {

@@ -19,6 +19,7 @@ import { brandOf } from './agencyDocs.js';
 import { clientView } from './quotes.js';
 import { meetingOf, themeText } from './choices.js';
 import { bookingPeople, bookingPeopleShort, partyExtra, partyOfBooking, peopleShort } from './party.js';
+import { transferInstructions } from './transferPay.js';
 import { ensurePayRef, groupIban, invoiceDue, invoicePayUrl, isPayable, payInstructions } from './invoicePayments.js';
 
 /** Saluto iniziale e congedo, comuni a più email. Senza nome: «Ciao,» / «Hi,» / «Hola,». */
@@ -442,6 +443,61 @@ export async function sendOptionExpired(app, b) {
   const lang = normLang(b.lang);
   const o = O[lang];
   await sendOptionMail(app, b, { subject: o.expiredSubject(b.ref), intro: o.expiredIntro(untilOf(b, lang)), withCta: false });
+}
+
+/** All'agenzia: il posto è trattenuto, ecco il bonifico da fare (importo, IBAN, causale, entro quando). */
+export async function sendTransferInstructions(app, b) {
+  const lang = normLang(b.lang);
+  const tr = T[lang];
+  const t = makeT(lang);
+  const p = transferInstructions(app, b);
+  const until = fmtInstant(p.deadlineMs, lang);
+  const intro = t('mail.transfer.intro', { service: tourText(app, b.tour_slug, lang).title, date: fmtDate(b.date, lang, 'short'), until });
+  const pay = [
+    [t('invpay.beneficiary'), p.beneficiary],
+    ...(p.bank ? [[t('invpay.bank'), p.bank]] : []),
+    [t('invpay.iban'), p.iban],
+    [t('invpay.reference'), p.reference],
+    [t('invpay.amount'), formatMoney(p.amountCents, lang, b.currency)],
+    [t('invpay.dueBy'), until],
+  ];
+  const rows = summaryRows(app, b, lang);
+  const link = bookingUrl(app, b, lang);
+  await app.mail.send({
+    to: b.email,
+    subject: t('mail.transfer.subject', { ref: b.ref, until }),
+    text: [tr.hello(b.name), '', intro, '', ...pay.map(([k, v]) => `${k}: ${v}`), '', ...rows.map(([k, v]) => `${k}: ${v}`), '', `${t('mail.transfer.cta')}: ${link}`, '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
+    html: String(
+      layout(
+        app,
+        lang,
+        html`<p>${tr.hello(b.name)}</p><p>${intro}</p>
+        ${payTable(pay)}
+        <p style="color:#666;font-size:13px">${t('booking.transfer.hint', { ref: b.ref, until })}</p>
+        ${payTable(rows)}
+        <p><a href="${link}" style="display:inline-block;background:#af9168;color:#fff;text-decoration:none;padding:10px 22px;border-radius:50px;font-weight:bold">${t('mail.transfer.cta')}</a></p>
+        <p style="color:#666;font-size:13px">${tr.contactLine}<br>${tr.bye} ${app.cfg.site.name}</p>`,
+      ),
+    ),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
+}
+
+/** All'agenzia: il bonifico non è arrivato in tempo e il posto è stato liberato. */
+export async function sendTransferExpired(app, b) {
+  const lang = normLang(b.lang);
+  const tr = T[lang];
+  const t = makeT(lang);
+  const until = fmtInstant(Date.parse(b.hold_expires_at), lang);
+  const intro = t('mail.transferExpired.intro', { until });
+  const rows = summaryRows(app, b, lang);
+  await app.mail.send({
+    to: b.email,
+    subject: t('mail.transferExpired.subject', { ref: b.ref }),
+    text: [tr.hello(b.name), '', intro, '', ...rows.map(([k, v]) => `${k}: ${v}`), '', tr.contactLine, `${tr.bye} ${app.cfg.site.name}`].join('\n'),
+    html: String(layout(app, lang, html`<p>${tr.hello(b.name)}</p><p>${intro}</p>${payTable(rows)}<p style="color:#666;font-size:13px">${tr.contactLine}<br>${tr.bye} ${app.cfg.site.name}</p>`)),
+    replyTo: app.cfg.mail.notifyTo || undefined,
+  });
 }
 
 /** All'agenzia: la guida ha rilasciato l'opzione. */
