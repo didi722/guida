@@ -853,6 +853,11 @@ CREATE TABLE google_reviews (
 );
 `;
 
+const V42_DROP_GOOGLE_REVIEWS = `
+-- Le recensioni di Google nella home non ci sono più (restano solo i commenti dei clienti del sito): la tabella della v41 non serve.
+DROP TABLE IF EXISTS google_reviews;
+`;
+
 const V39_INVOICE_BATCHES = `
 -- «Paga tutto lo scaduto»: un solo pagamento con carta per più fatture dell'agenzia. Ogni riga ricorda quanto si chiedeva per fattura,
 -- così, se nel frattempo una è stata saldata in un altro modo, la sua quota si rimborsa.
@@ -952,6 +957,8 @@ export const MIGRATIONS = [
   V40_TRANSFER,
   // v41 — recensioni di Google nella home
   V41_GOOGLE_REVIEWS,
+  // v42 — via la tabella delle recensioni di Google (funzione tolta)
+  V42_DROP_GOOGLE_REVIEWS,
 ];
 
 export function migrate(db) {
