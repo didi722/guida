@@ -377,54 +377,6 @@
   "Ver disponibilidad",
   "空き状況を見る"
  ],
- "trust.licensed": [
-  "Guida abilitata",
-  "Licensed guide",
-  "Guía habilitado",
-  "公認ガイド"
- ],
- "trust.licensedSub": [
-  "Professionista abilitato a Venezia",
-  "Qualified professional in Venice",
-  "Profesional habilitado en Venecia",
-  "ヴェネツィアで資格を持つプロのガイド"
- ],
- "trust.small": [
-  "Gruppi piccoli",
-  "Small groups",
-  "Grupos reducidos",
-  "少人数制"
- ],
- "trust.smallSub": [
-  "Per camminare e ascoltare meglio",
-  "Easier to walk, easier to listen",
-  "Para caminar y escuchar mejor",
-  "歩きやすく、お話も聞きやすい"
- ],
- "trust.cancel": [
-  "Cancellazione gratuita fino a {when}",
-  "Free cancellation up to {when}",
-  "Cancelación gratuita hasta {when} antes",
-  "{when}前までキャンセル無料"
- ],
- "trust.cancelSub": [
-  "Se cambi programma, nessun problema",
-  "If your plans change, no problem",
-  "Si cambian tus planes, no pasa nada",
-  "ご予定が変わっても大丈夫です"
- ],
- "trust.pay": [
-  "Paghi come preferisci",
-  "Pay your way",
-  "Pagas como prefieras",
-  "お支払い方法をお選びいただけます"
- ],
- "trust.paySub": [
-  "Online (carta, Apple Pay, Google Pay) o il giorno del tour",
-  "Online (card, Apple Pay, Google Pay) or on the day",
-  "Online (tarjeta, Apple Pay, Google Pay) o el día del tour",
-  "オンライン決済（カード、Apple Pay、Google Pay）、またはツアー当日に"
- ],
  "why.title": [
   "Un altro modo di guardare Venezia",
   "Another way to see Venice",
@@ -478,48 +430,6 @@
   "Meet your guide",
   "Conoce a tu guía",
   "ガイドのプロフィールを見る"
- ],
- "how.title": [
-  "Come funziona",
-  "How it works",
-  "Cómo funciona",
-  "ご利用の流れ"
- ],
- "how.1.t": [
-  "Scegli servizio e data",
-  "Choose your service and date",
-  "Elige servicio y fecha",
-  "サービスと日付を選ぶ"
- ],
- "how.1.p": [
-  "Tour di gruppo o guida privata: vedi subito orari disponibili e prezzo, senza registrarti.",
-  "Group tour or private guide: see the available times and the price straight away, with no sign-up.",
-  "Tour en grupo o guía privado: ves al instante los horarios disponibles y el precio, sin registrarte.",
-  "グループツアーかプライベートガイドかを選ぶと、空き時間と料金がすぐに表示されます。会員登録は不要です。"
- ],
- "how.2.t": [
-  "Prenota in due minuti",
-  "Book in two minutes",
-  "Reserva en dos minutos",
-  "2分で予約"
- ],
- "how.2.p": [
-  "Inserisci i dati e scegli se pagare online o il giorno del tour.",
-  "Enter your details and choose to pay online or on the day.",
-  "Introduce tus datos y elige si pagar online o el día del tour.",
-  "お名前などを入力し、オンライン決済かツアー当日のお支払いかをお選びください。"
- ],
- "how.3.t": [
-  "Incontriamoci a Venezia",
-  "Meet in Venice",
-  "Nos vemos en Venecia",
-  "ヴェネツィアでお会いしましょう"
- ],
- "how.3.p": [
-  "Ricevi conferma, punto d’incontro e calendario via email. Il resto lo faccio io.",
-  "You get confirmation, meeting point and calendar file by email. I take care of the rest.",
-  "Recibes por correo la confirmación, el punto de encuentro y el archivo de calendario. De lo demás me encargo yo.",
-  "確認メールで、集合場所とカレンダー用ファイルをお届けします。あとは私にお任せください。"
  ],
  "faq.title": [
   "Domande frequenti",
@@ -5825,29 +5735,11 @@
   "online (con tarjeta y otros métodos electrónicos)",
   "オンライン（カードなどの電子決済）"
  ],
- "trust.paySubCard": [
-  "Online, in modo sicuro: carta, Apple Pay, Google Pay",
-  "Secure online payment: card, Apple Pay, Google Pay",
-  "Online, de forma segura: tarjeta, Apple Pay, Google Pay",
-  "オンラインで安全にお支払い：カード、Apple Pay、Google Pay"
- ],
- "how.2.pCard": [
-  "Inserisci i dati e paga online in modo sicuro (carta, Apple Pay, Google Pay).",
-  "Enter your details and pay securely online (card, Apple Pay, Google Pay).",
-  "Introduce tus datos y paga online de forma segura (tarjeta, Apple Pay, Google Pay).",
-  "お名前などを入力し、オンラインで安全にお支払いください（カード、Apple Pay、Google Pay）。"
- ],
  "faq.pay.aCard": [
   "Online, in modo sicuro tramite Stripe: carta, Apple Pay, Google Pay e altri metodi disponibili sul tuo dispositivo. Le agenzie possono pagare a fattura.",
   "Online, securely through Stripe: card, Apple Pay, Google Pay and other methods available on your device. Agencies can pay by invoice.",
   "Online, de forma segura a través de Stripe: tarjeta, Apple Pay, Google Pay y otros métodos disponibles en tu dispositivo. Las agencias pueden pagar con factura.",
   "オンライン（Stripeによる安全な決済。クレジットカード、Apple Pay、Google Payなど、お使いの端末で利用できる方法）でお支払いいただけます。旅行会社様は請求書払いもご利用いただけます。"
- ],
- "trust.payCard": [
-  "Pagamento sicuro",
-  "Secure payment",
-  "Pago seguro",
-  "安全なお支払い"
  ],
  "checkout.update": [
   "Aggiorna",
@@ -5884,6 +5776,72 @@
   "Read all reviews",
   "Leer todas las reseñas",
   "すべてのレビューを読む"
+ ],
+ "reviews.src.google": [
+  "Google",
+  "Google",
+  "Google",
+  "Google"
+ ],
+ "reviews.src.site": [
+  "Ha fatto il tour",
+  "Took the tour",
+  "Hizo el tour",
+  "ツアー参加者"
+ ],
+ "reviews.google.avg": [
+  "{avg} su Google · {n} recensioni",
+  "{avg} on Google · {n} reviews",
+  "{avg} en Google · {n} reseñas",
+  "Google {avg}・レビュー{n}件"
+ ],
+ "reviews.google.translated": [
+  "Tradotto da Google",
+  "Translated by Google",
+  "Traducido por Google",
+  "Googleによる翻訳"
+ ],
+ "reviews.google.read": [
+  "Leggi su Google",
+  "Read on Google",
+  "Leer en Google",
+  "Googleで読む"
+ ],
+ "reviews.googleNote": [
+  "Le recensioni di Google sono lette ogni giorno dal profilo dell’attività su Google Maps.",
+  "Google reviews are read every day from the business profile on Google Maps.",
+  "Las reseñas de Google se leen cada día del perfil de la empresa en Google Maps.",
+  "Googleのレビューは、Googleマップのビジネスプロフィールから毎日取得しています。"
+ ],
+ "reviews.carousel": [
+  "Recensioni dei clienti",
+  "Customer reviews",
+  "Opiniones de clientes",
+  "お客様のレビュー"
+ ],
+ "reviews.prev": [
+  "Recensione precedente",
+  "Previous review",
+  "Opinión anterior",
+  "前のレビュー"
+ ],
+ "reviews.next": [
+  "Recensione successiva",
+  "Next review",
+  "Opinión siguiente",
+  "次のレビュー"
+ ],
+ "reviews.pause": [
+  "Ferma lo scorrimento",
+  "Pause scrolling",
+  "Detener el desplazamiento",
+  "自動スクロールを止める"
+ ],
+ "reviews.play": [
+  "Riprendi lo scorrimento",
+  "Resume scrolling",
+  "Reanudar el desplazamiento",
+  "自動スクロールを再開する"
  ],
  "nav.hourly": [
   "Guida a ore",

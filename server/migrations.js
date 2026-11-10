@@ -840,6 +840,19 @@ ALTER TABLE accounts ADD COLUMN transfer_enabled INTEGER NOT NULL DEFAULT 1;  --
 ALTER TABLE accounts ADD COLUMN transfer_days INTEGER;                          -- giorni di attesa del bonifico per questo partner; NULL = valore del sito
 `;
 
+const V41_GOOGLE_REVIEWS = `
+-- Recensioni di Google (Places API): una copia per lingua, rinnovata ogni giorno e mai tenuta oltre due giorni (le regole di Google non permettono di archiviarle).
+CREATE TABLE google_reviews (
+  lang          TEXT PRIMARY KEY,
+  place_id      TEXT NOT NULL,           -- il profilo a cui si riferisce la copia: se cambia, la copia non vale più
+  rating        REAL,                    -- valutazione media di Google
+  count         INTEGER,                 -- quante recensioni ha il profilo
+  uri           TEXT,                    -- il profilo su Google Maps
+  reviews_json  TEXT NOT NULL,           -- le recensioni restituite da Google (al massimo cinque), già nella lingua richiesta
+  fetched_at    TEXT NOT NULL
+);
+`;
+
 const V39_INVOICE_BATCHES = `
 -- «Paga tutto lo scaduto»: un solo pagamento con carta per più fatture dell'agenzia. Ogni riga ricorda quanto si chiedeva per fattura,
 -- così, se nel frattempo una è stata saldata in un altro modo, la sua quota si rimborsa.
@@ -937,6 +950,8 @@ export const MIGRATIONS = [
   V39_INVOICE_BATCHES,
   // v40 — bonifico anticipato alla conferma (per agenzia: acceso/spento e giorni di attesa)
   V40_TRANSFER,
+  // v41 — recensioni di Google nella home
+  V41_GOOGLE_REVIEWS,
 ];
 
 export function migrate(db) {

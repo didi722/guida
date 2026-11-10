@@ -1170,14 +1170,11 @@ test('senza pagamento sul posto il sito non lo promette: home, FAQ, checkout off
   try {
     const home = await (await off.jar()('/it/')).text();
     assert.ok(!/il giorno del tour|il giorno del servizio/.test(home), 'nessun invito a pagare il giorno del tour');
-    assert.match(home, /Online, in modo sicuro: carta, Apple Pay, Google Pay/);
     const faq = await (await off.jar()('/it/tours')).text();
     assert.ok(!/dove previsto\)? il giorno del servizio|oppure \(dove previsto\)/.test(faq));
     const checkout = await (await off.jar()(`/it/book/checkout?tour=san-marco-rialto&date=${day(20)}&time=09:30&pax=2`)).text();
     assert.match(checkout, /value="card"/);
     assert.ok(!/value="onsite"/.test(checkout), 'il checkout non offre il pagamento in loco');
-    const homeOn = await (await on.jar()('/it/')).text();
-    assert.match(homeOn, /Online \(carta, Apple Pay, Google Pay\) o il giorno del tour/);
     const checkoutOn = await (await on.jar()(`/it/book/checkout?tour=san-marco-rialto&date=${day(20)}&time=09:30&pax=2`)).text();
     assert.match(checkoutOn, /value="onsite"/);
   } finally {

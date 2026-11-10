@@ -109,13 +109,21 @@ test('commenti sul sito: home e pagina del tour, con privacy, escape, limite, me
     assert.doesNotMatch(gh2, /Una guida appassionata/);
     assert.match(await s.get('/es/tours/cannaregio-ghetto'), /Lo que dicen de este tour/);
 
-    // in home al massimo 3, i più recenti
+    // in home scorrono fino a 8 commenti, i più recenti
     await s.adminPost(`/admin/feedback/${f6.id}/featured`, { on: '1' });
     await s.adminPost(`/admin/feedback/${f7.id}/featured`, { on: '1' });
     assert.equal(featuredQuotes(app.db, { limit: 3 }).length, 3);
     h = await home();
-    assert.equal((h.match(/<figure class="quote">/g) ?? []).length, 3);
-    assert.doesNotMatch(h, /Così così/, 'il più vecchio resta fuori');
+    assert.equal((h.match(/<figure class="quote rv-card"/g) ?? []).length, 5, 'tutti e cinque i commenti scelti');
+    assert.match(h, /Così così/);
+    for (let i = 8; i <= 11; i++) {
+      const f = feedbackFor(app, i, { rating: 5, comment: `Extra ${i}`, name: `Cliente ${i}`, time: '14:30' });
+      await s.adminPost(`/admin/feedback/${f.id}/featured`, { on: '1' });
+    }
+    h = await home();
+    assert.equal((h.match(/<figure class="quote rv-card"/g) ?? []).length, 8, 'al massimo otto');
+    assert.doesNotMatch(h, /Extra 11/, 'il più vecchio resta fuori');
+    assert.match(h, /Extra 8/);
 
     // collegamento a tutte le recensioni, dalle Impostazioni
     assert.doesNotMatch(h, /Leggi tutte le recensioni/);
