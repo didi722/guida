@@ -479,7 +479,7 @@ Chi chiede l'accesso (dal modulo o da un tuo invito) deve scrivere **tutto ciò 
 
 ### Approvare un partner
 1. Apri la richiesta: vedi dati aziendali (Partita IVA, indirizzo, SDI/PEC), referente e messaggio, e sotto la Partita IVA l'**esito del controllo** ([sotto](#controllo-della-partita-iva-vies)).
-2. In **Stato e pagamento** scegli **Stato**: *Approvato*, *Rifiutato* o *Sospeso*; imposta lo **Sconto su tutto il listino (%)** (vale per i tour senza prezzo dedicato) e se **può pagare a fattura / bonifico**; aggiungi **Note interne**. **Salva**.
+2. In **Stato e pagamento** scegli **Stato**: *Approvato*, *Rifiutato* o *Sospeso*; imposta lo **Sconto su tutto il listino (%)** (vale per i tour senza prezzo dedicato) e se **può pagare a fattura** e **con bonifico alla conferma** (con i suoi giorni di attesa); aggiungi **Note interne**. **Salva**.
 3. Il partner riceve un'email e può entrare nella sua area (vedi sotto). Se scegli **Sconto %**, lo sconto si toglie dalle **tariffe agenzie** (tour B2B e tariffe a ore) e il prezzo scontato si **arrotonda sempre al multiplo di 5 € successivo** (mai oltre la tariffa).
 
 ### Controllo della Partita IVA (VIES)
@@ -633,9 +633,13 @@ Un'agenzia con venti pratiche aperte non vuole ricordarsi a mente quando scade o
 - **Nel pannello non c'è nulla da impostare**: la chiave nasce la prima volta che l'agenzia apre la pagina.
 
 ### Come pagano le agenzie
-Per ogni partner decidi in **Clienti › Partner › Stato e pagamento** se **può pagare a fattura / bonifico**. Le agenzie hanno quindi:
+Per ogni partner decidi in **Clienti › Partner › Stato e pagamento** se **può pagare a fattura** (poi con bonifico o carta) e se **può pagare con bonifico alla conferma**. Le agenzie hanno quindi:
 - **Carta online** (sempre): su Stripe, rimborso automatico se annullano nei termini. Compare anche *Apple Pay*, *Google Pay*, *PayPal* o altro se li hai attivati in Stripe ([sezione 18](#18-online-aggiornamenti-e-cosa-non-si-cambia-dal-pannello)).
 - **Fattura / bonifico** (solo se lo consenti): la prenotazione è **confermata subito, senza pagare nulla**. Dopo il servizio la pratica compare in **Conti › Fatture › Da fatturare** e tu emetti la **fattura elettronica** (entro 12 giorni); l'agenzia paga con **bonifico entro la scadenza scritta in fattura** (**30 giorni** di default: **Sito › Impostazioni › Fatturazione elettronica › Scadenza delle fatture ai partner**). Quando arriva il bonifico tocca **Segna come incassata** nella scheda della fattura ([sotto](#pagamento-delle-fatture-iban-carta-e-solleciti)). Nella sua area l'agenzia vede l'importo ancora non saldato come **Da saldare** (e quanto è già scaduto).
+- **Bonifico alla conferma** (di partenza acceso per tutte le agenzie, se hai scritto l'**IBAN** in *Impostazioni › Pagamenti e tempi*): pensato per chi incassa dal cliente prima di confermare. Alla conferma (di una prenotazione nuova o di un'opzione) l'agenzia sceglie **Bonifico**: il **posto resta trattenuto** (non lo prenota nessun altro) e la prenotazione risulta *In attesa del bonifico*; lei vede **importo, intestatario, IBAN e banca** (con **Copia**) e la **causale**, che è il **codice della prenotazione** (*VE-…*), e riceve le stesse cose per email. Quando il denaro arriva, apri la prenotazione e tocca **Bonifico ricevuto: conferma la prenotazione**: diventa *Confermata e pagata* e all'agenzia partono conferma e voucher. Finché aspetti, la prenotazione è in **Da fare** (*Bonifico atteso*). Se il bonifico **non arriva entro l'attesa**, il posto si libera e l'agenzia riceve un avviso (un'opzione ancora valida torna opzione); se il bonifico arriva dopo e il posto è ancora libero, il pulsante riprende la prenotazione. L'agenzia può anche **rinunciare** mentre aspetta (senza penale) o **pagare subito con la carta** dalla stessa pagina.
+  - **Attesa**: **2 giorni** per tutte (*Impostazioni › Pagamenti e tempi › Attesa del bonifico anticipato*); per una singola agenzia la cambi (1–14 giorni) o spegni il bonifico in *Partner › Stato e pagamento*. Il posto non resta trattenuto oltre **12 ore prima del servizio**, e se mancano **meno di 24 ore** il bonifico non viene offerto. Non vale per i pacchetti di più servizi.
+  - **Se poi annulli** una prenotazione già pagata con bonifico, il rimborso **non parte da solo**: compare in **Da fare** come *Rimborso da fare*; restituisci la somma con un bonifico e tocca **Fatto, l'ho rimborsato** nella scheda.
+  - Il bonifico viene segnato **a mano**, dalla scheda: non c'è (ancora) l'abbinamento automatico con l'estratto conto della banca.
 - Se un'agenzia annulla oltre il termine gratuito, la **penale** (la parte non rimborsata) si fattura allo stesso modo.
 
 ### Pagamento delle fatture: IBAN, carta e solleciti

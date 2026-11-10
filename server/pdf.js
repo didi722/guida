@@ -347,6 +347,7 @@ export async function renderVoucherPdf(app, b, { lang: wanted = b.lang, nowMs = 
       card: b.payment_status === 'paid' || b.payment_status === 'refunded' ? t('booking.paidOnline') : t('booking.cardPending'),
       onsite: b.payment_status === 'paid' ? t('booking.paidOnline') : t('booking.onsite'),
       invoice: t('booking.invoice'),
+      transfer: t('booking.transfer'),
       giftcard: t('booking.giftcard'),
       free: t('booking.free'),
     }[b.payment_method];

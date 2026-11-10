@@ -8,7 +8,7 @@ import { partyOfBooking, peopleText } from './party.js';
 import { parseServiceRecord, serviceNote } from './rates.js';
 import { fmtInstant } from './time.js';
 
-const PAY_LABEL = { card: 'pagata online', invoice: 'a fattura (agenzia)', giftcard: 'pagata con buono regalo', free: 'nessun pagamento dovuto', onsite: 'pagamento sul posto' };
+const PAY_LABEL = { card: 'pagata online', transfer: 'pagata con bonifico', invoice: 'a fattura (agenzia)', giftcard: 'pagata con buono regalo', free: 'nessun pagamento dovuto', onsite: 'pagamento sul posto' };
 
 /**
  * @returns {{ date: string, services: object[], programs: object[], blocks: object[], totals: {services: number, people: number, options: number, collectCents: number} }}

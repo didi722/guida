@@ -98,7 +98,10 @@ export function partnerDetailPage(ctx, a, { bookings, others, team = [], openOpt
     <h2>Stato e pagamento</h2>
     <label class="field"><span class="label">Stato</span><select name="status">${[['pending', 'Da approvare'], ['approved', 'Approvato'], ['rejected', 'Rifiutato'], ['suspended', 'Sospeso']].map(([v, l]) => html`<option value="${v}" ${a.status === v ? raw('selected') : ''}>${l}</option>`)}</select></label>
     <label class="field"><span class="label">Sconto su tutto il listino (%) <em>— si toglie dalle tariffe B2B (tour e tariffe a ore) e si arrotonda ai 5 € successivi; i tour con prezzo dedicato non lo usano</em></span><input type="number" name="discount_percent" min="0" max="60" step="0.5" value="${a.discount_percent}"></label>
-    <label class="check"><input type="checkbox" name="allow_invoice" value="1" ${a.allow_invoice ? raw('checked') : ''}> Può pagare a fattura / bonifico</label>
+    <label class="check"><input type="checkbox" name="allow_invoice" value="1" ${a.allow_invoice ? raw('checked') : ''}> Può pagare a fattura (la prenotazione è subito confermata e si paga dopo, con bonifico o carta)</label>
+    <label class="check"><input type="checkbox" name="transfer_enabled" value="1" ${a.transfer_enabled ? raw('checked') : ''}> Può pagare con bonifico alla conferma (il posto resta trattenuto finché il bonifico non arriva)</label>
+    <label class="field"><span class="label">Giorni di attesa del bonifico <em>— vuoto = ${cfg.invoice.transferDays} come per tutti; il posto non resta trattenuto oltre 12 ore prima del servizio, e se mancano meno di 24 ore il bonifico non è offerto</em></span><input type="number" name="transfer_days" min="1" max="14" step="1" inputmode="numeric" value="${a.transfer_days ?? ''}"></label>
+    ${cfg.invoice.iban ? '' : html`<p class="small muted">Per offrire il bonifico serve l’IBAN: lo scrivi in Impostazioni › Pagamenti e tempi.</p>`}
     <label class="field"><span class="label">Note interne</span><textarea name="admin_notes" rows="3" maxlength="2000">${a.admin_notes ?? ''}</textarea></label>
     <button class="btn btn-gold" type="submit">Salva${a.status === 'pending' ? ' (e approva se imposti "Approvato")' : ''}</button>
   </form>

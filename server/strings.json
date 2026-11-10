@@ -1932,16 +1932,16 @@
   "予約を確定する"
  ],
  "pay.invoice.title": [
-  "Fattura / bonifico",
-  "Invoice / bank transfer",
-  "Factura / transferencia",
-  "請求書払い／銀行振込"
+  "Fattura, si paga dopo",
+  "Invoice, pay later",
+  "Factura, se paga después",
+  "請求書払い(後払い)"
  ],
  "pay.invoice.desc": [
-  "Il servizio viene fatturato secondo gli accordi (SDI).",
-  "The service is invoiced as agreed (e-invoice).",
-  "El servicio se factura según lo acordado (factura electrónica).",
-  "ご契約に基づき、サービスは請求書（電子請求書）で請求されます。"
+  "Prenotazione confermata subito. Il servizio viene fatturato secondo gli accordi (SDI) e si paga con bonifico o carta.",
+  "Booking confirmed at once. The service is invoiced as agreed (e-invoice) and paid later by bank transfer or card.",
+  "Reserva confirmada al instante. El servicio se factura según lo acordado (factura electrónica) y se paga después por transferencia o tarjeta.",
+  "予約はすぐに確定します。ご契約に基づき電子請求書で請求され、銀行振込またはカードでお支払いいただきます。"
  ],
  "pay.invoice.cta": [
   "Conferma prenotazione",
@@ -6467,6 +6467,12 @@
   "Reserva confirmada: te hemos enviado el resumen y el voucher.",
   "予約を確定しました。確認内容とバウチャーをお送りしました。"
  ],
+ "booking.flash.option-transfer": [
+  "Il posto è trattenuto: fai il bonifico per confermare la prenotazione (trovi IBAN e causale qui sotto e nell’email).",
+  "The spot is held: make the bank transfer to confirm the booking (IBAN and reference are below and in the email).",
+  "La plaza queda reservada: haz la transferencia para confirmar la reserva (IBAN y concepto abajo y en el correo).",
+  "枠を確保しました。予約を確定するには銀行振込をお願いします(口座と通信欄は下記とメールをご覧ください)。"
+ ],
  "booking.flash.option-released": [
   "Opzione rilasciata: la data è tornata libera.",
   "Option released: the date is available again.",
@@ -9911,6 +9917,12 @@
   "Pagado con tarjeta",
   "カード支払い済み"
  ],
+ "stmt.svc.transfer": [
+  "Pagato con bonifico",
+  "Paid by bank transfer",
+  "Pagado por transferencia",
+  "銀行振込で支払い済み"
+ ],
  "stmt.svc.onsite": [
   "Pagamento sul posto",
   "Pay on site",
@@ -10108,5 +10120,101 @@
   "This link is not valid. To stop receiving emails, reply to one of our emails or write to us.",
   "Este enlace no es válido. Para dejar de recibir correos, responde a uno de nuestros correos o escríbenos.",
   "このリンクは無効です。今後のメールが不要な場合は、届いたメールにご返信いただくか、ご連絡ください。"
+ ],
+ "pay.transfer.title": [
+  "Bonifico",
+  "Bank transfer",
+  "Transferencia bancaria",
+  "銀行振込"
+ ],
+ "pay.transfer.desc": [
+  "Il posto resta trattenuto {days} giorni: la prenotazione è definitiva quando il bonifico arriva.",
+  "The spot is held for {days} days: the booking is final when the transfer arrives.",
+  "La plaza queda reservada {days} días: la reserva es definitiva cuando llega la transferencia.",
+  "枠は{days}日間確保されます。振込が確認された時点で予約が確定します。"
+ ],
+ "pay.transfer.desc1": [
+  "Il posto resta trattenuto 1 giorno: la prenotazione è definitiva quando il bonifico arriva.",
+  "The spot is held for 1 day: the booking is final when the transfer arrives.",
+  "La plaza queda reservada 1 día: la reserva es definitiva cuando llega la transferencia.",
+  "枠は1日間確保されます。振込が確認された時点で予約が確定します。"
+ ],
+ "pay.transfer.cta": [
+  "Prenota e paga con bonifico",
+  "Book and pay by bank transfer",
+  "Reservar y pagar por transferencia",
+  "予約して銀行振込で支払う"
+ ],
+ "booking.transfer": [
+  "Bonifico",
+  "Bank transfer",
+  "Transferencia",
+  "銀行振込"
+ ],
+ "booking.heldTransferTitle": [
+  "In attesa del bonifico",
+  "Waiting for the bank transfer",
+  "A la espera de la transferencia",
+  "振込を待っています"
+ ],
+ "booking.heldTransferText": [
+  "Il posto è trattenuto fino al {until}. Appena il bonifico arriva la prenotazione è confermata e ti scriviamo con il voucher.",
+  "The spot is held until {until}. As soon as the transfer arrives the booking is confirmed and we email you the voucher.",
+  "La plaza queda reservada hasta el {until}. En cuanto llegue la transferencia la reserva se confirma y te escribimos con el voucher.",
+  "{until}まで枠を確保します。振込が確認され次第、予約を確定し、バウチャーをメールでお送りします。"
+ ],
+ "booking.transfer.title": [
+  "Bonifico da fare",
+  "Bank transfer to make",
+  "Transferencia por hacer",
+  "お振込のお願い"
+ ],
+ "booking.transfer.hint": [
+  "Scrivi nella causale il codice della prenotazione ({ref}): così riconosciamo subito il pagamento. Se il bonifico non arriva entro {until} il posto si libera.",
+  "Put the booking code ({ref}) in the payment reference so we can match the payment right away. If the transfer has not arrived by {until} the spot is released.",
+  "Escribe en el concepto el código de la reserva ({ref}) para reconocer el pago enseguida. Si la transferencia no llega antes del {until}, la plaza se libera.",
+  "振込の通信欄に予約コード({ref})をご記入ください。{until}までに入金が確認できない場合、枠は解放されます。"
+ ],
+ "booking.transfer.orCard": [
+  "Preferisci la carta? Puoi pagare subito, la prenotazione si conferma all’istante.",
+  "Prefer a card? You can pay now and the booking is confirmed at once.",
+  "¿Prefieres la tarjeta? Puedes pagar ahora y la reserva se confirma al instante.",
+  "カードをご希望の場合は今すぐお支払いいただけ、予約はすぐに確定します。"
+ ],
+ "booking.transfer.cardBtn": [
+  "Paga invece con la carta",
+  "Pay by card instead",
+  "Pagar con tarjeta",
+  "カードで支払う"
+ ],
+ "mail.transfer.subject": [
+  "Prenotazione {ref}: bonifico entro il {until}",
+  "Booking {ref}: bank transfer by {until}",
+  "Reserva {ref}: transferencia antes del {until}",
+  "予約 {ref}:{until}までに銀行振込をお願いします"
+ ],
+ "mail.transfer.intro": [
+  "Abbiamo trattenuto il posto per {service} del {date}. Per confermare la prenotazione fai il bonifico qui sotto entro il {until}: appena lo riceviamo ti scriviamo con il voucher.",
+  "We are holding the spot for {service} on {date}. To confirm the booking, make the bank transfer below by {until}: as soon as we receive it we will email you the voucher.",
+  "Hemos reservado la plaza para {service} el {date}. Para confirmar la reserva haz la transferencia que figura abajo antes del {until}: en cuanto la recibamos te escribiremos con el voucher.",
+  "{date}の{service}の枠を確保しました。予約を確定するには、{until}までに下記の口座へお振込みください。入金確認後、バウチャーをメールでお送りします。"
+ ],
+ "mail.transfer.cta": [
+  "Vedi la prenotazione",
+  "View the booking",
+  "Ver la reserva",
+  "予約を見る"
+ ],
+ "mail.transferExpired.subject": [
+  "Prenotazione {ref} scaduta: bonifico non ricevuto",
+  "Booking {ref} expired: transfer not received",
+  "Reserva {ref} caducada: transferencia no recibida",
+  "予約 {ref} の期限が切れました(入金未確認)"
+ ],
+ "mail.transferExpired.intro": [
+  "Il bonifico non è arrivato entro il {until}, quindi il posto è stato liberato. Se hai già pagato scrivici rispondendo a questa email; altrimenti puoi prenotare di nuovo dal sito.",
+  "The transfer did not arrive by {until}, so the spot has been released. If you have already paid, reply to this email; otherwise you can book again on the website.",
+  "La transferencia no llegó antes del {until}, así que la plaza se ha liberado. Si ya has pagado, responde a este correo; si no, puedes reservar de nuevo en la web.",
+  "{until}までに入金が確認できなかったため、枠を解放しました。すでにお支払い済みの場合は、このメールにご返信ください。そうでない場合は、サイトから改めてご予約いただけます。"
  ]
 }

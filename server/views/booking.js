@@ -1,5 +1,5 @@
 import { html, raw } from '../html.js';
-import { bookingDue, cancellationState, inviteDiscountOwed, paymentOptions, priceFor, unitPriceFor } from '../bookings.js';
+import { bookingDue, cancellationState, inviteDiscountOwed, paymentOptions, priceFor, transferWindow, unitPriceFor } from '../bookings.js';
 import { cancelPeriodFor, freeHoursOf, hasFreeTier, policyFor, refundPercentAt } from '../policy.js';
 import { isSimplePolicy, tierSentences } from '../policyText.js';
 import { fmtDate, fmtInstant, localToInstant } from '../time.js';
@@ -18,7 +18,8 @@ import { areaOf, breadcrumbs, durationText, fmtDuration, fmtHours, homeCrumb, ho
 import { quoteLines } from './hourly.js';
 import { changeBox, extensionBox } from './changes.js';
 import { documentsBox } from './agencyDocs.js';
-import { bookingPayBlock } from './invoicePay.js';
+import { bookingPayBlock, transferBox } from './invoicePay.js';
+import { awaitsTransfer } from '../transferPay.js';
 import { pendingExtension } from '../changes.js';
 import { extraHourOptions, parseServiceRecord } from '../rates.js';
 
@@ -88,8 +89,9 @@ export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pa
   const perPerson = tour.model === 'person' && !hourly; // i bambini e gli infanti cambiano il prezzo solo nei servizi a persona
   const unit = perPerson ? unitPriceFor(tour, channel, acct) : 0;
   const nothingToPay = pricing.dueCents === 0;
-  const options = paymentOptions(app, tour, channel, acct);
   const startMs = localToInstant(date, time);
+  const options = paymentOptions(app, tour, channel, acct, Date.now(), startMs);
+  const transferDays = options.includes('transfer') ? transferWindow(app, acct, startMs).days : 0; // l'attesa del bonifico (la sua, o quella del sito)
   const baseTiers = policyFor(cfg, tour, channel, acct, date);
   const cancelPeriod = cancelPeriodFor(cfg, tour, channel, acct, date); // il servizio cade in un periodo con condizioni di annullo particolari
   const firm = channel === 'b2b' ? firmTiers({ options: cfg.options, tiers: baseTiers, startMs, nowMs: Date.now() }) : { applied: false, tiers: baseTiers }; // data lontana: la prenotazione diretta ha una cancellazione gratuita breve
@@ -193,7 +195,7 @@ export function checkoutPage(ctx, { tour, date, time, pax, party = adultsOnly(pa
       ? html`<div class="notice notice-ok" role="status">${t('checkout.nothingToPay')}</div><input type="hidden" name="paymentMethod" value="card">`
       : options.length
       ? html`<div class="pay-options" role="radiogroup">
-      ${options.map((o) => html`<label class="pay-option"><input type="radio" name="paymentMethod" value="${o}" ${o === method ? raw('checked') : ''} data-label="${t(`pay.${o}.cta`)}"><span><strong>${t(`pay.${o}.title`)}</strong><small>${t(`pay.${o}.desc`)}</small></span></label>`)}
+      ${options.map((o) => html`<label class="pay-option"><input type="radio" name="paymentMethod" value="${o}" ${o === method ? raw('checked') : ''} data-label="${t(`pay.${o}.cta`)}"><span><strong>${t(`pay.${o}.title`)}</strong><small>${o === 'transfer' ? t(transferDays === 1 ? 'pay.transfer.desc1' : 'pay.transfer.desc', { days: transferDays }) : t(`pay.${o}.desc`)}</small></span></label>`)}
     </div>`
       : html`<div class="notice notice-err" role="alert">${t('checkout.noPayment')} <a href="${u('/contact')}">${t('nav.contact')}</a></div>`}
 
@@ -259,7 +261,7 @@ export function slotGonePage(ctx, { tour, date, pax, hours = null }) {
 export function optionActions(ctx, b, { st, nextUrl = '', group = null }) {
   const { t, lang, app } = ctx;
   const account = b.account_id ? app.db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
-  const methods = paymentOptions(app, app.content.tour(b.tour_slug), 'b2b', account);
+  const methods = paymentOptions(app, app.content.tour(b.tour_slug), 'b2b', account, Date.now(), localToInstant(b.date, b.start_time)).filter((m) => !(group && m === 'transfer'));
   const late = st.percent < 100; // già oltre il periodo di cancellazione gratuita: confermando non è più rimborsabile (del tutto)
   const left = Date.parse(b.option_expires_at) - Date.now();
   const base = `/${lang}/booking/${b.ref}`;
@@ -321,7 +323,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
   const optionUntil = b.option_expires_at ? fmtInstant(Date.parse(b.option_expires_at), lang) : '';
   const heads = {
     confirmed: owner && isDone(b) ? ['ok', t('booking.doneTitle'), t('booking.doneText', { date: fmtDate(b.date, lang) })] : ['ok', t('booking.confirmedTitle'), t('booking.confirmedText', { email: b.email })],
-    held: ['wait', t('booking.heldTitle'), t('booking.heldText', { n: holdLeft })],
+    held: b.payment_method === 'transfer' ? ['wait', t('booking.heldTransferTitle'), t('booking.heldTransferText', { until: b.hold_expires_at ? fmtInstant(Date.parse(b.hold_expires_at), lang) : '' })] : ['wait', t('booking.heldTitle'), t('booking.heldText', { n: holdLeft })],
     option: ['wait', t('booking.optionTitle'), t('booking.optionText', { until: optionUntil })],
     cancelled: ['err', t('booking.cancelledTitle'), t('booking.cancelledText')],
     expired: wasOption ? ['err', t('booking.expiredOptionTitle'), t('booking.expiredOptionText')] : ['err', t('booking.expiredTitle'), t('booking.expiredText')],
@@ -332,6 +334,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
     card: b.payment_status === 'paid' || b.payment_status === 'refunded' ? t('booking.paidOnline') : t('booking.cardPending'),
     onsite: b.gift_cents ? t('booking.dueOnSite', { amount: formatMoney(due, lang, b.currency) }) : t('booking.onsite'),
     invoice: t('booking.invoice'),
+    transfer: t('booking.transfer'),
     giftcard: t('booking.giftcard'),
     free: t('booking.free'),
   }[b.payment_method];
@@ -367,7 +370,7 @@ export function bookingPage(ctx, b, { flash = '', payLater = false, nextUrl = ''
     </dl>
     ${b.status === 'cancelled' && b.retained_cents > 0 ? html`<p class="policy-box warn">${t('booking.penalty', { amount: formatMoney(b.retained_cents, lang, b.currency) })}</p>` : ''}
 
-    ${b.status === 'held'
+    ${awaitsTransfer(b) ? transferBox(ctx, b, { q }) : b.status === 'held'
       ? html`<p class="btn-row"><a class="btn btn-gold" href="/pay/resume/${b.ref}${q}&lang=${lang}">${t('booking.payNow')}</a></p>`
       : ''}
 

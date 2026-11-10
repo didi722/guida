@@ -251,6 +251,7 @@ export function createConfig(overrides = {}) {
       iban: (e.INVOICE_IBAN || '').replace(/\s+/g, '').toUpperCase(),
       bank: e.INVOICE_BANK || '',
       b2bDueDays: num(e.INVOICE_B2B_DUE_DAYS, 30), // scadenza di pagamento delle fatture ai partner
+      transferDays: num(e.TRANSFER_HOLD_DAYS, 2), // giorni in cui il posto resta trattenuto in attesa del bonifico anticipato di un partner (si cambia per singolo partner)
       giftInvoiceAt: e.INVOICE_GIFT_AT === 'redemption' ? 'redemption' : 'sale', // buono monouso: fattura alla vendita; multiuso: all'utilizzo
       startDate: /^\d{4}-\d{2}-\d{2}$/.test(e.INVOICE_START_DATE || '') ? e.INVOICE_START_DATE : '', // prima data fatturabile (es. 2027-01-01, apertura P.IVA): prima di questa non si fattura nulla
       sdiAddress: e.SDI_PEC_ADDRESS || 'sdi01@pec.fatturapa.it',

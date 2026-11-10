@@ -128,19 +128,19 @@ export function describeSource(app, type, id, nowMs = Date.now()) {
         hint: b.billing_json ? (JSON.parse(b.billing_json).text ?? null) : null,
         description: `Penale di annullo – ${title} – ${fmtDate(b.date, 'it', 'short')} ore ${b.start_time} – ${bookingPeople(b, 'it')}${b.client_ref ? ` – rif. ${b.client_ref}` : ''}`,
         amountCents: kept,
-        payments: [{ method: paidPart ? ({ card: 'MP08', onsite: 'MP01', invoice: 'MP05' }[b.payment_method] ?? null) : 'MP05', cents: kept, paid: paidPart }],
+        payments: [{ method: paidPart ? ({ card: 'MP08', onsite: 'MP01', invoice: 'MP05', transfer: 'MP05' }[b.payment_method] ?? null) : 'MP05', cents: kept, paid: paidPart }],
         dueBy: addDays(cancelDate, 12),
       };
     }
     // la parte pagata con un buono regalo è già stata fatturata alla vendita del buono (se è considerato monouso)
     const cents = s.giftInvoiceAt === 'sale' ? bookingDue(b) : b.total_cents;
     const paidNow = b.payment_status === 'paid';
-    const method = { card: 'MP08', onsite: 'MP01', invoice: 'MP05' }[b.payment_method] ?? null;
+    const method = { card: 'MP08', onsite: 'MP01', invoice: 'MP05', transfer: 'MP05' }[b.payment_method] ?? null;
     const payments = [];
     if (bookingDue(b) > 0) payments.push({ method, cents: bookingDue(b), paid: paidNow });
     if (cents > bookingDue(b)) payments.push({ method: null, cents: cents - bookingDue(b), paid: true });
     const served = b.date <= today;
-    const paidDate = b.payment_method === 'card' && b.confirmed_at ? dateOf(b.confirmed_at) : null;
+    const paidDate = (b.payment_method === 'card' || b.payment_method === 'transfer') && b.confirmed_at ? dateOf(b.confirmed_at) : null;
     const trigger = paidDate && paidDate < b.date ? paidDate : b.date;
     return {
       ...common,

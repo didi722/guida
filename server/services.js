@@ -1,6 +1,6 @@
 // Orchestrazione: collega DB, pagamenti ed email.
 import { BookingError, bookingDue, cancelBooking, confirmOption, confirmPaid, createBooking, expireBooking, expireHolds, expireOptions, extendOption, getBooking, getBookingByRef, markRefund, optionsDueForReminder, releaseOption } from './bookings.js';
-import { notifyGuideOption, sendBookingCancelled, sendBookingConfirmed, sendOptionCreated, sendOptionExpired, sendOptionExtended, sendOptionReleased, sendOptionReminder, sendSlotLostRefund } from './emails.js';
+import { notifyGuideOption, sendBookingCancelled, sendBookingConfirmed, sendOptionCreated, sendOptionExpired, sendOptionExtended, sendOptionReleased, sendOptionReminder, sendSlotLostRefund, sendTransferExpired, sendTransferInstructions } from './emails.js';
 import { resolveExtensions } from './changes.js';
 import { invoiceForSource } from './invoices.js';
 import { onlinePaymentsOpen } from './opening.js';
@@ -11,6 +11,11 @@ export function createServices(app) {
 
   async function doRefund(b, cents) {
     try {
+      if (b.payment_method === 'transfer' && b.payment_status === 'paid') {
+        // pagata con bonifico: si restituisce con un bonifico, a mano; finisce tra i rimborsi da fare (la guida li segna fatti dalla scheda)
+        db.prepare('UPDATE bookings SET refund_pending_cents = refund_pending_cents + ? WHERE id = ?').run(cents, b.id);
+        return true;
+      }
       if (b.payment_method === 'card' && b.stripe_payment_intent) await payments.refund({ paymentIntent: b.stripe_payment_intent, cents, ref: b.ref });
       markRefund(db, b.id, { ok: true, cents });
       return true;
@@ -54,6 +59,11 @@ export function createServices(app) {
         // opzione: la data resta trattenuta senza pagare; l'agenzia conferma (o rilascia) dal suo account
         await sendOptionCreated(app, booking, nowMs);
         await notifyGuideOption(app, booking, 'created');
+        return { booking, redirect: `/${lang}/booking/${booking.ref}?t=${booking.token}&new=1` };
+      }
+      if (booking.payment_method === 'transfer') {
+        // bonifico: il posto è trattenuto; la prenotazione sarà confermata quando il bonifico arriva (a ricordarlo, l'email con IBAN e causale)
+        await sendTransferInstructions(app, booking);
         return { booking, redirect: `/${lang}/booking/${booking.ref}?t=${booking.token}&new=1` };
       }
       if (booking.payment_method !== 'card') {
@@ -124,6 +134,8 @@ export function createServices(app) {
       const res = confirmOption(app, bookingId, { method }, nowMs);
       if (res.outcome === 'confirmed') {
         await sendBookingConfirmed(app, res.booking, nowMs);
+      } else if (res.outcome === 'transfer') {
+        await sendTransferInstructions(app, res.booking);
       } else if (res.outcome === 'pay') {
         try {
           res.redirect = await svc.startCheckout(res.booking, lang, nowMs);
@@ -202,8 +214,22 @@ export function createServices(app) {
       return (await app.payables.sync(booking.ref)) ?? booking;
     },
 
-    sweep(nowMs = Date.now()) {
-      return expireHolds(db, nowMs);
+    /** Il bonifico di una prenotazione in attesa è arrivato (lo segna la guida): la prenotazione è confermata e parte il voucher. */
+    async transferReceived(bookingId, nowMs = Date.now()) {
+      const b = getBooking(db, bookingId);
+      if (!b || b.payment_method !== 'transfer') return null;
+      return svc.handlePaid(bookingId, null, nowMs);
+    },
+
+    /** Lavoro periodico: libera i posti trattenuti troppo a lungo (e, se aspettavano un bonifico, lo dice all'agenzia). */
+    async sweep(nowMs = Date.now()) {
+      const waiting = db.prepare(`SELECT id FROM bookings WHERE status = 'held' AND payment_method = 'transfer' AND hold_expires_at <= ?`).all(new Date(nowMs).toISOString());
+      const n = expireHolds(db, nowMs);
+      for (const { id } of waiting) {
+        const b = getBooking(db, id);
+        if (b.status === 'expired') await sendTransferExpired(app, b); // (se era un'opzione non ancora scaduta torna opzione, con il posto ancora suo: l'agenzia può riprovare)
+      }
+      return n;
     },
   };
 
@@ -228,7 +254,7 @@ export function createServices(app) {
     isOpen: (b) => (b.status === 'held' && Date.parse(b.hold_expires_at) > Date.now()) || payableLater(b),
     title: (b, lang) => content.tour(b.tour_slug)?.i18n[lang]?.title ?? b.ref,
     onPaid: (b, pi, nowMs) => svc.handlePaid(b.id, pi, nowMs),
-    onExpired: (b) => expireBooking(db, b.id),
+    onExpired: (b) => (b.payment_method === 'transfer' ? 0 : expireBooking(db, b.id)), // la sessione di carta scaduta non toglie il posto a chi aspetta di pagare con il bonifico
     startCheckout: (b, lang, nowMs, attempt) => svc.startCheckout(b, lang, nowMs, attempt),
     statusUrl: (b, lang) => `/${lang}/booking/${b.ref}?t=${b.token}`,
   });

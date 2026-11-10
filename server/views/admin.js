@@ -27,7 +27,7 @@ const WEEKDAYS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', '
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export const STATUS_IT = { confirmed: 'Confermata', held: 'In attesa di pagamento', option: 'Opzione', cancelled: 'Annullata', expired: 'Scaduta' };
-export const PAY_IT = { card: 'Carta', onsite: 'Sul posto', invoice: 'Fattura', giftcard: 'Buono regalo', free: 'Gratuita' };
+export const PAY_IT = { card: 'Carta', transfer: 'Bonifico', onsite: 'Sul posto', invoice: 'Fattura', giftcard: 'Buono regalo', free: 'Gratuita' };
 export const PAYSTATUS_IT = { unpaid: 'Da incassare', paid: 'Pagata', refunded: 'Rimborsata', refund_failed: 'Rimborso fallito' };
 const chipFor = (s) => ({ confirmed: 'chip-ok', held: 'chip-warn', option: 'chip-warn', cancelled: 'chip-err', expired: 'chip-err' }[s] ?? '');
 /** Stato in parole per le liste: un'opzione scaduta non è una prenotazione «scaduta» (non si è pagato nulla), è un'opzione terminata. */
@@ -299,8 +299,8 @@ export function bookingDetailPage(ctx, b, account, flash = '', invoice = null, p
       ${b.cancel_percent != null ? html`<div><dt>Esito dell'annullo</dt><dd>rimborso ${b.cancel_percent}%${b.refund_cents ? ` · rimborsati ${formatMoney(b.refund_cents, 'it', b.currency)}` : ''}${b.retained_cents ? html` · <strong>penale ${formatMoney(b.retained_cents, 'it', b.currency)}</strong> ${b.payment_status === 'unpaid' ? 'da fatturare' : 'trattenuta'}` : ''}</dd></div>` : ''}` : ''}
       ${b.status === 'confirmed' || invoice ? invoiceRow(invoice, { warn: true }) : ''}
     </dl>
-    ${b.refund_pending_cents > 0 ? html`<div class="notice notice-err" role="alert"><p><strong>Rimborso da fare: ${formatMoney(b.refund_pending_cents, 'it', b.currency)}.</strong> La modifica ha abbassato il prezzo, ma il rimborso sulla carta non è partito: fallo da Stripe e poi segnalo qui.</p>
-      <form method="post" action="/admin/bookings/${b.id}/refund-done" class="inline-form" data-confirm="Hai già rimborsato ${formatMoney(b.refund_pending_cents, 'it', b.currency)} da Stripe?"><button class="btn btn-outline btn-sm" type="submit">Fatto, l’ho rimborsato</button></form></div>` : ''}
+    ${b.refund_pending_cents > 0 ? html`<div class="notice notice-err" role="alert"><p><strong>Rimborso da fare: ${formatMoney(b.refund_pending_cents, 'it', b.currency)}.</strong> ${b.payment_method === 'transfer' ? 'La prenotazione era pagata con bonifico: restituisci la somma con un bonifico all’agenzia e poi segnalo qui.' : 'Il rimborso sulla carta non è partito: fallo da Stripe e poi segnalo qui.'}</p>
+      <form method="post" action="/admin/bookings/${b.id}/refund-done" class="inline-form" data-confirm="Hai già rimborsato ${formatMoney(b.refund_pending_cents, 'it', b.currency)}${b.payment_method === 'transfer' ? ' con un bonifico' : ' da Stripe'}?"><button class="btn btn-outline btn-sm" type="submit">Fatto, l’ho rimborsato</button></form></div>` : ''}
     ${(b.status === 'confirmed' || b.status === 'option') && !invoice ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/edit">Modifica persone, data, ore o prezzo</a></p>` : ''}
     ${b.status === 'confirmed' ? html`<p class="btn-row"><a class="btn btn-outline btn-sm" href="/admin/bookings/${b.id}/voucher.pdf" target="_blank" rel="noopener">Voucher PDF</a> ${['it', 'en', 'es', 'ja'].map((l) => html`<a class="chip chip-link" href="/admin/bookings/${b.id}/voucher.pdf?vl=${l}" target="_blank" rel="noopener">${l.toUpperCase()}</a>`)}</p>` : ''}
   </div>
@@ -329,6 +329,7 @@ ${history.length ? html`<div class="card pad"><h2>Storico modifiche</h2>
     <label class="field"><textarea name="admin_notes" rows="4" maxlength="2000">${b.admin_notes ?? ''}</textarea></label>
     <button class="btn btn-outline" type="submit">Salva note</button>
     ${b.status === 'confirmed' && b.payment_status === 'unpaid' ? html`<button class="btn btn-gold" type="submit" formaction="/admin/bookings/${b.id}/paid">Segna come incassata</button>` : ''}
+    ${b.payment_method === 'transfer' && (b.status === 'held' || (b.status === 'expired' && b.payment_status === 'unpaid')) ? html`<p class="small muted">${b.status === 'held' ? html`In attesa del bonifico fino al <strong>${untilIt(b.hold_expires_at)}</strong> · causale <strong>${b.ref}</strong>.` : 'Il bonifico non è arrivato in tempo e il posto è stato liberato; se è arrivato lo stesso, il pulsante riprende la prenotazione se il posto è ancora libero.'}</p><button class="btn btn-gold" type="submit" formaction="/admin/bookings/${b.id}/transfer-received">Bonifico ricevuto: conferma la prenotazione</button>` : ''}
     ${pkg && pkg.bookings.filter((x) => x.status === 'confirmed' && x.payment_status === 'unpaid').length > 1 ? html`<button class="btn btn-gold" type="submit" formaction="/admin/bookings/${b.id}/paid" name="all" value="1">Segna incassato tutto il pacchetto</button>` : ''}
   </form>
   ${b.status === 'option'

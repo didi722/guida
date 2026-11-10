@@ -36,7 +36,7 @@ export const bookingDue = (b) => b.total_cents - (b.gift_cents ?? 0);
  * In «pre-apertura» (prima della data degli incassi, vedi opening.js) non si incassa online: ai privati resta il pagamento
  * il giorno del servizio, alle agenzie la fattura.
  */
-export function paymentOptions(app, tour, channel, account = null, nowMs = Date.now()) {
+export function paymentOptions(app, tour, channel, account = null, nowMs = Date.now(), startMs = null) {
   const { cfg } = app;
   const pre = isPreOpening(cfg, nowMs);
   const cardOk = (!!cfg.stripe.secretKey || cfg.demoPayments) && !pre;
@@ -44,6 +44,7 @@ export function paymentOptions(app, tour, channel, account = null, nowMs = Date.
   if (channel === 'b2b') {
     if (account?.allow_invoice) opts.push('invoice');
     if (cardOk) opts.push('card');
+    if (startMs != null && transferWindow(app, account, startMs, nowMs).ok) opts.push('transfer'); // (senza la data del servizio non si sa se c'è il tempo: per esempio nei pacchetti non c'è)
   } else if (pre) {
     opts.push('onsite');
   } else {
@@ -51,6 +52,31 @@ export function paymentOptions(app, tour, channel, account = null, nowMs = Date.
     if (cfg.policy.allowPayOnSite && tour.payOnSite) opts.push('onsite');
   }
   return opts;
+}
+
+// ───────────── bonifico anticipato ─────────────
+const TRANSFER_MIN_LEAD_MS = 24 * 3600_000; // meno di un giorno al servizio: non c'è il tempo di aspettare un bonifico
+const TRANSFER_MARGIN_MS = 12 * 3600_000; // il posto non resta trattenuto oltre 12 ore prima del servizio
+
+/** I giorni di attesa del bonifico per un partner: i suoi, oppure quelli del sito. */
+export function transferDaysOf(cfg, account) {
+  const own = Number(account?.transfer_days);
+  if (Number.isInteger(own) && own >= 1) return own;
+  const site = Number(cfg.invoice?.transferDays);
+  return Number.isInteger(site) && site >= 1 ? site : 2;
+}
+
+/**
+ * Se un partner può pagare con bonifico anticipato un servizio che inizia a `startMs`, e fino a quando il posto resta trattenuto
+ * (i giorni di attesa, ma non oltre 12 ore prima del servizio). Serve l'IBAN del sito e il bonifico acceso per il partner.
+ * @returns {{ok: boolean, expiresMs?: number, days?: number}}
+ */
+export function transferWindow(app, account, startMs, nowMs = Date.now()) {
+  const { cfg } = app;
+  if (!account?.transfer_enabled || !String(cfg.invoice?.iban ?? '').trim()) return { ok: false };
+  if (startMs - nowMs < TRANSFER_MIN_LEAD_MS) return { ok: false };
+  const days = transferDaysOf(cfg, account);
+  return { ok: true, days, expiresMs: Math.min(nowMs + days * 24 * 3600_000, startMs - TRANSFER_MARGIN_MS) };
 }
 
 const iso = (ms) => new Date(ms).toISOString();
@@ -148,9 +174,10 @@ export function createBooking(app, input, nowMs = Date.now()) {
     if (manual) method = 'invoice';
     else if (wantsOption) method = account.allow_invoice ? 'invoice' : 'card'; // come pagherà si sceglie alla conferma
     else if (pricing.dueCents === 0) method = pricing.giftCents > 0 ? 'giftcard' : 'free';
-    else if (!paymentOptions(app, tour, channel, account, nowMs).includes(method)) throw new BookingError('payment', 'payment method not allowed');
+    else if (!paymentOptions(app, tour, channel, account, nowMs, startInstant).includes(method)) throw new BookingError('payment', 'payment method not allowed');
 
-    const status = wantsOption ? 'option' : method === 'card' ? 'held' : 'confirmed';
+    const status = wantsOption ? 'option' : method === 'card' || method === 'transfer' ? 'held' : 'confirmed';
+    const holdExpiresMs = method === 'transfer' ? transferWindow(app, account, startInstant, nowMs).expiresMs : nowMs + cfg.policy.holdMinutes * 60_000; // (un bonifico aspetta giorni, la carta minuti)
     const prepaid = !wantsOption && (method === 'giftcard' || method === 'free');
     const total = manual && Number.isInteger(manual.totalCents) ? manual.totalCents : pricing.totalCents; // prezzo di vendita concordato
     const now = new Date(nowMs).toISOString();
@@ -191,7 +218,7 @@ export function createBooking(app, input, nowMs = Date.now()) {
       status,
       payment_method: method,
       payment_status: prepaid || manual?.paid ? 'paid' : 'unpaid',
-      hold_expires_at: status === 'held' ? new Date(nowMs + cfg.policy.holdMinutes * 60_000).toISOString() : null,
+      hold_expires_at: status === 'held' ? new Date(holdExpiresMs).toISOString() : null,
       option_expires_at: optionExpires,
       free_cancel_until: hasFreeTier(tiers) ? new Date(startInstant - freeHoursOf(tiers) * HOUR).toISOString() : now, // senza periodo gratuito: già scaduto
       cancel_policy_json: JSON.stringify(tiers),
@@ -261,8 +288,9 @@ export function confirmPaid(app, bookingId, paymentIntent = null, nowMs = Date.n
       if (!stillFree) return { outcome: 'conflict', booking: b };
       if (b.gift_cents > 0 && !reserveGiftsAgain(db, b.id, nowMs)) return { outcome: 'conflict', booking: b };
     }
-    db.prepare(`UPDATE bookings SET status = 'confirmed', payment_status = 'paid', stripe_payment_intent = COALESCE(?, stripe_payment_intent),
-                hold_expires_at = NULL, confirmed_at = ? WHERE id = ?`).run(paymentIntent, new Date(nowMs).toISOString(), b.id);
+    // (chi aveva scelto il bonifico e poi ha pagato con la carta ha pagato con la carta; il bonifico segnato a mano non ha un pagamento online)
+    db.prepare(`UPDATE bookings SET status = 'confirmed', payment_status = 'paid', stripe_payment_intent = COALESCE(?, stripe_payment_intent), payment_method = CASE WHEN ? IS NOT NULL THEN 'card' ELSE payment_method END,
+                hold_expires_at = NULL, confirmed_at = ? WHERE id = ?`).run(paymentIntent, paymentIntent, new Date(nowMs).toISOString(), b.id);
     return { outcome: 'confirmed', booking: getBooking(db, b.id) };
   });
 }
@@ -424,7 +452,7 @@ export function extendOption(app, bookingId, days, nowMs = Date.now()) {
 /**
  * L'agenzia conferma l'opzione. Se può pagare a fattura, la prenotazione è subito confermata; altrimenti passa «in attesa di pagamento»
  * con la carta (lo slot resta trattenuto `holdMinutes`, come per ogni prenotazione con carta).
- * @returns {{outcome: 'confirmed'|'pay'|'expired'|'state'|'payment'|'account', booking: object}}
+ * @returns {{outcome: 'confirmed'|'pay'|'transfer'|'expired'|'state'|'payment'|'account', booking: object}}
  */
 export function confirmOption(app, bookingId, { method = null } = {}, nowMs = Date.now()) {
   const { db, cfg, content } = app;
@@ -437,16 +465,22 @@ export function confirmOption(app, bookingId, { method = null } = {}, nowMs = Da
     }
     const account = b.account_id ? db.prepare('SELECT * FROM accounts WHERE id = ?').get(b.account_id) : null;
     if (account?.status !== 'approved') return { outcome: 'account', booking: b };
-    const allowed = paymentOptions(app, content.tour(b.tour_slug), 'b2b', account, nowMs);
+    const startMs = localToInstant(b.date, b.start_time);
+    const allowed = paymentOptions(app, content.tour(b.tour_slug), 'b2b', account, nowMs, startMs).filter((m) => !(b.group_id && m === 'transfer')); // (le date di un pacchetto si pagano con la carta o a fattura)
     const chosen = allowed.includes(method) ? method : allowed[0];
     if (!chosen) return { outcome: 'payment', booking: b };
     // confermare l'opzione è un impegno: per una data lontana la cancellazione gratuita riparte da adesso, ma dura poco (vedi firmTiers)
-    const startMs = localToInstant(b.date, b.start_time);
     const firm = firmTiers({ options: cfg.options, tiers: parseTiers(b.cancel_policy_json) ?? policyFor(cfg, content.tour(b.tour_slug), 'b2b', account), startMs, nowMs });
     if (firm.applied) db.prepare(`UPDATE bookings SET cancel_policy_json = ?, free_cancel_until = ? WHERE id = ?`).run(JSON.stringify(firm.tiers), new Date(startMs - freeHoursOf(firm.tiers) * HOUR).toISOString(), b.id);
     if (chosen === 'invoice') {
       db.prepare(`UPDATE bookings SET status = 'confirmed', payment_method = 'invoice', confirmed_at = ?, hold_expires_at = NULL WHERE id = ?`).run(iso(nowMs), b.id);
       return { outcome: 'confirmed', booking: getBooking(db, b.id) };
+    }
+    if (chosen === 'transfer') {
+      // bonifico: il posto resta trattenuto per i giorni di attesa (non oltre la scadenza dell'opzione, che torna a valere se il bonifico non arriva)
+      const until = Math.min(transferWindow(app, account, startMs, nowMs).expiresMs, Date.parse(b.option_expires_at));
+      db.prepare(`UPDATE bookings SET status = 'held', payment_method = 'transfer', hold_expires_at = ? WHERE id = ?`).run(iso(until), b.id);
+      return { outcome: 'transfer', booking: getBooking(db, b.id) };
     }
     db.prepare(`UPDATE bookings SET status = 'held', payment_method = 'card', hold_expires_at = ? WHERE id = ?`).run(iso(nowMs + cfg.policy.holdMinutes * 60_000), b.id);
     return { outcome: 'pay', booking: getBooking(db, b.id) };
