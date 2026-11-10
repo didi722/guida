@@ -33,7 +33,7 @@ function faqItems(ctx, keys) {
 }
 
 // ───────────────────────── Home ─────────────────────────
-export function homePage(ctx, { quotes = [], reviewStats = null, google = null } = {}) {
+export function homePage(ctx, { quotes = [], reviewStats = null } = {}) {
   const { t, lang, u, app } = ctx;
   const { content, cfg } = app;
   const rates = app.rates.get();
@@ -104,10 +104,10 @@ ${privateCover || groupCover ? html`<section class="section tight choose">
   </div>
 </section>
 
-${quotes.length || google?.reviews.length ? html`<section class="section reviews-band">
+${quotes.length ? html`<section class="section reviews-band">
   <div class="wrap">
     ${sectionHead(t('reviews.title'))}
-    ${reviewsCarousel(ctx, { quotes, google, stats: reviewStats, readUrl: cfg.reviews.readUrl })}
+    ${reviewsCarousel(ctx, { quotes, stats: reviewStats, readUrl: cfg.reviews.readUrl })}
   </div>
 </section>` : ''}
 

@@ -5777,42 +5777,6 @@
   "Leer todas las reseñas",
   "すべてのレビューを読む"
  ],
- "reviews.src.google": [
-  "Google",
-  "Google",
-  "Google",
-  "Google"
- ],
- "reviews.src.site": [
-  "Ha fatto il tour",
-  "Took the tour",
-  "Hizo el tour",
-  "ツアー参加者"
- ],
- "reviews.google.avg": [
-  "{avg} su Google · {n} recensioni",
-  "{avg} on Google · {n} reviews",
-  "{avg} en Google · {n} reseñas",
-  "Google {avg}・レビュー{n}件"
- ],
- "reviews.google.translated": [
-  "Tradotto da Google",
-  "Translated by Google",
-  "Traducido por Google",
-  "Googleによる翻訳"
- ],
- "reviews.google.read": [
-  "Leggi su Google",
-  "Read on Google",
-  "Leer en Google",
-  "Googleで読む"
- ],
- "reviews.googleNote": [
-  "Le recensioni di Google sono lette ogni giorno dal profilo dell’attività su Google Maps.",
-  "Google reviews are read every day from the business profile on Google Maps.",
-  "Las reseñas de Google se leen cada día del perfil de la empresa en Google Maps.",
-  "Googleのレビューは、Googleマップのビジネスプロフィールから毎日取得しています。"
- ],
  "reviews.carousel": [
   "Recensioni dei clienti",
   "Customer reviews",

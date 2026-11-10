@@ -268,7 +268,6 @@ export const SECTIONS = [
       { key: 'reviews.googleUrl', type: 'url', label: 'Link per recensire su Google' },
       { key: 'reviews.tripadvisorUrl', type: 'url', label: 'Link per recensire su Tripadvisor' },
       { key: 'reviews.readUrl', type: 'url', label: 'Pagina con tutte le recensioni', hint: 'il tuo profilo Google o Tripadvisor: compare come «Leggi tutte le recensioni» accanto ai commenti sul sito' },
-      { key: 'reviews.google.placeId', type: 'text', max: 200, label: 'Codice del profilo Google (Place ID)', hint: 'per mostrare le recensioni di Google nella home (comincia con «ChIJ…»); serve anche la chiave GOOGLE_PLACES_API_KEY sul server. Vuoto = solo i commenti dei clienti del sito' },
       { key: 'reviews.sendHour', type: 'int', min: 0, max: 23, unit: 'h', label: 'Ora di invio della richiesta', hint: 'ora di Venezia, il giorno dopo il tour' },
     ],
     check(v, errors) {

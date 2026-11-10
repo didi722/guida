@@ -195,8 +195,6 @@ export function createConfig(overrides = {}) {
       readUrl: e.REVIEWS_PAGE_URL || '', // pagina con tutte le recensioni (profilo Google o Tripadvisor): link accanto ai commenti sul sito
       sendHour: num(e.REVIEW_SEND_HOUR, 10), // la richiesta parte il giorno dopo il tour a quest'ora (ora di Venezia)
       catchUpDays: 7, // dopo un'interruzione non si inviano richieste più vecchie di così
-      // le recensioni di Google nella home (Places API): servono il codice del profilo (Place ID) e una chiave; senza, non compaiono (vedi googleReviews.js)
-      google: { placeId: e.GOOGLE_PLACE_ID || '', apiKey: secret(e.GOOGLE_PLACES_API_KEY) },
     },
 
     // Traduzione automatica dei commenti in evidenza nella lingua di chi guarda il sito (con «Vedi originale»): spenta finché non c'è una chiave

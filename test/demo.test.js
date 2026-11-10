@@ -110,7 +110,6 @@ test('configurazione della demo: nessuna chiave, posta, PEC, admin o dato fiscal
     assert.notEqual(d.sessionSecret, real.sessionSecret);
     assert.deepEqual([d.admin.password, d.stripe.secretKey, d.stripe.webhookSecret, d.mail.host, d.mail.user, d.mail.pass, d.mail.notifyTo, d.mail.sales.host, d.mail.sales.pass, d.invoice.pec.host], ['', '', '', '', '', '', '', '', '', '']);
     assert.equal(d.demoPayments, true);
-    assert.deepEqual(d.reviews.google, { placeId: '', apiKey: '' }, 'la demo non chiede nulla a Google');
     assert.equal(d.site.vatNumber, 'IT12345678903');
     assert.equal(d.invoice.seller.fiscalCode, 'RSSMRA80A01H501U');
     assert.equal(d.invoice.seller.address.street, 'Calle del Test 1');

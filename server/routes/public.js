@@ -60,7 +60,7 @@ export function publicRouter(app) {
   const hourlyProducts = (channel) => visible(channel).filter((x) => x.pricing === 'hourly');
 
   r.get('/', (req, res) => {
-    send(res, homePage(res.locals.ctx, { quotes: featuredQuotes(db, { limit: 8, lang: req.lang }), reviewStats: feedbackStats(db), google: app.googleReviews.forLang(req.lang) }));
+    send(res, homePage(res.locals.ctx, { quotes: featuredQuotes(db, { limit: 8, lang: req.lang }), reviewStats: feedbackStats(db) }));
   });
   r.get('/tours', (req, res) => send(res, toursPage(res.locals.ctx, { kind: ['private', 'group'].includes(req.query.kind) ? req.query.kind : null })));
   r.get('/tours/:slug', (req, res, next) => {
