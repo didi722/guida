@@ -1,5 +1,7 @@
 // Inviti alle agenzie: la guida scrive un indirizzo email e il sito manda un collegamento personale che apre la registrazione
-// con l'account già approvato. Del collegamento si conserva solo l'impronta (SHA-256): chi legge il database non può usarlo.
+// con l'account già approvato. Per riconoscere il collegamento si conserva l'impronta (SHA-256): chi legge il database non può usarlo.
+// Per poterlo rimostrare alla guida («Copia link», per mandarlo da un'altra casella) se ne tiene anche una copia CIFRATA (AES-256-GCM, con una chiave
+// ricavata dal segreto del sito): senza quel segreto il database da solo non basta. La copia sparisce quando l'invito è usato o annullato.
 // Vale 14 giorni e una volta sola. Funzioni sul database, senza rete né email.
 import crypto from 'node:crypto';
 import { tx } from './db.js';
@@ -11,6 +13,29 @@ export const INVITE_DAYS = 14;
 const DAY = 86_400_000;
 const hash = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
 const newToken = () => crypto.randomBytes(24).toString('base64url');
+const sealKey = (secret) => crypto.createHmac('sha256', String(secret)).update('guida-partner-invite-link').digest();
+
+/** Il collegamento cifrato con il segreto del sito (vuoto se il segreto manca). */
+export function sealToken(secret, token) {
+  if (!secret) return null;
+  const iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv('aes-256-gcm', sealKey(secret), iv);
+  const enc = Buffer.concat([c.update(String(token), 'utf8'), c.final()]);
+  return Buffer.concat([iv, c.getAuthTag(), enc]).toString('base64url');
+}
+
+/** Il collegamento in chiaro, o null se non si riesce (segreto cambiato, dato rovinato). */
+export function openToken(secret, sealed) {
+  try {
+    if (!secret || !sealed) return null;
+    const raw = Buffer.from(String(sealed), 'base64url');
+    const d = crypto.createDecipheriv('aes-256-gcm', sealKey(secret), raw.subarray(0, 12));
+    d.setAuthTag(raw.subarray(12, 28));
+    return Buffer.concat([d.update(raw.subarray(28)), d.final()]).toString('utf8');
+  } catch {
+    return null;
+  }
+}
 
 export class InviteError extends Error {
   /** @param {'email'|'exists'} code */
@@ -33,10 +58,11 @@ const fields = (input) => ({
 /**
  * Un invito nuovo, oppure — se per lo stesso indirizzo ce n'è già uno aperto — lo stesso con un collegamento nuovo e una scadenza nuova
  * (il collegamento di prima smette di valere).
+ * Con `secret` (il segreto del sito) il collegamento si conserva anche cifrato, per poterlo ricopiare dopo (vedi `inviteLinkFor`).
  * @returns {{ invite: object, token: string, reused: boolean }} `token` si vede solo adesso: va messo nell'email
  * @throws {InviteError} email non valida, o esiste già un account con quell'indirizzo
  */
-export function createInvite(db, input, nowMs = Date.now()) {
+export function createInvite(db, input, nowMs = Date.now(), secret = '') {
   const email = cleanText(input.email, 254).toLowerCase();
   if (!isEmail(email)) throw new InviteError('email');
   if (emailInUse(db, email)) throw new InviteError('exists');
@@ -46,12 +72,12 @@ export function createInvite(db, input, nowMs = Date.now()) {
     const expires = new Date(nowMs + INVITE_DAYS * DAY).toISOString();
     const open = db.prepare('SELECT * FROM partner_invites WHERE email = ? AND used_at IS NULL AND cancelled_at IS NULL ORDER BY id DESC').get(email);
     if (open) {
-      db.prepare('UPDATE partner_invites SET token_hash = ?, expires_at = ?, company = ?, contact_name = ?, lang = ?, note = ?, sent_at = NULL WHERE id = ?').run(hash(token), expires, f.company, f.contactName, f.lang, f.note, open.id);
+      db.prepare('UPDATE partner_invites SET token_hash = ?, token_enc = ?, expires_at = ?, company = ?, contact_name = ?, lang = ?, note = ?, sent_at = NULL WHERE id = ?').run(hash(token), sealToken(secret, token), expires, f.company, f.contactName, f.lang, f.note, open.id);
       return { invite: db.prepare('SELECT * FROM partner_invites WHERE id = ?').get(open.id), token, reused: true };
     }
     const row = db
-      .prepare('INSERT INTO partner_invites(email, company, contact_name, lang, note, token_hash, created_at, expires_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(email, f.company, f.contactName, f.lang, f.note, hash(token), new Date(nowMs).toISOString(), expires);
+      .prepare('INSERT INTO partner_invites(email, company, contact_name, lang, note, token_hash, token_enc, created_at, expires_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(email, f.company, f.contactName, f.lang, f.note, hash(token), sealToken(secret, token), new Date(nowMs).toISOString(), expires);
     return { invite: db.prepare('SELECT * FROM partner_invites WHERE id = ?').get(Number(row.lastInsertRowid)), token, reused: false };
   });
 }
@@ -66,11 +92,21 @@ export function inviteByToken(db, token, nowMs = Date.now()) {
 /** Segna l'invito come usato (una volta sola, anche se due richieste arrivano insieme). @returns {boolean} false se non era più aperto */
 export function markUsed(db, id, accountId, nowMs = Date.now()) {
   const when = new Date(nowMs).toISOString();
-  return db.prepare('UPDATE partner_invites SET used_at = ?, account_id = ? WHERE id = ? AND used_at IS NULL AND cancelled_at IS NULL AND expires_at > ?').run(when, accountId, id, when).changes === 1;
+  return db.prepare('UPDATE partner_invites SET token_enc = NULL, used_at = ?, account_id = ? WHERE id = ? AND used_at IS NULL AND cancelled_at IS NULL AND expires_at > ?').run(when, accountId, id, when).changes === 1;
 }
 
-/** Il collegamento personale da mettere nell'email dell'invito (il token si vede solo alla creazione). */
+/** Il collegamento personale da mettere nell'email dell'invito. */
 export const inviteUrl = (cfg, invite, token) => `${cfg.baseUrl}/${invite.lang}/b2b/invite/${token}`;
+
+/**
+ * Lo stesso collegamento già mandato, per un invito ancora valido: serve a rimandarlo da un'altra casella. Null se l'invito non è aperto,
+ * se è stato creato prima che si conservasse la copia cifrata, o se la copia non si riesce più ad aprire (allora: «Nuovo link»).
+ */
+export function inviteLinkFor(cfg, invite, nowMs = Date.now()) {
+  if (stateOf(invite, nowMs) !== 'open' || !invite.token_enc) return null;
+  const token = openToken(cfg.sessionSecret, invite.token_enc);
+  return token && hash(token) === invite.token_hash ? inviteUrl(cfg, invite, token) : null; // (l'impronta conferma che è proprio il collegamento in vigore)
+}
 
 export const markSent = (db, id, nowMs = Date.now()) => db.prepare('UPDATE partner_invites SET sent_at = ? WHERE id = ?').run(new Date(nowMs).toISOString(), id);
 
@@ -86,20 +122,20 @@ export function listInvites(db, nowMs = Date.now()) {
 
 /** La guida annulla un invito ancora aperto: il collegamento smette di valere. @returns {boolean} */
 export function cancelInvite(db, id, nowMs = Date.now()) {
-  return db.prepare('UPDATE partner_invites SET cancelled_at = ? WHERE id = ? AND used_at IS NULL AND cancelled_at IS NULL').run(new Date(nowMs).toISOString(), id).changes === 1;
+  return db.prepare('UPDATE partner_invites SET token_enc = NULL, cancelled_at = ? WHERE id = ? AND used_at IS NULL AND cancelled_at IS NULL').run(new Date(nowMs).toISOString(), id).changes === 1;
 }
 
 /**
  * Un collegamento nuovo per un invito aperto o scaduto (non per uno usato o annullato), con una scadenza nuova.
  * @returns {{ invite: object, token: string } | null}
  */
-export function renewInvite(db, id, nowMs = Date.now()) {
+export function renewInvite(db, id, nowMs = Date.now(), secret = '') {
   return tx(db, () => {
     const i = getInvite(db, id);
     if (!i || i.used_at || i.cancelled_at) return null;
     if (emailInUse(db, i.email)) return null; // nel frattempo si è registrata da sola
     const token = newToken();
-    db.prepare('UPDATE partner_invites SET token_hash = ?, expires_at = ?, sent_at = NULL WHERE id = ?').run(hash(token), new Date(nowMs + INVITE_DAYS * DAY).toISOString(), id);
+    db.prepare('UPDATE partner_invites SET token_hash = ?, token_enc = ?, expires_at = ?, sent_at = NULL WHERE id = ?').run(hash(token), sealToken(secret, token), new Date(nowMs + INVITE_DAYS * DAY).toISOString(), id);
     return { invite: getInvite(db, id), token };
   });
 }

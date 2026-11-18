@@ -508,7 +508,9 @@ Per portare in squadra un'agenzia che conosci (un contatto di una fiera, un'agen
 3. Il collegamento vale **14 giorni** e **una volta sola**. L'elenco sotto il modulo dice per ogni invito se è **In attesa**, **Registrata** (con il collegamento alla scheda), **Scaduto** o **Annullato**.
 
 Quando serve:
-- **Rinvia**: l'email non è arrivata o l'invito è scaduto. Si crea un collegamento **nuovo** e il vecchio smette di valere. Il collegamento lo vedi **solo nel momento in cui lo crei** (e quando rinvii): se l'email non è partita il sito te lo scrive, e puoi copiarlo e mandarlo tu, per esempio su WhatsApp.
+- **Copia link** (sugli inviti *In attesa*): copia **lo stesso collegamento già mandato**, per rimandarlo da un'altra casella (la tua posta personale, WhatsApp…). Non cambia nulla: il collegamento resta valido, con la stessa scadenza. Il sito ne conserva una **copia cifrata** (senza il segreto del sito il database da solo non basta) che sparisce quando l'invito è usato o annullato. Gli inviti **creati prima di questa funzione** non l'hanno: per loro c'è **Nuovo link**.
+- **Nuovo link**: crea un collegamento **nuovo senza mandare nessuna email** e te lo mostra da copiare; quello di prima smette di valere (sugli inviti in attesa il sito chiede conferma). Serve anche per un invito **scaduto**, se vuoi mandarlo tu.
+- **Rinvia**: l'email non è arrivata o l'invito è scaduto. Si crea un collegamento **nuovo**, il sito **rimanda l'email** e il vecchio smette di valere. Se l'email non è partita il sito te lo scrive, e puoi copiarlo e mandarlo tu, per esempio su WhatsApp.
 - **Annulla**: hai sbagliato indirizzo o hai cambiato idea; il collegamento non funziona più. L'indirizzo di un invito non si cambia: annulla e invita quello giusto.
 - Invitare di nuovo **lo stesso indirizzo** mentre l'invito è ancora aperto lo rinnova (non ne nasce un secondo). Se l'agenzia ha **già un account**, il sito te lo dice: non serve invitarla.
 - Se l'agenzia si registra **da sola** prima di usare l'invito, entra come ogni altra richiesta (da approvare) e l'invito non crea un secondo account.

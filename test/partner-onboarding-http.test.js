@@ -232,7 +232,10 @@ test('invito: la guida scrive l’email, l’agenzia riceve il collegamento pers
     assert.match(page, /Lagoon DMC<\/strong><br><small class="muted">anna@lagoon\.example · English/);
     assert.match(page, /\/admin\/partners\/invites\/1\/resend/);
     assert.match(page, /\/admin\/partners\/invites\/1\/cancel/);
-    assert.ok(!page.includes(token), 'dopo la prima volta il collegamento non si rivede');
+    // «Copia link»: lo stesso collegamento già mandato, per rimandarlo da un'altra casella
+    assert.match(page, new RegExp(`<input class="sr-only" id="invite-link-1" readonly tabindex="-1" aria-hidden="true" value="${url.replace(/[.]/g, '\\.')}">`));
+    assert.match(page, /data-copy="#invite-link-1" data-copied="Copiato">Copia link<\/button>/);
+    assert.doesNotMatch(page, /invites\/1\/link/, 'con il collegamento ricopiabile non serve crearne uno nuovo');
 
     // la pagina dell'invito: nella lingua del collegamento, con email fissa e dati già scritti
     const at = new URL(url).pathname;
@@ -276,7 +279,9 @@ test('invito: la guida scrive l’email, l’agenzia riceve il collegamento pers
     page = await text(await admin('/admin/partners/invites'));
     assert.match(page, /<span class="chip chip-ok">Registrata<\/span>/);
     assert.match(page, new RegExp(`href="/admin/partners/${a.id}">apri la scheda`));
-    assert.doesNotMatch(page, /invites\/1\/resend|invites\/1\/cancel/);
+    assert.doesNotMatch(page, /invites\/1\/resend|invites\/1\/cancel|Copia link/);
+    assert.equal(app.db.prepare('SELECT token_enc FROM partner_invites').get().token_enc, null, 'usato: la copia cifrata sparisce');
+    assert.ok(!page.includes(token));
     assert.equal(await app.vat.sweep(Date.now()), 1);
     assert.equal(row('anna@lagoon.example').vat_status, 'valid');
 
@@ -465,6 +470,56 @@ test('invito: email e pagine nelle quattro lingue', async () => {
       assert.ok(page.includes(`<h1>${titles[lang]}</h1>`), lang);
       assert.ok(page.includes(makeT(lang)('pinv.emailNote')), lang);
     }
+  } finally {
+    s.close();
+  }
+});
+
+test('inviti: «Copia link» rimostra lo stesso collegamento; «Nuovo link» ne crea uno senza mandare email', async () => {
+  const s = await start();
+  try {
+    const { app, admin, anon } = s;
+    const made = await text(await admin('/admin/partners/invites', form({ email: 'anna@lagoon.example', lang: 'it', company: 'Lagoon DMC' })));
+    const url = made.match(/value="(http:\/\/localhost\/it\/b2b\/invite\/[A-Za-z0-9_-]{20,})"/)[1];
+    const mails = () => app.mail.sent.filter((m) => m.to === 'anna@lagoon.example').length;
+    assert.equal(mails(), 1);
+
+    // dopo un po': il collegamento si ritrova nell'elenco, identico, e il box dice dove ritrovarlo
+    let page = await text(await admin('/admin/partners/invites'));
+    assert.ok(page.includes(`value="${url}"`), 'lo stesso collegamento già mandato');
+    assert.match(page, /<strong>Copia link<\/strong> copia lo stesso collegamento già mandato/);
+    assert.equal((await anon(new URL(url).pathname)).status, 200, 'e vale ancora');
+
+    // inviti di prima (senza copia cifrata): c'è «Nuovo link», con conferma perché il vecchio smette di valere
+    app.db.prepare('UPDATE partner_invites SET token_enc = NULL').run();
+    page = await text(await admin('/admin/partners/invites'));
+    assert.doesNotMatch(page, /Copia link<\/button>/);
+    assert.match(page, /<form method="post" action="\/admin\/partners\/invites\/1\/link" data-confirm="Il collegamento già mandato a anna@lagoon\.example smetterà di valere[^"]*"><button class="btn btn-sm btn-outline" type="submit">Nuovo link<\/button><\/form>/);
+
+    const res = await admin('/admin/partners/invites/1/link', form());
+    assert.equal(res.status, 200);
+    page = await text(res);
+    assert.match(page, /Nuovo collegamento per <strong>anna@lagoon\.example<\/strong>: <strong>non ho mandato nessuna email<\/strong>/);
+    const fresh = page.match(/id="invite-link" readonly data-select-all value="([^"]+)"/)[1];
+    assert.notEqual(fresh, url);
+    assert.equal(mails(), 1, 'nessuna email');
+    assert.notEqual((await anon(new URL(url).pathname)).status, 200, 'il vecchio non vale più');
+    assert.equal((await anon(new URL(fresh).pathname)).status, 200);
+    // da ora «Copia link» dà quello nuovo
+    page = await text(await admin('/admin/partners/invites'));
+    assert.ok(page.includes(`id="invite-link-1" readonly tabindex="-1" aria-hidden="true" value="${fresh}"`));
+    assert.match(page, /non partito/, 'la guida lo manda lei: l’invito non risulta mandato dal sito');
+
+    // scaduto: «Nuovo link» senza conferma; annullato o già registrata: nulla da fare
+    app.db.prepare("UPDATE partner_invites SET expires_at = '2020-01-01T00:00:00.000Z'").run();
+    page = await text(await admin('/admin/partners/invites'));
+    assert.doesNotMatch(page, /Copia link<\/button>/);
+    assert.match(page, /<form method="post" action="\/admin\/partners\/invites\/1\/link" ><button/);
+    await admin('/admin/partners/invites/1/link', form());
+    assert.equal((await anon(new URL(fresh).pathname)).status === 200, false);
+    await admin('/admin/partners/invites/1/cancel', form());
+    assert.equal(loc(await admin('/admin/partners/invites/1/link', form())), '/admin/partners/invites?ok=gone');
+    assert.equal(loc(await admin('/admin/partners/invites/99/link', form())), '/admin/partners/invites?ok=gone');
   } finally {
     s.close();
   }

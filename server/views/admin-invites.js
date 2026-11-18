@@ -25,9 +25,9 @@ export function invitesPage(ctx, { invites, values = {}, flash = '', error = '',
 ${partnerTabs('invites')}
 <p class="muted">Per portare in squadra un’agenzia che conosci: scrivi la sua email e il sito le manda un <strong>collegamento personale</strong>. Registrandosi da lì l’agenzia ha <strong>l’account già approvato</strong>, senza attendere te. Il collegamento vale ${INVITE_DAYS} giorni e una volta sola; chi ha già un account non serve invitarlo. Alla registrazione il sito controlla la partita IVA (formato e VIES) e ti scrive.</p>
 ${fresh
-  ? html`<div class="notice ${fresh.sent ? 'notice-ok' : 'notice-err'}" role="status">
-  <p>${fresh.sent ? html`Invito mandato a <strong>${fresh.invite.email}</strong>.` : html`<strong>L’email non è partita</strong> (controlla la posta in <em>Aiuto › Email</em>): puoi mandare tu il collegamento.`}</p>
-  <p class="small"><strong>Collegamento personale</strong> <em class="muted">(si vede solo adesso: poi, con «Rinvia», se ne crea uno nuovo)</em></p>
+  ? html`<div class="notice ${fresh.sent || fresh.quiet ? 'notice-ok' : 'notice-err'}" role="status">
+  <p>${fresh.quiet ? html`Nuovo collegamento per <strong>${fresh.invite.email}</strong>: <strong>non ho mandato nessuna email</strong>, mandalo tu. Quello di prima non vale più.` : fresh.sent ? html`Invito mandato a <strong>${fresh.invite.email}</strong>.` : html`<strong>L’email non è partita</strong> (controlla la posta in <em>Aiuto › Email</em>): puoi mandare tu il collegamento.`}</p>
+  <p class="small"><strong>Collegamento personale</strong> <em class="muted">(lo ritrovi sempre nell’elenco qui sotto con «Copia link», finché è valido)</em></p>
   <p class="copy-line"><input class="copy-field" id="invite-link" readonly data-select-all value="${fresh.url}" aria-label="Collegamento personale"><button class="btn btn-outline btn-sm" type="button" data-copy="#invite-link" data-copied="Copiato">Copia</button></p>
 </div>`
   : ''}
@@ -50,10 +50,13 @@ ${invites.length
     return html`<tr><td><strong>${i.company || i.email}</strong><br><small class="muted">${i.company ? html`${i.email} · ` : ''}${LANG_META[i.lang]?.name ?? i.lang}</small></td>
     <td><span class="chip ${chip}">${label}</span><br><small class="muted">${i.state === 'used' ? html`${when(i.used_at)}${i.account_id ? html` · <a href="/admin/partners/${i.account_id}">apri la scheda</a>` : ''}` : i.state === 'open' ? `scade il ${when(i.expires_at)}` : i.state === 'expired' ? `scaduto il ${when(i.expires_at)}` : ''}</small></td>
     <td>${i.sent_at ? when(i.sent_at) : html`<span class="muted">non partito</span>`}<br><small class="muted">creato il ${when(i.created_at)}</small></td>
-    <td class="actions">${['open', 'expired'].includes(i.state) ? html`<form method="post" action="/admin/partners/invites/${i.id}/resend"><button class="btn btn-sm btn-outline" type="submit">Rinvia</button></form>` : ''}
+    <td class="actions">${i.link ? html`<input class="sr-only" id="invite-link-${i.id}" readonly tabindex="-1" aria-hidden="true" value="${i.link}"><button class="btn btn-sm btn-gold" type="button" data-copy="#invite-link-${i.id}" data-copied="Copiato">Copia link</button>` : ''}
+      ${['open', 'expired'].includes(i.state) && !i.link ? html`<form method="post" action="/admin/partners/invites/${i.id}/link" ${i.state === 'open' ? html`data-confirm="Il collegamento già mandato a ${i.email} smetterà di valere e ne avrai uno nuovo da copiare. Continuare?"` : ''}><button class="btn btn-sm btn-outline" type="submit">Nuovo link</button></form>` : ''}
+      ${['open', 'expired'].includes(i.state) ? html`<form method="post" action="/admin/partners/invites/${i.id}/resend"><button class="btn btn-sm btn-outline" type="submit">Rinvia</button></form>` : ''}
       ${i.state === 'open' ? html`<form method="post" action="/admin/partners/invites/${i.id}/cancel" data-confirm="Annullare l’invito a ${i.email}? Il collegamento smette di valere."><button class="btn btn-sm btn-link-danger" type="submit">Annulla</button></form>` : ''}</td></tr>`;
   })}
   </tbody></table></div>`
-  : html`<div class="card pad muted">Nessun invito ancora.</div>`}`;
+  : html`<div class="card pad muted">Nessun invito ancora.</div>`}
+${invites.some((i) => i.state === 'open') ? html`<p class="small muted"><strong>Copia link</strong> copia lo stesso collegamento già mandato (se è ancora valido), per rimandarlo da un’altra casella. <strong>Nuovo link</strong> ne crea uno nuovo senza mandare email; <strong>Rinvia</strong> ne crea uno nuovo e rimanda l’email. Con un collegamento nuovo, quello di prima smette di valere.</p>` : ''}`;
   return adminLayout(ctx, { title: 'Partner B2B', active: '/admin/partners', body, flash, error });
 }

@@ -858,6 +858,11 @@ const V42_DROP_GOOGLE_REVIEWS = `
 DROP TABLE IF EXISTS google_reviews;
 `;
 
+const V43_INVITE_LINK = `
+-- Inviti alle agenzie: il collegamento si può rimostrare («Copia link») perché se ne tiene anche una copia cifrata (vedi partnerInvites.js).
+ALTER TABLE partner_invites ADD COLUMN token_enc TEXT;
+`;
+
 const V39_INVOICE_BATCHES = `
 -- «Paga tutto lo scaduto»: un solo pagamento con carta per più fatture dell'agenzia. Ogni riga ricorda quanto si chiedeva per fattura,
 -- così, se nel frattempo una è stata saldata in un altro modo, la sua quota si rimborsa.
@@ -959,6 +964,8 @@ export const MIGRATIONS = [
   V41_GOOGLE_REVIEWS,
   // v42 — via la tabella delle recensioni di Google (funzione tolta)
   V42_DROP_GOOGLE_REVIEWS,
+  // v43 — copia cifrata del collegamento degli inviti, per ricopiarlo
+  V43_INVITE_LINK,
 ];
 
 export function migrate(db) {

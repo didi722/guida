@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import { INVITE_DAYS, InviteError, cancelInvite, createInvite, getInvite, inviteByToken, listInvites, markSent, markUsed, renewInvite, stateOf } from '../server/partnerInvites.js';
+import { INVITE_DAYS, InviteError, cancelInvite, createInvite, getInvite, inviteByToken, inviteLinkFor, inviteUrl, listInvites, markSent, markUsed, openToken, renewInvite, sealToken, stateOf } from '../server/partnerInvites.js';
 import { addAccount, makeApp, NOW } from './helpers.js';
 
 const DAY = 86_400_000;
@@ -143,4 +143,58 @@ test('elenco: dal più recente, con lo stato e l’agenzia registrata', (t) => {
   assert.deepEqual(list.map((i) => [i.email, i.state]), [['c@x.example', 'used'], ['b@x.example', 'expired'], ['a@x.example', 'open']]);
   assert.deepEqual([list[0].account_company, list[0].account_status], ['Ce DMC', 'pending']);
   assert.equal(list[2].account_company, null);
+});
+
+test('«Copia link»: la copia cifrata riporta lo stesso collegamento, solo finché l’invito è valido e il segreto è quello del sito', (t) => {
+  const app = makeApp();
+  t.after(app.cleanup);
+  const { db, cfg } = app;
+  const SECRET = cfg.sessionSecret;
+  assert.ok(SECRET);
+  // cifratura: andata e ritorno, ogni volta diversa, inutile con un altro segreto
+  const a = sealToken('segreto', 'abc'); const b = sealToken('segreto', 'abc');
+  assert.notEqual(a, b);
+  assert.equal(openToken('segreto', a), 'abc');
+  assert.equal(openToken('altro', a), null);
+  assert.equal(openToken('segreto', a.slice(0, -2) + 'AA'), null, 'dato rovinato');
+  assert.equal(sealToken('', 'abc'), null);
+  assert.equal(openToken('segreto', null), null);
+
+  const made = createInvite(db, { email: 'anna@lagoon.example', lang: 'en' }, NOW, SECRET);
+  const row = () => getInvite(db, made.invite.id);
+  assert.ok(row().token_enc);
+  assert.ok(!JSON.stringify(row()).includes(made.token), 'il collegamento non è in chiaro nel database');
+  assert.equal(inviteLinkFor(cfg, row(), NOW + DAY), inviteUrl(cfg, made.invite, made.token), 'lo stesso collegamento mandato');
+  assert.equal(inviteByToken(db, made.token, NOW).state, 'open');
+
+  // scaduto: non si ricopia (si crea un nuovo link)
+  assert.equal(inviteLinkFor(cfg, row(), NOW + (INVITE_DAYS + 1) * DAY), null);
+  // un segreto diverso (per esempio cambiato sul server): non si riesce ad aprire
+  assert.equal(inviteLinkFor({ ...cfg, sessionSecret: 'altro-segreto' }, row(), NOW), null);
+  // senza segreto alla creazione (inviti di prima): nulla da ricopiare
+  const old = createInvite(db, { email: 'vecchio@x.example' }, NOW).invite;
+  assert.equal(old.token_enc, null);
+  assert.equal(inviteLinkFor(cfg, old, NOW), null);
+
+  // un nuovo invito allo stesso indirizzo riusa quello aperto: il collegamento ricopiabile è quello nuovo
+  const again = createInvite(db, { email: 'anna@lagoon.example', lang: 'en' }, NOW + DAY, SECRET);
+  assert.equal(again.reused, true);
+  assert.equal(inviteLinkFor(cfg, row(), NOW + DAY), inviteUrl(cfg, again.invite, again.token));
+  assert.notEqual(again.token, made.token);
+  // «Rinvia» / «Nuovo link»: lo stesso
+  const renewed = renewInvite(db, made.invite.id, NOW + 2 * DAY, SECRET);
+  assert.equal(inviteLinkFor(cfg, row(), NOW + 2 * DAY), inviteUrl(cfg, renewed.invite, renewed.token));
+  assert.equal(inviteByToken(db, again.token, NOW + 2 * DAY).state, 'unknown', 'quello di prima non vale più');
+  const noSecret = renewInvite(db, old.id, NOW, '');
+  assert.equal(getInvite(db, old.id).token_enc, null);
+  assert.ok(noSecret.token);
+
+  // annullato o usato: la copia sparisce
+  assert.equal(cancelInvite(db, made.invite.id, NOW + 3 * DAY), true);
+  assert.equal(row().token_enc, null);
+  assert.equal(inviteLinkFor(cfg, row(), NOW + 3 * DAY), null);
+  const second = createInvite(db, { email: 'b@x.example' }, NOW, SECRET);
+  const acct = addAccount(db, { email: 'b-acct@x.example' });
+  assert.equal(markUsed(db, second.invite.id, acct.id, NOW + DAY), true);
+  assert.equal(getInvite(db, second.invite.id).token_enc, null);
 });
