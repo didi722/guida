@@ -225,7 +225,7 @@ ${fresh ? html`<div class="notice ${fresh.sent ? 'notice-ok' : 'notice-err'}" ro
   <p>${fresh.kind === 'invite'
     ? (fresh.sent ? html`Invito mandato: l’agenzia riceve un <strong>collegamento personale</strong> e, registrandosi, ha l’account già approvato.` : html`<strong>L’email non è partita</strong> (controlla la posta in <em>Aiuto › Email</em>): puoi mandare tu il collegamento.`)
     : (fresh.sent ? html`Profilo creato e approvato. Ho mandato all’agenzia l’email per <strong>scegliere la password</strong>.` : html`Profilo creato e approvato. <strong>Manda tu all’agenzia</strong> il collegamento per scegliere la password.`)}</p>
-  <p class="small"><strong>Collegamento personale</strong> <em class="muted">(si vede solo adesso${fresh.kind === 'invite' ? ': poi, da Clienti › Partner › Inviti, se ne crea uno nuovo' : `: vale 7 giorni e una volta sola; ricrearlo: «Password dimenticata?» dell’agenzia`})</em></p>
+  <p class="small"><strong>Collegamento personale</strong> <em class="muted">(${fresh.kind === 'invite' ? 'lo ritrovi sempre in Clienti › Partner › Inviti, con «Copia link», finché è valido' : 'si vede solo adesso'}${fresh.kind === 'invite' ? '' : `: vale 7 giorni e una volta sola; ricrearlo: «Password dimenticata?» dell’agenzia`})</em></p>
   <p class="copy-line"><input class="copy-field" id="fresh-link" readonly data-select-all value="${fresh.url}" aria-label="Collegamento personale"><button class="btn btn-outline btn-sm" type="button" data-copy="#fresh-link" data-copied="Copiato">Copia</button></p></div>` : ''}
 <div class="lead-grid">
   <div class="lead-stack">

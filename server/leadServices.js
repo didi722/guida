@@ -153,7 +153,7 @@ export function createLeadServices(app) {
       if (!lead.email_ok || isSuppressed(db, email)) return { error: 'blocked' };
       let made;
       try {
-        made = createInvite(db, { email, company: lead.company, contactName: contact?.name, lang: normLang(lang ?? contact?.lang ?? lead.lang), note }, nowMs);
+        made = createInvite(db, { email, company: lead.company, contactName: contact?.name, lang: normLang(lang ?? contact?.lang ?? lead.lang), note }, nowMs, cfg.sessionSecret);
       } catch (err) {
         if (err instanceof InviteError && err.code === 'exists') {
           syncAccounts(db, nowMs); // ha già un profilo: lo si aggancia
